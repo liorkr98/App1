@@ -1,5 +1,5 @@
 import { I18nManager } from 'react-native';
-import { MMKV } from 'react-native-mmkv';
+import { createMMKV, type MMKV } from 'react-native-mmkv';
 
 /**
  * RTL bootstrap (CLAUDE.md §4.5).
@@ -32,9 +32,16 @@ const ALREADY_FORCED_KEY = 'alreadyForced';
 
 let storage: MMKV | undefined;
 
-/** Lazily created so importing this module never touches the native layer. */
+/**
+ * Lazily created so importing this module never touches the native layer.
+ *
+ * react-native-mmkv v4 exports `MMKV` as a type only; instances come from the
+ * `createMMKV` factory rather than a constructor.
+ */
 function store(): MMKV {
-  storage ??= new MMKV({ id: STORAGE_ID });
+  if (storage === undefined) {
+    storage = createMMKV({ id: STORAGE_ID });
+  }
   return storage;
 }
 
