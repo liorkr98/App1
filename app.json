@@ -1,7 +1,8 @@
 {
   "expo": {
     "name": "Hebrew App Template",
-    "slug": "hebrew-app-template",
+    "slug": "app1",
+    "owner": "liorkrisis-team",
     "scheme": "hebrewapptemplate",
     "version": "1.0.0",
     "orientation": "portrait",
