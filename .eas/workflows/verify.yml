@@ -25,3 +25,5 @@ jobs:
         run: npm run lint
       - name: Test
         run: npm run test
+      - name: Verify the RTL lint rules actually fire
+        run: bash scripts/verify-rtl-lint.sh

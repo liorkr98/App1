@@ -19,7 +19,13 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      "expo-localization",
+      [
+        "expo-localization",
+        {
+          "supportsRTL": true,
+          "forcesRTL": true
+        }
+      ],
       "expo-splash-screen"
     ],
     "experiments": {

@@ -1,1 +1,36 @@
-{}
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "retry": "Try again",
+    "close": "Close",
+    "delete": "Delete",
+    "edit": "Edit",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "done": "Done",
+    "search": "Search",
+    "share": "Share",
+    "loading": "Loading…",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "errors": {
+    "network": "No internet connection. Check your connection and try again.",
+    "timeout": "That took too long. Try again.",
+    "server": "The server is unavailable right now. Try again in a moment.",
+    "unauthorized": "You do not have permission to view this.",
+    "notFound": "We could not find what you were looking for.",
+    "generic": "Something went wrong. Try again."
+  },
+  "empty": {
+    "title": "Nothing here yet",
+    "description": "When there is content, it will show up here."
+  },
+  "language": {
+    "label": "Language",
+    "he": "Hebrew",
+    "en": "English"
+  }
+}

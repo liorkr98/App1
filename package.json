@@ -13,6 +13,7 @@
     "build:preview": "eas build --profile preview"
   },
   "dependencies": {
+    "@expo-google-fonts/assistant": "0.4.1",
     "@sentry/react-native": "~7.11.0",
     "@supabase/supabase-js": "2.115.0",
     "@tanstack/react-query": "5.102.8",
