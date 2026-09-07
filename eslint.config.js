@@ -8,59 +8,45 @@ const expoConfig = require('eslint-config-expo/flat');
 const prettierConfig = require('eslint-config-prettier/flat');
 
 /**
- * Style properties that hardcode a physical side (CLAUDE.md §4.1).
+ * Style properties that hardcode a physical side, and what to use instead
+ * (CLAUDE.md §4.1).
  *
  * Under RTL these do NOT flip — `marginLeft` is still the left edge when the
  * user reads right-to-left, so padding lands on the wrong side of every
  * component. The `*Start`/`*End` forms follow text direction instead.
+ *
+ * Deliberately a list of pairs rather than an object: object keys named
+ * `marginLeft` would be Property nodes, and the rule below would flag its own
+ * configuration.
  */
-const BANNED_DIRECTIONAL_PROPERTIES = [
+const DIRECTIONAL_REPLACEMENTS = [
   // Exactly the list in CLAUDE.md §4.1.
-  'marginLeft',
-  'marginRight',
-  'paddingLeft',
-  'paddingRight',
-  'left',
-  'right',
-  'borderLeftWidth',
-  'borderRightWidth',
+  ['marginLeft', 'marginStart'],
+  ['marginRight', 'marginEnd'],
+  ['paddingLeft', 'paddingStart'],
+  ['paddingRight', 'paddingEnd'],
+  ['left', 'start'],
+  ['right', 'end'],
+  ['borderLeftWidth', 'borderStartWidth'],
+  ['borderRightWidth', 'borderEndWidth'],
   // Same class of bug, same fix. Not named in §4.1 but they break identically.
-  'borderLeftColor',
-  'borderRightColor',
-  'borderTopLeftRadius',
-  'borderTopRightRadius',
-  'borderBottomLeftRadius',
-  'borderBottomRightRadius',
+  ['borderLeftColor', 'borderStartColor'],
+  ['borderRightColor', 'borderEndColor'],
+  ['borderTopLeftRadius', 'borderTopStartRadius'],
+  ['borderTopRightRadius', 'borderTopEndRadius'],
+  ['borderBottomLeftRadius', 'borderBottomStartRadius'],
+  ['borderBottomRightRadius', 'borderBottomEndRadius'],
 ];
 
-const DIRECTIONAL_REPLACEMENTS = {
-  marginLeft: 'marginStart',
-  marginRight: 'marginEnd',
-  paddingLeft: 'paddingStart',
-  paddingRight: 'paddingEnd',
-  left: 'start',
-  right: 'end',
-  borderLeftWidth: 'borderStartWidth',
-  borderRightWidth: 'borderEndWidth',
-  borderLeftColor: 'borderStartColor',
-  borderRightColor: 'borderEndColor',
-  borderTopLeftRadius: 'borderTopStartRadius',
-  borderTopRightRadius: 'borderTopEndRadius',
-  borderBottomLeftRadius: 'borderBottomStartRadius',
-  borderBottomRightRadius: 'borderBottomEndRadius',
-};
-
-const bannedPattern = `^(${BANNED_DIRECTIONAL_PROPERTIES.join('|')})$`;
-const replacementList = Object.entries(DIRECTIONAL_REPLACEMENTS)
-  .map(([from, to]) => `${from} -> ${to}`)
-  .join(', ');
+const bannedPattern = `^(${DIRECTIONAL_REPLACEMENTS.map(([from]) => from).join('|')})$`;
 
 const RTL_RESTRICTED_SYNTAX = [
   // --- §4.1 Directional properties -------------------------------------
   {
     // Covers both `{ marginLeft: 8 }` and `{ 'margin-left': 8 }` style keys.
     selector: `Property[key.name=/${bannedPattern}/], Property[key.value=/${bannedPattern}/]`,
-    message: `CLAUDE.md §4.1: directional style properties do not flip under RTL. Use the start/end form instead (${replacementList}).`,
+    message:
+      'CLAUDE.md §4.1: this style property hardcodes a physical side and does not flip under RTL. Use the start/end form: marginLeft/Right -> marginStart/End, paddingLeft/Right -> paddingStart/End, left/right -> start/end, border*Left/Right* -> border*Start/End*.',
   },
   {
     selector: "Property[key.name='textAlign'] > Literal[value=/^(left|right)$/]",
@@ -113,10 +99,14 @@ module.exports = defineConfig([
           ],
         },
       ],
+      // i18next has both a default export and named exports with the same
+      // names, so `i18next.use(...)` trips this rule. The chained form is the
+      // documented i18next API, so the rule is the thing that is wrong here.
+      'import/no-named-as-default-member': 'off',
     },
   },
   {
-    // The two files that are allowed to do the thing the rules forbid, because
+    // The files that are allowed to do the thing the rules forbid, because
     // they are the shared implementation everything else calls.
     files: ['src/core/ui/rtl.ts', 'src/core/ui/Text.tsx'],
     rules: {

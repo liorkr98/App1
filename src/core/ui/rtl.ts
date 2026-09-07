@@ -19,7 +19,7 @@ import { I18nManager, type ViewStyle } from 'react-native';
  * <ChevronIcon style={flipForRTL()} />
  */
 export function flipForRTL(): ViewStyle {
-  // eslint-disable-next-line no-restricted-syntax -- this helper is the one
-  // sanctioned place to branch on isRTL; see CLAUDE.md §4.3.
+  // This file is exempted from the no-restricted-syntax RTL rules in
+  // eslint.config.js: it is the one sanctioned place to branch on isRTL.
   return { transform: [{ scaleX: I18nManager.isRTL ? -1 : 1 }] };
 }
