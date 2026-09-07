@@ -1,27 +1,25 @@
 ---
 import type { Listing } from '@/types/listing';
-import { ogDescription, ogImagePath, ogTitle } from '../lib/og';
+import { ogDescription, ogImageUrl, ogTitle } from '../lib/og';
 
 interface Props {
   listing: Listing;
   /** Fact keys, in order, for the one-line og:description. */
   ogFactKeys: string[];
-  /** Content hash for the OG image filename. Stage D produces the image. */
-  ogHash: string;
   /** aspect-ratio for .hero — an allowed divergence (DESIGN-CONTRACT §5.1). */
   heroRatio: string;
   /** .hero-veil top padding — the other half of the same divergence. */
   heroVeilPad: string;
 }
 
-const { listing, ogFactKeys, ogHash, heroRatio, heroVeilPad } = Astro.props;
+const { listing, ogFactKeys, heroRatio, heroVeilPad } = Astro.props;
 
 const title = ogTitle(listing);
 const description = ogDescription(listing, ogFactKeys);
 
-// Absolute, because WhatsApp rejects a relative og:image and silently shows
-// a card with no picture.
-const ogImage = new URL(ogImagePath(listing.slug, ogHash), Astro.site).href;
+// Always absolute. Falls back to the cover photo until Stage D generates the
+// real 1200x630 crop — see ogImageUrl.
+const ogImage = ogImageUrl(listing, Astro.site);
 
 // noindex unless the seller opted in. A private seller usually does not want
 // their home address permanently searchable; an agent does. Not our call.

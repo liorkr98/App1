@@ -11,9 +11,15 @@ import { defineConfig } from 'astro/config';
 export default defineConfig({
   // Absolute OG image URLs are built from this. WhatsApp rejects relative
   // ones, and a wrong host here silently produces a preview card with no
-  // image — which is the single most expensive failure in the product.
-  // TODO: replace with the real production host before the first deploy.
-  site: 'https://example.com',
+  // image — the single most expensive failure in the product.
+  //
+  // Cloudflare Pages sets CF_PAGES_URL on every build, so a preview deploy
+  // gets its own hostname and the card works there too. SITE_URL overrides it
+  // for the production custom domain. See docs/DEPLOY.md.
+  //
+  // The example.com default only applies to a local build, where nothing is
+  // fetching the card anyway.
+  site: process.env.SITE_URL ?? process.env.CF_PAGES_URL ?? 'https://example.com',
 
   output: 'static',
   build: { format: 'directory' },

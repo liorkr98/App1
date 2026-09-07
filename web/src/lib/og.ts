@@ -69,3 +69,27 @@ export function ogDescription(listing: Listing, keys: string[]): string {
 export function ogImagePath(slug: string, contentHash: string): string {
   return `/og/${slug}-${contentHash}.webp`;
 }
+
+/**
+ * The absolute og:image URL, with a fallback.
+ *
+ * WhatsApp rejects a relative og:image and shows a card with no picture, so
+ * this is always absolute.
+ *
+ * When `ogImageHash` is absent the Stage D pipeline has not generated a
+ * proper 1200x630 crop yet, and we point at the cover photo instead. That is
+ * the wrong aspect ratio and WhatsApp will centre-crop it — but a
+ * badly-cropped photo is enormously better than the empty grey card you get
+ * from a 404, and the card is the one asset the whole product depends on.
+ *
+ * Uses the cover URL as uploaded, not a derived variant: the variants are
+ * produced by the same pipeline that would have produced the OG image, so if
+ * one is missing the others are too.
+ */
+export function ogImageUrl(listing: Listing, site: URL | undefined): string {
+  const path = listing.ogImageHash
+    ? ogImagePath(listing.slug, listing.ogImageHash)
+    : listing.media.cover.url;
+
+  return new URL(path, site).href;
+}

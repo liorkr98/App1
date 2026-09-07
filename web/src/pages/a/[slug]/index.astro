@@ -11,7 +11,7 @@ import PriceBar from '../../../components/PriceBar.astro';
 import Prose from '../../../components/Prose.astro';
 import SellerBlock from '../../../components/SellerBlock.astro';
 import { CATEGORY_PRESENTATION } from '../../../lib/category-presentation';
-import { listings, ogHashFor } from '../../../lib/listings';
+import { listings } from '../../../lib/listings';
 
 /**
  * ONE template for both categories.
@@ -43,7 +43,6 @@ const mapImageUrl = 'https://placehold.co/800x400/E4E0D6/6E6F66?text=+';
 <BaseListing
   listing={listing}
   ogFactKeys={presentation.ogFactKeys}
-  ogHash={ogHashFor(listing)}
   heroRatio={presentation.heroRatio}
   heroVeilPad={presentation.heroVeilPad}
 >

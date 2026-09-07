@@ -236,6 +236,17 @@ export interface Listing {
   media: Media;
 
   /**
+   * Content hash of the generated Open Graph image, set by the Stage D
+   * pipeline once it has produced /og/{slug}-{hash}.webp.
+   *
+   * ABSENT means no OG image has been generated yet, and the page falls back
+   * to the cover photo so the WhatsApp card still carries a picture. A card
+   * with no image is the worst outcome in the product — it is the difference
+   * between someone tapping and not.
+   */
+  ogImageHash?: string;
+
+  /**
    * Things the seller volunteers that count against them — defects, wear,
    * work still needed.
    *

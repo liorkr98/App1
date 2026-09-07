@@ -160,19 +160,3 @@ export const listings: Listing[] = [propertyListing, vehicleListing];
 export function listingBySlug(slug: string): Listing | undefined {
   return listings.find((listing) => listing.slug === slug);
 }
-
-/**
- * Placeholder content hash for the OG image filename.
- *
- * Stage D computes this from the cover image and price, and regenerates the
- * image whenever either changes. The hash lives in the FILENAME because
- * WhatsApp caches previews hard and some scrapers strip query strings.
- */
-export function ogHashFor(listing: Listing): string {
-  const source = `${listing.media.cover.url}|${listing.price}`;
-  let hash = 0;
-  for (let i = 0; i < source.length; i += 1) {
-    hash = (hash * 31 + source.charCodeAt(i)) >>> 0;
-  }
-  return hash.toString(16).padStart(8, '0').slice(0, 6);
-}
