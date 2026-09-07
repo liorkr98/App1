@@ -6,30 +6,37 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthProvider } from '@/core/auth/AuthProvider';
 import { useAuthGuard } from '@/core/auth/guard';
+import { initBilling } from '@/core/billing';
 import '@/core/i18n/i18n';
 import { initRTL } from '@/core/i18n/rtl';
+import { RootErrorBoundary } from '@/core/observability/ErrorBoundary';
+import { initSentry } from '@/core/observability/sentry';
 import { queryClient, startQueryFocusTracking } from '@/core/query/client';
 import { useAppFonts } from '@/core/ui';
 
 /**
  * Root layout.
  *
- * Order matters here. RTL is forced at module scope, before React renders its
- * first frame — doing it inside a component would lay the first frame out
- * left-to-right and then visibly flip it.
- *
- * Stage 6 wraps this with Sentry and the root error boundary.
+ * Order matters. All three run at module scope, before React renders its first
+ * frame:
+ *   - Sentry first, so a crash during the rest of startup is still reported.
+ *   - RTL before any layout exists, or the first frame renders left-to-right
+ *     and then visibly flips.
+ *   - Billing early, so Restore Purchases works on the paywall without a
+ *     session (CLAUDE.md §6).
  */
 
+initSentry();
 initRTL();
+initBilling();
 
 // Hold the splash screen until Assistant has loaded, otherwise the first frame
 // renders Hebrew in the system font and then reflows.
 void SplashScreen.preventAutoHideAsync();
 
 /**
- * Split out so the guard runs inside AuthProvider — it reads auth status, and
- * a hook cannot consume a context its own component provides.
+ * Split out so the guard runs inside AuthProvider — a hook cannot consume a
+ * context its own component provides.
  */
 function RootNavigator() {
   useAuthGuard();
@@ -54,12 +61,15 @@ export default function RootLayout() {
   }
 
   return (
-    <SafeAreaProvider>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <RootNavigator />
-        </AuthProvider>
-      </QueryClientProvider>
-    </SafeAreaProvider>
+    // Outermost, so it catches render errors from every provider below it.
+    <RootErrorBoundary>
+      <SafeAreaProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <RootNavigator />
+          </AuthProvider>
+        </QueryClientProvider>
+      </SafeAreaProvider>
+    </RootErrorBoundary>
   );
 }

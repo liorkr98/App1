@@ -78,7 +78,16 @@ module.exports = defineConfig([
   expoConfig,
   prettierConfig,
   {
-    ignores: ['node_modules/*', '.expo/*', 'dist/*', 'ios/*', 'android/*', 'coverage/*'],
+    ignores: [
+      'node_modules/*',
+      '.expo/*',
+      'dist/*',
+      'ios/*',
+      'android/*',
+      'coverage/*',
+      // Deno runtime, different globals and module resolution.
+      'supabase/functions/*',
+    ],
   },
   {
     files: ['**/*.{js,jsx,ts,tsx}'],

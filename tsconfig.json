@@ -15,5 +15,8 @@
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
   ],
-  "exclude": ["node_modules", ".expo", "dist"]
+  // supabase/functions is Deno, not React Native: it uses the Deno global and
+  // jsr: imports, which this tsconfig cannot resolve. Supabase typechecks it
+  // on deploy.
+  "exclude": ["node_modules", ".expo", "dist", "supabase/functions"]
 }

@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "jest",
-    "build:preview": "eas build --profile preview"
+    "build:preview": "eas build --profile preview",
+    "new-app": "node scripts/new-app.ts"
   },
   "dependencies": {
     "@expo-google-fonts/assistant": "0.4.1",
