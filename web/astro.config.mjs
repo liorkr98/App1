@@ -21,10 +21,13 @@ export default defineConfig({
   // Share the Listing type and category schemas with the mobile app without
   // making the repo an npm workspace. Turning the root into a workspace root
   // would rewrite the React Native dependency tree for no benefit here.
+  // Must mirror the "paths" entry in web/tsconfig.json. tsconfig paths guide
+  // the typechecker; this guides the bundler. If they disagree, the build and
+  // the typecheck disagree about what the code means.
   vite: {
     resolve: {
       alias: {
-        '@app': new URL('../src/', import.meta.url).pathname,
+        '@': new URL('../src', import.meta.url).pathname,
       },
     },
   },

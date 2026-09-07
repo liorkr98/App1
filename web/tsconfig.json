@@ -1,8 +1,12 @@
 {
   "extends": "astro/tsconfigs/strict",
   "compilerOptions": {
+    // Same alias as the mobile app's tsconfig, pointed at the same directory.
+    // astro check typechecks the shared ../src files too, and those files
+    // import each other through "@/" — with a different alias here they
+    // resolve to nothing and every shared type silently degrades to any.
     "paths": {
-      "@app/*": ["../src/*"]
+      "@/*": ["../src/*"]
     }
   },
   "include": [

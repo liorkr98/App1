@@ -1,5 +1,5 @@
-import { factsFromSchema, type Fact, type FactValue, type Listing } from '@app/types/listing';
-import { propertySchema, vehicleSchema } from '@app/features/listings/schemas';
+import { factsFromSchema, type Fact, type FactValue, type Listing } from '@/types/listing';
+import { propertySchema, vehicleSchema } from '@/features/listings/schemas';
 
 /**
  * Sample listings, with the content of the two reference pages.

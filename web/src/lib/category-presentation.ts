@@ -1,4 +1,4 @@
-import type { ListingCategory } from '@app/features/listings/schemas';
+import type { ListingCategory } from '@/features/listings/schemas';
 
 /**
  * The ONLY place a category name selects a presentation value.

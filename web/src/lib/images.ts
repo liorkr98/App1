@@ -1,4 +1,4 @@
-import type { Image } from '@app/types/listing';
+import type { Image } from '@/types/listing';
 
 /**
  * Responsive image URLs.

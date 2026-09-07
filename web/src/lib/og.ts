@@ -1,4 +1,4 @@
-import type { Fact, Listing } from '@app/types/listing';
+import type { Fact, Listing } from '@/types/listing';
 
 import { factValue, ils, num } from './format';
 

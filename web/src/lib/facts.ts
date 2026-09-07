@@ -1,6 +1,6 @@
-import type { Fact } from '@app/types/listing';
-import { factDefinition } from '@app/features/listings/schemas';
-import type { ListingCategory } from '@app/features/listings/schemas';
+import type { Fact } from '@/types/listing';
+import { factDefinition } from '@/features/listings/schemas';
+import type { ListingCategory } from '@/features/listings/schemas';
 
 import { factValue, needsBdi } from './format';
 
