@@ -1,10 +1,11 @@
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import '@/core/i18n/i18n';
 import { initRTL } from '@/core/i18n/rtl';
-import { useAppFonts } from '@/core/ui/fonts';
+import { useAppFonts } from '@/core/ui';
 
 /**
  * Root layout.
@@ -13,8 +14,8 @@ import { useAppFonts } from '@/core/ui/fonts';
  * first frame — doing it inside a component would lay the first frame out
  * left-to-right and then visibly flip it.
  *
- * Later stages wrap this with: theme provider (Stage 2), TanStack Query and
- * AuthProvider (Stage 3), Sentry and the root error boundary (Stage 6).
+ * Later stages wrap this with: TanStack Query and AuthProvider (Stage 3),
+ * Sentry and the root error boundary (Stage 6).
  */
 
 initRTL();
@@ -38,5 +39,9 @@ export default function RootLayout() {
     return null;
   }
 
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <SafeAreaProvider>
+      <Stack screenOptions={{ headerShown: false }} />
+    </SafeAreaProvider>
+  );
 }

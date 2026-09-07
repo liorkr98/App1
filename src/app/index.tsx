@@ -1,13 +1,26 @@
-import { View } from 'react-native';
+import { Link } from 'expo-router';
+
+import { Button, Empty, Screen } from '@/core/ui';
 
 /**
- * Placeholder route so expo-router has an entry point and `npm run start`
- * boots. Renders nothing on purpose.
+ * Placeholder home route.
  *
- * There is no text here because CLAUDE.md §10 forbids hardcoding a
- * user-facing string outside locales/, and i18n does not exist until Stage 1.
- * Stage 2 replaces this with the kitchen-sink route.
+ * Renders the shared Empty state (whose copy comes from locales/) so the app
+ * shows real Hebrew from first launch. In development it also links to the
+ * kitchen sink — that label is a developer affordance, not shipped copy.
+ *
+ * Stage 7's clone script resets this to a minimal tab layout per app.
  */
 export default function Index() {
-  return <View style={{ flex: 1 }} />;
+  return (
+    <Screen>
+      <Empty />
+
+      {__DEV__ ? (
+        <Link href="/_dev/kitchen-sink" asChild>
+          <Button label="Kitchen Sink (dev)" variant="secondary" block />
+        </Link>
+      ) : null}
+    </Screen>
+  );
 }
