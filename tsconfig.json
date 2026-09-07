@@ -2,9 +2,9 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
-    // expo/tsconfig.base does not pull in test-runner globals, so describe/it/
-    // expect are unknown to tsc without this.
-    "types": ["jest"],
+    // expo/tsconfig.base pulls in neither test-runner globals (describe/it/expect)
+    // nor Node types, which scripts/new-app.ts needs.
+    "types": ["jest", "node"],
     "paths": {
       "@/*": ["./src/*"]
     }
