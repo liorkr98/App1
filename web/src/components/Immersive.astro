@@ -12,12 +12,14 @@ interface Props {
 const { immersive, posterUrl, posterAlt } = Astro.props;
 
 /**
- * Placeholder only. Stage C fills the container with Photo Sphere Viewer or
- * CI360; nothing is installed here.
+ * The immersive block.
  *
- * The poster and the explicit tap-to-enter are not decoration. A tour is
- * several megabytes and the reader is on cellular, so the viewer must never
- * auto-load — hence the note telling them what they are about to fetch.
+ * The poster, scrim, button and note are the reference markup, unchanged.
+ * Stage C adds the mount target, the status line and the JSON payload
+ * alongside them — nothing that existed was restyled.
+ *
+ * The viewer loads on tap and never on page view: a tour is several megabytes
+ * and the reader is on cellular.
  */
 const isTour = immersive.type === 'tour';
 
@@ -30,10 +32,11 @@ const note = isTour
 const prefix = isTour ? null : 'חוץ ופנים';
 const megabytes = immersive.payloadMb;
 ---
-<figure class="immersive">
+<figure class="immersive" data-viewer>
   <img src={posterUrl} alt={posterAlt} loading="lazy" decoding="async" width="900" height="563">
-  <div class="immersive-scrim">
-    <button class="immersive-enter" type="button">{label}</button>
+
+  <div class="immersive-scrim" data-viewer-scrim>
+    <button class="immersive-enter" type="button" data-viewer-open>{label}</button>
     <span class="immersive-note">
       {prefix ? (
         <Fragment>{prefix} · <bdi>{note.count}</bdi> {note.unit}</Fragment>
@@ -43,4 +46,45 @@ const megabytes = immersive.payloadMb;
       {megabytes !== undefined && <Fragment> · <bdi>{num(megabytes)}</bdi> מ״ב</Fragment>}
     </span>
   </div>
+
+  {/* Real progress, not a spinner — the user has just agreed to spend data. */}
+  <div class="viewer-status" data-viewer-status hidden role="status" aria-live="polite">
+    <span></span>
+    <button class="immersive-enter" type="button" data-viewer-retry hidden>נסה שוב</button>
+  </div>
+
+  <div class="viewer-stage" data-viewer-stage hidden></div>
+
+  {/* Payload for the client. A JSON script block rather than a data attribute:
+      scene lists contain Hebrew labels and URLs, and attribute escaping is a
+      needless place for those to break. */}
+  <script type="application/json" set:html={JSON.stringify(immersive)} />
 </figure>
+
+<style is:global>
+/* Additive only — nothing above this comment changes the ported rules. */
+.viewer-stage{
+  position:absolute;inset:0;background:var(--ink);
+}
+.viewer-stage .psv-container{width:100%;height:100%}
+
+.spin-stage{
+  width:100%;height:100%;
+  background-repeat:no-repeat;
+  touch-action:pan-y;      /* let the page scroll vertically, we take x */
+  cursor:grab;
+}
+.spin-stage:focus-visible{outline:3px solid var(--plaster);outline-offset:-3px}
+
+.viewer-status{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.7rem;
+  background:rgba(25,26,21,.34);color:var(--plaster);
+  font-size:.9rem;
+}
+</style>
+
+<script>
+  import { initViewers } from '../lib/viewers/mount';
+  initViewers();
+</script>

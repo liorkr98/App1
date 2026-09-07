@@ -140,8 +140,12 @@ export const vehicleListing: Listing = {
     ],
     immersive: {
       type: 'spin',
+      // 36 frames on a 6x6 sheet — one request instead of 36, which matters
+      // on cellular. Stage D generates the real sheet; this stands in.
+      spriteUrl: `${HOST}/2400x1800/E4E0D6/6E6F66?text=+`,
       frames: [],
       frameCount: 36,
+      payloadMb: 3,
     },
   },
 
