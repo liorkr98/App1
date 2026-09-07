@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>בדיקת RTL</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Assistant:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--plaster:#FBFAF7;--ink:#191A15;--olive:#4A5D3A;--stone:#E4E0D6;--muted:#6E6F66;--fail:#8C2F1E}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Assistant',system-ui,sans-serif;background:var(--plaster);color:var(--ink);
+  line-height:1.6;max-width:600px;margin-inline:auto;padding:1.5rem}
+h1{font-family:'Frank Ruhl Libre',serif;font-size:1.6rem;margin-bottom:.3rem}
+.sub{color:var(--muted);font-size:.9rem;margin-bottom:2rem}
+.case{border-block-end:1px solid var(--stone);padding-block:1.25rem}
+.case:last-child{border:none}
+.case h2{font-size:.8rem;font-weight:600;color:var(--muted);margin-bottom:.5rem}
+.expect{font-size:.82rem;color:var(--muted);margin-top:.45rem}
+.big{font-family:'Frank Ruhl Libre',serif;font-weight:700;font-size:1.9rem}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--stone);margin-top:.5rem}
+.fact{padding:.85rem .5rem;text-align:center;border-inline-start:1px solid var(--stone);
+  border-block-start:1px solid var(--stone)}
+.fact:nth-child(3n+1){border-inline-start:none}
+.fact:nth-child(-n+3){border-block-start:none}
+.fact-val{font-family:'Frank Ruhl Libre',serif;font-size:1.2rem}
+.fact-lbl{font-size:.75rem;color:var(--muted)}
+.fact.off .fact-val,.fact.off .fact-lbl{opacity:.35}
+.strip{display:flex;gap:.4rem;overflow-x:auto;padding-block:.4rem}
+.strip div{flex:0 0 68px;height:68px;background:var(--stone);border-radius:3px;
+  display:grid;place-items:center;font-family:'Frank Ruhl Libre',serif;font-size:1.1rem}
+.chev{display:inline-block;transform:scaleX(-1)}
+.bad{color:var(--fail)}
+</style>
+</head>
+<body>
+
+<h1>בדיקת RTL</h1>
+<p class="sub">עמוד קבוע. כל תבנית חדשה נבדקת כאן לפני שהיא נכנסת לפרודקשן.<br>
+נתיב: <bdi>/a/_rtltest</bdi></p>
+
+<div class="case">
+  <h2>1 · מחיר בן 7 ספרות</h2>
+  <div class="big"><bdi>₪1,850,000</bdi></div>
+  <p class="expect">שקל מימין למספר. הפסיקים במקום. אין היפוך של קבוצות הספרות.</p>
+</div>
+
+<div class="case">
+  <h2>2 · יחס וטווח</h2>
+  <div>קומה <bdi>3</bdi> מתוך <bdi>5</bdi> &nbsp;·&nbsp; <bdi>3 / 5</bdi> &nbsp;·&nbsp; <bdi>2018–2021</bdi></div>
+  <p class="expect">הצורה <bdi>3 / 5</bdi> היא הרגישה — בלי bdi היא מתהפכת ל־<span class="bad">5 / 3</span>.</p>
+</div>
+
+<div class="case">
+  <h2>3 · טקסט עברי עם אנגלית מוטמעת</h2>
+  <div>הדירה ברחוב שדרות ירושלים <bdi>45</bdi>, ליד <bdi>Herzl St</bdi>, קומה <bdi>3</bdi>.</div>
+  <div style="margin-top:.4rem">רכב עם <bdi>Apple CarPlay</bdi> ומולטימדיה מקורית.</div>
+  <p class="expect">המילים באנגלית נשארות במקומן במשפט. הפסיק והנקודה בסוף, בצד שמאל.</p>
+</div>
+
+<div class="case">
+  <h2>4 · גרשיים ויחידות</h2>
+  <div><bdi>95</bdi> מ״ר · <bdi>12</bdi> מ״ר מרפסת · ממ״ד · <bdi>1,600</bdi> סמ״ק · <bdi>62,000</bdi> ק״מ · <bdi>10</bdi> ס״מ</div>
+  <p class="expect">גרשיים כפולים עבריים (״) ולא מרכאות ישרות ("). זו הטעות שתופיע בכל עמוד אם לא תתפוס אותה כאן.</p>
+</div>
+
+<div class="case">
+  <h2>5 · טלפון ותאריכים</h2>
+  <div><bdi>054-1234567</bdi> &nbsp;·&nbsp; <bdi>03-5551234</bdi> &nbsp;·&nbsp; <bdi>+972-50-1234567</bdi></div>
+  <div style="margin-top:.4rem">טסט עד <bdi>03/2027</bdi> · פורסם <bdi>07/09/2026</bdi></div>
+  <p class="expect">מקפים לא מתהפכים. קידומת <bdi>+972</bdi> נשארת בהתחלה.</p>
+</div>
+
+<div class="case">
+  <h2>6 · גריד עובדות עם ערך חסר</h2>
+  <div class="facts">
+    <div class="fact"><div class="fact-val"><bdi>95</bdi></div><div class="fact-lbl">מ״ר</div></div>
+    <div class="fact"><div class="fact-val"><bdi>3</bdi> / <bdi>5</bdi></div><div class="fact-lbl">קומה</div></div>
+    <div class="fact"><div class="fact-val">יש</div><div class="fact-lbl">מעלית</div></div>
+    <div class="fact off"><div class="fact-val">אין</div><div class="fact-lbl">מחסן</div></div>
+    <div class="fact"><div class="fact-val">דרום־מזרח</div><div class="fact-lbl">כיווני אוויר</div></div>
+    <div class="fact"><div class="fact-val"><bdi>12</bdi> מ״ר</div><div class="fact-lbl">מרפסת שמש</div></div>
+  </div>
+  <p class="expect">התא הראשון בכל שורה הוא הימני. "מחסן" באפור (<code>present:false</code>), לא מוסתר.
+  שדה שלא נענה כלל פשוט לא מופיע — כאן אין כזה בכוונה.</p>
+</div>
+
+<div class="case">
+  <h2>7 · סדר גרירה — הבאג הקלאסי</h2>
+  <div class="strip"><div>1</div><div>2</div><div>3</div><div>4</div><div>5</div></div>
+  <p class="expect"><strong>אינדקס 0 הוא הימני.</strong> אם "1" מופיע משמאל — סדר התמונות בעמוד המפורסם יהיה הפוך מזה שהמוכר בחר.</p>
+</div>
+
+<div class="case">
+  <h2>8 · אייקוני כיוון</h2>
+  <div><span class="chev">›</span> חזרה &nbsp;·&nbsp; המשך <span class="chev">‹</span> &nbsp;·&nbsp; ✓ אושר &nbsp;·&nbsp; ★ מועדף</div>
+  <p class="expect">חצים מתהפכים. וי, כוכב, לוגו ובקרות ניגון — לא.</p>
+</div>
+
+<div class="case">
+  <h2>9 · טקסט ארוך וגלישה</h2>
+  <p>הדירה עברה שיפוץ מלא לפני שנתיים — חשמל, אינסטלציה, מטבח וריצוף. הסלון פונה למרפסת שמש דרומית שמקבלת אור מהבוקר עד אחר הצהריים. שלושה חדרי שינה, אחד מהם עם יציאה נפרדת למרפסת שירות. הבניין שקט, שמונה דיירים בלבד, וועד בית פעיל.</p>
+  <p class="expect">מקף עברי (—) לא שובר שורה באמצע. גובה שורה נוח. אין יתומות בסוף פסקה.</p>
+</div>
+
+<div class="case">
+  <h2>10 · כותרת ארוכה בשתי שורות</h2>
+  <div class="big" style="font-size:1.5rem">דירת <bdi>4</bdi> חדרים בשדרות ירושלים, משופצת מהיסוד</div>
+  <p class="expect">יישור לימין, שבירה טבעית, בלי חיתוך.</p>
+</div>
+
+</body>
+</html>

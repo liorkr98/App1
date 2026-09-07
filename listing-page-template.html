@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>דירת 4 חדרים ברחוב סוקולוב, חולון</title>
+<meta name="description" content="דירת 4 חדרים משופצת, 95 מ״ר, קומה 3 עם מעלית, מרפסת שמש וחניה. סוקולוב 42, חולון.">
+
+<!-- ============================================================
+     OG TAGS — זה מה שקובע איך הלינק נראה בוואטסאפ.
+     התמונה חייבת להיות 1200x630, מוחלטת (לא יחסית), ומתחת ל-300KB.
+     בלי זה, כל המוצר נשבר ברגע השיתוף.
+     ============================================================ -->
+<meta property="og:type" content="website">
+<meta property="og:locale" content="he_IL">
+<meta property="og:site_name" content="מרפסת">
+<meta property="og:title" content="דירת 4 חדרים בחולון · ₪1,850,000">
+<meta property="og:description" content="95 מ״ר, קומה 3 עם מעלית, מרפסת שמש, חניה וממ״ד. משופצת.">
+<meta property="og:image" content="https://example.com/og/a7k2m.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Assistant:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --plaster:#FBFAF7;      /* טיח, לא קרם */
+  --ink:#191A15;
+  --olive:#4A5D3A;        /* לא כחול — כל מותגי הנדל"ן בישראל כחולים */
+  --stone:#E4E0D6;
+  --muted:#6E6F66;
+  --shadow:0 1px 2px rgba(25,26,21,.06);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+html{background:var(--stone)}
+
+body{
+  font-family:'Assistant',system-ui,sans-serif;
+  background:var(--plaster);
+  color:var(--ink);
+  line-height:1.6;
+  max-width:600px;
+  margin-inline:auto;
+  padding-bottom:6rem;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ---------- Hero ---------- */
+.hero{position:relative;aspect-ratio:4/5;overflow:hidden;background:var(--stone)}
+.hero img{width:100%;height:100%;object-fit:cover;display:block}
+
+.hero-veil{
+  position:absolute;inset-inline:0;bottom:0;padding:5rem 1.5rem 1.25rem;
+  background:linear-gradient(to top,rgba(25,26,21,.82),transparent);
+  color:var(--plaster);
+}
+.hero-place{font-size:.9rem;opacity:.9}
+.hero-title{
+  font-family:'Frank Ruhl Libre',serif;
+  font-weight:700;font-size:2rem;line-height:1.25;margin-top:.15rem;
+}
+
+/* ---------- Price ---------- */
+.price-bar{
+  display:flex;align-items:baseline;justify-content:space-between;gap:1rem;
+  padding:1.25rem 1.5rem;border-bottom:1px solid var(--stone);
+}
+.price{
+  font-family:'Frank Ruhl Libre',serif;
+  font-weight:700;font-size:1.9rem;letter-spacing:-.01em;
+}
+.price-note{font-size:.85rem;color:var(--muted)}
+
+/* ---------- Facts ----------
+   הגריד הזה הוא הסיבה שהעמוד עובד. קונה ישראלי סורק בדיוק
+   את השדות האלה לפני שהוא קורא מילה אחת מהתיאור. */
+.facts{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  border-bottom:1px solid var(--stone);
+}
+.fact{
+  padding:1rem .75rem;text-align:center;
+  border-inline-start:1px solid var(--stone);
+  border-block-start:1px solid var(--stone);
+}
+.fact:nth-child(3n+1){border-inline-start:none}
+.fact:nth-child(-n+3){border-block-start:none}
+.fact-val{font-family:'Frank Ruhl Libre',serif;font-weight:500;font-size:1.3rem;line-height:1.2}
+.fact-lbl{font-size:.78rem;color:var(--muted);margin-top:.15rem}
+.fact.off .fact-val,.fact.off .fact-lbl{opacity:.35}
+
+/* ---------- Immersive placeholder ----------
+   השלב הזה נשאר placeholder עד Stage C. הצופה נטען עצלנית
+   מאחורי פוסטר, לעולם לא אוטומטית — סיור שוקל מגהבייטים
+   והקורא נמצא על סלולרי. */
+.immersive{position:relative;margin:0;border-bottom:1px solid var(--stone)}
+.immersive img{width:100%;aspect-ratio:16/10;object-fit:cover;display:block;background:var(--stone)}
+.immersive-scrim{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:.7rem;
+  background:rgba(25,26,21,.34);
+}
+.immersive-enter{
+  display:inline-flex;align-items:center;gap:.5rem;
+  padding:.7rem 1.4rem;border:none;border-radius:999px;
+  background:var(--plaster);color:var(--ink);
+  font-family:'Assistant',sans-serif;font-size:1rem;font-weight:600;
+  box-shadow:0 2px 10px rgba(25,26,21,.2);cursor:pointer;
+}
+.immersive-enter:focus-visible{outline:3px solid var(--plaster);outline-offset:3px}
+.immersive-note{color:var(--plaster);font-size:.82rem;opacity:.9}
+
+/* ---------- Sections ---------- */
+section{padding:1.75rem 1.5rem;border-bottom:1px solid var(--stone)}
+h2{
+  font-family:'Frank Ruhl Libre',serif;
+  font-weight:500;font-size:1.15rem;margin-bottom:.6rem;
+}
+p{font-size:1rem;max-width:60ch}
+
+/* ---------- Gallery ---------- */
+.gallery{
+  display:flex;gap:.6rem;overflow-x:auto;
+  scroll-snap-type:x mandatory;
+  padding:1.5rem;margin:0;
+  scrollbar-width:none;
+}
+.gallery::-webkit-scrollbar{display:none}
+.gallery figure{
+  flex:0 0 78%;scroll-snap-align:center;margin:0;
+}
+.gallery img{
+  width:100%;aspect-ratio:4/3;object-fit:cover;
+  border-radius:3px;background:var(--stone);display:block;
+}
+.gallery figcaption{font-size:.82rem;color:var(--muted);margin-top:.4rem}
+
+/* ---------- Map ---------- */
+.map img{width:100%;border-radius:3px;display:block;background:var(--stone)}
+.addr{font-size:.9rem;color:var(--muted);margin-top:.6rem}
+
+/* ---------- Seller ---------- */
+.seller{display:flex;align-items:center;gap:.9rem}
+.avatar{
+  width:46px;height:46px;border-radius:50%;
+  background:var(--stone);flex:0 0 auto;
+}
+.seller-name{font-weight:600}
+.seller-role{font-size:.85rem;color:var(--muted)}
+
+/* ---------- CTA ---------- */
+.cta-dock{
+  position:fixed;inset-inline:0;bottom:0;
+  max-width:600px;margin-inline:auto;
+  padding:.75rem 1rem calc(.75rem + env(safe-area-inset-bottom));
+  background:linear-gradient(to top,var(--plaster) 72%,transparent);
+}
+.cta{
+  display:block;width:100%;padding:.95rem;
+  background:var(--olive);color:var(--plaster);
+  font-family:'Assistant',sans-serif;font-size:1.05rem;font-weight:600;
+  border:none;border-radius:4px;text-align:center;text-decoration:none;
+  box-shadow:var(--shadow);cursor:pointer;
+}
+.cta:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+
+/* ---------- Footer ---------- */
+footer{padding:1.5rem;text-align:center;font-size:.82rem;color:var(--muted)}
+footer a{color:var(--muted)}
+
+/* ---------- Motion: רגע אחד בלבד ---------- */
+@media (prefers-reduced-motion:no-preference){
+  .hero-veil{animation:rise .5s .1s both cubic-bezier(.2,.7,.3,1)}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}}
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <img src="https://placehold.co/900x1125/E4E0D6/6E6F66?text=+" alt="מבט לסלון ולמרפסת השמש">
+  <div class="hero-veil">
+    <div class="hero-place">סוקולוב 42, חולון</div>
+    <h1 class="hero-title">דירת <bdi>4</bdi> חדרים,<br>משופצת מהיסוד</h1>
+  </div>
+</header>
+
+<div class="price-bar">
+  <div class="price"><bdi>₪1,850,000</bdi></div>
+  <div class="price-note">פינוי גמיש</div>
+</div>
+
+<div class="facts">
+  <div class="fact"><div class="fact-val"><bdi>95</bdi></div><div class="fact-lbl">מ״ר</div></div>
+  <div class="fact"><div class="fact-val"><bdi>3</bdi> / <bdi>5</bdi></div><div class="fact-lbl">קומה</div></div>
+  <div class="fact"><div class="fact-val"><bdi>4</bdi></div><div class="fact-lbl">חדרים</div></div>
+  <div class="fact"><div class="fact-val">יש</div><div class="fact-lbl">מעלית</div></div>
+  <div class="fact"><div class="fact-val">יש</div><div class="fact-lbl">חניה</div></div>
+  <div class="fact"><div class="fact-val">יש</div><div class="fact-lbl">ממ״ד</div></div>
+  <div class="fact"><div class="fact-val"><bdi>12</bdi> מ״ר</div><div class="fact-lbl">מרפסת שמש</div></div>
+  <div class="fact"><div class="fact-val">דרום־מזרח</div><div class="fact-lbl">כיווני אוויר</div></div>
+  <div class="fact off"><div class="fact-val">אין</div><div class="fact-lbl">מחסן</div></div>
+</div>
+
+<figure class="immersive">
+  <img src="https://placehold.co/900x563/E4E0D6/6E6F66?text=+" alt="תצוגה מקדימה של הסיור בדירה">
+  <div class="immersive-scrim">
+    <button class="immersive-enter" type="button">כניסה לסיור</button>
+    <span class="immersive-note"><bdi>6</bdi> חדרים · <bdi>8</bdi> מ״ב</span>
+  </div>
+</figure>
+
+<section>
+  <h2>על הדירה</h2>
+  <p>הדירה עברה שיפוץ מלא לפני שנתיים — חשמל, אינסטלציה, מטבח וריצוף. הסלון פונה למרפסת שמש דרומית שמקבלת אור מהבוקר עד אחר הצהריים. שלושה חדרי שינה, אחד מהם עם יציאה נפרדת למרפסת שירות.</p>
+  <p style="margin-top:.8rem">הבניין שקט, שמונה דיירים בלבד, ועד בית פעיל. חניה בטאבו. בית ספר וגן ילדים במרחק הליכה, ותחנת הרכבת הקלה שבע דקות ברגל.</p>
+</section>
+
+<div class="gallery">
+  <figure><img src="https://placehold.co/800x600/E4E0D6/6E6F66?text=+" alt="סלון"><figcaption>סלון ומרפסת שמש</figcaption></figure>
+  <figure><img src="https://placehold.co/800x600/E4E0D6/6E6F66?text=+" alt="מטבח"><figcaption>מטבח משופץ</figcaption></figure>
+  <figure><img src="https://placehold.co/800x600/E4E0D6/6E6F66?text=+" alt="חדר שינה"><figcaption>חדר הורים</figcaption></figure>
+  <figure><img src="https://placehold.co/800x600/E4E0D6/6E6F66?text=+" alt="מרפסת"><figcaption>מרפסת דרומית</figcaption></figure>
+</div>
+
+<section class="map">
+  <h2>מיקום</h2>
+  <img src="https://placehold.co/800x400/E4E0D6/6E6F66?text=+" alt="מפת האזור">
+  <div class="addr">סוקולוב <bdi>42</bdi>, חולון</div>
+</section>
+
+<section>
+  <div class="seller">
+    <div class="avatar"></div>
+    <div>
+      <div class="seller-name">ליאור</div>
+      <div class="seller-role">בעל הדירה</div>
+    </div>
+  </div>
+</section>
+
+<div class="cta-dock">
+  <a class="cta" href="https://wa.me/972500000000?text=%D7%94%D7%99%D7%99%2C%20%D7%A8%D7%90%D7%99%D7%AA%D7%99%20%D7%90%D7%AA%20%D7%94%D7%93%D7%99%D7%A8%D7%94%20%D7%91%D7%A1%D7%95%D7%A7%D7%95%D7%9C%D7%95%D7%91%20%D7%95%D7%90%D7%A9%D7%9E%D7%97%20%D7%9C%D7%A4%D7%A8%D7%98%D7%99%D7%9D">
+    שליחת הודעה בוואטסאפ
+  </a>
+</div>
+
+<footer>
+  נבנה ב<a href="#">מרפסת</a>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>מאזדה 3, 2021, יד ראשונה</title>
+<meta name="description" content="מאזדה 3 שנתון 2021, יד ראשונה פרטית, 62,000 ק״מ, אוטומטית, טסט עד 03/2027.">
+
+<!-- OG — זהה במבנה לעמוד הדירה. ההבדל היחיד הוא התוכן.
+     תמונת השער חייבת להיות זווית 3/4 קדמית, לא צילום ישר מהצד. -->
+<meta property="og:type" content="website">
+<meta property="og:locale" content="he_IL">
+<meta property="og:site_name" content="מרפסת">
+<meta property="og:title" content="מאזדה 3, 2021 · ₪89,000">
+<meta property="og:description" content="יד ראשונה פרטית, 62,000 ק״מ, אוטומטית, טסט עד 03/2027.">
+<meta property="og:image" content="https://example.com/og/v3m9q-8f21c4.webp">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="robots" content="noindex">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Assistant:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --plaster:#FBFAF7;--ink:#191A15;--olive:#4A5D3A;
+  --stone:#E4E0D6;--muted:#6E6F66;--shadow:0 1px 2px rgba(25,26,21,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--stone)}
+body{
+  font-family:'Assistant',system-ui,sans-serif;background:var(--plaster);color:var(--ink);
+  line-height:1.6;max-width:600px;margin-inline:auto;padding-bottom:6rem;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* רכב: 4:3 ולא 4:5. מכונית היא אובייקט רחב —
+   מסגרת אנכית כמו בדירה חותכת אותה או משאירה אספלט מיותר. */
+.hero{position:relative;aspect-ratio:4/3;overflow:hidden;background:var(--stone)}
+.hero img{width:100%;height:100%;object-fit:cover;display:block}
+.hero-veil{
+  position:absolute;inset-inline:0;bottom:0;padding:4.5rem 1.5rem 1.25rem;
+  background:linear-gradient(to top,rgba(25,26,21,.82),transparent);color:var(--plaster);
+}
+.hero-place{font-size:.9rem;opacity:.9}
+.hero-title{font-family:'Frank Ruhl Libre',serif;font-weight:700;font-size:2rem;line-height:1.25;margin-top:.15rem}
+
+.price-bar{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;
+  padding:1.25rem 1.5rem;border-bottom:1px solid var(--stone)}
+.price{font-family:'Frank Ruhl Libre',serif;font-weight:700;font-size:1.9rem;letter-spacing:-.01em}
+.price-note{font-size:.85rem;color:var(--muted)}
+
+.facts{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--stone)}
+.fact{padding:1rem .75rem;text-align:center;
+  border-inline-start:1px solid var(--stone);border-block-start:1px solid var(--stone)}
+.fact:nth-child(3n+1){border-inline-start:none}
+.fact:nth-child(-n+3){border-block-start:none}
+.fact-val{font-family:'Frank Ruhl Libre',serif;font-weight:500;font-size:1.3rem;line-height:1.2}
+.fact-lbl{font-size:.78rem;color:var(--muted);margin-top:.15rem}
+.fact.off .fact-val,.fact.off .fact-lbl{opacity:.35}
+
+.immersive{position:relative;margin:0;border-bottom:1px solid var(--stone)}
+.immersive img{width:100%;aspect-ratio:16/10;object-fit:cover;display:block;background:var(--stone)}
+.immersive-scrim{position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:.7rem;background:rgba(25,26,21,.34)}
+.immersive-enter{display:inline-flex;align-items:center;gap:.5rem;padding:.7rem 1.4rem;
+  border:none;border-radius:999px;background:var(--plaster);color:var(--ink);
+  font-family:'Assistant',sans-serif;font-size:1rem;font-weight:600;
+  box-shadow:0 2px 10px rgba(25,26,21,.2);cursor:pointer}
+.immersive-enter:focus-visible{outline:3px solid var(--plaster);outline-offset:3px}
+.immersive-note{color:var(--plaster);font-size:.82rem;opacity:.9}
+
+section{padding:1.75rem 1.5rem;border-bottom:1px solid var(--stone)}
+h2{font-family:'Frank Ruhl Libre',serif;font-weight:500;font-size:1.15rem;margin-bottom:.6rem}
+p{font-size:1rem;max-width:60ch}
+
+.gallery{display:flex;gap:.6rem;overflow-x:auto;scroll-snap-type:x mandatory;
+  padding:1.5rem;margin:0;scrollbar-width:none}
+.gallery::-webkit-scrollbar{display:none}
+.gallery figure{flex:0 0 78%;scroll-snap-align:center;margin:0}
+.gallery img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:3px;
+  background:var(--stone);display:block}
+.gallery figcaption{font-size:.82rem;color:var(--muted);margin-top:.4rem}
+
+/* גילוי פגמים — הבידול האמיתי מול מודעת רכב רגילה.
+   מסגרת נפרדת, לא מוסתר בתוך הגלריה. */
+.flaws{background:#F5F2EA}
+.flaws ul{list-style:none;margin-top:.5rem}
+.flaws li{padding:.45rem 0;border-block-end:1px solid var(--stone);font-size:.95rem}
+.flaws li:last-child{border:none}
+
+.seller{display:flex;align-items:center;gap:.9rem}
+.avatar{width:46px;height:46px;border-radius:50%;background:var(--stone);flex:0 0 auto}
+.seller-name{font-weight:600}
+.seller-role{font-size:.85rem;color:var(--muted)}
+
+.cta-dock{position:fixed;inset-inline:0;bottom:0;max-width:600px;margin-inline:auto;
+  padding:.75rem 1rem calc(.75rem + env(safe-area-inset-bottom));
+  background:linear-gradient(to top,var(--plaster) 72%,transparent)}
+.cta{display:block;width:100%;padding:.95rem;background:var(--olive);color:var(--plaster);
+  font-family:'Assistant',sans-serif;font-size:1.05rem;font-weight:600;
+  border:none;border-radius:4px;text-align:center;text-decoration:none;
+  box-shadow:var(--shadow);cursor:pointer}
+.cta:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+
+footer{padding:1.5rem;text-align:center;font-size:.82rem;color:var(--muted)}
+footer a{color:var(--muted)}
+
+@media (prefers-reduced-motion:no-preference){
+  .hero-veil{animation:rise .5s .1s both cubic-bezier(.2,.7,.3,1)}
+  @keyframes rise{from{opacity:0;transform:translateY(14px)}}
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <img src="https://placehold.co/900x675/E4E0D6/6E6F66?text=+" alt="מאזדה 3 בזווית קדמית">
+  <div class="hero-veil">
+    <div class="hero-place">ראשון לציון</div>
+    <h1 class="hero-title">מאזדה <bdi>3</bdi>, <bdi>2021</bdi><br>יד ראשונה פרטית</h1>
+  </div>
+</header>
+
+<div class="price-bar">
+  <div class="price"><bdi>₪89,000</bdi></div>
+  <div class="price-note">מחיר מחירון: <bdi>₪94,000</bdi></div>
+</div>
+
+<div class="facts">
+  <div class="fact"><div class="fact-val"><bdi>2021</bdi></div><div class="fact-lbl">שנתון</div></div>
+  <div class="fact"><div class="fact-val">ראשונה</div><div class="fact-lbl">יד</div></div>
+  <div class="fact"><div class="fact-val"><bdi>62,000</bdi></div><div class="fact-lbl">ק״מ</div></div>
+  <div class="fact"><div class="fact-val">אוטומטית</div><div class="fact-lbl">תיבת הילוכים</div></div>
+  <div class="fact"><div class="fact-val"><bdi>1,600</bdi></div><div class="fact-lbl">סמ״ק</div></div>
+  <div class="fact"><div class="fact-val">בנזין</div><div class="fact-lbl">סוג דלק</div></div>
+  <div class="fact"><div class="fact-val">לבן</div><div class="fact-lbl">צבע</div></div>
+  <div class="fact"><div class="fact-val"><bdi>03/2027</bdi></div><div class="fact-lbl">טסט עד</div></div>
+  <div class="fact"><div class="fact-val">פרטית</div><div class="fact-lbl">בעלות קודמת</div></div>
+</div>
+
+<figure class="immersive">
+  <img src="https://placehold.co/900x563/E4E0D6/6E6F66?text=+" alt="תצוגה מקדימה של הרכב מכל הזוויות">
+  <div class="immersive-scrim">
+    <button class="immersive-enter" type="button">צפייה מכל הזוויות</button>
+    <span class="immersive-note">חוץ ופנים · <bdi>36</bdi> זוויות</span>
+  </div>
+</figure>
+
+<section>
+  <h2>על הרכב</h2>
+  <p>הרכב אצלי מהיום הראשון, כל הטיפולים במוסך מורשה ויש תיק טיפולים מלא. שימוש עירוני בעיקר, לא נגרר ולא היה מעורב בתאונה.</p>
+  <p style="margin-top:.8rem">מולטימדיה מקורית עם Apple CarPlay, חיישני רוורס, בקרת שיוט. צמיגים הוחלפו לפני כ־<bdi>8,000</bdi> ק״מ.</p>
+</section>
+
+<section class="flaws">
+  <h2>מה שכדאי לדעת</h2>
+  <ul>
+    <li>שריטה בדלת נהג אחורית, כ־<bdi>10</bdi> ס״מ</li>
+    <li>שפשוף קל בפגוש אחורי מחניה</li>
+    <li>בלמים קדמיים יצטרכו החלפה בטיפול הבא</li>
+  </ul>
+</section>
+
+<div class="gallery">
+  <figure><img src="https://placehold.co/800x600/E4E0D6/6E6F66?text=+" alt="חזית"><figcaption>חזית</figcaption></figure>
+  <figure><img src="https://placehold.co/800x600/E4E0D6/6E6F66?text=+" alt="תא נהג"><figcaption>תא נהג</figcaption></figure>
+  <figure><img src="https://placehold.co/800x600/E4E0D6/6E6F66?text=+" alt="מד אוץ"><figcaption>מד אוץ</figcaption></figure>
+  <figure><img src="https://placehold.co/800x600/E4E0D6/6E6F66?text=+" alt="תא מטען"><figcaption>תא מטען</figcaption></figure>
+</div>
+
+<section>
+  <div class="seller">
+    <div class="avatar"></div>
+    <div>
+      <div class="seller-name">ליאור</div>
+      <div class="seller-role">בעל הרכב</div>
+    </div>
+  </div>
+</section>
+
+<div class="cta-dock">
+  <a class="cta" href="https://wa.me/972500000000?text=%D7%94%D7%99%D7%99%2C%20%D7%A8%D7%90%D7%99%D7%AA%D7%99%20%D7%90%D7%AA%20%D7%94%D7%9E%D7%90%D7%96%D7%93%D7%94%20%D7%95%D7%90%D7%A9%D7%9E%D7%97%20%D7%9C%D7%A4%D7%A8%D7%98%D7%99%D7%9D">
+    שליחת הודעה בוואטסאפ
+  </a>
+</div>
+
+<footer>נבנה ב<a href="#">מרפסת</a></footer>
+
+</body>
+</html>
