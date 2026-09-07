@@ -50,5 +50,22 @@
     "continueWithApple": "Continue with Apple",
     "continueWithGoogle": "Continue with Google",
     "signOut": "Sign out"
+  },
+  "paywall": {
+    "title": "Upgrade to the full version",
+    "subtitle": "Everything, with no limits.",
+    "feature1": "Full access to every feature",
+    "feature2": "No ads",
+    "feature3": "Backup and sync across devices",
+    "feature4": "Fast support in Hebrew",
+    "subscribe": "Subscribe",
+    "restore": "Restore purchases",
+    "restored": "Your purchases were restored.",
+    "nothingToRestore": "We could not find any previous purchases to restore.",
+    "noOfferings": "Plans could not be loaded right now.",
+    "terms": "Your subscription renews automatically at the end of each period unless cancelled at least 24 hours beforehand. Billing goes through your store account. You can manage or cancel the subscription at any time in your store account settings.",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "alreadySubscribed": "Your subscription is active."
   }
 }

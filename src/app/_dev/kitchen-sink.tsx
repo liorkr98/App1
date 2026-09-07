@@ -19,6 +19,29 @@ import {
 import { fixtures } from './fixtures';
 
 /**
+ * Declared at module scope, not inside the screen.
+ *
+ * A component defined during render is a new type on every render, so React
+ * unmounts and remounts its subtree — every Input would lose what you typed.
+ */
+function Divider() {
+  const { colors } = useTheme();
+  return <View style={{ height: 1, backgroundColor: colors.border }} />;
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <View style={{ gap: spacing.md }}>
+      <Text variant="label" muted>
+        {title}
+      </Text>
+      {children}
+      <Divider />
+    </View>
+  );
+}
+
+/**
  * Kitchen sink — every component, every state, in Hebrew.
  *
  * This is the CLAUDE.md §4.6 definition-of-done screen. Open it on a real
@@ -28,25 +51,12 @@ import { fixtures } from './fixtures';
  */
 export default function KitchenSink() {
   const { t } = useTranslation();
-  const { colors } = useTheme();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [value, setValue] = useState('');
 
   if (!__DEV__) {
     return null;
   }
-
-  const Divider = () => <View style={{ height: 1, backgroundColor: colors.border }} />;
-
-  const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <View style={{ gap: spacing.md }}>
-      <Text variant="label" muted>
-        {title}
-      </Text>
-      {children}
-      <Divider />
-    </View>
-  );
 
   return (
     <Screen scroll>
