@@ -22,10 +22,26 @@ function required(value: string | undefined, name: string): string {
   return value;
 }
 
-export const env = {
+interface Env {
+  supabase: { readonly url: string; readonly anonKey: string };
+  revenueCat: { iosKey: string; androidKey: string };
+  sentry: { dsn: string };
+}
+
+export const env: Env = {
   supabase: {
-    url: required(process.env.EXPO_PUBLIC_SUPABASE_URL, 'EXPO_PUBLIC_SUPABASE_URL'),
-    anonKey: required(process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY, 'EXPO_PUBLIC_SUPABASE_ANON_KEY'),
+    // Getters, not eager values. Validating at module load would make every
+    // module that transitively imports this file throw on import — including
+    // pure helpers that never touch Supabase, which makes them untestable and
+    // turns one missing variable into an app that cannot even start to report
+    // the problem. Throwing on first *use* keeps the error just as loud and
+    // just as early for anything that actually needs a connection.
+    get url() {
+      return required(process.env.EXPO_PUBLIC_SUPABASE_URL, 'EXPO_PUBLIC_SUPABASE_URL');
+    },
+    get anonKey() {
+      return required(process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY, 'EXPO_PUBLIC_SUPABASE_ANON_KEY');
+    },
   },
   revenueCat: {
     // Not required() — billing is only initialised in Stage 4, and an app
@@ -36,4 +52,4 @@ export const env = {
   sentry: {
     dsn: process.env.EXPO_PUBLIC_SENTRY_DSN ?? '',
   },
-} as const;
+};
