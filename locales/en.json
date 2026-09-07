@@ -67,5 +67,30 @@
     "privacyPolicy": "Privacy Policy",
     "termsOfService": "Terms of Service",
     "alreadySubscribed": "Your subscription is active."
+  },
+  "settings": {
+    "title": "Settings",
+    "accountSection": "Account",
+    "email": "Email",
+    "signOut": "Sign out",
+    "deleteAccount": "Delete account",
+    "deleteAccountSubtitle": "Permanently delete your account and all data",
+    "deleteConfirmTitle": "Delete your account?",
+    "deleteConfirmBody": "This is permanent. All your data will be removed from the server and cannot be recovered. Your subscription is not cancelled automatically — cancel it in your store settings.",
+    "deleteConfirmAction": "I understand, continue",
+    "deleteFinalTitle": "Final confirmation",
+    "deleteFinalBody": "Tapping delete removes your account immediately.",
+    "deleteFinalAction": "Delete permanently",
+    "deleteFailed": "Deleting your account failed. Try again or contact support.",
+    "subscriptionSection": "Subscription",
+    "subscriptionStatus": "Status",
+    "subscriptionActive": "Active",
+    "subscriptionInactive": "Not active",
+    "manageSubscription": "Manage subscription",
+    "legalSection": "Legal",
+    "supportSection": "Support",
+    "contactSupport": "Contact us",
+    "aboutSection": "About",
+    "version": "Version"
   }
 }

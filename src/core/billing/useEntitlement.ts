@@ -33,7 +33,11 @@ export interface EntitlementState {
 
 export function useEntitlement(): EntitlementState {
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
-  const [settled, setSettled] = useState(false);
+
+  // With no API key there is nothing to ask, so the state is already settled
+  // as not-subscribed. Derived at init rather than set from the effect, which
+  // would cause a cascading render.
+  const [settled, setSettled] = useState(() => !isBillingConfigurable());
 
   const refresh = useCallback(async () => {
     const info = await fetchCustomerInfo();
@@ -42,10 +46,7 @@ export function useEntitlement(): EntitlementState {
   }, []);
 
   useEffect(() => {
-    // With no API key there is nothing to ask. Settle immediately as
-    // not-subscribed rather than leaving the UI spinning.
     if (!isBillingConfigurable()) {
-      setSettled(true);
       return;
     }
 

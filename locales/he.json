@@ -67,5 +67,30 @@
     "privacyPolicy": "מדיניות פרטיות",
     "termsOfService": "תנאי שימוש",
     "alreadySubscribed": "המנוי שלכם פעיל."
+  },
+  "settings": {
+    "title": "הגדרות",
+    "accountSection": "חשבון",
+    "email": "דוא״ל",
+    "signOut": "התנתקות",
+    "deleteAccount": "מחיקת החשבון",
+    "deleteAccountSubtitle": "מחיקה לצמיתות של החשבון וכל הנתונים",
+    "deleteConfirmTitle": "למחוק את החשבון?",
+    "deleteConfirmBody": "הפעולה הזו סופית. כל הנתונים שלכם יימחקו מהשרת ולא ניתן יהיה לשחזר אותם. המנוי אינו מבוטל אוטומטית — יש לבטל אותו בהגדרות החנות.",
+    "deleteConfirmAction": "הבנתי, המשך",
+    "deleteFinalTitle": "אישור אחרון",
+    "deleteFinalBody": "לחיצה על מחיקה תמחק את החשבון מיד.",
+    "deleteFinalAction": "מחיקה לצמיתות",
+    "deleteFailed": "מחיקת החשבון נכשלה. נסו שוב או פנו לתמיכה.",
+    "subscriptionSection": "מנוי",
+    "subscriptionStatus": "סטטוס",
+    "subscriptionActive": "פעיל",
+    "subscriptionInactive": "לא פעיל",
+    "manageSubscription": "ניהול המנוי",
+    "legalSection": "מידע משפטי",
+    "supportSection": "תמיכה",
+    "contactSupport": "יצירת קשר",
+    "aboutSection": "אודות",
+    "version": "גרסה"
   }
 }
