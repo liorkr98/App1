@@ -14,7 +14,8 @@
     "share": "Share",
     "loading": "Loading…",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "continue": ""
   },
   "errors": {
     "network": "No internet connection. Check your connection and try again.",
@@ -24,7 +25,8 @@
     "notFound": "We could not find what you were looking for.",
     "generic": "Something went wrong. Try again.",
     "invalidEmail": "That email address is not valid.",
-    "invalidCode": "That code is wrong or has expired."
+    "invalidCode": "That code is wrong or has expired.",
+    "upload": ""
   },
   "empty": {
     "title": "Nothing here yet",
@@ -92,5 +94,19 @@
     "contactSupport": "Contact us",
     "aboutSection": "About",
     "version": "Version"
+  },
+  "listing": {
+    "create": "",
+    "empty": "",
+    "publish": "",
+    "share": "",
+    "copyLink": "",
+    "draft": "",
+    "published": "",
+    "sold": ""
+  },
+  "capture": {
+    "property": "",
+    "vehicle": ""
   }
 }
