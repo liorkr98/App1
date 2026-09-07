@@ -22,7 +22,9 @@
     "server": "The server is unavailable right now. Try again in a moment.",
     "unauthorized": "You do not have permission to view this.",
     "notFound": "We could not find what you were looking for.",
-    "generic": "Something went wrong. Try again."
+    "generic": "Something went wrong. Try again.",
+    "invalidEmail": "That email address is not valid.",
+    "invalidCode": "That code is wrong or has expired."
   },
   "empty": {
     "title": "Nothing here yet",
@@ -32,5 +34,21 @@
     "label": "Language",
     "he": "Hebrew",
     "en": "English"
+  },
+  "auth": {
+    "title": "Sign in",
+    "subtitle": "We will email you a one-time code. No password needed.",
+    "emailLabel": "Email address",
+    "emailPlaceholder": "name@example.com",
+    "sendCode": "Send code",
+    "codeLabel": "Your code",
+    "codePlaceholder": "123456",
+    "codeSentTo": "We sent a code to {{email}}",
+    "verify": "Sign in",
+    "changeEmail": "Change address",
+    "or": "or",
+    "continueWithApple": "Continue with Apple",
+    "continueWithGoogle": "Continue with Google",
+    "signOut": "Sign out"
   }
 }

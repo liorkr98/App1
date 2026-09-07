@@ -22,7 +22,9 @@
     "server": "השרת לא זמין כרגע. נסו שוב בעוד כמה רגעים.",
     "unauthorized": "אין לכם הרשאה לצפות בתוכן הזה.",
     "notFound": "לא מצאנו את מה שחיפשתם.",
-    "generic": "משהו השתבש. נסו שוב."
+    "generic": "משהו השתבש. נסו שוב.",
+    "invalidEmail": "כתובת הדוא״ל אינה תקינה.",
+    "invalidCode": "הקוד שהוזן שגוי או שפג תוקפו."
   },
   "empty": {
     "title": "אין כאן כלום עדיין",
@@ -32,5 +34,21 @@
     "label": "שפה",
     "he": "עברית",
     "en": "אנגלית"
+  },
+  "auth": {
+    "title": "כניסה לחשבון",
+    "subtitle": "נשלח אליכם קוד חד־פעמי בדוא״ל. אין צורך בסיסמה.",
+    "emailLabel": "כתובת דוא״ל",
+    "emailPlaceholder": "name@example.com",
+    "sendCode": "שליחת קוד",
+    "codeLabel": "הקוד שקיבלתם",
+    "codePlaceholder": "123456",
+    "codeSentTo": "שלחנו קוד אל {{email}}",
+    "verify": "כניסה",
+    "changeEmail": "שינוי כתובת",
+    "or": "או",
+    "continueWithApple": "המשך עם Apple",
+    "continueWithGoogle": "המשך עם Google",
+    "signOut": "התנתקות"
   }
 }

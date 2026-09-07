@@ -63,7 +63,39 @@ export type TypeVariant = keyof typeof typeScale;
  * Both schemes carry the same keys so a component never has to ask which one
  * it is in. Contrast ratios for text on background meet WCAG AA.
  */
-const palette = {
+export type ColorScheme = 'light' | 'dark';
+
+/**
+ * Every colour the system has. Both schemes must implement all of it, so a
+ * component never has to ask which scheme it is in — or guard a missing key.
+ */
+export interface Colors {
+  background: string;
+  backgroundElevated: string;
+  backgroundSunken: string;
+  overlay: string;
+
+  text: string;
+  textSecondary: string;
+  textInverse: string;
+  textDisabled: string;
+
+  border: string;
+  borderStrong: string;
+
+  primary: string;
+  primaryPressed: string;
+  primaryDisabled: string;
+
+  danger: string;
+  dangerPressed: string;
+  dangerDisabled: string;
+
+  success: string;
+  warning: string;
+}
+
+const palette: Record<ColorScheme, Colors> = {
   light: {
     background: '#FFFFFF',
     backgroundElevated: '#F5F6F8',
@@ -114,10 +146,7 @@ const palette = {
     success: '#4ADE80',
     warning: '#F0B429',
   },
-} as const;
-
-export type ColorScheme = keyof typeof palette;
-export type Colors = (typeof palette)['light'];
+};
 
 export function colorsFor(scheme: ColorScheme): Colors {
   return palette[scheme];
