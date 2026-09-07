@@ -11,8 +11,9 @@ expo-env.d.ts
 /ios
 /android
 
-# EAS
-.eas/
+# EAS — local state only. Workflow definitions must be committed.
+.eas/*
+!.eas/workflows/
 
 # Environment — never commit real values (CLAUDE.md §8)
 .env

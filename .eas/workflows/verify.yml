@@ -1,0 +1,27 @@
+name: Verify
+
+# Stage verification runs in Expo's cloud because registry.npmjs.org is
+# blocked on the primary dev machine. This is the CLAUDE.md §9 step 4 gate:
+# typecheck and lint must pass before a stage is considered done.
+
+on:
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
+  workflow_dispatch: {}
+
+jobs:
+  verify:
+    name: Typecheck, lint and test
+    steps:
+      - name: Checkout
+        uses: eas/checkout
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Test
+        run: npm run test
