@@ -157,21 +157,39 @@ Shared structural constants:
 
 ## 5. Divergences
 
-### Confirmed — the three you listed
+### The allowed list — exactly four. A fifth is a porting bug.
 
-| # | | Property | Vehicle |
-|---|---|---|---|
-| 1 | `.hero` aspect-ratio | `4/5` | `4/3` |
-| 2 | `.price-note` content | `פינוי גמיש` | `מחיר מחירון: <bdi>₪94,000</bdi>` |
-| 3 | Disclosure block | *(none)* | `section.flaws` — `מה שכדאי לדעת`, 4 CSS rules, 3 list items |
+Resolved by the product owner after B0. Nothing else may differ between the
+two category templates.
 
-On #1 the vehicle file carries the reasoning inline: a car is a wide object,
-so a vertical frame either crops it or leaves dead asphalt.
+**1 · The hero block** — aspect ratio and veil padding together
 
-On #2 the CSS is identical — `.price-note` is the same rule in both. The
-divergence is **content only**, not style.
+| | Property | Vehicle |
+|---|---|---|
+| `.hero` aspect-ratio | `4/5` | `4/3` |
+| `.hero-veil` padding | `5rem 1.5rem 1.25rem` | `4.5rem 1.5rem 1.25rem` |
 
-On #3 the vehicle-only rules are:
+These are **one decision, not two**: the padding differs *because* the aspect
+ratio does. A car is a wide object, so a vertical frame either crops it or
+leaves dead asphalt (the reasoning is inline in the vehicle file), and the
+shorter 4/3 hero needs less gradient runway above the title.
+
+Treat the hero as a single category-parameterised component taking both values
+from one place. Splitting them into two independent overrides invites someone
+to change one and not the other.
+
+**2 · `.price-note` content**
+
+| Property | Vehicle |
+|---|---|
+| `פינוי גמיש` | `מחיר מחירון: <bdi>₪94,000</bdi>` |
+
+**CSS is identical** — the same `.price-note` rule serves both. This is a
+content divergence only. It must not become a style divergence.
+
+**3 · `section.flaws` — vehicle only**
+
+`מה שכדאי לדעת`, sitting between the description and the gallery.
 
 ```
 .flaws            { background:#F5F2EA }
@@ -180,51 +198,29 @@ On #3 the vehicle-only rules are:
 .flaws li:last-child { border:none }
 ```
 
-### Found, not on your list — four more
-
-**4 · `.hero-veil` top padding**
-
-| Property | Vehicle |
-|---|---|
-| `padding:5rem 1.5rem 1.25rem` | `padding:4.5rem 1.5rem 1.25rem` |
-
-Everything else in the rule is identical. Plausibly deliberate — the shorter
-4/3 hero has less room for the gradient to fade through — but it is a second
-hero divergence and you listed only the aspect ratio.
-
-**5 · Map section — property only**
-
-The property file has `section.map` in the body plus two CSS rules that have
-no vehicle counterpart:
+**4 · `section.map` — property only**
 
 ```
 .map img { width:100%; border-radius:3px; display:block; background:var(--stone) }
 .addr    { font-size:.9rem; color:var(--muted); margin-top:.6rem }
 ```
 
-RESEARCH.md §5's page structure lists a map for the product generally. A car
-has no fixed address, so omitting it reads intentional — but it is a whole
-missing section, not a style tweak, and it changes what the shared layout can
-assume.
+Not an oversight, and the reason matters for anyone tempted to "fix" it
+later: a vehicle's location is an approximate meeting area, not an address.
+Pinning a private car for sale to a home address on a public page is a
+**theft risk**. The city in `.hero-place` is the correct resolution for
+vehicles, and no map section is rendered for them.
 
-**6 · `og:image` format and cache-busting**
+### Two differences that are NOT divergences
 
-| Property | Vehicle |
-|---|---|
-| `https://example.com/og/a7k2m.jpg` | `https://example.com/og/v3m9q-8f21c4.webp` |
+Both are per-listing generated metadata, not template CSS. One code path
+produces them for both categories, so neither creates a fifth divergence.
+The property reference file is simply older than the spec.
 
-JPG with no content hash versus WebP with one. B1 specifies WebP with a hash
-in the filename, and RESEARCH.md §5 says OG images should be WebP. The vehicle
-file matches that; the property file does not.
-
-**7 · `robots` meta**
-
-The vehicle file has `<meta name="robots" content="noindex">`. The property
-file has no `robots` meta at all. B1 specifies noindex by default.
-
-On 6 and 7 the vehicle file is the one that matches the written spec, which
-suggests the property file is simply older rather than that a difference was
-intended — but per B0 I am not resolving these.
+| | Property file | Vehicle file | Resolution |
+|---|---|---|---|
+| `og:image` | `a7k2m.jpg`, no hash | `v3m9q-8f21c4.webp` | **WebP, content hash in the filename**, both categories |
+| `robots` | *(absent)* | `noindex` | **`noindex` by default**, driven by `listing.indexable`, both categories |
 
 ---
 
