@@ -54,7 +54,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   version: identity.version,
   orientation: 'portrait',
   userInterfaceStyle: 'automatic',
-  newArchEnabled: true,
+  // No newArchEnabled or edgeToEdgeEnabled: SDK 57 removed both from
+  // ExpoConfig because the New Architecture and Android edge-to-edge are no
+  // longer optional.
 
   ios: {
     supportsTablet: false,
