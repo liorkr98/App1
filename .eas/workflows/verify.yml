@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Checkout
         uses: eas/checkout
+
+      # --- Mobile app -----------------------------------------------------
       - name: Install dependencies
         run: npm install --no-audit --no-fund
       - name: Typecheck
@@ -27,3 +29,21 @@ jobs:
         run: npm run test
       - name: Verify the RTL lint rules actually fire
         run: bash scripts/verify-rtl-lint.sh
+
+      # --- Web workspace --------------------------------------------------
+      # Its own package.json, deliberately not an npm workspace: making the
+      # root a workspace root would rewrite the React Native dependency tree.
+      - name: Install web dependencies
+        run: npm install --no-audit --no-fund --prefix web
+      - name: Web typecheck
+        run: npm run typecheck --prefix web
+      - name: Verify no physical left/right in web
+        run: node scripts/verify-web-logical-props.mjs
+      - name: Verify the web logical-property rule actually fires
+        run: bash scripts/verify-web-lint-fires.sh
+      - name: Build web
+        run: npm run build --prefix web
+      - name: Verify exactly four template divergences
+        run: node scripts/verify-template-divergences.mjs
+      - name: Report built page weight
+        run: node scripts/report-page-weight.mjs

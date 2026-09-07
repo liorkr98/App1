@@ -1,0 +1,38 @@
+---
+import type { Fact } from '@app/types/listing';
+import type { ListingCategory } from '@app/features/listings/schemas';
+import { toCells } from '../lib/facts';
+
+interface Props {
+  category: ListingCategory;
+  facts: Fact[];
+}
+
+const { category, facts } = Astro.props;
+
+/**
+ * Cells come from the schema. No field name appears in this file, so a third
+ * category renders here with no change.
+ *
+ * Three states, and the difference between the last two is the point:
+ *   present: true, value set   normal cell
+ *   present: false             35% opacity showing אין — the seller said no
+ *   value: null                NO cell — the seller never answered
+ *
+ * Collapsing the last two would turn "we do not know" into "no", which is
+ * what makes a listing page an ad instead of a description.
+ */
+const cells = toCells(category, facts);
+---
+<div class="facts">
+  {cells.map((cell) => (
+    <div class={cell.absent ? 'fact off' : 'fact'}>
+      <div class="fact-val">
+        {cell.bdi ? <bdi>{cell.value}</bdi> : cell.value}
+        {cell.pairedValue !== undefined && <Fragment> / <bdi>{cell.pairedValue}</bdi></Fragment>}
+        {cell.unit !== undefined && <Fragment> {cell.unit}</Fragment>}
+      </div>
+      <div class="fact-lbl">{cell.label}</div>
+    </div>
+  ))}
+</div>

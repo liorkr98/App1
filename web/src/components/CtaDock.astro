@@ -1,0 +1,17 @@
+---
+interface Props {
+  /** Digits only, international format without a plus, e.g. 972500000000. */
+  phone: string;
+  /** Hebrew opening message, encoded into the wa.me link. */
+  message: string;
+}
+
+const { phone, message } = Astro.props;
+
+// wa.me needs the text percent-encoded. encodeURIComponent handles Hebrew as
+// UTF-8, which is what WhatsApp expects.
+const href = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+---
+<div class="cta-dock">
+  <a class="cta" href={href}>שליחת הודעה בוואטסאפ</a>
+</div>

@@ -61,6 +61,33 @@ export interface FactDefinition {
   /** Defaults to false. Only three fields per category are required. */
   required?: boolean;
   options?: readonly string[];
+
+  /**
+   * Shorter label for the three-column facts grid, where the full label does
+   * not fit. The reference vehicle page labels the mileage cell ק״מ rather
+   * than קילומטראז׳ for exactly this reason.
+   *
+   * Lives in the schema, not the grid component, so the grid stays free of
+   * hardcoded field names.
+   */
+  gridLabel?: string;
+
+  /**
+   * Renders this fact and another as a single cell, `a / b`, under this
+   * fact's label — the reference property page shows floor as 3 / 5 under
+   * קומה, not as two separate cells.
+   *
+   * The paired fact is not rendered on its own. Also schema-side for the same
+   * reason as gridLabel.
+   */
+  pairWith?: string;
+
+  /**
+   * Defaults to true. Set false for facts that already appear in the page
+   * title and would be redundant in the grid — the reference vehicle page
+   * carries make and model in the hero and not as cells.
+   */
+  showInGrid?: boolean;
 }
 
 /** A category's ordered fact definitions. Order is display order. */
@@ -95,6 +122,8 @@ export interface Image {
   alt?: string;
   /** Placeholder shown while the image loads, to avoid layout shift. */
   blurhash?: string;
+  /** Hebrew figcaption. Distinct from alt: alt describes, caption names. */
+  caption?: string;
 }
 
 /** One captured room, rendered as a panorama scene in the tour. */
@@ -128,6 +157,8 @@ export interface TourImmersive {
   scenes: PanoScene[];
   /** May be empty. An unlinked tour still works as a room selector. */
   links: SceneLink[];
+  /** Download size, shown before the user opts in on cellular. */
+  payloadMb?: number;
 }
 
 export interface SpinImmersive {
@@ -137,6 +168,8 @@ export interface SpinImmersive {
   spriteUrl?: string;
   /** Read from here, never hardcoded. 36 is the v1 default. */
   frameCount: number;
+  /** Download size, shown before the user opts in on cellular. */
+  payloadMb?: number;
 }
 
 export type Immersive = TourImmersive | SpinImmersive;
@@ -167,6 +200,8 @@ export interface Seller {
   /** E.164 or local Israeli format. Rendered through the bidi helpers. */
   phone: string;
   avatarUrl?: string;
+  /** Hebrew role line, e.g. בעל הדירה. */
+  role?: string;
   /** Set for agents; absent for private sellers. */
   agencyName?: string;
   agencyLogoUrl?: string;
@@ -188,8 +223,27 @@ export interface Listing {
   /** ISO 4217. ILS for the launch market. */
   currency: string;
 
+  /**
+   * Manufacturer or book price, shown beside the asking price. Its presence
+   * is what selects the comparison form of the price note, so the component
+   * branches on data rather than on category.
+   */
+  listPrice?: number;
+  /** Free text beside the price when there is no listPrice, e.g. פינוי גמיש. */
+  priceNote?: string;
+
   facts: Fact[];
   media: Media;
+
+  /**
+   * Things the seller volunteers that count against them — defects, wear,
+   * work still needed.
+   *
+   * Rendered in its own framed block, never folded into the description,
+   * because the point is that a buyer can find it without reading prose.
+   * Disclosing raises trust and cuts wasted viewings.
+   */
+  disclosures?: string[];
   location?: ListingLocation;
   seller: Seller;
   template: TemplateId;

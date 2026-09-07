@@ -87,6 +87,9 @@ module.exports = defineConfig([
       'coverage/*',
       // Deno runtime, different globals and module resolution.
       'supabase/functions/*',
+      // Astro workspace: its own toolchain, and physical left/right there is
+      // caught by scripts/verify-web-logical-props.mjs instead.
+      'web/*',
     ],
   },
   {

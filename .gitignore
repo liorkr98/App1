@@ -29,6 +29,11 @@ expo-env.d.ts
 google-services.json
 GoogleService-Info.plist
 
+# Astro web workspace
+web/dist/
+web/.astro/
+web/node_modules/
+
 # Metro
 .metro-health-check*
 .metro-cache/

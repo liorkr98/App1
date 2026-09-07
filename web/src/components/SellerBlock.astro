@@ -1,0 +1,18 @@
+---
+import type { Seller } from '@app/types/listing';
+
+interface Props {
+  seller: Seller;
+}
+
+const { seller } = Astro.props;
+---
+<section>
+  <div class="seller">
+    <div class="avatar"></div>
+    <div>
+      <div class="seller-name">{seller.name}</div>
+      {seller.role && <div class="seller-role">{seller.role}</div>}
+    </div>
+  </div>
+</section>

@@ -1,0 +1,27 @@
+---
+import { ils } from '../lib/format';
+
+interface Props {
+  price: number;
+  /** Book price. Its presence selects the comparison form. */
+  listPrice?: number;
+  /** Free text used when there is no listPrice. */
+  priceNote?: string;
+}
+
+const { price, listPrice, priceNote } = Astro.props;
+---
+<div class="price-bar">
+  <div class="price"><bdi>{ils(price)}</bdi></div>
+  {
+    /* Branches on the DATA, never on listing.category. A vehicle happens to
+       carry a book price and a property happens to carry a move-in note, but
+       either category could carry either — so this stays one component and
+       does not become a fifth divergence. */
+    listPrice !== undefined ? (
+      <div class="price-note">מחיר מחירון: <bdi>{ils(listPrice)}</bdi></div>
+    ) : priceNote ? (
+      <div class="price-note">{priceNote}</div>
+    ) : null
+  }
+</div>

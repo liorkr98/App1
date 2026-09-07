@@ -1,0 +1,27 @@
+---
+import type { Image } from '@app/types/listing';
+import { GALLERY_WIDTHS, largest, srcset } from '../lib/images';
+
+interface Props {
+  images: Image[];
+}
+
+const { images } = Astro.props;
+---
+<div class="gallery">
+  {images.map((image) => (
+    <figure>
+      <img
+        src={largest(image.url, GALLERY_WIDTHS)}
+        srcset={srcset(image.url, GALLERY_WIDTHS)}
+        sizes="78vw"
+        width={image.width}
+        height={image.height}
+        alt={image.alt ?? ''}
+        loading="lazy"
+        decoding="async"
+      >
+      {image.caption && <figcaption>{image.caption}</figcaption>}
+    </figure>
+  ))}
+</div>

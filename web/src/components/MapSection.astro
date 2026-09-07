@@ -1,0 +1,29 @@
+---
+import type { ListingLocation } from '@app/types/listing';
+import Prose from './Prose.astro';
+
+interface Props {
+  location: ListingLocation;
+  mapImageUrl: string;
+}
+
+const { location, mapImageUrl } = Astro.props;
+
+const address = location.street ? `${location.street}, ${location.city}` : location.city;
+---
+{
+  /**
+   * Property only (DESIGN-CONTRACT §5.4). A vehicle's location is an
+   * approximate meeting area, not an address; pinning a private car for sale
+   * to a home address on a public page is a theft risk.
+   *
+   * A rendered image, never an interactive embed — a map SDK is hundreds of
+   * kilobytes and a third-party script on a page whose whole job is loading
+   * fast on cellular.
+   */
+}
+<section class="map">
+  <h2>מיקום</h2>
+  <img src={mapImageUrl} alt="מפת האזור" loading="lazy" decoding="async" width="800" height="400">
+  <div class="addr"><Prose text={address} /></div>
+</section>

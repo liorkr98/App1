@@ -1,0 +1,11 @@
+---
+import { splitBdi } from '../lib/format';
+
+interface Props {
+  text: string;
+}
+
+const { text } = Astro.props;
+const segments = splitBdi(text);
+---
+{segments.map((segment) => (segment.bdi ? <bdi>{segment.text}</bdi> : <Fragment>{segment.text}</Fragment>))}

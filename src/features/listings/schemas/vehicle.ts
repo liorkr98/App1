@@ -12,8 +12,9 @@ import type { CategorySchema } from '@/types/listing';
 export const vehicleSchema: CategorySchema = {
   category: 'vehicle',
   facts: [
-    { key: 'make', label: 'יצרן', type: 'text', required: true },
-    { key: 'model', label: 'דגם', type: 'text', required: true },
+    // Both appear in the hero title, so they are not repeated as grid cells.
+    { key: 'make', label: 'יצרן', type: 'text', required: true, showInGrid: false },
+    { key: 'model', label: 'דגם', type: 'text', required: true, showInGrid: false },
     { key: 'year', label: 'שנתון', type: 'number', required: true },
     {
       key: 'hand',
@@ -21,14 +22,14 @@ export const vehicleSchema: CategorySchema = {
       type: 'enum',
       options: ['ראשונה', 'שנייה', 'שלישית', 'רביעית', 'חמישית ומעלה'],
     },
-    { key: 'mileage', label: 'קילומטראז׳', type: 'number', unit: 'ק״מ' },
+    { key: 'mileage', label: 'קילומטראז׳', type: 'number', unit: 'ק״מ', gridLabel: 'ק״מ' },
     {
       key: 'gearbox',
       label: 'תיבת הילוכים',
       type: 'enum',
       options: ['אוטומטית', 'ידנית', 'רובוטית', 'טיפטרוניק'],
     },
-    { key: 'engine_cc', label: 'נפח מנוע', type: 'number', unit: 'סמ״ק' },
+    { key: 'engine_cc', label: 'נפח מנוע', type: 'number', unit: 'סמ״ק', gridLabel: 'סמ״ק' },
     {
       key: 'fuel',
       label: 'סוג דלק',

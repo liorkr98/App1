@@ -1,0 +1,46 @@
+---
+import type { Immersive } from '@app/types/listing';
+import { num } from '../lib/format';
+
+interface Props {
+  immersive: Immersive;
+  posterUrl: string;
+  /** Hebrew alt for the poster. */
+  posterAlt: string;
+}
+
+const { immersive, posterUrl, posterAlt } = Astro.props;
+
+/**
+ * Placeholder only. Stage C fills the container with Photo Sphere Viewer or
+ * CI360; nothing is installed here.
+ *
+ * The poster and the explicit tap-to-enter are not decoration. A tour is
+ * several megabytes and the reader is on cellular, so the viewer must never
+ * auto-load — hence the note telling them what they are about to fetch.
+ */
+const isTour = immersive.type === 'tour';
+
+const label = isTour ? 'כניסה לסיור' : 'צפייה מכל הזוויות';
+
+const note = isTour
+  ? { count: num(immersive.scenes.length), unit: 'חדרים' }
+  : { count: num(immersive.frameCount), unit: 'זוויות' };
+
+const prefix = isTour ? null : 'חוץ ופנים';
+const megabytes = immersive.payloadMb;
+---
+<figure class="immersive">
+  <img src={posterUrl} alt={posterAlt} loading="lazy" decoding="async" width="900" height="563">
+  <div class="immersive-scrim">
+    <button class="immersive-enter" type="button">{label}</button>
+    <span class="immersive-note">
+      {prefix ? (
+        <Fragment>{prefix} · <bdi>{note.count}</bdi> {note.unit}</Fragment>
+      ) : (
+        <Fragment><bdi>{note.count}</bdi> {note.unit}</Fragment>
+      )}
+      {megabytes !== undefined && <Fragment> · <bdi>{num(megabytes)}</bdi> מ״ב</Fragment>}
+    </span>
+  </div>
+</figure>

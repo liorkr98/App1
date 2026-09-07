@@ -18,5 +18,7 @@
   // supabase/functions is Deno, not React Native: it uses the Deno global and
   // jsr: imports, which this tsconfig cannot resolve. Supabase typechecks it
   // on deploy.
-  "exclude": ["node_modules", ".expo", "dist", "supabase/functions"]
+  // web/ is Astro with its own tsconfig, DOM libs and path aliases. Checking
+  // it with React Native settings would produce hundreds of false errors.
+  "exclude": ["node_modules", ".expo", "dist", "supabase/functions", "web"]
 }

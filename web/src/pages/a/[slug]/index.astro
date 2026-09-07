@@ -1,0 +1,90 @@
+---
+import BaseListing from '../../../layouts/BaseListing.astro';
+import CtaDock from '../../../components/CtaDock.astro';
+import Disclosures from '../../../components/Disclosures.astro';
+import FactsGrid from '../../../components/FactsGrid.astro';
+import Gallery from '../../../components/Gallery.astro';
+import Hero from '../../../components/Hero.astro';
+import Immersive from '../../../components/Immersive.astro';
+import MapSection from '../../../components/MapSection.astro';
+import PriceBar from '../../../components/PriceBar.astro';
+import Prose from '../../../components/Prose.astro';
+import SellerBlock from '../../../components/SellerBlock.astro';
+import { CATEGORY_PRESENTATION } from '../../../lib/category-presentation';
+import { listings, ogHashFor } from '../../../lib/listings';
+
+/**
+ * ONE template for both categories.
+ *
+ * Three of the four allowed divergences are selected by DATA, not by a
+ * category check:
+ *   price note   PriceBar branches on listPrice
+ *   disclosures  rendered when the array is non-empty
+ *   map          rendered when the location has a street
+ *
+ * The fourth — the hero block — comes from CATEGORY_PRESENTATION. That is the
+ * only category lookup on the page, which is what keeps a fifth divergence
+ * from appearing by accident.
+ */
+export function getStaticPaths() {
+  return listings.map((listing) => ({ params: { slug: listing.slug }, props: { listing } }));
+}
+
+const { listing } = Astro.props;
+const presentation = CATEGORY_PRESENTATION[listing.category];
+
+const paragraphs = listing.description.split('\n\n');
+const heading = listing.category === 'property' ? 'על הדירה' : 'על הרכב';
+
+// A vehicle has no street, so no map. See DESIGN-CONTRACT §5.4.
+const showMap = Boolean(listing.location?.street);
+const mapImageUrl = 'https://placehold.co/800x400/E4E0D6/6E6F66?text=+';
+---
+<BaseListing
+  listing={listing}
+  ogFactKeys={presentation.ogFactKeys}
+  ogHash={ogHashFor(listing)}
+  heroRatio={presentation.heroRatio}
+  heroVeilPad={presentation.heroVeilPad}
+>
+  <Hero cover={listing.media.cover} title={listing.title} location={listing.location} />
+
+  <PriceBar price={listing.price} listPrice={listing.listPrice} priceNote={listing.priceNote} />
+
+  <FactsGrid category={listing.category} facts={listing.facts} />
+
+  {listing.media.immersive && (
+    <Immersive
+      immersive={listing.media.immersive}
+      posterUrl="https://placehold.co/900x563/E4E0D6/6E6F66?text=+"
+      posterAlt={
+        listing.media.immersive.type === 'tour'
+          ? 'תצוגה מקדימה של הסיור בדירה'
+          : 'תצוגה מקדימה של הרכב מכל הזוויות'
+      }
+    />
+  )}
+
+  <section>
+    <h2>{heading}</h2>
+    {paragraphs.map((paragraph, index) => (
+      <p style={index > 0 ? 'margin-top:.8rem' : undefined}><Prose text={paragraph} /></p>
+    ))}
+  </section>
+
+  {listing.disclosures && listing.disclosures.length > 0 && (
+    <Disclosures items={listing.disclosures} />
+  )}
+
+  <Gallery images={listing.media.gallery} />
+
+  {showMap && listing.location && (
+    <MapSection location={listing.location} mapImageUrl={mapImageUrl} />
+  )}
+
+  <SellerBlock seller={listing.seller} />
+
+  <CtaDock phone={listing.seller.phone} message={presentation.whatsappMessage} />
+
+  <footer>נבנה ב<a href="#">מרפסת</a></footer>
+</BaseListing>

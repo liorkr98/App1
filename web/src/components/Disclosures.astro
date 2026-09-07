@@ -1,0 +1,25 @@
+---
+import Prose from './Prose.astro';
+
+interface Props {
+  items: string[];
+}
+
+const { items } = Astro.props;
+---
+{
+  /**
+   * Vehicle-only in practice, but the component asks for a list rather than a
+   * category — a property with known defects should be able to use it.
+   *
+   * Its own framed block, deliberately not folded into the description: the
+   * whole value is that a buyer can find the bad news without reading prose.
+   * (DESIGN-CONTRACT §5.3)
+   */
+}
+<section class="flaws">
+  <h2>מה שכדאי לדעת</h2>
+  <ul>
+    {items.map((item) => <li><Prose text={item} /></li>)}
+  </ul>
+</section>

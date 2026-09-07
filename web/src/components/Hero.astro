@@ -1,0 +1,49 @@
+---
+import type { Image, ListingLocation } from '@app/types/listing';
+import { HERO_WIDTHS, largest, srcset } from '../lib/images';
+import Prose from './Prose.astro';
+
+interface Props {
+  cover: Image;
+  /** Newlines become <br>, matching the reference titles. */
+  title: string;
+  location?: ListingLocation;
+}
+
+const { cover, title, location } = Astro.props;
+
+/**
+ * Street only when the seller supplied one.
+ *
+ * A vehicle deliberately carries no street: its location is an approximate
+ * meeting area, and pinning a private car for sale to a home address on a
+ * public page is a theft risk (DESIGN-CONTRACT §5.4). The same expression
+ * serves both categories — the data differs, not the template.
+ */
+const place = location?.street ? `${location.street}, ${location.city}` : (location?.city ?? '');
+
+const lines = title.split('\n');
+---
+<header class="hero">
+  <img
+    src={largest(cover.url, HERO_WIDTHS)}
+    srcset={srcset(cover.url, HERO_WIDTHS)}
+    sizes="(max-width: 600px) 100vw, 600px"
+    width={cover.width}
+    height={cover.height}
+    alt={cover.alt ?? ''}
+    fetchpriority="high"
+    decoding="async"
+  >
+  <div class="hero-veil">
+    {place && <div class="hero-place"><Prose text={place} /></div>}
+    <h1 class="hero-title">
+      {lines.map((line, index) => (
+        <Fragment>
+          {index > 0 && <br />}
+          <Prose text={line} />
+        </Fragment>
+      ))}
+    </h1>
+  </div>
+</header>
