@@ -1,5 +1,4 @@
 import { track } from './analytics';
-import { prefersReducedMotion } from './guards';
 
 /**
  * The 360° spin.
@@ -161,10 +160,8 @@ async function mountFrames(options: SpinOptions): Promise<SpinHandle | null> {
 }
 
 export async function mountSpin(options: SpinOptions): Promise<SpinHandle | null> {
-  // autoplay is off regardless, so reduce-motion needs no branch here — but
-  // if autoplay is ever added it must be gated on this.
-  void prefersReducedMotion();
-
+  // Neither path autoplays, so there is nothing for reduce-motion to gate.
+  // If autoplay is ever added it must check guards.prefersReducedMotion().
   if (options.spriteUrl) {
     return mountSprite({ ...options, spriteUrl: options.spriteUrl });
   }

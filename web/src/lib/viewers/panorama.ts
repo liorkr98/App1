@@ -1,7 +1,7 @@
 import type { PanoScene, SceneLink } from '@/types/listing';
 
 import { track } from './analytics';
-import { checkPanorama, prefersReducedMotion } from './guards';
+import { checkPanorama } from './guards';
 
 /**
  * The panorama viewer — Photo Sphere Viewer.

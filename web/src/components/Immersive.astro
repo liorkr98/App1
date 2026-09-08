@@ -58,7 +58,7 @@ const megabytes = immersive.payloadMb;
   {/* Payload for the client. A JSON script block rather than a data attribute:
       scene lists contain Hebrew labels and URLs, and attribute escaping is a
       needless place for those to break. */}
-  <script type="application/json" set:html={JSON.stringify(immersive)} />
+  <script type="application/json" is:inline set:html={JSON.stringify(immersive)} />
 </figure>
 
 <style is:global>
