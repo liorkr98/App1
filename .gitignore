@@ -37,7 +37,7 @@ web/node_modules/
 # Worker
 worker/dist/
 worker/node_modules/
-worker/.test-build/
+worker/test-build/
 
 # Metro
 .metro-health-check*

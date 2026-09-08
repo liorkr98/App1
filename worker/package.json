@@ -9,7 +9,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
-    "test": "tsc --outDir .test-build && node --test",
+    "test": "tsc --outDir test-build && node --test \"test-build/**/*.test.js\"",
     "start": "node dist/index.js",
     "dev": "node --watch src/index.ts"
   },

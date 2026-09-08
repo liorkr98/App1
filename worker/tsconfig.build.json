@@ -4,5 +4,5 @@
   // runtime should not carry fixtures, and `node --test` should not be able to
   // find anything to run there.
   "extends": "./tsconfig.json",
-  "exclude": ["dist", ".test-build", "node_modules", "src/**/*.test.ts"]
+  "exclude": ["dist", "test-build", "node_modules", "src/**/*.test.ts"]
 }
