@@ -47,3 +47,11 @@ jobs:
         run: node scripts/verify-template-divergences.mjs
       - name: Report built page weight
         run: node scripts/report-page-weight.mjs
+
+      # --- Worker ---------------------------------------------------------
+      # Typecheck only. Running it needs Docker, ffmpeg and a live Supabase
+      # project, none of which exist on a CI runner — see ADR 0001.
+      - name: Install worker dependencies
+        run: npm install --no-audit --no-fund --prefix worker
+      - name: Worker typecheck
+        run: npm run typecheck --prefix worker

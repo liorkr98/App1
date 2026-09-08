@@ -1,0 +1,58 @@
+# Fly configuration for the pipeline worker (ADR 0001).
+#
+# Deploy from the REPO ROOT so the Dockerfile can see worker/:
+#   fly deploy --config worker/fly.toml --dockerfile worker/Dockerfile
+#
+# Secrets are set by hand and never live in this file or the repo:
+#   fly secrets set SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=...
+#
+# The service-role key bypasses RLS entirely. It is the one credential in the
+# system that must never reach a client (CLAUDE.md §8).
+
+app = "listing-worker"
+primary_region = "fra"   # Frankfurt, matching the eu-central-1 Supabase project
+
+[build]
+
+[env]
+  IDLE_POLL_MS = "5000"
+  STALE_CLAIM_MS = "600000"
+
+# ---------------------------------------------------------------------------
+# Process groups
+# ---------------------------------------------------------------------------
+#
+# Chrome is memory-hungry and it crashes. Sharing a process with stitching
+# means a Chrome OOM kills a panorama job mid-run — a bug that presents as
+# "sometimes a room fails" and is very hard to trace back.
+
+[processes]
+  worker = "node dist/index.js"
+  pdf = "node dist/index.js"
+
+# ---------------------------------------------------------------------------
+# worker — image enhancement, stitching, ffmpeg
+# ---------------------------------------------------------------------------
+
+[[vm]]
+  processes = ["worker"]
+  size = "shared-cpu-2x"
+  memory = "2gb"
+
+# ---------------------------------------------------------------------------
+# pdf — Puppeteer only
+# ---------------------------------------------------------------------------
+#
+# Capped memory and its own machine so a Chrome OOM restarts this group alone.
+
+[[vm]]
+  processes = ["pdf"]
+  size = "shared-cpu-1x"
+  memory = "1gb"
+
+# Scale to zero. There is no HTTP service — the worker polls Postgres — so
+# machines are started by `fly scale` or by a scheduled wake, not by traffic.
+# We pay when there is work, which is the reason for Fly over Render.
+[[metrics]]
+  port = 9091
+  path = "/metrics"

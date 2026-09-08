@@ -90,6 +90,8 @@ module.exports = defineConfig([
       // Astro workspace: its own toolchain, and physical left/right there is
       // caught by scripts/verify-web-logical-props.mjs instead.
       'web/*',
+      // Node service with its own toolchain.
+      'worker/*',
     ],
   },
   {
