@@ -77,6 +77,14 @@ async function main(): Promise<void> {
     return;
   }
 
+  if (env.role === 'pdf') {
+    // Read it once at boot so a missing PAGE_BASE_URL is a startup failure
+    // with the fix in the message. Left to the handler it would surface as a
+    // job that fails, backs off, and fails again — five times, minutes apart,
+    // with the real cause buried in an internal_error.
+    log('page_base_url', { origin: new URL(env.pageBaseUrl).origin });
+  }
+
   log('started', { jobTypes });
 
   while (running) {

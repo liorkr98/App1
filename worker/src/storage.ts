@@ -56,6 +56,20 @@ export async function downloadOriginal(listingId: string, path: string): Promise
   return download(ORIGINALS, path);
 }
 
+/**
+ * Reads pipeline output back — the sprite builder consumes the frames the
+ * extractor produced.
+ *
+ * `derived` is a public bucket, so this leaks nothing that a URL would not.
+ * The listing check is still here because the job payload names the paths and
+ * the client composes the payload: without it, a sprite job could assemble a
+ * sheet out of another listing's frames and publish it under this slug.
+ */
+export async function downloadDerived(listingId: string, path: string): Promise<Buffer> {
+  assertWithinListing(listingId, path);
+  return download(DERIVED, path);
+}
+
 export async function upload(
   path: string,
   body: Buffer,

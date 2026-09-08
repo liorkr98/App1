@@ -1,7 +1,11 @@
 import type { JobHandler, JobType } from '../types.js';
 
 import { enhanceImages } from './enhance.js';
+import { extractFrames } from './frames.js';
 import { generateOg } from './og.js';
+import { renderPdf } from './pdf.js';
+import { buildSprite } from './sprite.js';
+import { stitchPanorama } from './stitch.js';
 
 /**
  * Handler registry, split by Fly process group (ADR 0001).
@@ -14,13 +18,15 @@ import { generateOg } from './og.js';
 /** Image and video work. Concurrency 2-3. */
 export const WORKER_HANDLERS: Partial<Record<JobType, JobHandler>> = {
   enhance_images: enhanceImages,
+  stitch_panorama: stitchPanorama,
+  extract_frames: extractFrames,
+  build_sprite: buildSprite,
   generate_og: generateOg,
-  // stitch_panorama, extract_frames and build_sprite arrive in D-b.
 };
 
 /** Puppeteer only. Concurrency 1, memory capped, aggressive restart. */
 export const PDF_HANDLERS: Partial<Record<JobType, JobHandler>> = {
-  // render_pdf arrives in D-b.
+  render_pdf: renderPdf,
 };
 
 export function handlersFor(role: 'worker' | 'pdf'): Partial<Record<JobType, JobHandler>> {

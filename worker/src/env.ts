@@ -42,6 +42,18 @@ export const env = {
     return required('SUPABASE_SERVICE_ROLE_KEY');
   },
 
+  /**
+   * Where the published listing pages live, e.g. https://listings.example.com.
+   *
+   * The PDF renderer drives a real browser against the real page, so there is
+   * one template and two formats. Only the pdf process group ever reads this,
+   * which is why it is a getter: the worker group must not fail to boot over a
+   * variable it never uses.
+   */
+  get pageBaseUrl(): string {
+    return required('PAGE_BASE_URL').replace(/\/+$/, '');
+  },
+
   role: role(),
 
   /** Identifies which machine claimed a job, for stuck-job diagnosis. */

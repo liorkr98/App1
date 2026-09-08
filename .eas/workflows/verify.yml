@@ -49,9 +49,19 @@ jobs:
         run: node scripts/report-page-weight.mjs
 
       # --- Worker ---------------------------------------------------------
-      # Typecheck only. Running it needs Docker, ffmpeg and a live Supabase
-      # project, none of which exist on a CI runner — see ADR 0001.
+      # Typecheck plus the unit tests over the pure maths. What CI does NOT
+      # prove is the pipeline itself: stitching, ffmpeg and Puppeteer all need
+      # real media, a real Supabase project and a browser, none of which exist
+      # on this runner. docs/PIPELINE.md says so in as many words rather than
+      # letting a green tick imply otherwise.
+      #
+      # PUPPETEER_SKIP_DOWNLOAD: nothing here launches a browser, and the
+      # download is ~150MB on every single run.
       - name: Install worker dependencies
-        run: npm install --no-audit --no-fund --prefix worker
+        run: PUPPETEER_SKIP_DOWNLOAD=true npm install --no-audit --no-fund --prefix worker
       - name: Worker typecheck
         run: npm run typecheck --prefix worker
+      - name: Worker tests
+        run: npm run test --prefix worker
+      - name: Verify the sprite layout matches the viewer
+        run: node scripts/verify-sprite-layout.mjs

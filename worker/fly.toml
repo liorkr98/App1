@@ -18,6 +18,16 @@ primary_region = "fra"   # Frankfurt, matching the eu-central-1 Supabase project
   IDLE_POLL_MS = "5000"
   STALE_CLAIM_MS = "600000"
 
+  # PAGE_BASE_URL — where the published listing pages live, e.g.
+  # "https://listings.example.com". The pdf group drives a real browser against
+  # the real page, so this has to be the deployed origin, not a placeholder.
+  #
+  # Left unset on purpose: it is not a secret, but nobody knows it until
+  # Cloudflare Pages is connected (docs/DEPLOY.md), and a wrong value here
+  # would render 404 pages into PDFs rather than failing. Set it with
+  #   fly secrets set PAGE_BASE_URL=https://...
+  # or add it here once the domain is fixed. Only the pdf group reads it.
+
 # ---------------------------------------------------------------------------
 # Process groups
 # ---------------------------------------------------------------------------

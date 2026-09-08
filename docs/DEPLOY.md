@@ -97,5 +97,31 @@ changed. Appending a query string will not work.
 
 ## What is not deployed here
 
-The `/a/{slug}/pdf` route is a Stage D stub returning 501. It exists so links
-to it fail with a message rather than a 404 that reads like a broken deploy.
+### The PDF route
+
+`/a/{slug}/pdf` is still a stub. The PDF itself is real — the worker renders
+it from this very page and writes the result to `listings.media.pdfUrl` — but
+this site builds with `output: static`, where an endpoint keeps its body and
+loses its status and headers. A redirect from that route would produce an empty
+file, not a redirect.
+
+A stable `/a/{slug}/pdf` link therefore needs either on-demand rendering or a
+generated redirect map, and both belong with the change that makes these pages
+read from Supabase instead of the fixtures in `web/src/lib/listings.ts`.
+
+The listing page does not link to the PDF yet either. Putting a download
+control on it is a design change to a template held to a byte-identical CSS
+contract, and that is a decision to take deliberately rather than in passing.
+
+### The worker
+
+The pipeline is not part of this deploy. It runs on Fly (`docs/PIPELINE.md`),
+and it needs one value from here:
+
+```
+PAGE_BASE_URL   the origin Cloudflare Pages serves, e.g. https://listings.example.com
+```
+
+Set it on the Fly app once the domain is fixed. Until it is set, the pdf
+process group refuses to start rather than rendering something wrong — which is
+the intended behaviour, not a bug to work around.

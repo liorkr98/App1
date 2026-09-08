@@ -139,6 +139,11 @@ export interface PanoScene {
   yaw?: number;
   /** Initial camera pitch in degrees. Defaults to 0 when absent. */
   pitch?: number;
+  /**
+   * Encoded size of panoUrl. Written by the stitcher; the database sums these
+   * into the tour's payloadMb, which is what the cellular opt-in shows.
+   */
+  bytes?: number;
 }
 
 /** A doorway hotspot linking one scene to another. */
@@ -179,6 +184,11 @@ export interface Media {
   gallery: Image[];
   /** Absent until capture has been processed. The page works without it. */
   immersive?: Immersive;
+  /**
+   * The rendered PDF, once the render_pdf job has produced one. Absent means
+   * the download is not offered yet — never a broken link.
+   */
+  pdfUrl?: string;
 }
 
 // ---------------------------------------------------------------------------
