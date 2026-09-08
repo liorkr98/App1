@@ -61,6 +61,11 @@ jobs:
         run: PUPPETEER_SKIP_DOWNLOAD=true npm install --no-audit --no-fund --prefix worker
       - name: Worker typecheck
         run: npm run typecheck --prefix worker
+      # `node --test` with NO path, deliberately. Handed a directory, Node
+      # treats every file under it as a test file — which ran the worker's
+      # own index.js, started the queue loop, and hung the job until it was
+      # cancelled by hand. With no path Node uses its default patterns, and
+      # those only match *.test.js.
       - name: Worker tests
         run: npm run test --prefix worker
       - name: Verify the sprite layout matches the viewer

@@ -1,3 +1,5 @@
+import { pathToFileURL } from 'node:url';
+
 import { env } from './env.js';
 import { handlersFor } from './handlers/index.js';
 import { claim, complete, fail, reportProgress } from './queue.js';
@@ -102,17 +104,35 @@ async function main(): Promise<void> {
   log('stopped');
 }
 
-// Fly sends SIGTERM before stopping a machine. Finish the current job rather
-// than abandoning it: an abandoned job sits in 'processing' until the stale
-// claim reclaims it, which delays the seller by minutes for no reason.
-for (const signal of ['SIGTERM', 'SIGINT'] as const) {
-  process.on(signal, () => {
-    log('shutdown_requested', { signal });
-    running = false;
-  });
+/**
+ * Only start the loop when this file IS the process, not when something
+ * merely loads it.
+ *
+ * Without the guard, importing this module starts an infinite queue poll as a
+ * side effect. That is not hypothetical: `node --test` handed a directory
+ * treats every file under it as a test, executed the compiled index.js, and
+ * hung CI until the run was cancelled by hand. A module that cannot be loaded
+ * without taking over the process is a trap for whatever loads it next.
+ */
+function isEntryPoint(): boolean {
+  const entry = process.argv[1];
+  if (!entry) return false;
+  return import.meta.url === pathToFileURL(entry).href;
 }
 
-main().catch((error: unknown) => {
-  log('fatal', { message: error instanceof Error ? error.message : 'unknown' });
-  process.exit(1);
-});
+if (isEntryPoint()) {
+  // Fly sends SIGTERM before stopping a machine. Finish the current job rather
+  // than abandoning it: an abandoned job sits in 'processing' until the stale
+  // claim reclaims it, which delays the seller by minutes for no reason.
+  for (const signal of ['SIGTERM', 'SIGINT'] as const) {
+    process.on(signal, () => {
+      log('shutdown_requested', { signal });
+      running = false;
+    });
+  }
+
+  main().catch((error: unknown) => {
+    log('fatal', { message: error instanceof Error ? error.message : 'unknown' });
+    process.exit(1);
+  });
+}
