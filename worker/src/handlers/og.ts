@@ -59,14 +59,15 @@ export async function generateOg({ job, progress }: JobContext): Promise<Record<
     position: sharp.strategy.attention,
   });
 
-  let body: Buffer | undefined;
-  for (const quality of QUALITY_STEPS) {
-    body = await base.clone().webp({ quality }).toBuffer();
-    if (body.byteLength <= MAX_BYTES) break;
-  }
+  // Encode at the top quality first, then step down only while we are over
+  // budget. If even the last step is over, we still ship it: an oversize card
+  // is a card, and failing the job would leave the link with no preview at all.
+  const [best, ...fallbacks] = QUALITY_STEPS;
+  let body = await base.clone().webp({ quality: best }).toBuffer();
 
-  if (!body) {
-    throw new JobFailure('og_encode_failed', true);
+  for (const quality of fallbacks) {
+    if (body.byteLength <= MAX_BYTES) break;
+    body = await base.clone().webp({ quality }).toBuffer();
   }
 
   await progress(70);

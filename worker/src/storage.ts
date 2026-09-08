@@ -1,4 +1,4 @@
-import sharp from 'sharp';
+import sharp, { type Sharp } from 'sharp';
 
 import { db } from './db.js';
 import { JobFailure } from './types.js';
@@ -89,7 +89,7 @@ export async function upload(
  * rotate() applies the EXIF orientation to the pixels FIRST — otherwise
  * dropping the tag would leave the image sideways.
  */
-export function stripMetadata(input: sharp.Sharp): sharp.Sharp {
+export function stripMetadata(input: Sharp): Sharp {
   return input.rotate();
 }
 

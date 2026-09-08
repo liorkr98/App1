@@ -1,4 +1,4 @@
-import type sharp from 'sharp';
+import type { Sharp } from 'sharp';
 
 /**
  * The seam for v1.5 external enhancement.
@@ -16,6 +16,6 @@ import type sharp from 'sharp';
  * unpicking enhancement from the middle of a pipeline later, which is exactly
  * the kind of change that gets deferred forever.
  */
-export function enhanceAdvanced(image: sharp.Sharp): Promise<sharp.Sharp> {
+export function enhanceAdvanced(image: Sharp): Promise<Sharp> {
   return Promise.resolve(image);
 }
