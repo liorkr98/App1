@@ -25,19 +25,23 @@ export class PdfMissingHebrew extends Error {
 
 /** Concatenates the text of every page, in the order the PDF stores it. */
 export async function extractText(pdf: Uint8Array): Promise<string> {
-  const document = await getDocument({
+  // Teardown lives on the LOADING TASK, not the document — PDFDocumentProxy
+  // only has cleanup(), which frees page resources but leaves the worker
+  // running. In a long-lived process that difference is a leak per PDF.
+  const task = getDocument({
     data: pdf,
-    // There is no DOM here. Left on, pdfjs tries to fetch font data and to
-    // eval helper code; both fail in the container, and text extraction needs
-    // neither.
+    // There is no DOM and no network here. Left on, pdfjs tries to fetch font
+    // and standard-font data, which fails in the container — and extracting
+    // text needs neither.
     useWorkerFetch: false,
-    isEvalSupported: false,
     useSystemFonts: false,
-  }).promise;
+  });
 
   const pages: string[] = [];
 
   try {
+    const document = await task.promise;
+
     for (let number = 1; number <= document.numPages; number += 1) {
       const page = await document.getPage(number);
       const content = await page.getTextContent();
@@ -45,7 +49,7 @@ export async function extractText(pdf: Uint8Array): Promise<string> {
       pages.push(content.items.map((item) => ('str' in item ? item.str : '')).join(' '));
     }
   } finally {
-    await document.destroy();
+    await task.destroy();
   }
 
   return pages.join('\n');
