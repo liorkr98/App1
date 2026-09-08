@@ -93,7 +93,13 @@ export function monotonic(unwrapped: readonly number[]): {
   let running = -Infinity;
 
   for (const value of unwrapped) {
-    running = Math.max(running, sign * value);
+    // `-1 * 0` is -0, and -0 is not the same VALUE as 0 even though it
+    // compares equal with ===. A track of angles that sometimes starts at -0
+    // and sometimes at 0 depending on which way the seller walked is a wart:
+    // it survives into job results and into anything that compares them
+    // strictly.
+    const oriented = value === 0 ? 0 : sign * value;
+    running = Math.max(running, oriented);
     track.push(running);
   }
 

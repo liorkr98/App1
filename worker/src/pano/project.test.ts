@@ -34,7 +34,15 @@ const closeVec = (actual: Vec3, expected: Vec3, tolerance = 1e-9): void => {
 
 describe('rotationMatrix', () => {
   it('is the identity at rest', () => {
-    assert.deepEqual(rotationMatrix({ yaw: 0, pitch: 0 }), [1, 0, 0, 0, 1, 0, 0, 0, 1]);
+    // Elementwise, not deepEqual. Several entries come out as -0 — the pitch
+    // term is negated, and `-Math.sin(0)` is -0 — and deepStrictEqual treats
+    // -0 and 0 as different values. What this test means is "no rotation",
+    // not "no negative zeros", so it compares numbers as numbers.
+    const identity = [1, 0, 0, 0, 1, 0, 0, 0, 1];
+
+    rotationMatrix({ yaw: 0, pitch: 0 }).forEach((value, index) => {
+      close(value, identity[index] ?? 0, 1e-15);
+    });
   });
 
   it('makes yaw equal longitude', () => {
