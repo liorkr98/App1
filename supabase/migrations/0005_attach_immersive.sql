@@ -135,18 +135,26 @@ comment on function public.attach_pdf(uuid, text) is
 -- Who may call these
 -- ---------------------------------------------------------------------------
 --
--- Postgres grants EXECUTE to PUBLIC on every new function, so leaving these
--- alone would let any signed-in user rewrite their own listing's immersive
--- payload directly — pointing a "tour" at any URL they liked, on a page that
--- other people open from WhatsApp. Only the worker calls these.
+-- Postgres grants EXECUTE to PUBLIC on every new function, and Supabase adds
+-- default privileges on top that grant it to anon and authenticated as well.
+-- Both have to go, and REVOKE ... FROM PUBLIC alone does NOT remove the second
+-- kind — it leaves anon=X and authenticated=X in place, which is exactly what
+-- happened the first time this ran. The roles are named explicitly for that
+-- reason, and the grants were read back out of pg_proc.proacl to confirm.
 --
--- They run as INVOKER, not SECURITY DEFINER: the worker's service role already
--- bypasses RLS, so a definer function would add privilege without adding
--- capability, and would keep working if the grant below were ever loosened.
+-- The exposure was not large: these functions run as INVOKER, so RLS still
+-- applied and a signed-in user could only have rewritten their OWN listing.
+-- They can already do that with a plain UPDATE. But the comment above claimed
+-- the functions were worker-only, and a claim like that has to be true.
+--
+-- INVOKER rather than SECURITY DEFINER on purpose: the service role the worker
+-- uses already bypasses RLS, so a definer function would add privilege without
+-- adding capability — and would keep working if these grants were ever
+-- loosened by accident.
 
-revoke all on function public.attach_pano_scene(uuid, jsonb) from public;
-revoke all on function public.attach_spin(uuid, jsonb) from public;
-revoke all on function public.attach_pdf(uuid, text) from public;
+revoke all on function public.attach_pano_scene(uuid, jsonb) from public, anon, authenticated;
+revoke all on function public.attach_spin(uuid, jsonb) from public, anon, authenticated;
+revoke all on function public.attach_pdf(uuid, text) from public, anon, authenticated;
 
 grant execute on function public.attach_pano_scene(uuid, jsonb) to service_role;
 grant execute on function public.attach_spin(uuid, jsonb) to service_role;
