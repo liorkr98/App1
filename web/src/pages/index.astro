@@ -1,0 +1,332 @@
+---
+import { t } from '../lib/i18n';
+import '../styles/tokens.css';
+
+/**
+ * The homepage.
+ *
+ * Built in the listing page's own vocabulary rather than a landing-page one:
+ * the same 600px column, the same plaster ground, the same stone hairline
+ * between sections, one accent colour, and the same two typefaces. Somebody
+ * who arrives here and then opens a listing should not be able to tell they
+ * changed sites.
+ *
+ * WHAT IS DELIBERATELY ABSENT, all of it from docs/DESIGN-CONTRACT.md and the
+ * impeccable rules:
+ *
+ *   no cards, and nothing nested in a card. The reference page has none —
+ *   it is one column divided by hairlines, and a card grid here would be the
+ *   clearest possible tell that a different hand drew it.
+ *
+ *   no hero image. There is no real photograph in this repo, and a grey
+ *   placeholder or a stock interior would both be worse than type.
+ *
+ *   no icon tiles, no gradient panels, no emoji, no invented statistics and
+ *   no logos of companies that do not use this yet.
+ *
+ * Radii are 3px and 4px, the only two in the contract. The single animation
+ * is `rise`, reused from the listing page, behind prefers-reduced-motion.
+ *
+ * INDEXABLE, unlike everything else here. Listing pages default to noindex
+ * because a private seller may not want their address searchable (§7) and
+ * /new is a private workspace. This page is the one that should be found.
+ */
+
+const samples = [
+  { slug: 'A7K2M', label: t('home.exampleProperty') },
+  { slug: 'V3M9Q', label: t('home.exampleVehicle') },
+];
+
+const title = `סיבוב — ${t('home.tagline')}`;
+---
+
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+    <title>{title}</title>
+    <meta name="description" content={t('home.tagline')} />
+    <meta name="robots" content="index,follow" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="he_IL" />
+    <meta property="og:site_name" content="סיבוב" />
+    <meta property="og:title" content="סיבוב" />
+    <meta property="og:description" content={t('home.tagline')} />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Assistant:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <style is:global>
+      html {
+        background: var(--stone);
+      }
+
+      body {
+        font-family: 'Assistant', system-ui, sans-serif;
+        background: var(--plaster);
+        color: var(--ink);
+        line-height: 1.6;
+        max-width: 600px;
+        margin-inline: auto;
+        padding-bottom: 6rem;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* ---------- Masthead ----------
+         Type, not a photograph. The wordmark carries the same Frank Ruhl
+         Libre 700 as a listing's .hero-title, one step larger, so the first
+         thing seen is the same voice the product speaks in. */
+      .masthead {
+        padding: 4.5rem 1.5rem 2.5rem;
+        border-block-end: 1px solid var(--stone);
+      }
+
+      .wordmark {
+        font-family: 'Frank Ruhl Libre', serif;
+        font-weight: 700;
+        font-size: 2.6rem;
+        line-height: 1.1;
+        letter-spacing: -0.015em;
+      }
+
+      .tagline {
+        font-size: 1.05rem;
+        color: var(--muted);
+        margin-block-start: 0.6rem;
+        max-width: 34ch;
+      }
+
+      .lead {
+        font-size: 1.15rem;
+        margin-block-start: 1.75rem;
+        max-width: 40ch;
+      }
+
+      section {
+        padding: 1.75rem 1.5rem;
+        border-block-end: 1px solid var(--stone);
+      }
+
+      h2 {
+        font-family: 'Frank Ruhl Libre', serif;
+        font-weight: 500;
+        font-size: 1.15rem;
+        margin-block-end: 0.6rem;
+      }
+
+      p {
+        font-size: 1rem;
+        max-width: 60ch;
+      }
+
+      /* ---------- The provenance demonstration ----------
+         Shown, not described. Two rows in the page's real visual classes: one
+         carrying a register's name and date, one the seller's own word. The
+         claim in the paragraph above is that these never mix, and a reader
+         can check that claim against the thing itself. */
+      .proof {
+        margin-block-start: 1.1rem;
+        border-block-start: 1px solid var(--stone);
+      }
+
+      .proof-row {
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+        padding-block: 0.9rem;
+        border-block-end: 1px solid var(--stone);
+      }
+
+      .proof-val {
+        font-family: 'Frank Ruhl Libre', serif;
+        font-weight: 500;
+        font-size: 1.3rem;
+        line-height: 1.2;
+      }
+
+      /* Olive outline, not a green tick. A tick reads as "good"; this is a
+         statement about who recorded the number, not an endorsement. */
+      .verified {
+        font-size: 0.66rem;
+        font-weight: 600;
+        color: var(--olive);
+        border: 1px solid var(--olive);
+        border-radius: 2px;
+        padding: 0.05rem 0.3rem;
+        line-height: 1.4;
+      }
+
+      .declared {
+        font-size: 0.66rem;
+        font-weight: 600;
+        color: var(--muted);
+        border: 1px solid var(--stone);
+        border-radius: 2px;
+        padding: 0.05rem 0.3rem;
+        line-height: 1.4;
+      }
+
+      .proof-cite {
+        font-size: 0.78rem;
+        color: var(--muted);
+      }
+
+      /* ---------- Samples ---------- */
+      .samples {
+        list-style: none;
+        margin-block-start: 0.9rem;
+      }
+
+      .samples a {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 1rem;
+        padding-block: 0.9rem;
+        border-block-start: 1px solid var(--stone);
+        color: var(--ink);
+        text-decoration: none;
+        font-size: 1.05rem;
+      }
+
+      .samples a:hover .sample-name,
+      .samples a:focus-visible .sample-name {
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+
+      .sample-kind {
+        font-size: 0.82rem;
+        color: var(--muted);
+      }
+
+      .note {
+        font-size: 0.85rem;
+        color: var(--muted);
+        margin-block-start: 0.9rem;
+      }
+
+      /* ---------- CTA ----------
+         The listing page's dock, unchanged: fixed, safe-area aware, the same
+         olive and the same 4px radius. It is the only button on the page. */
+      .cta-dock {
+        position: fixed;
+        inset-inline: 0;
+        bottom: 0;
+        max-width: 600px;
+        margin-inline: auto;
+        padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
+        background: linear-gradient(to top, var(--plaster) 72%, transparent);
+      }
+
+      .cta {
+        display: block;
+        inline-size: 100%;
+        padding: 0.95rem;
+        background: var(--olive);
+        color: var(--plaster);
+        font-size: 1.05rem;
+        font-weight: 600;
+        border: none;
+        border-radius: 4px;
+        text-align: center;
+        text-decoration: none;
+        box-shadow: var(--shadow);
+        cursor: pointer;
+      }
+
+      .cta:focus-visible {
+        outline: 3px solid var(--ink);
+        outline-offset: 2px;
+      }
+
+      footer {
+        padding: 1.5rem;
+        text-align: center;
+        font-size: 0.82rem;
+        color: var(--muted);
+      }
+
+      /* One moment of motion, and it is the listing page's own. */
+      @media (prefers-reduced-motion: no-preference) {
+        .masthead {
+          animation: rise 0.5s 0.1s both cubic-bezier(0.2, 0.7, 0.3, 1);
+        }
+        @keyframes rise {
+          from {
+            opacity: 0;
+            transform: translateY(14px);
+          }
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <header class="masthead">
+      <h1 class="wordmark">סיבוב</h1>
+      <p class="tagline">{t('home.tagline')}</p>
+      <p class="lead">{t('home.lead')}</p>
+    </header>
+
+    <section>
+      <h2>{t('home.sourcesTitle')}</h2>
+      <p>{t('home.sourcesBody')}</p>
+
+      <div class="proof">
+        <div class="proof-row">
+          {/* Every number in Hebrew prose sits in <bdi> — §4.2. */}
+          <span class="proof-val"><bdi>{t('home.proofValue')}</bdi> {t('home.proofUnit')}</span>
+          <span class="verified">{t('home.proofBadge')}</span>
+          <span class="proof-cite">{t('home.proofCite')}</span>
+        </div>
+
+        <div class="proof-row">
+          <span class="proof-val">{t('home.proofSellerValue')}</span>
+          <span class="declared">{t('home.proofSellerBadge')}</span>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>{t('home.gapsTitle')}</h2>
+      <p>{t('home.gapsBody')}</p>
+    </section>
+
+    <section>
+      <h2>{t('home.linkTitle')}</h2>
+      <p>{t('home.linkBody')}</p>
+    </section>
+
+    <section>
+      <h2>{t('home.examplesTitle')}</h2>
+      <ul class="samples">
+        {
+          samples.map((sample) => (
+            <li>
+              <a href={`/a/${sample.slug}/`}>
+                <span class="sample-name">{sample.label}</span>
+                <span class="sample-kind">{`/a/${sample.slug}`}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <p class="note">{t('home.examplesNote')}</p>
+    </section>
+
+    <footer>hasivuv.com</footer>
+
+    <div class="cta-dock">
+      <a class="cta" href="/new/">{t('home.cta')}</a>
+    </div>
+  </body>
+</html>

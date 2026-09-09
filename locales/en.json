@@ -168,6 +168,32 @@
       "galleryNote": "",
       "luxury": "",
       "luxuryNote": ""
-    }
+    },
+    "photosHint": "",
+    "earlier": "",
+    "later": "",
+    "moveEarlier": "",
+    "moveLater": ""
+  },
+  "home": {
+    "tagline": "",
+    "lead": "",
+    "sourcesTitle": "",
+    "sourcesBody": "",
+    "proofValue": "",
+    "proofUnit": "",
+    "proofBadge": "",
+    "proofCite": "",
+    "proofSellerValue": "",
+    "proofSellerBadge": "",
+    "gapsTitle": "",
+    "gapsBody": "",
+    "linkTitle": "",
+    "linkBody": "",
+    "examplesTitle": "",
+    "examplesNote": "",
+    "exampleProperty": "",
+    "exampleVehicle": "",
+    "cta": ""
   }
 }
