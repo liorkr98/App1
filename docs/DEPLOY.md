@@ -95,6 +95,48 @@ changed. Appending a query string will not work.
 
 ---
 
+## Cloudflare build settings — the one that bit us
+
+A deploy on 8 September 2026 failed with:
+
+    CommandError: ... Install react-native-web@^0.21.2
+    Command failed with exit code 1: bunx expo export -p web
+
+Cloudflare had auto-detected the repository as an Expo app and was building a
+React Native web export. It is an **Astro static site in `web/`**.
+
+The detection is not going to stop on its own: `expo` is still a root
+dependency and `app.config.ts` is still present, both deliberately, as the
+anchor for the EAS project (CLAUDE.md §2). So the configuration has to be
+explicit.
+
+### In the repository — done
+
+`wrangler.jsonc` is committed. It pins the asset directory to `web/dist` and
+stops `wrangler deploy` running its auto-configuration at all.
+
+### In the Cloudflare dashboard — YOU need to set this
+
+The build command is a dashboard setting and cannot be committed. Set it to:
+
+```
+npm install --prefix web --no-audit --no-fund && npm run build --prefix web
+```
+
+The `--prefix web` on the install matters. `web/` has its own package.json and
+is deliberately NOT an npm workspace (CLAUDE.md §3), so a root install does not
+fetch Astro. Without it the build command fails on a missing `astro`.
+
+Leave the deploy command as `npx wrangler deploy`.
+
+### Why not just delete the Expo remnant
+
+Because it is the EAS project anchor, and EAS is the fallback CI. Removing it
+to satisfy a framework detector would trade a settings change for the loss of a
+build path. The explicit config is the cheaper fix.
+
+---
+
 ## What is not deployed here
 
 ### The PDF route

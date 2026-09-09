@@ -1,0 +1,30 @@
+{
+  // Cloudflare deploy configuration, committed ON PURPOSE.
+  //
+  // WHY THIS FILE EXISTS
+  //
+  // Without it, `wrangler deploy` runs its auto-configuration, which inspects
+  // the repository and guesses. It guessed Expo — because `expo` is still a
+  // root dependency and app.config.ts is still here, both deliberately, as the
+  // anchor for the EAS project that used to run CI (CLAUDE.md §2).
+  //
+  // So it ran `bunx expo export -p web` and failed asking for react-native-web.
+  // It would have kept failing, because the detection is reading real files
+  // that are staying. A committed config removes the guess entirely.
+  //
+  // The site is an ASTRO static build in web/. Nothing here is React Native.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "besivov",
+  "compatibility_date": "2026-09-07",
+
+  "observability": {
+    "enabled": true
+  },
+
+  "assets": {
+    // web/dist, not dist. The auto-config wrote "dist" because it expected an
+    // Expo export at the repository root; the Astro build writes into its own
+    // workspace.
+    "directory": "web/dist"
+  }
+}
