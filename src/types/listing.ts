@@ -194,10 +194,10 @@ export interface Media {
  * Public-record context assembled around the seller's own listing.
  *
  * THIS IS THE PRODUCT (RESEARCH.md §1). A page with photos and a price is a
- * one-week build for anyone who wants to copy it. A page that knows what sold
- * in this building over the last two years, or that the ownership history is
- * what the Ministry of Transport holds, is months of assembly and it
- * compounds.
+ * one-week build for anyone who wants to copy it. A page that knows the light
+ * rail is six minutes' walk — routed, not straight-line — and that the
+ * ownership history is what the Ministry of Transport holds, is months of
+ * assembly and it compounds.
  *
  * Everything here is baked in at build time from our own Postgres. Government
  * endpoints are never queried while a page renders — they are slow,
@@ -212,9 +212,9 @@ export interface Media {
 /**
  * Attribution carried by every enriched item, individually.
  *
- * Not hoisted to the block: two comparable sales can come from different
- * extracts with different dates, and averaging that away would be exactly the
- * kind of tidy lie §4.7 forbids.
+ * Not hoisted to the block: a school list synced last week and a transit
+ * feed synced yesterday have different dates, and showing one date for both
+ * would be exactly the kind of tidy lie §4.7 forbids.
  */
 export interface Provenance {
   /** The body, by name: רשות המסים, משרד התחבורה, מנהל התכנון. */
@@ -223,86 +223,102 @@ export interface Provenance {
   sourceDate: string;
 }
 
-// --- Property ---------------------------------------------------------------
+// --- Property: proximity ----------------------------------------------------
 
 /**
- * One transaction from the Tax Authority register.
+ * Transit modes, kept apart on purpose.
  *
- * Every property transaction in Israel is legally required to be reported, so
- * this is the strongest single property signal available — and it is free and
- * public (RESEARCH.md §4.2).
+ * Light rail must never be lumped in with bus. Proximity to the light rail is
+ * one of the highest-value facts on a Tel Aviv page, and a page that calls the
+ * red line "a bus stop" has thrown away the single thing the reader most
+ * wanted to know.
  */
-export interface ComparableSale extends Provenance {
+export type TransitMode = 'light_rail' | 'train' | 'metro' | 'bus';
+
+export interface NearbyTransit extends Provenance {
   id: string;
-  /** Sale price in ILS. */
-  price: number;
-  /** Registered floor area. Absent in older records. */
-  areaSqm?: number;
-  rooms?: number;
-  floor?: number;
-  /** ISO date of the transaction. */
-  soldAt: string;
+  name: string;
+  mode: TransitMode;
   /**
-   * How close this sale is to the listing. Drives display order — a sale in
-   * the same building is worth more than ten in the neighbourhood.
+   * Route designations serving this stop, as STRINGS. Israeli routes include
+   * 5א and 480, so a numeric type would silently drop half of them.
    */
-  proximity: 'building' | 'street' | 'neighbourhood';
-  /** Shown only for street and neighbourhood matches. */
-  address?: string;
-}
-
-export interface School extends Provenance {
-  id: string;
-  /** Hebrew name as the register holds it. */
-  name: string;
-  /** Hebrew stage label, e.g. יסודי, חטיבת ביניים, גן ילדים. */
-  stage: string;
-  /** Straight-line metres. Walking time is only claimed where GTFS gives it. */
-  distanceMetres: number;
-}
-
-export interface TransitStop extends Provenance {
-  id: string;
-  name: string;
-  /** Hebrew mode label, e.g. אוטובוס, רכבת קלה, רכבת. */
-  mode: string;
-  /** Route numbers or names served, as strings — line 5 and line 5א both exist. */
   routes: string[];
-  /**
-   * Real walking minutes from the GTFS network, never a marketing claim
-   * (RESEARCH.md §4.2). Absent when the network cannot produce one.
-   */
-  walkMinutes?: number;
+  /** Routed on the pedestrian network by OSRM. Never straight-line. */
+  walkMinutes: number;
 }
 
-export interface PlanningItem extends Provenance {
+export interface NearbySchool extends Provenance {
   id: string;
-  /** Official plan number. */
-  planNumber: string;
-  /** Hebrew status, e.g. מאושרת, בהפקדה. */
-  status: string;
-  /** One-line Hebrew summary of what the plan does. */
-  summary: string;
-  /** ISO date of the last status change. */
-  updatedAt: string;
+  name: string;
+  /** Hebrew institution type, e.g. בית ספר יסודי, גן ילדים. */
+  type: string;
+  /** Supervision stream: ממלכתי, ממלכתי־דתי, חרדי, or what the register says. */
+  stream: string;
+  /** Hebrew grade span, e.g. א׳–ו׳. Absent for kindergartens. */
+  gradeSpan?: string;
+  walkMinutes: number;
 }
 
+export type PlaceCategory =
+  | 'restaurant'
+  | 'cafe'
+  | 'grocery'
+  | 'pharmacy'
+  | 'park'
+  | 'culture'
+  | 'gym';
+
+export interface NearbyPlace extends Provenance {
+  id: string;
+  name: string;
+  category: PlaceCategory;
+  walkMinutes: number;
+}
+
+/**
+ * The headline numbers, so a reader gets the shape of a neighbourhood without
+ * reading three lists.
+ *
+ * Every field is optional because every one of them can legitimately be
+ * missing: a moshav has no grocery within walking distance, and saying so with
+ * a zero would be a different claim than saying nothing.
+ */
+export interface ProximitySummary {
+  /** Count, not a list. Nobody reads forty restaurants. */
+  restaurantsWithin500m?: number;
+  nearestGrocery?: { name: string; walkMinutes: number };
+  nearestPark?: { name: string; walkMinutes: number };
+}
+
+/**
+ * What is around this address.
+ *
+ * NOT what sold in this building — transactions are deferred to v2 and to
+ * agents (RESEARCH.md §4.2). The chain here is address → coordinate → what is
+ * nearby: one link, where the transaction chain was four.
+ *
+ * Every list is CAPPED and every list may be EMPTY. An empty one is omitted by
+ * the page rather than rendered as a blank block, because a moshav listing
+ * legitimately has no light rail and its page must look intentional rather
+ * than broken.
+ */
 export interface PropertyEnrichment {
   category: 'property';
-  /** Ordered tightest-first by the page, not by the ingestion. */
-  comparableSales: ComparableSale[];
-  schools: School[];
-  transitStops: TransitStop[];
-  planningItems: PlanningItem[];
+  transit: NearbyTransit[];
+  schools: NearbySchool[];
+  places: NearbyPlace[];
+  summary: ProximitySummary;
+
   /**
-   * Neighbourhood price per m², with the comparison set stated alongside it.
-   * A number without its denominator is not a comparison, it is a claim.
+   * Licence attributions that MUST be rendered wherever this data is shown.
+   *
+   * OpenStreetMap is ODbL: attribution is a condition of use, not a courtesy.
+   * Carrying it in the payload rather than hardcoding it in the footer means a
+   * page that drops the places block also drops its attribution, and a page
+   * that gains a new ODbL source cannot forget to add one.
    */
-  pricePerSqm?: {
-    value: number;
-    /** Hebrew description of what was averaged, e.g. 24 עסקאות בשכונה. */
-    basis: string;
-  } & Provenance;
+  attributions: string[];
 }
 
 // --- Vehicle ----------------------------------------------------------------

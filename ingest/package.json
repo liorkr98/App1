@@ -1,0 +1,24 @@
+{
+  "name": "listing-ingest",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "tsc --outDir test-build && node --test \"test-build/**/*.test.js\"",
+    "sync:schools": "node dist/ingest/src/index.js schools",
+    "sync:transit": "node dist/ingest/src/index.js transit",
+    "sync:places": "node dist/ingest/src/index.js places"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.115.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "typescript": "~6.0.3"
+  }
+}

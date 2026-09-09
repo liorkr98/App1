@@ -101,3 +101,14 @@ jobs:
       # SOURCES, whose './x.js' specifiers only resolve after compilation.
       - name: Worker tests
         run: npm run test --prefix worker
+
+      # --- Ingestion --------------------------------------------------------
+      # Typecheck only. Running a sync needs a live Supabase project, an OSRM
+      # instance and the OSM extract; none exist on a runner, and none of this
+      # code has ever executed. docs/DATA-SOURCES.md says which parts were
+      # verified against the live APIs and which were written blind.
+      - name: Install ingest dependencies
+        run: npm install --no-audit --no-fund --prefix ingest
+
+      - name: Ingest typecheck
+        run: npm run typecheck --prefix ingest

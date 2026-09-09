@@ -1,0 +1,42 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+
+    // rootDir is the REPO ROOT, not ingest/src, because the enrichment payload
+    // types live in ../src/types/listing.ts — the same file web/ imports, so
+    // that the shape the ingestion writes and the shape the page renders
+    // cannot drift.
+    //
+    // The consequence is a predictable nested output:
+    //   dist/ingest/src/index.js
+    //   dist/src/types/...        (types only, so nothing is actually emitted)
+    //
+    // Spelled out rather than left to tsc's inferred common root, which
+    // changes the moment the import graph does — and would silently move the
+    // entry point the npm scripts and the Dockerfile point at.
+    "rootDir": "..",
+    "outDir": "dist",
+
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "exactOptionalPropertyTypes": true,
+
+    "types": ["node"],
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "verbatimModuleSyntax": true,
+
+    // Same alias as web/, pointed at the same directory. A different one here
+    // and every shared type silently degrades to any.
+    "paths": {
+      "@/*": ["../src/*"]
+    }
+  },
+  "include": ["src/**/*", "../src/types/listing.ts"],
+  "exclude": ["dist", "test-build", "node_modules"]
+}

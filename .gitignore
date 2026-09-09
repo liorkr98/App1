@@ -61,3 +61,6 @@ Thumbs.db
 
 # Local Claude Code settings
 .claude/settings.local.json
+ingest/dist/
+ingest/node_modules/
+ingest/test-build/

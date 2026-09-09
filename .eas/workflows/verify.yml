@@ -73,3 +73,10 @@ jobs:
       # './x.js' specifiers that only exist after compilation.
       - name: Worker tests
         run: npm run test --prefix worker
+
+      # --- Ingestion ------------------------------------------------------
+      # Typecheck only; see the GitHub workflow for why.
+      - name: Install ingest dependencies
+        run: npm install --no-audit --no-fund --prefix ingest
+      - name: Ingest typecheck
+        run: npm run typecheck --prefix ingest
