@@ -44,10 +44,15 @@ export function heMonthYear(iso: string): string {
  * Booleans are יש / אין and never a tick or a cross — a tick reads as
  * "verified" rather than "present", and a cross reads as a failure.
  */
-export function factValue(value: string | number | boolean | null): string {
+export function factValue(
+  value: string | number | boolean | null,
+  grouped = true,
+): string {
   if (value === null) return '';
   if (typeof value === 'boolean') return value ? 'יש' : 'אין';
-  if (typeof value === 'number') return num(value);
+  // grouped:false comes from the schema, for a number that identifies rather
+  // than counts. A year is the one that matters — 2021 grouped reads "2,021".
+  if (typeof value === 'number') return grouped ? num(value) : String(value);
   return value;
 }
 

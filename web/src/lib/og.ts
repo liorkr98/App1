@@ -34,7 +34,9 @@ export function ogTitle(listing: Listing): string {
   const model = get(listing.facts, 'model');
   const year = get(listing.facts, 'year');
   const name = [make?.value, model?.value].filter(Boolean).join(' ');
-  const head = year ? `${name}, ${num(Number(year.value))}` : name;
+  // Not num(): a year is an identifier, not a quantity, and grouping it
+  // put "2,021" on the card that decides whether anyone taps at all (§6).
+  const head = year ? `${name}, ${String(year.value)}` : name;
   return `${head} · ${price}`;
 }
 

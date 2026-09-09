@@ -100,6 +100,21 @@ export interface FactDefinition {
   options?: readonly string[];
 
   /**
+   * Whether digits are grouped: 1600 -> "1,600". Defaults to true.
+   *
+   * Set false for a number that is an IDENTIFIER rather than a quantity. A
+   * year is the case that matters: 2021 grouped reads "2,021", which is
+   * visibly wrong to anyone who owns a car, and it was doing exactly that on
+   * the listing page AND on the WhatsApp card.
+   *
+   * On the schema rather than in the formatter, because whether a field is a
+   * quantity is a property of the field. A formatter that checked for the key
+   * 'year' would be a hardcoded field name in the layer that is specifically
+   * kept free of them.
+   */
+  grouped?: boolean;
+
+  /**
    * Defaults to 'seller'. Set 'verified' for fields a public register can
    * fill — the vehicle schema marks eight of its twelve that way.
    *

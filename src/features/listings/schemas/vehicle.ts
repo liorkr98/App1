@@ -39,7 +39,7 @@ export const vehicleSchema: CategorySchema = {
       showInGrid: false,
       source: 'verified',
     },
-    { key: 'year', label: 'שנתון', type: 'number', required: true, source: 'verified' },
+    { key: 'year', label: 'שנתון', type: 'number', required: true, source: 'verified', grouped: false },
     {
       key: 'engine_cc',
       label: 'נפח מנוע',

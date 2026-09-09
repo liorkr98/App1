@@ -80,9 +80,14 @@ export function toCells(category: ListingCategory, facts: Fact[]): FactCell[] {
     if (fact.value === null) continue;
 
     const partner = definition?.pairWith ? byKey.get(definition.pairWith) : undefined;
+    // The partner's own DEFINITION carries its grouping, not the partner fact
+    // — byKey holds Facts, and grouping is a property of the field.
+    const partnerDefinition = definition?.pairWith
+      ? factDefinition(category, definition.pairWith)
+      : undefined;
     const partnerValue =
       partner && partner.present !== false && partner.value !== null
-        ? factValue(partner.value)
+        ? factValue(partner.value, partnerDefinition?.grouped)
         : undefined;
 
     // Both halves are required. A fact flagged verified without a citation
@@ -92,7 +97,7 @@ export function toCells(category: ListingCategory, facts: Fact[]): FactCell[] {
     cells.push({
       key: fact.key,
       label: definition?.gridLabel ?? fact.label,
-      value: factValue(fact.value),
+      value: factValue(fact.value, definition?.grouped),
       ...(fact.unit === undefined ? {} : { unit: fact.unit }),
       ...(partnerValue === undefined ? {} : { pairedValue: partnerValue }),
       bdi: needsBdi(fact.value),
