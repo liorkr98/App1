@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type CSSProperties } from 'react';
 
 import {
   blockers,
@@ -153,9 +153,15 @@ export default function Editor() {
           fine in every English screenshot.
         */}
         <div className="rail-bar" aria-hidden="true">
+          {/*
+            A scale factor, not a width. Animating inline-size relaid the bar
+            out on every frame; a transform is composited. The custom property
+            needs the cast because React's CSSProperties has no index
+            signature for one.
+          */}
           <div
             className="rail-fill"
-            style={{ inlineSize: `${((position + 1) / steps.length) * 100}%` }}
+            style={{ '--progress': (position + 1) / steps.length } as CSSProperties}
           />
         </div>
       </header>

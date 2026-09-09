@@ -1,60 +1,42 @@
 ---
-import { parts, t } from '../lib/i18n';
+import { t } from '../lib/i18n';
 import '../styles/tokens.css';
 
 /**
  * The homepage.
  *
- * Built in the listing page's own vocabulary rather than a landing-page one:
- * the same 600px column, the same plaster ground, the same stone hairline
- * between sections, one accent colour, and the same two typefaces. Somebody
- * who arrives here and then opens a listing should not be able to tell they
- * changed sites.
+ * REBUILT after seeing it on a desktop browser, where the first version was
+ * plainly wrong: a 600px column stranded in the middle of a wide window with
+ * a fixed bottom bar laid over the content behind it. The 600px column is the
+ * LISTING page's shape — it is a document meant to be read on a phone. A
+ * homepage is a different surface and needed its own.
  *
- * WHAT IS DELIBERATELY ABSENT, all of it from docs/DESIGN-CONTRACT.md and the
- * impeccable rules:
+ * Grounded in the impeccable reference (pbakaus/impeccable), read directly:
  *
- *   no cards, and nothing nested in a card. The reference page has none —
- *   it is one column divided by hairlines, and a card grid here would be the
- *   clearest possible tell that a different hand drew it.
+ *   typeset    body measure 65–75ch; tracking floor -0.04em; distinguish
+ *              heading, body, label, metadata and data roles at a glance;
+ *              never let two weights that are too close carry different jobs.
+ *   craft      more space above a heading than below it; tabular numerals for
+ *              data; style the browser surfaces — selection, focus ring,
+ *              underline offset. No eyebrows above headings. No gradient
+ *              text, no decorative blur, no emoji as icons.
+ *   animate    one authored entrance, 500–800ms, cubic-bezier(.16,1,.3,1);
+ *              never animate width/height/top/left; no generic fade-and-rise
+ *              scroll reveals; cap stagger; strip movement under
+ *              prefers-reduced-motion but keep opacity.
  *
- *   no hero image. There is no real photograph in this repo, and a grey
- *   placeholder or a stock interior would both be worse than type.
+ * THE PROOF ROWS ARE GONE. Two badge rows — a מאומת figure and a לפי המוכר
+ * one — sat under the provenance paragraph. In context they read as stray
+ * fragments of another screen rather than as a demonstration. The distinction
+ * they were illustrating is the product's whole trust proposition, so it is
+ * now shown the honest way: by the real listing page, running, below.
  *
- *   no icon tiles, no gradient panels, no emoji, no invented statistics and
- *   no logos of companies that do not use this yet.
- *
- * Radii are 3px and 4px, the only two in the contract. The single animation
- * is `rise`, reused from the listing page, behind prefers-reduced-motion.
- *
- * INDEXABLE, unlike everything else here. Listing pages default to noindex
- * because a private seller may not want their address searchable (§7) and
- * /new is a private workspace. This page is the one that should be found.
+ * THE PREVIEW IS NOT A MOCKUP. It is an iframe of the actual page at
+ * /a/A7K2M, rendered at 320px — a real phone width, so nothing is scaled and
+ * nothing is faked. It cannot drift from the product, because it IS the
+ * product. Two radio inputs switch between the property and the vehicle with
+ * no JavaScript at all.
  */
-
-/**
- * The sample links.
- *
- * Their labels hold numbers, so they arrive as slots rather than finished
- * strings and every number lands in its own <bdi> (§4.2). `parts` is
- * framework-free for exactly this: the React island renders it through
- * <Message>, and this page renders the same split inline.
- */
-const samples = [
-  {
-    slug: 'A7K2M',
-    label: 'home.exampleProperty',
-    values: { rooms: t('home.examplePropertyRooms') } as Record<string, string>,
-  },
-  {
-    slug: 'V3M9Q',
-    label: 'home.exampleVehicle',
-    values: {
-      model: t('home.exampleVehicleModel'),
-      year: t('home.exampleVehicleYear'),
-    } as Record<string, string>,
-  },
-];
 
 const title = `סיבוב — ${t('home.tagline')}`;
 ---
@@ -83,206 +65,344 @@ const title = `סיבוב — ${t('home.tagline')}`;
     />
 
     <style is:global>
+      /*
+        A deliberate role scale, not arbitrary sizes. Five roles that are
+        distinguishable at a glance: display, heading, lead, body, meta.
+        clamp() carries them across widths without a breakpoint each.
+      */
+      :root {
+        --display: clamp(2.5rem, 6vw, 3.6rem);
+        --lead: clamp(1.15rem, 2.2vw, 1.4rem);
+        --heading: clamp(1.2rem, 1.6vw, 1.4rem);
+        --body: 1.0625rem;
+        --meta: 0.8rem;
+
+        --gutter: clamp(1.25rem, 5vw, 3rem);
+        --rule: 1px solid var(--stone);
+      }
+
       html {
-        background: var(--stone);
+        background: var(--plaster);
       }
 
       body {
         font-family: 'Assistant', system-ui, sans-serif;
         background: var(--plaster);
         color: var(--ink);
-        line-height: 1.6;
-        max-width: 600px;
-        margin-inline: auto;
-        padding-bottom: 6rem;
+        font-size: var(--body);
+        line-height: 1.65;
         -webkit-font-smoothing: antialiased;
       }
 
-      /* ---------- Masthead ----------
-         Type, not a photograph. The wordmark carries the same Frank Ruhl
-         Libre 700 as a listing's .hero-title, one step larger, so the first
-         thing seen is the same voice the product speaks in. */
-      .masthead {
-        padding: 4.5rem 1.5rem 2.5rem;
-        border-block-end: 1px solid var(--stone);
+      /* Browser surfaces, styled rather than left to the defaults. */
+      ::selection {
+        background: var(--olive);
+        color: var(--plaster);
       }
 
-      .wordmark {
+      :focus-visible {
+        outline: 2px solid var(--olive);
+        outline-offset: 3px;
+      }
+
+      .shell {
+        max-inline-size: 1120px;
+        margin-inline: auto;
+        padding-inline: var(--gutter);
+      }
+
+      /* ---------- Masthead ---------- */
+
+      .top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding-block: 1.5rem;
+        border-block-end: var(--rule);
+      }
+
+      .mark {
         font-family: 'Frank Ruhl Libre', serif;
         font-weight: 700;
-        font-size: 2.6rem;
-        line-height: 1.1;
-        letter-spacing: -0.015em;
+        font-size: 1.35rem;
+        letter-spacing: -0.02em;
+      }
+
+      .top-link {
+        font-size: var(--meta);
+        font-weight: 600;
+        color: var(--muted);
+        text-decoration: none;
+        transition: color 0.15s ease;
+      }
+
+      .top-link:hover {
+        color: var(--olive);
+      }
+
+      /*
+        Two columns on a wide screen: the words on the reading side, the
+        running product on the other. In RTL the grid fills from the right, so
+        the first child lands where a Hebrew reader starts. Nothing computes
+        that — `dir="rtl"` does, and the grid follows.
+      */
+      .hero {
+        display: grid;
+        gap: clamp(2.5rem, 5vw, 4.5rem);
+        padding-block: clamp(3rem, 7vw, 5.5rem) clamp(2.5rem, 5vw, 4rem);
+        align-items: center;
+      }
+
+      @media (min-width: 900px) {
+        .hero {
+          grid-template-columns: minmax(0, 1fr) auto;
+        }
+      }
+
+      h1 {
+        font-family: 'Frank Ruhl Libre', serif;
+        font-weight: 700;
+        font-size: var(--display);
+        line-height: 1.05;
+        /* Tracking floor is -0.04em; large display type needs some. */
+        letter-spacing: -0.03em;
       }
 
       .tagline {
-        font-size: 1.05rem;
+        font-size: var(--lead);
         color: var(--muted);
-        margin-block-start: 0.6rem;
-        max-width: 34ch;
+        margin-block-start: 1rem;
+        max-inline-size: 26ch;
+        text-wrap: balance;
       }
 
       .lead {
-        font-size: 1.15rem;
         margin-block-start: 1.75rem;
-        max-width: 40ch;
+        max-inline-size: 46ch;
       }
 
-      section {
-        padding: 1.75rem 1.5rem;
-        border-block-end: 1px solid var(--stone);
-      }
-
-      h2 {
-        font-family: 'Frank Ruhl Libre', serif;
-        font-weight: 500;
-        font-size: 1.15rem;
-        margin-block-end: 0.6rem;
-      }
-
-      p {
-        font-size: 1rem;
-        max-width: 60ch;
-      }
-
-      /* ---------- The provenance demonstration ----------
-         Shown, not described. Two rows in the page's real visual classes: one
-         carrying a register's name and date, one the seller's own word. The
-         claim in the paragraph above is that these never mix, and a reader
-         can check that claim against the thing itself. */
-      .proof {
-        margin-block-start: 1.1rem;
-        border-block-start: 1px solid var(--stone);
-      }
-
-      .proof-row {
+      .actions {
         display: flex;
-        align-items: baseline;
-        gap: 0.6rem;
+        align-items: center;
+        gap: 1.25rem;
         flex-wrap: wrap;
-        padding-block: 0.9rem;
-        border-block-end: 1px solid var(--stone);
-      }
-
-      .proof-val {
-        font-family: 'Frank Ruhl Libre', serif;
-        font-weight: 500;
-        font-size: 1.3rem;
-        line-height: 1.2;
-      }
-
-      /* Olive outline, not a green tick. A tick reads as "good"; this is a
-         statement about who recorded the number, not an endorsement. */
-      .verified {
-        font-size: 0.66rem;
-        font-weight: 600;
-        color: var(--olive);
-        border: 1px solid var(--olive);
-        border-radius: 2px;
-        padding: 0.05rem 0.3rem;
-        line-height: 1.4;
-      }
-
-      .declared {
-        font-size: 0.66rem;
-        font-weight: 600;
-        color: var(--muted);
-        border: 1px solid var(--stone);
-        border-radius: 2px;
-        padding: 0.05rem 0.3rem;
-        line-height: 1.4;
-      }
-
-      .proof-cite {
-        font-size: 0.78rem;
-        color: var(--muted);
-      }
-
-      /* ---------- Samples ---------- */
-      .samples {
-        list-style: none;
-        margin-block-start: 0.9rem;
-      }
-
-      .samples a {
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        gap: 1rem;
-        padding-block: 0.9rem;
-        border-block-start: 1px solid var(--stone);
-        color: var(--ink);
-        text-decoration: none;
-        font-size: 1.05rem;
-      }
-
-      .samples a:hover .sample-name,
-      .samples a:focus-visible .sample-name {
-        text-decoration: underline;
-        text-underline-offset: 3px;
-      }
-
-      .sample-kind {
-        font-size: 0.82rem;
-        color: var(--muted);
-      }
-
-      .note {
-        font-size: 0.85rem;
-        color: var(--muted);
-        margin-block-start: 0.9rem;
-      }
-
-      /* ---------- CTA ----------
-         The listing page's dock, unchanged: fixed, safe-area aware, the same
-         olive and the same 4px radius. It is the only button on the page. */
-      .cta-dock {
-        position: fixed;
-        inset-inline: 0;
-        bottom: 0;
-        max-width: 600px;
-        margin-inline: auto;
-        padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
-        background: linear-gradient(to top, var(--plaster) 72%, transparent);
+        margin-block-start: 2rem;
       }
 
       .cta {
-        display: block;
-        inline-size: 100%;
-        padding: 0.95rem;
+        display: inline-block;
+        padding: 0.95rem 2rem;
         background: var(--olive);
         color: var(--plaster);
         font-size: 1.05rem;
         font-weight: 600;
         border: none;
         border-radius: 4px;
-        text-align: center;
         text-decoration: none;
-        box-shadow: var(--shadow);
-        cursor: pointer;
+        /* Offset and a soft blur, not a hard drop. */
+        box-shadow: 0 2px 8px rgba(25, 26, 21, 0.12);
+        transition:
+          transform 0.12s ease,
+          box-shadow 0.12s ease;
       }
 
-      .cta:focus-visible {
-        outline: 3px solid var(--ink);
-        outline-offset: 2px;
+      .cta:hover {
+        box-shadow: 0 4px 14px rgba(25, 26, 21, 0.16);
       }
 
-      footer {
-        padding: 1.5rem;
-        text-align: center;
-        font-size: 0.82rem;
+      /* 100–150ms is the band for immediate feedback. */
+      .cta:active {
+        transform: translateY(1px);
+        box-shadow: 0 1px 4px rgba(25, 26, 21, 0.14);
+      }
+
+      .actions-note {
+        font-size: var(--meta);
         color: var(--muted);
       }
 
-      /* One moment of motion, and it is the listing page's own. */
-      @media (prefers-reduced-motion: no-preference) {
-        .masthead {
-          animation: rise 0.5s 0.1s both cubic-bezier(0.2, 0.7, 0.3, 1);
+      /* ---------- The live preview ----------
+         An iframe of the real page at a real phone width. Not a screenshot,
+         not a drawing: it cannot go stale, because it is the product. */
+
+      .preview {
+        display: grid;
+        justify-items: center;
+        gap: 0.9rem;
+      }
+
+      .switch {
+        display: flex;
+        gap: 0.4rem;
+      }
+
+      .switch input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .switch label {
+        padding: 0.35rem 0.9rem;
+        font-size: var(--meta);
+        font-weight: 600;
+        color: var(--muted);
+        border: var(--rule);
+        border-radius: 999px;
+        cursor: pointer;
+        transition:
+          color 0.15s ease,
+          border-color 0.15s ease;
+      }
+
+      .switch label:hover {
+        color: var(--ink);
+      }
+
+      .switch input:checked + label {
+        color: var(--olive);
+        border-color: var(--olive);
+      }
+
+      .switch input:focus-visible + label {
+        outline: 2px solid var(--olive);
+        outline-offset: 3px;
+      }
+
+      .device {
+        position: relative;
+        inline-size: 320px;
+        block-size: 660px;
+        border: var(--rule);
+        border-radius: 20px;
+        overflow: hidden;
+        background: var(--plaster);
+        box-shadow: 0 18px 44px rgba(25, 26, 21, 0.1);
+      }
+
+      .device iframe {
+        position: absolute;
+        inset: 0;
+        inline-size: 100%;
+        block-size: 100%;
+        border: 0;
+        /* The page inside is a document to look at, not to operate. Tapping
+           anywhere opens the real one. */
+        pointer-events: none;
+      }
+
+      /* Only the checked frame is shown. Two radios, no JavaScript. */
+      #show-property:checked ~ .device .frame-vehicle,
+      #show-vehicle:checked ~ .device .frame-property {
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      .device-open {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+      }
+
+      .preview-note {
+        font-size: var(--meta);
+        color: var(--muted);
+        text-align: center;
+        max-inline-size: 34ch;
+      }
+
+      /* ---------- Body sections ----------
+         Space above a heading, less below it: the heading belongs to what
+         follows, and even spacing makes it float between two blocks. */
+
+      .band {
+        border-block-start: var(--rule);
+      }
+
+      .band > .shell {
+        display: grid;
+        gap: clamp(2rem, 4vw, 3.5rem);
+        padding-block: clamp(2.75rem, 5vw, 4rem);
+      }
+
+      @media (min-width: 760px) {
+        .band > .shell {
+          grid-template-columns: repeat(3, 1fr);
         }
-        @keyframes rise {
+      }
+
+      h2 {
+        font-family: 'Frank Ruhl Libre', serif;
+        font-weight: 500;
+        font-size: var(--heading);
+        line-height: 1.3;
+        margin-block-end: 0.65rem;
+      }
+
+      .band p {
+        color: var(--muted);
+        max-inline-size: 68ch;
+      }
+
+      /* ---------- Footer ---------- */
+
+      footer {
+        border-block-start: var(--rule);
+      }
+
+      footer .shell {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+        padding-block: 2rem;
+        font-size: var(--meta);
+        color: var(--muted);
+      }
+
+      footer a {
+        color: var(--muted);
+        text-underline-offset: 3px;
+      }
+
+      footer a:hover {
+        color: var(--olive);
+      }
+
+      /* ---------- Motion ----------
+         ONE authored entrance. 600ms sits in the 500–800ms band for a focal
+         arrival, on the exponential ease-out the reference recommends. The
+         preview follows at 120ms — a capped two-step, not a scroll-reveal
+         cascade, and nothing below the fold animates at all. */
+
+      @media (prefers-reduced-motion: no-preference) {
+        .hero > * {
+          animation: arrive 0.6s both cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .hero > .preview {
+          animation-delay: 0.12s;
+        }
+
+        @keyframes arrive {
           from {
             opacity: 0;
-            transform: translateY(14px);
+            transform: translateY(12px);
+          }
+        }
+      }
+
+      /* Movement removed, the arrival kept: opacity still carries the meaning. */
+      @media (prefers-reduced-motion: reduce) {
+        .hero > * {
+          animation: fade 0.4s both;
+        }
+
+        @keyframes fade {
+          from {
+            opacity: 0;
           }
         }
       }
@@ -290,73 +410,79 @@ const title = `סיבוב — ${t('home.tagline')}`;
   </head>
 
   <body>
-    <header class="masthead">
-      <h1 class="wordmark">סיבוב</h1>
-      <p class="tagline">{t('home.tagline')}</p>
-      <p class="lead">{t('home.lead')}</p>
-    </header>
+    <div class="shell">
+      <div class="top">
+        <span class="mark">סיבוב</span>
+        <a class="top-link" href="/new/">{t('home.cta')}</a>
+      </div>
+    </div>
 
-    <section>
-      <h2>{t('home.sourcesTitle')}</h2>
-      <p>{t('home.sourcesBody')}</p>
+    <div class="shell">
+      <div class="hero">
+        <div>
+          <h1>{t('home.tagline')}</h1>
+          <p class="tagline">{t('home.subTagline')}</p>
+          <p class="lead">{t('home.lead')}</p>
 
-      <div class="proof">
-        <div class="proof-row">
-          {/* Every number in Hebrew prose sits in <bdi> — §4.2. */}
-          <span class="proof-val"><bdi>{t('home.proofValue')}</bdi> {t('home.proofUnit')}</span>
-          <span class="verified">{t('home.proofBadge')}</span>
-          <span class="proof-cite">
-            {
-              parts('home.proofCite').map((part) =>
-                'text' in part ? part.text : <bdi>{t('home.proofDate')}</bdi>,
-              )
-            }
-          </span>
+          <div class="actions">
+            <a class="cta" href="/new/">{t('home.cta')}</a>
+            <span class="actions-note">{t('home.ctaNote')}</span>
+          </div>
         </div>
 
-        <div class="proof-row">
-          <span class="proof-val">{t('home.proofSellerValue')}</span>
-          <span class="declared">{t('home.proofSellerBadge')}</span>
+        <div class="preview">
+          <div class="switch">
+            <input type="radio" name="preview" id="show-property" checked />
+            <label for="show-property">{t('home.previewProperty')}</label>
+            <input type="radio" name="preview" id="show-vehicle" />
+            <label for="show-vehicle">{t('home.previewVehicle')}</label>
+          </div>
+
+          <div class="device">
+            <iframe
+              class="frame-property"
+              src="/a/A7K2M/"
+              title={t('home.previewProperty')}
+              loading="lazy"
+              tabindex="-1"></iframe>
+            <iframe
+              class="frame-vehicle"
+              src="/a/V3M9Q/"
+              title={t('home.previewVehicle')}
+              loading="lazy"
+              tabindex="-1"></iframe>
+            <a class="device-open" href="/a/A7K2M/" aria-label={t('home.previewOpen')}></a>
+          </div>
+
+          <p class="preview-note">{t('home.previewNote')}</p>
         </div>
       </div>
-    </section>
-
-    <section>
-      <h2>{t('home.gapsTitle')}</h2>
-      <p>{t('home.gapsBody')}</p>
-    </section>
-
-    <section>
-      <h2>{t('home.linkTitle')}</h2>
-      <p>{t('home.linkBody')}</p>
-    </section>
-
-    <section>
-      <h2>{t('home.examplesTitle')}</h2>
-      <ul class="samples">
-        {
-          samples.map((sample) => (
-            <li>
-              <a href={`/a/${sample.slug}/`}>
-                <span class="sample-name">
-                  {parts(sample.label).map((part) =>
-                    'text' in part ? part.text : <bdi>{sample.values[part.slot]}</bdi>,
-                  )}
-                </span>
-                {/* A Latin path inside a Hebrew line — §4.2 covers this too. */}
-                <span class="sample-kind"><bdi>{`/a/${sample.slug}`}</bdi></span>
-              </a>
-            </li>
-          ))
-        }
-      </ul>
-      <p class="note">{t('home.examplesNote')}</p>
-    </section>
-
-    <footer>hasivuv.com</footer>
-
-    <div class="cta-dock">
-      <a class="cta" href="/new/">{t('home.cta')}</a>
     </div>
+
+    <div class="band">
+      <div class="shell">
+        <section>
+          <h2>{t('home.sourcesTitle')}</h2>
+          <p>{t('home.sourcesBody')}</p>
+        </section>
+
+        <section>
+          <h2>{t('home.gapsTitle')}</h2>
+          <p>{t('home.gapsBody')}</p>
+        </section>
+
+        <section>
+          <h2>{t('home.linkTitle')}</h2>
+          <p>{t('home.linkBody')}</p>
+        </section>
+      </div>
+    </div>
+
+    <footer>
+      <div class="shell">
+        <span>hasivuv.com</span>
+        <a href="/new/">{t('home.cta')}</a>
+      </div>
+    </footer>
   </body>
 </html>

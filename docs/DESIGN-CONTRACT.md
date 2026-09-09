@@ -316,3 +316,83 @@ from now on.
 Case 6 is the one that encodes the `present` / `null` distinction from
 Stage A, and case 7 is the one that will catch an RTL drag-ordering bug in
 Stage G.
+
+---
+
+## 8. Surfaces that are not the listing page
+
+**Sections 1–7 above are extraction.** Every value in them was read out of the
+three reference files, and the guarantee at the top of this document — nothing
+inferred, improved or added — applies to those sections only.
+
+**This section is design, not extraction.** It records decisions taken for two
+surfaces the references never covered: the homepage at `/` and the editor at
+`/new`. They are written down here so the next change to them argues with a
+recorded decision rather than with taste.
+
+### The 600px column belongs to the listing page
+
+`max-width:600px` is right for a document meant to be read on a phone and
+forwarded. It is not a house style. The first homepage inherited it and, on a
+desktop browser, stranded a narrow column in the middle of a wide window with
+a fixed bottom bar laid over the content behind it.
+
+The homepage uses a `1120px` shell with a fluid gutter, two columns above
+`900px`, and no fixed dock at any width. The editor keeps a single column,
+because a form is read the same way a document is.
+
+### The homepage preview is the real page
+
+`/` embeds `/a/A7K2M` and `/a/V3M9Q` in an iframe at **320px**, which is a
+real phone width — nothing is scaled and nothing is redrawn. A screenshot or a
+mockup would start drifting from the product the day after it was made. Two
+radio inputs switch between them with no JavaScript.
+
+### The provenance badges are not on the homepage
+
+A `מאומת` row and a `לפי המוכר` row were rendered under the provenance
+paragraph as a demonstration. Out of the context of a real listing they read
+as stray fragments of another screen. **The distinction itself is unchanged
+and remains what §7 of CLAUDE.md says it is** — the trust proposition, legal
+rather than stylistic. It is now shown by the running page in the preview,
+which is where it means something.
+
+### Type roles
+
+Five, distinguishable at a glance, and no two weights doing different jobs at
+the same size:
+
+| Role | Value |
+|---|---|
+| display | `clamp(2.5rem, 6vw, 3.6rem)`, Frank Ruhl Libre 700, `-0.03em` |
+| lead | `clamp(1.15rem, 2.2vw, 1.4rem)`, Assistant 400, muted |
+| heading | `clamp(1.2rem, 1.6vw, 1.4rem)`, Frank Ruhl Libre 500 |
+| body | `1.0625rem`, Assistant 400, measure `68ch` |
+| meta | `0.8rem`, Assistant 400/600, muted |
+
+Prose measure stays inside 65–75ch. Tracking never goes below `-0.04em`. Data
+that changes under the reader — counts, prices, measurements — is set with
+`font-variant-numeric: tabular-nums` so the line does not shift.
+
+Space above a heading exceeds space below it. A heading belongs to what
+follows; even spacing leaves it floating between two blocks.
+
+### Motion
+
+One authored entrance per view, `600ms`, `cubic-bezier(.16,1,.3,1)`. A second
+element may follow at `120ms`; nothing staggers beyond that and nothing below
+the fold animates on scroll.
+
+**Never animate a layout-driving property** — width, height, inline-size, top,
+left, margins. The editor's progress bar did animate `inline-size`, relaying
+out on every frame; it is a composited `scaleX` now, with the origin at `100%`
+because that is the inline start of an RTL document.
+
+Under `prefers-reduced-motion: reduce` the movement is removed and the opacity
+kept: the arrival still reads, it simply does not travel.
+
+### Banned, on these surfaces as on the listing page
+
+Cards, and anything nested in a card. Gradient text. Decorative blur or glass.
+Emoji or Unicode characters standing in for icons. Eyebrows above headings.
+Invented statistics, and logos of companies that do not use this.

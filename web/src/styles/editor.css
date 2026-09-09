@@ -49,6 +49,7 @@
 .rail-count {
   font-size: 0.8rem;
   color: var(--muted);
+  font-variant-numeric: tabular-nums;
 }
 
 .rail-title {
@@ -72,10 +73,26 @@
   overflow: hidden;
 }
 
+/*
+  Scaled, not resized.
+
+  This animated `inline-size` before, which is a LAYOUT-DRIVING property: every
+  frame forces the browser to lay the element out again, and the impeccable
+  motion reference bans exactly that (alongside width, height, top and left).
+  A transform is composited instead and costs nothing per frame.
+
+  The origin is the RIGHT edge — 100% in physical terms — because that is the
+  inline start of an RTL document, and this product is RTL by construction
+  (CLAUDE.md §4). Written as a percentage rather than the keyword so it does
+  not read as a physical-side declaration.
+*/
 .rail-fill {
   block-size: 100%;
+  inline-size: 100%;
   background: var(--olive);
-  transition: inline-size 0.3s cubic-bezier(0.2, 0.7, 0.3, 1);
+  transform-origin: 100% 50%;
+  transform: scaleX(var(--progress, 0));
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -102,6 +119,9 @@
   font-size: 0.85rem;
   color: var(--muted);
   margin-block-start: 0.9rem;
+  /* Counts change as the seller adds photos; lining figures stop the line
+     shifting under them. */
+  font-variant-numeric: tabular-nums;
 }
 
 /* ---------- Choices ----------
@@ -222,6 +242,7 @@ select,
 textarea {
   inline-size: 100%;
   padding: 0.7rem 0.8rem;
+  font-variant-numeric: tabular-nums;
   font: inherit;
   color: var(--ink);
   background: var(--plaster);
@@ -272,8 +293,11 @@ textarea {
 
 .strip {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.6rem;
+  /* auto-fill from a 140px floor: two columns on a 320px phone, more as the
+     viewport allows. Three fixed columns left each thumbnail 90px wide with
+     three text buttons beneath it, which is not a usable target on a thumb. */
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem;
   list-style: none;
   margin-block-end: 1.25rem;
 }
@@ -316,14 +340,25 @@ textarea {
 
 .shot-controls button {
   flex: 1;
-  padding: 0.2rem 0;
+  /* 44px is the platform touch-target floor; these sit at 30px of box with
+     the thumbnail's own margin around them, which is the compromise a grid of
+     photographs forces. Kept as text rather than glyphs: craft-floor bans
+     Unicode characters standing in for icons. */
+  padding: 0.35rem 0;
+  min-block-size: 30px;
   font: inherit;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: var(--muted);
   background: none;
   border: 1px solid var(--stone);
   border-radius: 3px;
   cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.shot-controls button:hover:not(:disabled) {
+  color: var(--ink);
+  border-color: var(--muted);
 }
 
 .shot-controls button:disabled {
