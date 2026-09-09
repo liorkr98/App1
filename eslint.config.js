@@ -15,6 +15,7 @@
 // as coverage and provides nothing.
 const { defineConfig } = require('eslint/config');
 const prettierConfig = require('eslint-config-prettier/flat');
+const tsParser = require('@typescript-eslint/parser');
 
 module.exports = defineConfig([
   {
@@ -31,10 +32,25 @@ module.exports = defineConfig([
   },
 
   {
-    files: ['src/**/*.ts'],
+    // Everything TypeScript that is not ignored above — which is src/ plus
+    // app.config.ts at the root. app.config.ts matches no other block, and
+    // eslint-config-prettier applies universally, so without a parser here it
+    // would be linted by espree and fail exactly like src/ did.
+    files: ['**/*.ts'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',
+      // ESLint's default parser is espree, which does not understand a type
+      // annotation — it fails on the first `: string` in the file. The old
+      // config got a TypeScript parser transitively from eslint-config-expo;
+      // removing that package removed the parser with it, and four commits
+      // went in before CI said so.
+      //
+      // Parser only, not the typescript-eslint rule sets. The rules below are
+      // core ESLint ones that work fine on a TypeScript AST, and type-aware
+      // linting would mean a second full typecheck on every run for rules we
+      // have not asked for.
+      parser: tsParser,
     },
     rules: {
       // Hebrew display strings live in the schema files by design — they are
