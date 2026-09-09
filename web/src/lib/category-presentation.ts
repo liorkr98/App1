@@ -18,9 +18,15 @@ import type { ListingCategory } from '@/features/listings/schemas';
  * that none has been (scripts/verify-template-divergences.mjs).
  */
 export interface CategoryPresentation {
-  /** DESIGN-CONTRACT §5.1 — one decision, two values. */
-  heroRatio: string;
-  heroVeilPad: string;
+  /**
+   * DESIGN-CONTRACT §5.1 — divergence #1, now ONE value rather than two.
+   *
+   * The B2 revision made the hero full-bleed at a viewport height instead of
+   * a cropped aspect-ratio, so the veil padding no longer moves with it: the
+   * gradient runway is fixed at 7rem for both. What still differs is how much
+   * of the first screen the photograph takes.
+   */
+  heroHeight: string;
   /** Fact keys, in order, for the one-line og:description. */
   ogFactKeys: string[];
   /** Opening WhatsApp message the buyer sends. */
@@ -29,18 +35,17 @@ export interface CategoryPresentation {
 
 export const CATEGORY_PRESENTATION: Record<ListingCategory, CategoryPresentation> = {
   property: {
-    // A 4/5 frame suits a room: vertical, and it shows floor-to-ceiling.
-    heroRatio: '4/5',
-    heroVeilPad: '5rem',
+    // A room rewards height: 84svh shows floor-to-ceiling and makes the
+    // photograph the whole first screen, which is the point of the revision.
+    heroHeight: '84svh',
     ogFactKeys: ['area_sqm', 'floor', 'elevator', 'balcony_sqm', 'parking', 'shelter'],
     whatsappMessage: 'היי, ראיתי את הדירה ואשמח לפרטים',
   },
   vehicle: {
-    // A car is a wide object — a vertical frame either crops it or fills the
-    // rest with asphalt. The shorter hero needs less gradient runway, which
-    // is why the veil padding moves with the ratio.
-    heroRatio: '4/3',
-    heroVeilPad: '4.5rem',
+    // A car is a wide object. The rationale is unchanged from the aspect-ratio
+    // era — a tall frame either crops the car or fills the rest with asphalt —
+    // and it now expresses itself as a shorter hero rather than a wider crop.
+    heroHeight: '64svh',
     ogFactKeys: ['hand', 'mileage', 'gearbox', 'test_until'],
     whatsappMessage: 'היי, ראיתי את הרכב ואשמח לפרטים',
   },

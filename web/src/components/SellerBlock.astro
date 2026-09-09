@@ -7,9 +7,15 @@ interface Props {
 
 const { seller } = Astro.props;
 ---
-<section>
-  <div class="seller">
-    <div class="avatar"></div>
+{/*
+  Agents are the primary audience (CLAUDE.md §1), so their name appears at
+  the top of the page and again here at the bottom — the two positions a
+  reader actually looks at. The tinted ground separates it from the seller's
+  own content above without another hairline.
+*/}
+<section class="seller">
+  <div class="seller-row">
+    <div class="avatar" aria-hidden="true"></div>
     <div>
       <div class="seller-name">{seller.name}</div>
       {seller.role && <div class="seller-role">{seller.role}</div>}

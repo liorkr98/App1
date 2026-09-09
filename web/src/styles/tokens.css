@@ -18,6 +18,18 @@
   --stone: #e4e0d6;
   --muted: #6e6f66;
   --shadow: 0 1px 2px rgba(25, 26, 21, 0.06);
+
+  /*
+    Added by the Stage B2 revision. The listing page now inverts a whole
+    section to --ink-deep, lifts the olive for type on that dark ground, and
+    uses a warmer stone for the two tinted blocks.
+
+    --olive-lift exists because --olive on --ink-deep is too close in value to
+    read as type. It is the same hue carried up, not a second accent.
+  */
+  --ink-deep: #111208;
+  --olive-lift: #5f7749;
+  --stone-warm: #f1ede3;
 }
 
 * {

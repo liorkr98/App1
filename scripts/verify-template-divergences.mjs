@@ -8,7 +8,7 @@
  * override — rather than only ones visible in one file.
  *
  * Allowed:
- *   1. hero block   --heroRatio and --heroVeilPad on <html>
+ *   1. hero height  --heroH on <html>
  *   2. price note   different text in .price-note
  *   3. disclosures  section.flaws, vehicle only
  *   4. map          section.map, property only
@@ -20,6 +20,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+const DIST_ROOT = 'web/dist';
 const DIST = 'web/dist/a';
 const PROPERTY = path.join(DIST, 'A7K2M', 'index.html');
 const VEHICLE = path.join(DIST, 'V3M9Q', 'index.html');
@@ -40,12 +41,36 @@ const problems = [];
 // The hero divergence rides on two custom properties on <html>, so the
 // stylesheet itself has no reason to differ. If it does, someone added a
 // category-specific style rule.
-const styleOf = (html) => (html.match(/<style[^>]*>([\s\S]*?)<\/style>/g) ?? []).join('\n');
+/**
+ * All CSS a page applies: inline <style> blocks PLUS every local stylesheet
+ * it links.
+ *
+ * B2 grew the listing stylesheet past Astro's inlining threshold, so it moved
+ * into /_astro/*.css. Reading only <style> would then have compared two empty
+ * strings and reported success — the check would have kept passing while
+ * checking nothing, which CLAUDE.md §4.1 calls worse than having no rule at
+ * all. A stylesheet that cannot be read is reported as MISSING rather than
+ * skipped, so a broken href fails loudly instead of quietly matching.
+ */
+const styleOf = (html) => {
+  const inline = (html.match(/<style[^>]*>([\s\S]*?)<\/style>/g) ?? []).join('\n');
+
+  const linked = [...html.matchAll(/<link[^>]+rel="stylesheet"[^>]*>/g)]
+    .map((tag) => tag[0].match(/href="([^"]+)"/)?.[1])
+    .filter((href) => href && href.startsWith('/'))
+    .map((href) => {
+      const file = path.join(DIST_ROOT, href.slice(1));
+      return fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : `MISSING:${href}`;
+    })
+    .join('\n');
+
+  return `${inline}\n${linked}`;
+};
 
 if (styleOf(property) !== styleOf(vehicle)) {
   problems.push(
     'CSS differs between the two pages. The hero divergence is carried by\n' +
-      '  --heroRatio / --heroVeilPad on <html>, so the stylesheet must be identical.\n' +
+      '  --heroH on <html>, so the stylesheet must be identical.\n' +
       '  A category-specific rule was added somewhere.',
   );
 }
@@ -61,13 +86,27 @@ if (!propertyVars || !vehicleVars) {
 } else if (propertyVars === vehicleVars) {
   problems.push(
     `Hero variables are identical (${propertyVars}). Divergence 1 has been lost —\n` +
-      '  a car in a 4/5 frame is either cropped or surrounded by asphalt.',
+      '  a car in a tall frame is either cropped or surrounded by asphalt.',
   );
 }
 
 // --- 3 and 4. Section landmarks --------------------------------------------
+/**
+ * Section class lists, with the presentational `reveal` stripped.
+ *
+ * B2 added scroll-driven reveals, so a section's class attribute is now
+ * "enrich reveal" rather than "enrich". Comparing whole attributes would call
+ * that a divergence; comparing sorted class SETS asks the question actually
+ * being asked, which is which sections exist on each page.
+ */
 const sections = (html) =>
-  [...html.matchAll(/<section[^>]*class="([^"]*)"/g)].map((match) => match[1].trim());
+  [...html.matchAll(/<section[^>]*class="([^"]*)"/g)].map((match) =>
+    match[1]
+      .split(/\s+/)
+      .filter((name) => name && name !== 'reveal')
+      .sort()
+      .join(' '),
+  );
 
 const propertySections = sections(property);
 const vehicleSections = sections(vehicle);

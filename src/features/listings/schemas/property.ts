@@ -19,7 +19,7 @@ export const propertySchema: CategorySchema = {
   label: 'דירה',
   facts: [
     { key: 'rooms', label: 'חדרים', type: 'number', required: true },
-    { key: 'area_sqm', label: 'מ״ר', type: 'number', required: true },
+    { key: 'area_sqm', label: 'מ״ר', type: 'number', required: true, priceDenominator: true },
     // Rendered as one cell, "3 / 5", under קומה — matching the reference page.
     { key: 'floor', label: 'קומה', type: 'number', pairWith: 'total_floors' },
     { key: 'total_floors', label: 'מתוך קומות', type: 'number' },

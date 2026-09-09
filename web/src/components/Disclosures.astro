@@ -17,9 +17,17 @@ const { items } = Astro.props;
    * (DESIGN-CONTRACT §5.3)
    */
 }
-<section class="flaws">
-  <h2>מה שכדאי לדעת</h2>
+<section class="flaws reveal">
+  <h2>מה שכדאי <span class="h2-num">לדעת</span></h2>
   <ul>
-    {items.map((item) => <li><Prose text={item} /></li>)}
+    {items.map((item) => (
+      <li>
+        {/* An olive dot, not a warning glyph. These are disclosures a seller
+            chose to make, and marking them with a hazard sign would punish
+            the honesty the block exists to reward. */}
+        <span class="mark" aria-hidden="true"></span>
+        <span><Prose text={item} /></span>
+      </li>
+    ))}
   </ul>
 </section>

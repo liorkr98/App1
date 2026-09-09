@@ -145,6 +145,20 @@ export interface FactDefinition {
   pairWith?: string;
 
   /**
+   * Marks the fact the price is divided by for the per-unit figure in the
+   * price bar — ₪19,474 למ״ר under a property's asking price.
+   *
+   * On the schema for the same reason gridLabel and pairWith are: a formatter
+   * that looked for the key 'area_sqm' would hardcode a field name in the
+   * layer that is deliberately kept free of them, and a third category with a
+   * different denominator would need the formatter edited rather than a
+   * schema line added.
+   *
+   * At most one per category. The unit comes from the same definition.
+   */
+  priceDenominator?: boolean;
+
+  /**
    * Defaults to true. Set false for facts that already appear in the page
    * title and would be redundant in the grid — the reference vehicle page
    * carries make and model in the hero and not as cells.

@@ -6,193 +6,300 @@
 <title>דירת 4 חדרים ברחוב סוקולוב, חולון</title>
 <meta name="description" content="דירת 4 חדרים משופצת, 95 מ״ר, קומה 3 עם מעלית, מרפסת שמש וחניה. סוקולוב 42, חולון.">
 
-<!-- ============================================================
-     OG TAGS — זה מה שקובע איך הלינק נראה בוואטסאפ.
-     התמונה חייבת להיות 1200x630, מוחלטת (לא יחסית), ומתחת ל-300KB.
-     בלי זה, כל המוצר נשבר ברגע השיתוף.
-     ============================================================ -->
+<!-- OG — 1200x630 WebP, מתחת ל-300KB, hash בשם הקובץ ולא בפרמטר -->
 <meta property="og:type" content="website">
 <meta property="og:locale" content="he_IL">
-<meta property="og:site_name" content="מרפסת">
+<meta property="og:site_name" content="סיבוב">
 <meta property="og:title" content="דירת 4 חדרים בחולון · ₪1,850,000">
 <meta property="og:description" content="95 מ״ר, קומה 3 עם מעלית, מרפסת שמש, חניה וממ״ד. משופצת.">
-<meta property="og:image" content="https://example.com/og/a7k2m.jpg">
+<meta property="og:image" content="https://hasivuv.com/og/a7k2m-8f21c4.webp">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="robots" content="noindex">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Assistant:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Assistant:wght@400;600;700&display=swap" rel="stylesheet">
 
 <style>
+/* ============================================================
+   סיבוב — עמוד מודעה
+   טיפוגרפיה: Frank Ruhl Libre לכותרות ולמספרים, Assistant לגוף
+   תנועה: scroll-driven נטיבי בלבד. בלי GSAP, בלי ספריות.
+   ============================================================ */
+
 :root{
-  --plaster:#FBFAF7;      /* טיח, לא קרם */
+  --plaster:#FBFAF7;
   --ink:#191A15;
-  --olive:#4A5D3A;        /* לא כחול — כל מותגי הנדל"ן בישראל כחולים */
+  --ink-deep:#111208;
+  --olive:#4A5D3A;
+  --olive-lift:#5F7749;
   --stone:#E4E0D6;
+  --stone-warm:#F1EDE3;
   --muted:#6E6F66;
-  --shadow:0 1px 2px rgba(25,26,21,.06);
+
+  /* סקאלה פלואידית — טווח של פי שישה בין התווית לכותרת */
+  --t-hero:  clamp(2.6rem, 11.5vw, 4.2rem);
+  --t-price: clamp(2.1rem, 8.5vw, 3rem);
+  --t-num:   clamp(1.5rem, 5.5vw, 1.9rem);
+  --t-h2:    clamp(1.35rem, 5vw, 1.6rem);
+  --t-body:  1.02rem;
+  --t-label: .74rem;
+
+  --gut:1.4rem;
 }
 
 *{box-sizing:border-box;margin:0;padding:0}
-
-html{background:var(--stone)}
+html{background:var(--stone);direction:rtl;scroll-behavior:smooth}
 
 body{
   font-family:'Assistant',system-ui,sans-serif;
   background:var(--plaster);
   color:var(--ink);
-  line-height:1.6;
-  max-width:600px;
+  font-size:var(--t-body);
+  line-height:1.62;
+  max-width:620px;
   margin-inline:auto;
-  padding-bottom:6rem;
+  padding-bottom:7rem;
   -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
 }
 
-/* ---------- Hero ---------- */
-.hero{position:relative;aspect-ratio:4/5;overflow:hidden;background:var(--stone)}
-.hero img{width:100%;height:100%;object-fit:cover;display:block}
+/* ---------- תווית: עברית אין לה אותיות גדולות ואסור לה tracking חיובי,
+     אז ההיררכיה נבנית מגודל, משקל וצבע ולא מ-uppercase ---------- */
+.label{
+  font-size:var(--t-label);
+  font-weight:600;
+  color:var(--muted);
+  line-height:1.3;
+}
+
+/* ============================================================
+   סרגל הסוכן — נותן למתווך נוכחות מהשורה הראשונה
+   ============================================================ */
+.agent-bar{
+  display:flex;align-items:center;gap:.65rem;
+  padding:.7rem var(--gut);
+  background:var(--ink-deep);color:var(--plaster);
+  font-size:.86rem;
+}
+.agent-bar .dot{width:26px;height:26px;border-radius:50%;background:var(--olive-lift);flex:0 0 auto}
+.agent-bar strong{font-weight:600}
+.agent-bar span{color:#9C9D93;margin-inline-start:auto;font-size:.8rem}
+
+/* ============================================================
+   Hero — full bleed, פרלקסה נטיבית
+   ============================================================ */
+.hero{position:relative;height:84svh;min-height:440px;overflow:hidden;background:var(--stone)}
+.hero-img{position:absolute;inset:0;width:100%;height:118%;object-fit:cover;display:block}
 
 .hero-veil{
-  position:absolute;inset-inline:0;bottom:0;padding:5rem 1.5rem 1.25rem;
-  background:linear-gradient(to top,rgba(25,26,21,.82),transparent);
+  position:absolute;inset-inline:0;bottom:0;
+  padding:7rem var(--gut) 1.6rem;
+  background:linear-gradient(to top,rgba(17,18,8,.9) 12%,rgba(17,18,8,.55) 48%,transparent);
   color:var(--plaster);
 }
-.hero-place{font-size:.9rem;opacity:.9}
+.hero-place{font-size:.92rem;opacity:.88;margin-bottom:.35rem}
 .hero-title{
   font-family:'Frank Ruhl Libre',serif;
-  font-weight:700;font-size:2rem;line-height:1.25;margin-top:.15rem;
+  font-weight:900;
+  font-size:var(--t-hero);
+  line-height:1.02;
+  letter-spacing:-.015em;
+  text-wrap:balance;
 }
 
-/* ---------- Price ---------- */
+/* ============================================================
+   מחיר — טיפוגרפיה, לא כרטיס סטטיסטיקה
+   ============================================================ */
 .price-bar{
-  display:flex;align-items:baseline;justify-content:space-between;gap:1rem;
-  padding:1.25rem 1.5rem;border-bottom:1px solid var(--stone);
+  display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;
+  padding:1.5rem var(--gut) 1.35rem;
 }
 .price{
   font-family:'Frank Ruhl Libre',serif;
-  font-weight:700;font-size:1.9rem;letter-spacing:-.01em;
+  font-weight:700;font-size:var(--t-price);
+  line-height:1;letter-spacing:-.02em;
 }
-.price-note{font-size:.85rem;color:var(--muted)}
+.price-note{text-align:end;padding-block-end:.2rem}
 
-/* ---------- Facts ----------
-   הגריד הזה הוא הסיבה שהעמוד עובד. קונה ישראלי סורק בדיוק
-   את השדות האלה לפני שהוא קורא מילה אחת מהתיאור. */
+/* ============================================================
+   עובדות — מספרים בסריף, לא טבלה
+   ============================================================ */
 .facts{
   display:grid;grid-template-columns:repeat(3,1fr);
-  border-bottom:1px solid var(--stone);
+  gap:1px;background:var(--stone);
+  border-block:1px solid var(--stone);
 }
-.fact{
-  padding:1rem .75rem;text-align:center;
-  border-inline-start:1px solid var(--stone);
-  border-block-start:1px solid var(--stone);
+.fact{background:var(--plaster);padding:1.05rem .6rem;text-align:center}
+.fact-val{
+  font-family:'Frank Ruhl Libre',serif;font-weight:500;
+  font-size:var(--t-num);line-height:1.1;letter-spacing:-.01em;
 }
-.fact:nth-child(3n+1){border-inline-start:none}
-.fact:nth-child(-n+3){border-block-start:none}
-.fact-val{font-family:'Frank Ruhl Libre',serif;font-weight:500;font-size:1.3rem;line-height:1.2}
-.fact-lbl{font-size:.78rem;color:var(--muted);margin-top:.15rem}
-.fact.off .fact-val,.fact.off .fact-lbl{opacity:.35}
+.fact-lbl{font-size:var(--t-label);color:var(--muted);margin-top:.2rem}
+.fact.off{background:var(--stone-warm)}
+.fact.off .fact-val,.fact.off .fact-lbl{opacity:.42}
 
-/* ---------- Immersive placeholder ----------
-   השלב הזה נשאר placeholder עד Stage C. הצופה נטען עצלנית
-   מאחורי פוסטר, לעולם לא אוטומטית — סיור שוקל מגהבייטים
-   והקורא נמצא על סלולרי. */
-.immersive{position:relative;margin:0;border-bottom:1px solid var(--stone)}
-.immersive img{width:100%;aspect-ratio:16/10;object-fit:cover;display:block;background:var(--stone)}
-.immersive-scrim{
-  position:absolute;inset:0;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:.7rem;
-  background:rgba(25,26,21,.34);
-}
-.immersive-enter{
-  display:inline-flex;align-items:center;gap:.5rem;
-  padding:.7rem 1.4rem;border:none;border-radius:999px;
-  background:var(--plaster);color:var(--ink);
-  font-family:'Assistant',sans-serif;font-size:1rem;font-weight:600;
-  box-shadow:0 2px 10px rgba(25,26,21,.2);cursor:pointer;
-}
-.immersive-enter:focus-visible{outline:3px solid var(--plaster);outline-offset:3px}
-.immersive-note{color:var(--plaster);font-size:.82rem;opacity:.9}
-
-/* ---------- Sections ---------- */
-section{padding:1.75rem 1.5rem;border-bottom:1px solid var(--stone)}
+/* ============================================================
+   סקשנים — ריתמוס משתנה, לא אותו קו מפריד כל פעם
+   ============================================================ */
+section{padding:2.4rem var(--gut)}
 h2{
   font-family:'Frank Ruhl Libre',serif;
-  font-weight:500;font-size:1.15rem;margin-bottom:.6rem;
+  font-weight:500;font-size:var(--t-h2);
+  line-height:1.2;margin-bottom:.85rem;
 }
-p{font-size:1rem;max-width:60ch}
+h2 .h2-num{color:var(--olive);font-weight:700}
+p{max-width:62ch}
+p + p{margin-top:.9rem}
 
-/* ---------- Gallery ---------- */
-.gallery{
-  display:flex;gap:.6rem;overflow-x:auto;
-  scroll-snap-type:x mandatory;
-  padding:1.5rem;margin:0;
-  scrollbar-width:none;
-}
-.gallery::-webkit-scrollbar{display:none}
-.gallery figure{
-  flex:0 0 78%;scroll-snap-align:center;margin:0;
-}
-.gallery img{
-  width:100%;aspect-ratio:4/3;object-fit:cover;
-  border-radius:3px;background:var(--stone);display:block;
-}
-.gallery figcaption{font-size:.82rem;color:var(--muted);margin-top:.4rem}
+/* ============================================================
+   העשרה — הלב של המוצר. מספר הדקות הוא העוגן הוויזואלי.
+   ============================================================ */
+.enrich{background:var(--ink-deep);color:var(--plaster);padding-block:2.8rem}
+.enrich h2{color:var(--plaster)}
+.enrich-sub{color:#9C9D93;font-size:.88rem;margin-bottom:1.9rem}
 
-/* ---------- Map ---------- */
-.map img{width:100%;border-radius:3px;display:block;background:var(--stone)}
+.egroup{margin-block-end:2.1rem}
+.egroup:last-of-type{margin-block-end:0}
+.egroup-head{
+  display:flex;align-items:baseline;gap:.5rem;
+  padding-block-end:.6rem;margin-block-end:.5rem;
+  border-block-end:1px solid rgba(251,250,247,.16);
+}
+.egroup-head h3{font-family:'Frank Ruhl Libre',serif;font-weight:500;font-size:1.1rem}
+.egroup-head .count{font-size:.8rem;color:#9C9D93;margin-inline-start:auto}
+
+.erow{display:flex;align-items:baseline;gap:.9rem;padding-block:.62rem}
+.erow + .erow{border-block-start:1px solid rgba(251,250,247,.07)}
+.erow .mins{
+  font-family:'Frank Ruhl Libre',serif;font-weight:500;
+  font-size:1.45rem;line-height:1;color:var(--olive-lift);
+  flex:0 0 3.6rem;text-align:start;
+}
+.erow .mins small{font-size:.62rem;color:#9C9D93;font-family:'Assistant',sans-serif;display:block;margin-top:.15rem}
+.erow .who{flex:1}
+.erow .who b{font-weight:600;display:block}
+.erow .who em{font-style:normal;color:#9C9D93;font-size:.83rem}
+
+.source{
+  margin-top:1.8rem;padding-top:1rem;
+  border-top:1px solid rgba(251,250,247,.16);
+  font-size:.74rem;color:#83847B;line-height:1.7;
+}
+
+/* ============================================================
+   גלריה — א-סימטרית. תמונה ראשונה גדולה, אחר כך זוגות.
+   ============================================================ */
+.gallery{padding:0 var(--gut) 2.4rem;display:grid;gap:.5rem;
+  grid-template-columns:1fr 1fr}
+.gallery figure{margin:0}
+.gallery figure:first-child{grid-column:1 / -1}
+.gallery img{width:100%;display:block;background:var(--stone);border-radius:2px;
+  aspect-ratio:4/3;object-fit:cover}
+.gallery figure:first-child img{aspect-ratio:16/10}
+.gallery figcaption{font-size:.78rem;color:var(--muted);margin-top:.35rem}
+
+/* ---------- מפה ---------- */
+.map img{width:100%;display:block;border-radius:2px;background:var(--stone);aspect-ratio:2/1;object-fit:cover}
 .addr{font-size:.9rem;color:var(--muted);margin-top:.6rem}
 
-/* ---------- Seller ---------- */
-.seller{display:flex;align-items:center;gap:.9rem}
-.avatar{
-  width:46px;height:46px;border-radius:50%;
-  background:var(--stone);flex:0 0 auto;
-}
-.seller-name{font-weight:600}
-.seller-role{font-size:.85rem;color:var(--muted)}
+/* ---------- סוכן ---------- */
+.seller{background:var(--stone-warm)}
+.seller-row{display:flex;align-items:center;gap:1rem}
+.avatar{width:58px;height:58px;border-radius:50%;background:var(--stone);flex:0 0 auto}
+.seller-name{font-family:'Frank Ruhl Libre',serif;font-size:1.25rem;font-weight:500}
+.seller-role{font-size:.87rem;color:var(--muted)}
 
-/* ---------- CTA ---------- */
+/* ============================================================
+   CTA — עגינה תחתונה
+   ============================================================ */
 .cta-dock{
-  position:fixed;inset-inline:0;bottom:0;
-  max-width:600px;margin-inline:auto;
-  padding:.75rem 1rem calc(.75rem + env(safe-area-inset-bottom));
-  background:linear-gradient(to top,var(--plaster) 72%,transparent);
+  position:fixed;inset-inline:0;bottom:0;z-index:20;
+  max-width:620px;margin-inline:auto;
+  padding:.8rem 1rem calc(.8rem + env(safe-area-inset-bottom));
+  background:linear-gradient(to top,var(--plaster) 70%,rgba(251,250,247,0));
 }
 .cta{
-  display:block;width:100%;padding:.95rem;
+  display:flex;align-items:center;justify-content:center;gap:.5rem;
+  width:100%;padding:1.02rem;
   background:var(--olive);color:var(--plaster);
-  font-family:'Assistant',sans-serif;font-size:1.05rem;font-weight:600;
-  border:none;border-radius:4px;text-align:center;text-decoration:none;
-  box-shadow:var(--shadow);cursor:pointer;
+  font-family:'Assistant',sans-serif;font-size:1.06rem;font-weight:700;
+  border:none;border-radius:6px;text-decoration:none;
+  box-shadow:0 6px 22px -10px rgba(25,26,21,.55);
 }
-.cta:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.cta:active{background:var(--olive-lift)}
+.cta:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
 
-/* ---------- Footer ---------- */
-footer{padding:1.5rem;text-align:center;font-size:.82rem;color:var(--muted)}
+footer{padding:1.6rem var(--gut) .5rem;text-align:center;font-size:.8rem;color:var(--muted)}
 footer a{color:var(--muted)}
+.odbl{font-size:.7rem;color:#96978E;margin-top:.5rem;line-height:1.6}
 
-/* ---------- Motion: רגע אחד בלבד ---------- */
+/* ============================================================
+   תנועה — scroll-driven נטיבי. אפס JS.
+   דפדפן שלא תומך פשוט מציג את התוכן. שיפור מדורג.
+   ============================================================ */
 @media (prefers-reduced-motion:no-preference){
-  .hero-veil{animation:rise .5s .1s both cubic-bezier(.2,.7,.3,1)}
-  @keyframes rise{from{opacity:0;transform:translateY(14px)}}
+
+  /* פרלקסה: התמונה נעה לאט יותר מהגלילה */
+  @supports (animation-timeline:view()){
+    .hero-img{
+      animation:drift linear both;
+      animation-timeline:view();
+      animation-range:entry 0% exit 100%;
+    }
+    @keyframes drift{
+      from{transform:translateY(-7%)}
+      to{transform:translateY(7%)}
+    }
+
+    /* חשיפה בגלילה */
+    .reveal{
+      animation:rise linear both;
+      animation-timeline:view();
+      animation-range:entry 4% entry 46%;
+    }
+    @keyframes rise{
+      from{opacity:0;transform:translateY(22px)}
+      to{opacity:1;transform:none}
+    }
+
+    /* קו התקדמות דק בראש העמוד */
+    .progress{
+      position:fixed;inset-block-start:0;inset-inline:0;height:2px;z-index:30;
+      background:var(--olive);transform-origin:right center;
+      animation:fill linear both;
+      animation-timeline:scroll(root block);
+    }
+    @keyframes fill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+  }
+
+  .hero-veil{animation:rise .55s .08s both cubic-bezier(.2,.7,.3,1)}
 }
 </style>
 </head>
 <body>
 
+<div class="progress" aria-hidden="true"></div>
+
+<div class="agent-bar">
+  <div class="dot" aria-hidden="true"></div>
+  <strong>ליאור כהן</strong>
+  <span>תיווך ונדל״ן</span>
+</div>
+
 <header class="hero">
-  <img src="https://placehold.co/900x1125/E4E0D6/6E6F66?text=+" alt="מבט לסלון ולמרפסת השמש">
+  <img class="hero-img" src="https://placehold.co/1000x1300/D8D3C6/8A8B80?text=+" alt="מבט לסלון ולמרפסת השמש">
   <div class="hero-veil">
-    <div class="hero-place">סוקולוב 42, חולון</div>
+    <div class="hero-place">סוקולוב <bdi>42</bdi>, חולון</div>
     <h1 class="hero-title">דירת <bdi>4</bdi> חדרים,<br>משופצת מהיסוד</h1>
   </div>
 </header>
 
 <div class="price-bar">
   <div class="price"><bdi>₪1,850,000</bdi></div>
-  <div class="price-note">פינוי גמיש</div>
+  <div class="price-note label">פינוי גמיש<br><bdi>₪19,474</bdi> למ״ר</div>
 </div>
 
 <div class="facts">
@@ -202,56 +309,118 @@ footer a{color:var(--muted)}
   <div class="fact"><div class="fact-val">יש</div><div class="fact-lbl">מעלית</div></div>
   <div class="fact"><div class="fact-val">יש</div><div class="fact-lbl">חניה</div></div>
   <div class="fact"><div class="fact-val">יש</div><div class="fact-lbl">ממ״ד</div></div>
-  <div class="fact"><div class="fact-val"><bdi>12</bdi> מ״ר</div><div class="fact-lbl">מרפסת שמש</div></div>
+  <div class="fact"><div class="fact-val"><bdi>12</bdi></div><div class="fact-lbl">מרפסת, מ״ר</div></div>
   <div class="fact"><div class="fact-val">דרום־מזרח</div><div class="fact-lbl">כיווני אוויר</div></div>
   <div class="fact off"><div class="fact-val">אין</div><div class="fact-lbl">מחסן</div></div>
 </div>
 
-<figure class="immersive">
-  <img src="https://placehold.co/900x563/E4E0D6/6E6F66?text=+" alt="תצוגה מקדימה של הסיור בדירה">
-  <div class="immersive-scrim">
-    <button class="immersive-enter" type="button">כניסה לסיור</button>
-    <span class="immersive-note"><bdi>6</bdi> חדרים · <bdi>8</bdi> מ״ב</span>
-  </div>
-</figure>
-
-<section>
+<section class="reveal">
   <h2>על הדירה</h2>
-  <p>הדירה עברה שיפוץ מלא לפני שנתיים — חשמל, אינסטלציה, מטבח וריצוף. הסלון פונה למרפסת שמש דרומית שמקבלת אור מהבוקר עד אחר הצהריים. שלושה חדרי שינה, אחד מהם עם יציאה נפרדת למרפסת שירות.</p>
-  <p style="margin-top:.8rem">הבניין שקט, שמונה דיירים בלבד, ועד בית פעיל. חניה בטאבו. בית ספר וגן ילדים במרחק הליכה, ותחנת הרכבת הקלה שבע דקות ברגל.</p>
+  <p>הדירה עברה שיפוץ מלא לפני שנתיים — חשמל, אינסטלציה, מטבח וריצוף. הסלון פונה למרפסת שמש דרומית שמקבלת אור מהבוקר עד אחר הצהריים.</p>
+  <p>שלושה חדרי שינה, אחד מהם עם יציאה נפרדת למרפסת שירות. הבניין שקט, שמונה דיירים בלבד, וועד בית פעיל. חניה בטאבו.</p>
 </section>
 
-<div class="gallery">
-  <figure><img src="https://placehold.co/800x600/E4E0D6/6E6F66?text=+" alt="סלון"><figcaption>סלון ומרפסת שמש</figcaption></figure>
-  <figure><img src="https://placehold.co/800x600/E4E0D6/6E6F66?text=+" alt="מטבח"><figcaption>מטבח משופץ</figcaption></figure>
-  <figure><img src="https://placehold.co/800x600/E4E0D6/6E6F66?text=+" alt="חדר שינה"><figcaption>חדר הורים</figcaption></figure>
-  <figure><img src="https://placehold.co/800x600/E4E0D6/6E6F66?text=+" alt="מרפסת"><figcaption>מרפסת דרומית</figcaption></figure>
+<div class="gallery reveal">
+  <figure><img src="https://placehold.co/1000x625/D8D3C6/8A8B80?text=+" alt="סלון"><figcaption>סלון ומרפסת שמש</figcaption></figure>
+  <figure><img src="https://placehold.co/600x450/D8D3C6/8A8B80?text=+" alt="מטבח"><figcaption>מטבח משופץ</figcaption></figure>
+  <figure><img src="https://placehold.co/600x450/D8D3C6/8A8B80?text=+" alt="חדר הורים"><figcaption>חדר הורים</figcaption></figure>
+  <figure><img src="https://placehold.co/600x450/D8D3C6/8A8B80?text=+" alt="חדר רחצה"><figcaption>חדר רחצה</figcaption></figure>
+  <figure><img src="https://placehold.co/600x450/D8D3C6/8A8B80?text=+" alt="מרפסת"><figcaption>מרפסת דרומית</figcaption></figure>
 </div>
 
-<section class="map">
+<!-- ============================================================
+     בלוק ההעשרה. זה מה שמבדל את המוצר, ולכן הוא מקבל
+     היפוך צבע מלא ואת הטיפול הטיפוגרפי הכי חזק בעמוד.
+     ============================================================ -->
+<section class="enrich reveal">
+  <h2>מה יש <span class="h2-num">מסביב</span></h2>
+  <p class="enrich-sub">מרחקי הליכה אמיתיים, לא מרחק אווירי.</p>
+
+  <div class="egroup">
+    <div class="egroup-head">
+      <h3>תחבורה</h3>
+      <span class="count"><bdi>3</bdi> קווי אוטובוס ברדיוס <bdi>300</bdi> מ׳</span>
+    </div>
+    <div class="erow">
+      <div class="mins"><bdi>7</bdi><small>דקות</small></div>
+      <div class="who"><b>הרכבת הקלה, תחנת קוממיות</b><em>הקו האדום</em></div>
+    </div>
+    <div class="erow">
+      <div class="mins"><bdi>12</bdi><small>דקות</small></div>
+      <div class="who"><b>רכבת ישראל, חולון־וולפסון</b><em>קו החוף</em></div>
+    </div>
+  </div>
+
+  <div class="egroup">
+    <div class="egroup-head">
+      <h3>חינוך</h3>
+      <span class="count"><bdi>6</bdi> מוסדות ברדיוס <bdi>1</bdi> ק״מ</span>
+    </div>
+    <div class="erow">
+      <div class="mins"><bdi>4</bdi><small>דקות</small></div>
+      <div class="who"><b>גן עירוני שקד</b><em>גן ילדים · עירוני</em></div>
+    </div>
+    <div class="erow">
+      <div class="mins"><bdi>9</bdi><small>דקות</small></div>
+      <div class="who"><b>בית ספר הרצל</b><em>יסודי · ממלכתי · א׳–ו׳</em></div>
+    </div>
+    <div class="erow">
+      <div class="mins"><bdi>16</bdi><small>דקות</small></div>
+      <div class="who"><b>תיכון קריית שרת</b><em>על־יסודי · ממלכתי</em></div>
+    </div>
+  </div>
+
+  <div class="egroup">
+    <div class="egroup-head">
+      <h3>מסביב</h3>
+      <span class="count"><bdi>14</bdi> מקומות ברדיוס <bdi>500</bdi> מ׳</span>
+    </div>
+    <div class="erow">
+      <div class="mins"><bdi>3</bdi><small>דקות</small></div>
+      <div class="who"><b>סופרמרקט</b><em>הקרוב ביותר</em></div>
+    </div>
+    <div class="erow">
+      <div class="mins"><bdi>6</bdi><small>דקות</small></div>
+      <div class="who"><b>פארק פרס</b><em>פארק שכונתי</em></div>
+    </div>
+    <div class="erow">
+      <div class="mins"><bdi>11</bdi><small>דקות</small></div>
+      <div class="who"><b>היכל התרבות חולון</b><em>תרבות</em></div>
+    </div>
+  </div>
+
+  <p class="source">
+    מאומת · משרד התחבורה, נכון ל־<bdi>08/2026</bdi><br>
+    מאומת · משרד החינוך, נכון ל־<bdi>07/2026</bdi><br>
+    זמני הליכה מחושבים על רשת הדרכים בפועל.
+  </p>
+</section>
+
+<section class="map reveal">
   <h2>מיקום</h2>
-  <img src="https://placehold.co/800x400/E4E0D6/6E6F66?text=+" alt="מפת האזור">
+  <img src="https://placehold.co/1000x500/D8D3C6/8A8B80?text=+" alt="מפת האזור">
   <div class="addr">סוקולוב <bdi>42</bdi>, חולון</div>
 </section>
 
-<section>
-  <div class="seller">
-    <div class="avatar"></div>
+<section class="seller">
+  <div class="seller-row">
+    <div class="avatar" aria-hidden="true"></div>
     <div>
-      <div class="seller-name">ליאור</div>
-      <div class="seller-role">בעל הדירה</div>
+      <div class="seller-name">ליאור כהן</div>
+      <div class="seller-role">מתווך מורשה · חולון והסביבה</div>
     </div>
   </div>
 </section>
 
 <div class="cta-dock">
-  <a class="cta" href="https://wa.me/972500000000?text=%D7%94%D7%99%D7%99%2C%20%D7%A8%D7%90%D7%99%D7%AA%D7%99%20%D7%90%D7%AA%20%D7%94%D7%93%D7%99%D7%A8%D7%94%20%D7%91%D7%A1%D7%95%D7%A7%D7%95%D7%9C%D7%95%D7%91%20%D7%95%D7%90%D7%A9%D7%9E%D7%97%20%D7%9C%D7%A4%D7%A8%D7%98%D7%99%D7%9D">
+  <a class="cta" href="https://wa.me/972500000000?text=%D7%94%D7%99%D7%99%2C%20%D7%A8%D7%90%D7%99%D7%AA%D7%99%20%D7%90%D7%AA%20%D7%94%D7%93%D7%99%D7%A8%D7%94%20%D7%91%D7%A1%D7%95%D7%A7%D7%95%D7%9C%D7%95%D7%91">
     שליחת הודעה בוואטסאפ
   </a>
 </div>
 
 <footer>
-  נבנה ב<a href="#">מרפסת</a>
+  נבנה ב<a href="https://hasivuv.com">סיבוב</a>
+  <div class="odbl">נתוני מקומות מבוססים על OpenStreetMap, ברישיון ODbL</div>
 </footer>
 
 </body>

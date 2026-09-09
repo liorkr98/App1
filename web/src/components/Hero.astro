@@ -24,11 +24,19 @@ const place = location?.street ? `${location.street}, ${location.city}` : (locat
 
 const lines = title.split('\n');
 ---
+{/*
+  The LCP element. It is 84svh of the first screen, so it carries
+  fetchpriority="high" and explicit dimensions, and it is never lazy.
+
+  The parallax lives entirely in CSS (.hero-img, behind @supports
+  animation-timeline). Nothing here knows the image moves.
+*/}
 <header class="hero">
   <img
+    class="hero-img"
     src={largest(cover, HERO_WIDTHS)}
     srcset={srcset(cover, HERO_WIDTHS) || undefined}
-    sizes="(max-width: 600px) 100vw, 600px"
+    sizes="(max-width: 620px) 100vw, 620px"
     width={cover.width}
     height={cover.height}
     alt={cover.alt ?? ''}

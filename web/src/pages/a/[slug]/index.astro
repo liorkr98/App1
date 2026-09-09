@@ -12,6 +12,7 @@ import Prose from '../../../components/Prose.astro';
 import SellerBlock from '../../../components/SellerBlock.astro';
 import { CATEGORY_PRESENTATION } from '../../../lib/category-presentation';
 import { listings } from '../../../lib/listings';
+import { perUnitPrice } from '../../../lib/price';
 
 /**
  * ONE template for both categories.
@@ -38,7 +39,14 @@ const heading = listing.category === 'property' ? 'על הדירה' : 'על הר
 
 // A vehicle has no street, so no map. See DESIGN-CONTRACT §5.4.
 const showMap = Boolean(listing.location?.street);
-const mapImageUrl = 'https://placehold.co/800x400/E4E0D6/6E6F66?text=+';
+const mapImageUrl = '/sample/frame.png';
+
+/**
+ * ₪ per m², derived from the price and whichever fact the schema marks as the
+ * denominator. A vehicle has no such fact and gets nothing — inventing a
+ * price per kilometre would be worse than an empty line.
+ */
+const perUnit = perUnitPrice(listing.category, listing.facts, listing.price);
 
 /**
  * Licence attributions, carried by the data rather than the template.
@@ -53,16 +61,20 @@ const attributions =
 <BaseListing
   listing={listing}
   ogFactKeys={presentation.ogFactKeys}
-  heroRatio={presentation.heroRatio}
-  heroVeilPad={presentation.heroVeilPad}
+  heroHeight={presentation.heroHeight}
 >
   <Hero cover={listing.media.cover} title={listing.title} location={listing.location} />
 
-  <PriceBar price={listing.price} listPrice={listing.listPrice} priceNote={listing.priceNote} />
+  <PriceBar
+    price={listing.price}
+    listPrice={listing.listPrice}
+    priceNote={listing.priceNote}
+    perUnit={perUnit}
+  />
 
   <FactsGrid category={listing.category} facts={listing.facts} />
 
-  <section>
+  <section class="reveal">
     <h2>{heading}</h2>
     {paragraphs.map((paragraph, index) => (
       <p style={index > 0 ? 'margin-top:.8rem' : undefined}><Prose text={paragraph} /></p>

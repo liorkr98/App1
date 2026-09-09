@@ -11,18 +11,26 @@ interface Props {
 const { enrichment } = Astro.props;
 
 /**
- * ONE section class for both categories, deliberately.
+ * The centrepiece (Stage B2 §4).
  *
- * Exactly four divergences are permitted between the property and vehicle
- * templates (DESIGN-CONTRACT §5), and a section present on one page but absent
- * from the other is a fifth — scripts/verify-template-divergences.mjs fails
- * the build on it. So `section.enrich` renders on both, and what differs is
- * the CONTENT, exactly as the price-note divergence already does.
+ * Full colour inversion to --ink-deep. This is the product differentiator, so
+ * it gets the strongest treatment on the page — and the dark block also
+ * breaks the rhythm of an otherwise light page, which is what stops the whole
+ * thing reading as one long template.
  *
- * Property gets proximity: what is around this address. Vehicle gets the
- * verified specification and ownership history, because a car has no fixed
- * location and pinning one to an address is the theft risk the design already
- * refuses.
+ * THE WALK-TIME NUMBER IS THE ANCHOR OF EACH ROW, NOT THE PLACE NAME. It is
+ * set in Frank Ruhl Libre at 1.45rem in --olive-lift, in a fixed 3.6rem
+ * column at the start of the row; the name is 600-weight body text beside it.
+ * A reader scanning this block should be reading distances and only then
+ * finding out what is at that distance — "seven minutes to the light rail" is
+ * the sentence they came for, not "the light rail, which is seven minutes".
+ *
+ * ONE section class for both categories, deliberately. Exactly four
+ * divergences are permitted (DESIGN-CONTRACT §5) and a section present on one
+ * page but absent from the other is a fifth —
+ * scripts/verify-template-divergences.mjs fails the build on it. So
+ * `section.enrich` renders on both and the CONTENT differs, exactly as the
+ * price-note divergence already does.
  */
 
 const isProperty = enrichment.category === 'property';
@@ -30,17 +38,52 @@ const isProperty = enrichment.category === 'property';
 const transit = isProperty ? orderTransit(enrichment.transit) : [];
 const schools = isProperty ? enrichment.schools : [];
 const placeGroups = isProperty ? groupPlaces(enrichment.places) : [];
-const summary = isProperty ? enrichment.summary : undefined;
 
 const ownership = !isProperty ? enrichment.ownershipHistory : [];
 
 /**
- * Every citation on the section, once each.
+ * Rows shown individually per group.
  *
- * A source that has never successfully synced carries an empty date and is
- * dropped by citations() rather than printed as "נכון ל־" with nothing after
- * it — an empty date is worse than no citation.
+ * Three is the number that fits on a phone screen without the block becoming
+ * a directory. What is left over is counted in the group head rather than
+ * dropped silently — a reader who sees "ועוד 4" knows the list is a selection
+ * and not the whole truth, which is the same honesty the fact grid applies to
+ * an unanswered field.
  */
+const MAX_ROWS = 3;
+
+/** Month as the register holds it: YYYY-MM, shown as MM/YYYY. */
+const asMonth = (value: string): string => {
+  const [year, month] = value.split('-');
+  return year && month ? `${month}/${year}` : value;
+};
+
+const yearOf = (value: string): string => value.split('-')[0] ?? value;
+
+/**
+ * How long a closed ownership period lasted, in whole years.
+ *
+ * Only for CLOSED periods. An open one is measured against today, which on a
+ * statically built page means measured against the build — the number would
+ * be wrong the following year and nothing would say so. Open periods show the
+ * year they started instead, which never goes stale.
+ */
+const yearsBetween = (from: string, to: string): number => {
+  const [fromYear, fromMonth] = from.split('-').map(Number);
+  const [toYear, toMonth] = to.split('-').map(Number);
+  if (!fromYear || !toYear) return 1;
+
+  const months = (toYear - fromYear) * 12 + ((toMonth ?? 1) - (fromMonth ?? 1));
+
+  // Floors at one. A period of eight months is not "0 years" — that reads as
+  // a rendering fault, and rounding it to one is the honest summary of a
+  // figure whose whole job is to be scanned.
+  return Math.max(1, Math.round(months / 12));
+};
+
+/** Hebrew has a singular. שנה for one, שנים for the rest. */
+const yearsLabel = (years: number): string => (years === 1 ? 'שנה' : 'שנים');
+
 const sources = isProperty
   ? citations([...transit, ...schools, ...enrichment.places])
   : citations([
@@ -48,118 +91,133 @@ const sources = isProperty
       ...(enrichment.testSource ? [enrichment.testSource] : []),
       ...ownership,
     ]);
-
-/** Month as the register holds it: YYYY-MM, shown as MM/YYYY. */
-const asMonth = (value: string): string => {
-  const [year, month] = value.split('-');
-  return year && month ? `${month}/${year}` : value;
-};
 ---
-<section class="enrich">
-  <h2>{isProperty ? 'מה יש בסביבה' : 'מה מאומת'}</h2>
-
-  {isProperty && summary && (summary.restaurantsWithin500m || summary.nearestGrocery || summary.nearestPark) && (
-    <p class="enrich-lede">
-      {summary.nearestGrocery && (
-        <Fragment>מכולת במרחק <bdi>{summary.nearestGrocery.walkMinutes}</bdi> דקות הליכה. </Fragment>
-      )}
-      {summary.nearestPark && (
-        <Fragment>פארק במרחק <bdi>{summary.nearestPark.walkMinutes}</bdi> דקות הליכה. </Fragment>
-      )}
-      {summary.restaurantsWithin500m && (
-        <Fragment><bdi>{summary.restaurantsWithin500m}</bdi> מסעדות ברדיוס <bdi>500</bdi> מ׳.</Fragment>
-      )}
-    </p>
-  )}
+<section class="enrich reveal">
+  <h2>{isProperty ? <Fragment>מה יש <span class="h2-num">מסביב</span></Fragment> : <Fragment>מה <span class="h2-num">מאומת</span></Fragment>}</h2>
+  <p class="enrich-sub">
+    {isProperty ? 'מרחקי הליכה אמיתיים, לא מרחק אווירי.' : 'מה שרשום במרשם הציבורי, עם התאריך שבו היה נכון.'}
+  </p>
 
   {transit.length > 0 && (
-    <div class="enrich-group">
-      <h3>תחבורה ציבורית</h3>
-      <ul>
-        {transit.map((stop) => (
-          <li>
-            <span class="enrich-name"><Prose text={stop.name} /></span>
-            <span class="enrich-meta">
+    <div class="egroup">
+      <div class="egroup-head">
+        <h3>תחבורה</h3>
+        {transit.length > MAX_ROWS && (
+          <span class="count">ועוד <bdi>{transit.length - MAX_ROWS}</bdi></span>
+        )}
+      </div>
+      {transit.slice(0, MAX_ROWS).map((stop) => (
+        <div class="erow">
+          <div class="mins"><bdi>{stop.walkMinutes}</bdi><small>דקות</small></div>
+          <div class="who">
+            <b><Prose text={stop.name} /></b>
+            <em>
               {modeLabel(stop.mode)}
-              {stop.routes.length > 0 && (
-                <Fragment> · <bdi>{stop.routes.join(', ')}</bdi></Fragment>
-              )}
-              {' · '}<bdi>{stop.walkMinutes}</bdi> דקות הליכה
-            </span>
-          </li>
-        ))}
-      </ul>
+              {stop.routes.length > 0 && <Fragment> · <bdi>{stop.routes.join(', ')}</bdi></Fragment>}
+            </em>
+          </div>
+        </div>
+      ))}
     </div>
   )}
 
   {schools.length > 0 && (
-    <div class="enrich-group">
-      <h3>חינוך</h3>
-      <ul>
-        {schools.map((school) => (
-          <li>
-            <span class="enrich-name"><Prose text={school.name} /></span>
-            <span class="enrich-meta">
-              {[school.type, school.stream, school.gradeSpan].filter(Boolean).join(' · ')}
-              {' · '}<bdi>{school.walkMinutes}</bdi> דקות הליכה
-            </span>
-          </li>
-        ))}
-      </ul>
+    <div class="egroup">
+      <div class="egroup-head">
+        <h3>חינוך</h3>
+        {schools.length > MAX_ROWS && (
+          <span class="count">ועוד <bdi>{schools.length - MAX_ROWS}</bdi></span>
+        )}
+      </div>
+      {schools.slice(0, MAX_ROWS).map((school) => (
+        <div class="erow">
+          <div class="mins"><bdi>{school.walkMinutes}</bdi><small>דקות</small></div>
+          <div class="who">
+            <b><Prose text={school.name} /></b>
+            <em>{[school.type, school.stream, school.gradeSpan].filter(Boolean).join(' · ')}</em>
+          </div>
+        </div>
+      ))}
     </div>
   )}
 
   {placeGroups.map((group) => (
-    <div class="enrich-group">
-      <h3>{group.label}</h3>
-      <ul>
-        {group.places.map((place) => (
-          <li>
-            <span class="enrich-name"><Prose text={place.name} /></span>
-            <span class="enrich-meta"><bdi>{place.walkMinutes}</bdi> דקות הליכה</span>
-          </li>
-        ))}
-      </ul>
+    <div class="egroup">
+      <div class="egroup-head">
+        <h3>{group.label}</h3>
+        {group.places.length > MAX_ROWS && (
+          <span class="count">ועוד <bdi>{group.places.length - MAX_ROWS}</bdi></span>
+        )}
+      </div>
+      {group.places.slice(0, MAX_ROWS).map((place) => (
+        <div class="erow">
+          <div class="mins"><bdi>{place.walkMinutes}</bdi><small>דקות</small></div>
+          <div class="who"><b><Prose text={place.name} /></b></div>
+        </div>
+      ))}
     </div>
   ))}
 
   {!isProperty && enrichment.testValidUntil && (
-    <div class="enrich-group">
-      <h3>טסט</h3>
-      <ul>
-        <li>
-          <span class="enrich-name">בתוקף עד <bdi>{asMonth(enrichment.testValidUntil)}</bdi></span>
-        </li>
-      </ul>
+    <div class="egroup">
+      <div class="egroup-head"><h3>טסט</h3></div>
+      <div class="erow">
+        <div class="mins"><bdi>{yearOf(enrichment.testValidUntil)}</bdi><small>עד</small></div>
+        <div class="who">
+          <b>טסט בתוקף</b>
+          <em>עד <bdi>{asMonth(enrichment.testValidUntil)}</bdi></em>
+        </div>
+      </div>
     </div>
   )}
 
   {ownership.length > 0 && (
-    <div class="enrich-group">
-      <h3>היסטוריית בעלות</h3>
-      <ul>
-        {ownership.map((period) => (
-          <li>
-            <span class="enrich-name">{period.type}</span>
-            <span class="enrich-meta">
+    <div class="egroup">
+      <div class="egroup-head">
+        <h3>בעלות</h3>
+        {ownership.length > MAX_ROWS && (
+          <span class="count">ועוד <bdi>{ownership.length - MAX_ROWS}</bdi></span>
+        )}
+      </div>
+      {ownership.slice(0, MAX_ROWS).map((period) => (
+        <div class="erow">
+          <div class="mins">
+            {period.toMonth ? (
+              <Fragment>
+                <bdi>{yearsBetween(period.fromMonth, period.toMonth)}</bdi>
+                <small>{yearsLabel(yearsBetween(period.fromMonth, period.toMonth))}</small>
+              </Fragment>
+            ) : (
+              <Fragment><bdi>{yearOf(period.fromMonth)}</bdi><small>מאז</small></Fragment>
+            )}
+          </div>
+          <div class="who">
+            <b>{period.type}</b>
+            <em>
               <bdi>{asMonth(period.fromMonth)}</bdi>
               {period.toMonth ? <Fragment> – <bdi>{asMonth(period.toMonth)}</bdi></Fragment> : ' – היום'}
-            </span>
-          </li>
-        ))}
-      </ul>
+            </em>
+          </div>
+        </div>
+      ))}
     </div>
   )}
 
+  {/*
+    Source attribution at the FOOT of the block (Stage B2 §4). One line per
+    body, never paraphrased as "official data": a citation a reader can judge
+    is the difference between provenance and a claim. A source that has never
+    synced carries an empty date and citations() drops it rather than printing
+    נכון ל־ with nothing after it.
+  */}
   {sources.length > 0 && (
-    <p class="enrich-src">
-      {sources.map((source, index) => (
+    <p class="source">
+      {sources.map((source) => (
         <Fragment>
-          {index > 0 && ' · '}
-          <span class="verified">מאומת</span>{' '}
-          <Prose text={source.sourceName} /> · נכון ל־<bdi>{source.sourceDate}</bdi>
+          מאומת · <Prose text={source.sourceName} />, נכון ל־<bdi>{source.sourceDate}</bdi><br />
         </Fragment>
       ))}
+      {isProperty && 'זמני הליכה מחושבים על רשת הדרכים בפועל.'}
     </p>
   )}
 </section>

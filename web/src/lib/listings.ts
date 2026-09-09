@@ -87,10 +87,14 @@ const propertyEnrichment: PropertyEnrichment = {
     { id: 't1', name: 'וולפסון', mode: 'light_rail', routes: ['הקו הסגול'], walkMinutes: 7, ...{ sourceName: 'משרד התחבורה', sourceDate: '2026-09-01' } },
     { id: 't2', name: 'סוקולוב/ההסתדרות', mode: 'bus', routes: ['3', '5', '89'], walkMinutes: 3, ...{ sourceName: 'משרד התחבורה', sourceDate: '2026-09-01' } },
     { id: 't3', name: 'תחנת רכבת חולון', mode: 'train', routes: ['רכבת ישראל'], walkMinutes: 18, ...{ sourceName: 'משרד התחבורה', sourceDate: '2026-09-01' } },
+    { id: 't4', name: 'ההסתדרות/אילת', mode: 'bus', routes: ['1', '12'], walkMinutes: 5, ...{ sourceName: 'משרד התחבורה', sourceDate: '2026-09-01' } },
+    { id: 't5', name: 'קניון חולון', mode: 'bus', routes: ['3', '54'], walkMinutes: 9, ...{ sourceName: 'משרד התחבורה', sourceDate: '2026-09-01' } },
   ],
   schools: [
     { id: 's1', name: 'בית ספר יסודי אלונים', type: 'בית ספר יסודי', stream: 'ממלכתי', gradeSpan: 'א׳–ו׳', walkMinutes: 6, ...{ sourceName: 'משרד החינוך', sourceDate: '2026-08-14' } },
     { id: 's2', name: 'גן ילדים רימון', type: 'גן ילדים', stream: 'ממלכתי', walkMinutes: 4, ...{ sourceName: 'משרד החינוך', sourceDate: '2026-08-14' } },
+    { id: 's3', name: 'חטיבת ביניים קריית שרת', type: 'חטיבת ביניים', stream: 'ממלכתי', gradeSpan: 'ז׳–ט׳', walkMinutes: 11, ...{ sourceName: 'משרד החינוך', sourceDate: '2026-08-14' } },
+    { id: 's4', name: 'תיכון עירוני א׳', type: 'תיכון', stream: 'ממלכתי', walkMinutes: 16, ...{ sourceName: 'משרד החינוך', sourceDate: '2026-08-14' } },
   ],
   places: [
     { id: 'p1', name: 'שופרסל שלי', category: 'grocery', walkMinutes: 5, ...{ sourceName: 'OpenStreetMap', sourceDate: '2026-09-05' } },

@@ -1,5 +1,6 @@
 ---
 import { ils } from '../lib/format';
+import type { PerUnitPrice } from '../lib/price';
 
 interface Props {
   price: number;
@@ -7,21 +8,40 @@ interface Props {
   listPrice?: number;
   /** Free text used when there is no listPrice. */
   priceNote?: string;
+  /** Derived, never declared. See lib/price.ts. */
+  perUnit?: PerUnitPrice;
 }
 
-const { price, listPrice, priceNote } = Astro.props;
+const { price, listPrice, priceNote, perUnit } = Astro.props;
+
+/**
+ * DIVERGENCE #2 (DESIGN-CONTRACT §5.2) — and it is still driven by DATA,
+ * never by listing.category.
+ *
+ * A vehicle happens to carry a book price and a property happens to carry a
+ * move-in note and a price per m², but either category could carry any of
+ * them: the branches below ask what the listing HAS, not what it IS. That is
+ * what keeps this one component instead of two, and what stops the note
+ * becoming a fifth divergence.
+ */
+const note = listPrice !== undefined ? `מחיר מחירון: ` : priceNote;
 ---
 <div class="price-bar">
   <div class="price"><bdi>{ils(price)}</bdi></div>
-  {
-    /* Branches on the DATA, never on listing.category. A vehicle happens to
-       carry a book price and a property happens to carry a move-in note, but
-       either category could carry either — so this stays one component and
-       does not become a fifth divergence. */
-    listPrice !== undefined ? (
-      <div class="price-note">מחיר מחירון: <bdi>{ils(listPrice)}</bdi></div>
-    ) : priceNote ? (
-      <div class="price-note">{priceNote}</div>
-    ) : null
-  }
+
+  {(note || perUnit) && (
+    <div class="price-note label">
+      {listPrice !== undefined ? (
+        <Fragment>{note}<bdi>{ils(listPrice)}</bdi></Fragment>
+      ) : (
+        note
+      )}
+
+      {note && perUnit && <br />}
+
+      {perUnit && (
+        <Fragment><bdi>{perUnit.amount}</bdi> {perUnit.per}</Fragment>
+      )}
+    </div>
+  )}
 </div>
