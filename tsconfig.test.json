@@ -9,6 +9,11 @@
   //
   // The shared domain has had NO test runner since jest was removed with the
   // React Native app. That was a real regression and this restores it.
+  //
+  // ONE CONSTRAINT THIS IMPOSES: inside src/, the "@/" alias is for TYPE
+  // imports only. tsc does not rewrite path mappings in emitted JavaScript,
+  // so a VALUE imported through "@/" resolves at compile time and then fails
+  // at runtime under node:test. Use a relative specifier for values.
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "module": "NodeNext",

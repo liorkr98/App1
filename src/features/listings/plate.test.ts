@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { factsFromSchema } from '@/types/listing.js';
+// RELATIVE, not '@/'. A path mapping is compile-time only — tsc does not
+// rewrite it in the emitted JavaScript, so Node cannot resolve '@/' when
+// node:test runs the output. Every other '@/' import in src/ is `import
+// type` and therefore erased, which is why this is the first one to break.
+import { factsFromSchema } from '../../types/listing.js';
 import { vehicleSchema } from './schemas/index.js';
 import {
   attachLookup,
