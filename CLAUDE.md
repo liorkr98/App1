@@ -26,6 +26,14 @@ RTL. English is a secondary locale, never the design baseline.
 anyone who wants to copy it. Treat the enrichment layer as the product and the
 page as its presentation.
 
+**Product:** סיבוב. **Domain:** hasivuv.com.
+
+**The primary audience is Israeli estate agents, not private sellers.** The
+Justice Ministry's public register lists 22,995 licensed brokers with contact
+details — a distribution list almost no consumer product starts with. Private
+sellers are secondary. When a design decision trades one against the other,
+**agents win.**
+
 ---
 
 ## 2. Stack — do not substitute
@@ -36,7 +44,8 @@ page as its presentation.
 | Hosting | **Cloudflare Pages** |
 | Editor | **React island** at `/new`, mobile-first |
 | Language | **TypeScript**, `strict: true` everywhere |
-| Database | **Supabase** (Postgres, Auth, Storage, Realtime, RLS) |
+| Database | **Supabase** (Postgres, Auth, Realtime, RLS) |
+| Image storage | **Cloudflare R2** — not Supabase Storage. See below. |
 | Spatial | **PostGIS** for proximity queries |
 | Routing | **OSRM**, foot profile, self-hosted |
 | Worker | **Fly.io** container, Postgres job queue |
@@ -53,6 +62,28 @@ EAS project in `.eas/workflows/`, which was the original gate until the free
 plan's CI minutes ran out on 9 September 2026. Kept as a fallback and as the
 only thing that could build a native app if one ever returns. Neither is a
 stack choice.
+
+### Three exclusions, each with a tempting wrong answer
+
+**Images live in Cloudflare R2, not Supabase Storage.** R2 charges nothing for
+egress. This is an image-heavy product whose every page is forwarded to dozens
+of people, so egress is the cost line that grows fastest — and it grows with
+success, which is the worst shape a cost can have. Supabase keeps Postgres,
+Auth, Realtime and RLS.
+
+**Never propose Stripe.** It does not support ILS as a base currency for an
+Israeli business: they cannot settle to a shekel account directly. Israeli
+sellers also need Bit, local instalments, and a compliant tax invoice per
+transaction, none of which Stripe provides. The provider will be an Israeli
+PSP.
+
+**Never Google Distance Matrix, and never straight-line distance as a
+substitute for routing.** Distance Matrix is a per-listing cost forever, and
+fixed enrichment cost is this product's main economic advantage over the
+previous plan. Straight-line distance lies in Israel — a motorway or a wadi
+turns 300 metres into a twenty-minute walk, and the buyer discovers that on
+foot. The exclusion is written down because the fallback is tempting on the
+day OSRM is inconvenient.
 
 Do not introduce a dependency without asking. Justify: what it does, size,
 last publish date, and why the stack above cannot do it.
@@ -142,7 +173,16 @@ numerals, phone.
 
 When in doubt: does it depict a real object? Then it does not flip.
 
-### 4.4 Definition of done for any page
+### 4.4 Drag ordering
+
+**In RTL the FIRST item is the RIGHTMOST. Index 0 is on the right.**
+
+Every model gets this wrong, and the seller only finds out after they have
+sent the link — by which point the page has been seen. Photo reordering
+carries a test that reorders four photos and asserts the published order
+matches what the seller arranged.
+
+### 4.5 Definition of done for any page
 
 Checked in Hebrew with: long Hebrew strings, a mixed Hebrew+English string, a
 price, a phone number, and a date. Screenshots in Hebrew, not English.
@@ -168,7 +208,33 @@ reference HTML files are the contract — port them, do not redesign them.
 
 ---
 
-## 6. Provenance — the trust proposition
+## 6. The WhatsApp preview card
+
+**This is the highest-leverage code in the product.** The page is distributed
+by link. If the card is poor nobody taps, and nothing downstream matters.
+
+```
+og:image        1200x630, WebP, under 300KB, ABSOLUTE url
+og:locale       he_IL
+og:title        "<summary> · <price>"
+og:description  one line of facts, no marketing language
+```
+
+**The content hash goes in the FILENAME, never a query parameter:**
+
+```
+/og/{slug}-{hash}.webp
+```
+
+Some scrapers strip query strings, and WhatsApp caches previews hard — it will
+keep serving a stale card long after the seller has edited their listing.
+`?v=2` busts nothing; a new filename is a new resource. This is the difference
+between a preview that updates and one that does not, and it is not something
+you can discover by reading the code.
+
+---
+
+## 7. Provenance — the trust proposition
 
 Read `PRD.md §5`. Those rules are **legal, not stylistic.**
 
@@ -183,9 +249,36 @@ date it was current.
 - Missing enrichment is normal. A group with no results is **omitted** — never
   an empty block, a placeholder, or an error.
 
+### Absent is not unanswered
+
+| State | Meaning | Renders |
+|---|---|---|
+| `present: false` | the seller confirmed the feature is absent | greyed at 35%, showing **אין** |
+| `value: null` | nobody answered | omitted entirely; the grid reflows |
+
+Collapsing these two turns "we do not know" into "no". That distinction is why
+the page reads as a description rather than an advertisement. **Never collapse
+them.**
+
+### Indexing is off by default
+
+`robots noindex` by default, controlled by `listing.indexable`, default
+`false`. A private seller rarely wants their home address permanently
+searchable; an agent wants the organic traffic. **Do not decide for them.**
+
+### Template divergences
+
+Exactly **four** divergences are permitted between the property and vehicle
+templates — hero aspect-ratio, `.price-note` content, `section.flaws` (vehicle
+only), `section.map` (property only). A fifth is a porting bug.
+
+The full record, with the CSS of each, is `docs/DESIGN-CONTRACT.md` §5, and
+`scripts/verify-template-divergences.mjs` asserts it against the built HTML on
+every CI run.
+
 ---
 
-## 7. Billing — read carefully, this is the money
+## 8. Billing — read carefully, this is the money
 
 You may build the paywall. **You may not decide entitlement.**
 
@@ -200,9 +293,29 @@ summary:
 network failure. The payments provider is undecided — build behind an
 interface with one adapter and say what the interface needs.
 
+### The product rules
+
+**The free tier is create and preview only. Publishing requires payment.** The
+seller goes through the whole flow and sees their finished page — that is the
+conversion moment — but cannot share a link until they pay. A free published
+page would be the entire product given away: someone selling one apartment
+would take it and never come back.
+
+**Metering is LISTINGS, not images.** Cap images per listing at 25. The user
+thinks in listings; our cost is in images; the cap is what bridges the two.
+
+**No free trial on subscription tiers.** A private seller would take the trial,
+publish their one listing and churn — cannibalising the single-listing purchase
+that is the correct product for them.
+
+**Every published page carries נבנה בסיבוב in the footer**, removable only on
+agent tiers. This is the viral loop: a listing page is forwarded to 30–80
+people who are by definition interested in buying something. Small, elegant,
+clickable. Not obnoxious and not invisible.
+
 ---
 
-## 8. Data and security
+## 9. Data and security
 
 - **RLS is mandatory** on every Supabase table. A table without a policy is a
   data leak.
@@ -217,7 +330,7 @@ interface with one adapter and say what the interface needs.
 
 ---
 
-## 9. Licensing
+## 10. Licensing
 
 **OpenStreetMap data is ODbL.** Attribution is a licence condition, not a
 courtesy: any page displaying OSM-derived data carries it in the footer, in
@@ -230,7 +343,7 @@ leave it out.
 
 ---
 
-## 10. How to work
+## 11. How to work
 
 1. **Read `RESEARCH.md` and `PRD.md` first.**
 2. **Plan before coding.** For anything beyond a single file, state the plan
@@ -248,24 +361,27 @@ leave it out.
 
 ---
 
-## 11. Never do these
+## 12. Never do these
 
 - A physical `left`/`right` in CSS (§4.1)
+- Propose Stripe (§2)
+- Use Google Distance Matrix or straight-line distance for walking time (§2)
+- Collapse `present: false` into `value: null` (§7)
 - A number outside `<bdi>` (§4.2)
 - Hardcode a user-facing string outside `locales/` or a category schema
 - Create a Supabase table without an RLS policy
-- Decide subscription entitlement without human review (§7)
-- Display OSM data without ODbL attribution (§9)
-- Scrape a commercial portal (§9)
-- Publish a licence plate, or present data as a valuation (§6)
-- Render an empty enrichment block instead of omitting it (§6)
+- Decide subscription entitlement without human review (§8)
+- Display OSM data without ODbL attribution (§10)
+- Scrape a commercial portal (§10)
+- Publish a licence plate, or present data as a valuation (§7)
+- Render an empty enrichment block instead of omitting it (§7)
 - Query an external source at page render time — ingestion is scheduled, the
   page reads only from us
 - Claim a task is complete without running typecheck and lint
 
 ---
 
-## 12. Commands
+## 13. Commands
 
 ```bash
 npm run typecheck      # shared domain
