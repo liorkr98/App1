@@ -50,16 +50,20 @@ function variant(url: string, width: number): string {
  * browser the same file is both 400w and 1200w is a lie it will act on, and
  * the caller omits the attribute instead.
  */
-export function srcset(url: string, widths: readonly number[]): string {
-  const composed = widths.map((width) => variant(url, width));
-  if (composed.every((candidate) => candidate === url)) return '';
+export function srcset(image: Image, widths: readonly number[]): string {
+  if (image.variants !== true) return '';
+
+  const composed = widths.map((width) => variant(image.url, width));
+  if (composed.every((candidate) => candidate === image.url)) return '';
 
   return composed.map((candidate, index) => `${candidate} ${widths[index]}w`).join(', ');
 }
 
-/** Largest variant, used as the src fallback. */
-export function largest(url: string, widths: readonly number[]): string {
-  return variant(url, widths[widths.length - 1] ?? 800);
+/** Largest variant, or the original when none were generated. */
+export function largest(image: Image, widths: readonly number[]): string {
+  if (image.variants !== true) return image.url;
+
+  return variant(image.url, widths[widths.length - 1] ?? 800);
 }
 
 /**

@@ -12,8 +12,8 @@ const { images } = Astro.props;
   {images.map((image) => (
     <figure>
       <img
-        src={largest(image.url, GALLERY_WIDTHS)}
-        srcset={srcset(image.url, GALLERY_WIDTHS) || undefined}
+        src={largest(image, GALLERY_WIDTHS)}
+        srcset={srcset(image, GALLERY_WIDTHS) || undefined}
         sizes="78vw"
         width={image.width}
         height={image.height}

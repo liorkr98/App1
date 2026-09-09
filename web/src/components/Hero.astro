@@ -26,8 +26,8 @@ const lines = title.split('\n');
 ---
 <header class="hero">
   <img
-    src={largest(cover.url, HERO_WIDTHS)}
-    srcset={srcset(cover.url, HERO_WIDTHS) || undefined}
+    src={largest(cover, HERO_WIDTHS)}
+    srcset={srcset(cover, HERO_WIDTHS) || undefined}
     sizes="(max-width: 600px) 100vw, 600px"
     width={cover.width}
     height={cover.height}

@@ -201,6 +201,22 @@ export interface Image {
   blurhash?: string;
   /** Hebrew figcaption. Distinct from alt: alt describes, caption names. */
   caption?: string;
+
+  /**
+   * Whether `{base}-{width}.webp` files exist alongside this URL.
+   *
+   * DEFAULTS TO FALSE, and the direction of that default is the point. No URL
+   * can be inspected to find out — an extension says what a file IS, never
+   * what was generated beside it. When the code guessed from the extension it
+   * composed variants that had never been written, and every image on both
+   * sample pages was a dead link while the build stayed green.
+   *
+   * So the producer declares it. The Stage D pipeline sets it true when it
+   * has actually emitted the variants; anything else omits it and gets the
+   * original URL with no srcset, which is correct and merely unoptimised.
+   * The failure mode of forgetting is a larger download, not a broken image.
+   */
+  variants?: boolean;
 }
 
 export interface Media {

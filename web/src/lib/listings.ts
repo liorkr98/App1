@@ -55,7 +55,23 @@ function answer(
   });
 }
 
-const HOST = 'https://placehold.co';
+/**
+ * The stand-in photograph, served from our own origin.
+ *
+ * Was placehold.co, which renders the pixel dimensions across the image — so
+ * the homepage preview led with "900 × 1125" in a third-party service's
+ * typeface. A local SVG is one request to us, weighs almost nothing, is
+ * counted honestly by report-page-weight.mjs, and is an empty frame in the
+ * page's own stone rather than someone else's watermark.
+ *
+ * A raster, not an SVG, and 1200x630 — the og:image size §6 fixes. og:image
+ * falls back to the cover until Stage D generates a real card, and neither
+ * WhatsApp nor Facebook renders an SVG there, so an SVG cover would have
+ * produced a preview card with no picture at all. One flat colour serves
+ * every crop: object-fit does the cropping and a solid tone cannot show the
+ * distortion.
+ */
+const SAMPLE_IMAGE = '/sample/frame.png';
 
 
 /**
@@ -122,16 +138,16 @@ export const propertyListing: Listing = {
   media: {
     cover: {
       id: 'p-cover',
-      url: `${HOST}/900x1125/E4E0D6/6E6F66?text=+`,
+      url: SAMPLE_IMAGE,
       width: 900,
       height: 1125,
       alt: 'מבט לסלון ולמרפסת השמש',
     },
     gallery: [
-      { id: 'p1', url: `${HOST}/800x600/E4E0D6/6E6F66?text=+`, width: 800, height: 600, alt: 'סלון', caption: 'סלון ומרפסת שמש' },
-      { id: 'p2', url: `${HOST}/800x600/E4E0D6/6E6F66?text=+`, width: 800, height: 600, alt: 'מטבח', caption: 'מטבח משופץ' },
-      { id: 'p3', url: `${HOST}/800x600/E4E0D6/6E6F66?text=+`, width: 800, height: 600, alt: 'חדר שינה', caption: 'חדר הורים' },
-      { id: 'p4', url: `${HOST}/800x600/E4E0D6/6E6F66?text=+`, width: 800, height: 600, alt: 'מרפסת', caption: 'מרפסת דרומית' },
+      { id: 'p1', url: SAMPLE_IMAGE, width: 800, height: 600, alt: 'סלון', caption: 'סלון ומרפסת שמש' },
+      { id: 'p2', url: SAMPLE_IMAGE, width: 800, height: 600, alt: 'מטבח', caption: 'מטבח משופץ' },
+      { id: 'p3', url: SAMPLE_IMAGE, width: 800, height: 600, alt: 'חדר שינה', caption: 'חדר הורים' },
+      { id: 'p4', url: SAMPLE_IMAGE, width: 800, height: 600, alt: 'מרפסת', caption: 'מרפסת דרומית' },
     ],
   },
 
@@ -209,16 +225,16 @@ export const vehicleListing: Listing = {
   media: {
     cover: {
       id: 'v-cover',
-      url: `${HOST}/900x675/E4E0D6/6E6F66?text=+`,
+      url: SAMPLE_IMAGE,
       width: 900,
       height: 675,
       alt: 'מאזדה 3 בזווית קדמית',
     },
     gallery: [
-      { id: 'v1', url: `${HOST}/800x600/E4E0D6/6E6F66?text=+`, width: 800, height: 600, alt: 'חזית', caption: 'חזית' },
-      { id: 'v2', url: `${HOST}/800x600/E4E0D6/6E6F66?text=+`, width: 800, height: 600, alt: 'תא נהג', caption: 'תא נהג' },
-      { id: 'v3', url: `${HOST}/800x600/E4E0D6/6E6F66?text=+`, width: 800, height: 600, alt: 'מד אוץ', caption: 'מד אוץ' },
-      { id: 'v4', url: `${HOST}/800x600/E4E0D6/6E6F66?text=+`, width: 800, height: 600, alt: 'תא מטען', caption: 'תא מטען' },
+      { id: 'v1', url: SAMPLE_IMAGE, width: 800, height: 600, alt: 'חזית', caption: 'חזית' },
+      { id: 'v2', url: SAMPLE_IMAGE, width: 800, height: 600, alt: 'תא נהג', caption: 'תא נהג' },
+      { id: 'v3', url: SAMPLE_IMAGE, width: 800, height: 600, alt: 'מד אוץ', caption: 'מד אוץ' },
+      { id: 'v4', url: SAMPLE_IMAGE, width: 800, height: 600, alt: 'תא מטען', caption: 'תא מטען' },
     ],
   },
 
