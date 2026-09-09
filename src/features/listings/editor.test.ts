@@ -207,8 +207,13 @@ describe('the blocker codes and their copy', () => {
     // 25 appears in exactly one place (MAX_IMAGES). A locale string with the
     // number written into it is a second place, and the two drift the day the
     // cap changes.
-    assert.ok(he.editor.blockers.photosTooMany.includes('{max}'));
-    assert.ok(!he.editor.blockers.photosTooMany.includes(String(MAX_IMAGES)));
+    //
+    // Read into a local first: noUncheckedIndexedAccess makes an index into a
+    // Record string|undefined, and the test above is what proves it is there.
+    const message = he.editor.blockers.photosTooMany ?? '';
+
+    assert.ok(message.includes('{max}'));
+    assert.ok(!message.includes(String(MAX_IMAGES)));
   });
 });
 
