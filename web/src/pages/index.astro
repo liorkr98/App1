@@ -237,7 +237,7 @@ const title = `סיבוב — ${t('home.tagline')}`;
         gap: 0.4rem;
       }
 
-      .switch input {
+      .preview > input {
         position: absolute;
         opacity: 0;
         pointer-events: none;
@@ -260,12 +260,14 @@ const title = `סיבוב — ${t('home.tagline')}`;
         color: var(--ink);
       }
 
-      .switch input:checked + label {
+      #show-property:checked ~ .switch label[for='show-property'],
+      #show-vehicle:checked ~ .switch label[for='show-vehicle'] {
         color: var(--olive);
         border-color: var(--olive);
       }
 
-      .switch input:focus-visible + label {
+      #show-property:focus-visible ~ .switch label[for='show-property'],
+      #show-vehicle:focus-visible ~ .switch label[for='show-vehicle'] {
         outline: 2px solid var(--olive);
         outline-offset: 3px;
       }
@@ -293,10 +295,20 @@ const title = `סיבוב — ${t('home.tagline')}`;
       }
 
       /* Only the checked frame is shown. Two radios, no JavaScript. */
+      .device iframe {
+        transition: opacity 0.2s ease;
+      }
+
       #show-property:checked ~ .device .frame-vehicle,
       #show-vehicle:checked ~ .device .frame-property {
         opacity: 0;
         visibility: hidden;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .device iframe {
+          transition: none;
+        }
       }
 
       .device-open {
@@ -431,10 +443,17 @@ const title = `סיבוב — ${t('home.tagline')}`;
         </div>
 
         <div class="preview">
+          {/*
+            The radios are siblings of BOTH .switch and .device, not children
+            of .switch. A CSS-only tab is driven by ~ , which only reaches
+            later siblings — nested inputs matched nothing, so both frames
+            rendered and the second painted over the first.
+          */}
+          <input type="radio" name="preview" id="show-property" checked />
+          <input type="radio" name="preview" id="show-vehicle" />
+
           <div class="switch">
-            <input type="radio" name="preview" id="show-property" checked />
             <label for="show-property">{t('home.previewProperty')}</label>
-            <input type="radio" name="preview" id="show-vehicle" />
             <label for="show-vehicle">{t('home.previewVehicle')}</label>
           </div>
 
