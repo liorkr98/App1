@@ -26,4 +26,16 @@ export const env = {
   get osrmUrl(): string {
     return required('OSRM_URL').replace(/\/+$/, '');
   },
+
+  /**
+   * Our own Nominatim, on the same Israel extract OSRM uses.
+   *
+   * NEVER nominatim.openstreetmap.org. Its usage policy forbids systematic
+   * queries, and pointing a publish pipeline at a volunteer-funded service
+   * would be both a breach of that policy and a single point of failure we do
+   * not control.
+   */
+  get nominatimUrl(): string {
+    return required('NOMINATIM_URL').replace(/\/+$/, '');
+  },
 } as const;

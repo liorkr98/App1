@@ -178,6 +178,62 @@ into the enrichment payload, so a page cannot render places without the credit.
 
 ---
 
+## Geocoding — GovMap evaluated and rejected, Nominatim chosen
+
+The stage asked for an evaluation rather than a pick, and for the GovMap
+question to be answered as a verification task. It was.
+
+**GovMap does not publish a server-side REST API.** `api.govmap.gov.il/docs/intro`
+documents three integration methods — URL parameters, HTML embedding, and
+JavaScript functions. No REST base URL, no endpoint paths, no server-side auth
+model. It is a browser SDK, and a scheduled job cannot use it as documented.
+
+**Chosen: self-hosted Nominatim**, on the same Israel OSM extract that OSRM
+already requires and `src/osm/extract.ts` already downloads. No new data
+source, no new licence, no per-call fee, no dependency on an undocumented
+endpoint. A commercial geocoder stays as the fallback if match quality
+disappoints — geocoding runs once per listing at publish, so a small per-call
+cost is acceptable there in a way it never is for routing.
+
+**Never the public nominatim.openstreetmap.org.** Its usage policy forbids
+systematic queries.
+
+### Two refusals worth knowing about
+
+`geocode()` returns undefined rather than a coordinate when:
+
+- the result falls **outside Israel's bounding box** — that means the query
+  matched a similar name in another country, and returning it would put a Tel
+  Aviv flat's "nearby schools" somewhere else entirely;
+- the match type is a **centroid** rather than an address. A `suburb` result
+  for "פלורנטין, תל אביב" is the middle of the neighbourhood — a fine answer to
+  a different question. Routing from it and printing "4 דקות הליכה" would be a
+  fabricated number.
+
+Both are misses, and a miss means the listing publishes with no proximity
+enrichment. C8 already requires that to look intentional rather than broken.
+
+### Address normalisation
+
+`src/geocode/normalise.ts` collapses the variant spellings, with the variant
+list as executable assertions rather than prose. The headline case:
+
+    שד' ירושלים 12    שדרות ירושלים 12    שד ירושלים 12    שד׳ ירושלים 12
+
+All four now produce one query. Also handled: רחוב/רח׳ prefixes, apostrophe and
+gershayim variants from phone keyboards and iOS substitution, invisible bidi
+marks that survive copy-paste, flat and floor fragments, junction addresses,
+and house numbers with a Hebrew letter suffix.
+
+**Knowingly not handled**, and listed at the foot of that file: misspellings
+(no fuzzy matching), Arabic-script addresses, kibbutz and moshav addresses with
+no street, building names used instead of numbers, and the second street of a
+junction. Each is a miss, not a wrong answer.
+
+**None of this has run against a real geocoder.** No Nominatim instance exists.
+
+---
+
 ## Property — NOT TESTED
 
 The Israel Tax Authority נדל"ן database was **not** exercised. Its search
