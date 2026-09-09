@@ -27,7 +27,7 @@ export type Values = Record<string, string | number>;
  *
  * So the renderer gets the pieces and decides. See <Message> in the editor.
  */
-export type Part = { readonly text: string } | { readonly value: string };
+export type Part = { readonly text: string } | { readonly slot: string };
 
 const PLACEHOLDER = /\{(\w+)\}/g;
 
@@ -67,8 +67,18 @@ export function t(path: string, values?: Values): string {
   );
 }
 
-/** Message at `path`, split so each interpolated value can be wrapped. */
-export function parts(path: string, values?: Values): Part[] {
+/**
+ * Message at `path`, split into literal text and named slots.
+ *
+ * Slots rather than substituted strings, so the renderer decides what goes
+ * in one. That matters for more than styling: a LIST of numbers cannot be
+ * dropped into a single <bdi>, because <bdi> defaults to dir="auto" and auto
+ * looks for the first STRONG character to pick a direction. `3, 7` has none,
+ * so it inherits the paragraph's RTL and renders as `7 ,3` — the seller is
+ * shown numbers they did not write. Each number needs its own isolate, which
+ * means the renderer needs the slot, not a finished string.
+ */
+export function parts(path: string): Part[] {
   const message = lookup(path);
   if (message === undefined) return [{ text: path }];
 
@@ -81,11 +91,7 @@ export function parts(path: string, values?: Values): Part[] {
     const key = match[1] as string;
 
     if (at > index) out.push({ text: message.slice(index, at) });
-
-    // An unknown placeholder stays as written. Silently dropping it would
-    // leave a sentence that reads fine and says the wrong thing.
-    const supplied = values && key in values ? values[key] : undefined;
-    out.push(supplied === undefined ? { text: match[0] } : { value: format(supplied) });
+    out.push({ slot: key });
 
     index = at + match[0].length;
   }
@@ -93,6 +99,11 @@ export function parts(path: string, values?: Values): Part[] {
   if (index < message.length) out.push({ text: message.slice(index) });
 
   return out;
+}
+
+/** Number formatting for a slot value. Exported for the renderer. */
+export function formatValue(value: string | number): string {
+  return format(value);
 }
 
 /**

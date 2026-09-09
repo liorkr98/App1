@@ -248,3 +248,49 @@
   box-shadow: inset 0 0 0 1px var(--olive);
   font-weight: 600;
 }
+
+/* ---------- Description ---------- */
+
+.description {
+  inline-size: 100%;
+  padding: 0.85rem 0.9rem;
+  font: inherit;
+  line-height: 1.6;
+  color: var(--ink);
+  background: var(--plaster);
+  border: 1px solid var(--stone);
+  border-radius: 6px;
+  /* Hebrew needs room to breathe; §5 sets the floor at 1.5. */
+  resize: vertical;
+}
+
+.description:focus-visible {
+  outline: 2px solid var(--olive);
+  outline-offset: 2px;
+}
+
+.review {
+  display: grid;
+  gap: 0.5rem;
+  margin-block-start: 0.75rem;
+  font-size: 0.88rem;
+}
+
+/*
+  A note, not an error. These flags are advisory — nothing here blocks
+  publishing — and red would tell the seller they had done something wrong
+  when what they have is a suggestion.
+*/
+.review-flag {
+  padding: 0.6rem 0.75rem;
+  color: var(--ink);
+  background: var(--stone);
+  border-radius: 6px;
+  /* The accent sits on the reading edge: right in Hebrew, left in English. */
+  border-inline-start: 3px solid var(--olive);
+}
+
+.review-clean {
+  color: var(--olive);
+  font-weight: 600;
+}

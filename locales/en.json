@@ -151,6 +151,14 @@
     "notAnswered": "",
     "blockedTitle": "",
     "required": "",
-    "factsHint": ""
+    "factsHint": "",
+    "descriptionHint": "",
+    "review": {
+      "title": "",
+      "banned": "",
+      "reserved": "",
+      "numbers": "",
+      "clean": ""
+    }
   }
 }

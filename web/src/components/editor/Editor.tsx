@@ -14,6 +14,7 @@ import { blankFacts } from '@/features/listings/fact-entry';
 import { LISTING_CATEGORIES, schemaFor } from '@/features/listings/schemas';
 
 import { t } from '../../lib/i18n';
+import { DescriptionStep } from './DescriptionStep';
 import { FactsStep } from './FactsStep';
 import { Message } from './Message';
 
@@ -25,13 +26,19 @@ import { Message } from './Message';
  * the presentation of those rules and holds no product logic of its own, so
  * the answer to "why can I not publish" is testable without a browser.
  *
- * NOT YET WIRED, and deliberately so — this commit exists to prove the React
- * toolchain builds in CI, which nothing here can check locally:
- *   - photos, facts, description, template and preview render their heading
- *     and nothing else
- *   - there is no persistence; a refresh loses the draft
- *   - publish is inert. It is gated on entitlement and no provider is chosen
+ * BUILT SO FAR: category, facts, description.
  *
+ * STILL EMPTY — each renders its heading and nothing else:
+ *   - photos and plate. Photos needs an upload target, and R2 vs Supabase
+ *     Storage is undecided (CLAUDE.md §2 says R2; worker/src/storage.ts and
+ *     migration 0004 still use Supabase Storage). Not mine to settle.
+ *   - template and preview
+ *
+ * ALSO NOT DONE: there is no persistence, so a refresh loses the draft. PRD
+ * §4 locks "no account until publish; signed edit link", which makes local
+ * persistence the only thing standing between a seller and a lost afternoon.
+ *
+ * Publish is inert, and gated on entitlement with no provider chosen.
  * Entitlement is hard-coded to 'unknown' below. See the banner there.
  */
 
@@ -124,6 +131,15 @@ export default function Editor() {
             category={state.category}
             facts={state.facts}
             onChange={(facts) => setState((current) => ({ ...current, facts }))}
+          />
+        ) : null}
+
+        {step === 'description' ? (
+          <DescriptionStep
+            text={state.description}
+            generated={state.generatedDescription}
+            facts={state.facts}
+            onChange={(description) => setState((current) => ({ ...current, description }))}
           />
         ) : null}
       </section>
