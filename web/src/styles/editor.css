@@ -1,7 +1,17 @@
 /*
   The editor (/new).
 
-  Rewritten against docs/DESIGN-CONTRACT.md rather than styled from scratch.
+  REALIGNED TO THE B2 DESIGN. The listing page was redesigned — fluid type
+  spanning 6x, numbers set in Frank Ruhl Libre, a 620px column, a 6px CTA —
+  and the editor was left in the previous language. A seller would have built
+  their page in one product and shared it from another.
+
+  So the same tokens and the same scale are used here, with one deliberate
+  difference: the editor does NOT invert anything. The dark enrichment block
+  is the listing page's one moment of drama, earned because it is the thing
+  being sold. A form that shouts is a form that tires you out by step four.
+
+  Written against docs/DESIGN-CONTRACT.md rather than styled from scratch.
   The first version was a form in the product's colours; this one is built
   from the listing page's own vocabulary, so the thing a seller makes and the
   thing they make it in do not look like two products.
@@ -36,28 +46,33 @@
   flex-direction: column;
   min-block-size: 100dvh;
   /* Clears the fixed nav dock, exactly as the listing page clears its CTA. */
-  padding-block-end: 6rem;
+  padding-block-end: 7rem;
 }
 
 /* ---------- Progress rail ---------- */
 
 .rail {
-  padding: 1.75rem 1.5rem 1.25rem;
+  padding: 1.75rem var(--gut) 1.25rem;
   border-block-end: 1px solid var(--stone);
 }
 
 .rail-count {
-  font-size: 0.8rem;
+  font-size: var(--t-label);
+  font-weight: 600;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
 
+/* The step name is the page's headline. Same role as .hero-title on a
+   listing, one size down: --t-h2 rather than --t-hero, because a form
+   heading that fills the screen is a form heading in the way. */
 .rail-title {
   font-family: 'Frank Ruhl Libre', serif;
   font-weight: 700;
-  font-size: 1.6rem;
-  line-height: 1.25;
-  margin-block-start: 0.15rem;
+  font-size: var(--t-h2);
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  margin-block-start: 0.2rem;
 }
 
 /*
@@ -105,7 +120,7 @@
 
 .step {
   flex: 1;
-  padding: 1.75rem 1.5rem;
+  padding: 2.4rem var(--gut);
 }
 
 .hint {
@@ -115,6 +130,8 @@
   max-width: 46ch;
 }
 
+/* The photo count is a NUMBER, and numbers in this product are set in the
+   serif — that consistency is most of what makes the pages look authored. */
 .note {
   font-size: 0.85rem;
   color: var(--muted);
@@ -428,8 +445,8 @@ textarea {
    exactly what this is. */
 
 .blockers {
-  padding: 1.1rem 1.5rem;
-  background: #f5f2ea;
+  padding: 1.1rem var(--gut);
+  background: var(--stone-warm);
   border-block-start: 1px solid var(--stone);
 }
 
@@ -453,26 +470,30 @@ textarea {
   position: fixed;
   inset-inline: 0;
   bottom: 0;
-  max-width: 600px;
+  max-width: 620px;
   margin-inline: auto;
   display: flex;
   gap: 0.6rem;
-  padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
-  background: linear-gradient(to top, var(--plaster) 72%, transparent);
+  padding: 0.8rem 1rem calc(0.8rem + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, var(--plaster) 70%, rgba(251, 250, 247, 0));
 }
 
 .nav button {
   flex: 1;
-  padding: 0.95rem;
+  padding: 1.02rem;
   font: inherit;
-  font-size: 1.05rem;
-  font-weight: 600;
+  font-size: 1.06rem;
+  font-weight: 700;
   color: var(--plaster);
   background: var(--olive);
   border: none;
-  border-radius: 4px;
-  box-shadow: var(--shadow);
+  border-radius: 6px;
+  box-shadow: 0 6px 22px -10px rgba(25, 26, 21, 0.55);
   cursor: pointer;
+}
+
+.nav button:active:not(:disabled) {
+  background: var(--olive-lift);
 }
 
 /* Back is secondary: an outline, so the forward action is the only filled

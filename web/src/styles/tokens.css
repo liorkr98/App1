@@ -30,6 +30,28 @@
   --ink-deep: #111208;
   --olive-lift: #5f7749;
   --stone-warm: #f1ede3;
+
+  /*
+    The fluid type scale, spanning roughly 6x from label to hero.
+
+    Lives here rather than in BaseListing because the EDITOR needs it too. A
+    seller builds their page in /new and shares it from /a/{slug}; if those
+    two use different scales they are visibly different products, and the
+    editor had drifted into exactly that.
+
+    The previous port compressed this range to about 2x, and that compression
+    is what made the page read as templated. Do not collapse these back to
+    fixed rem values — DESIGN-CONTRACT.md §1.
+  */
+  --t-hero: clamp(2.6rem, 11.5vw, 4.2rem);
+  --t-price: clamp(2.1rem, 8.5vw, 3rem);
+  --t-num: clamp(1.5rem, 5.5vw, 1.9rem);
+  --t-h2: clamp(1.35rem, 5vw, 1.6rem);
+  --t-body: 1.02rem;
+  --t-label: 0.74rem;
+
+  /* One gutter for every full-bleed block, on both surfaces. */
+  --gut: 1.4rem;
 }
 
 * {

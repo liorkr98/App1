@@ -80,17 +80,8 @@ const agency = listing.seller.agencyName;
    תנועה: scroll-driven נטיבי בלבד. בלי GSAP, בלי ספריות.
    ============================================================ */
 
-:root{
-  /* סקאלה פלואידית — טווח של פי שישה בין התווית לכותרת */
-  --t-hero:  clamp(2.6rem, 11.5vw, 4.2rem);
-  --t-price: clamp(2.1rem, 8.5vw, 3rem);
-  --t-num:   clamp(1.5rem, 5.5vw, 1.9rem);
-  --t-h2:    clamp(1.35rem, 5vw, 1.6rem);
-  --t-body:  1.02rem;
-  --t-label: .74rem;
-
-  --gut:1.4rem;
-}
+/* הסקאלה הפלואידית וה-gutter נמצאים ב-styles/tokens.css, כי גם העורך
+   ב-/new משתמש בהם. הגדרה אחת לשני המשטחים. */
 
 html{background:var(--stone);direction:rtl;scroll-behavior:smooth}
 
