@@ -44,9 +44,15 @@ page as its presentation.
 | PDF | **Puppeteer**, in its own Fly process group |
 | Payments | **Undecided.** Build behind a provider interface (PRD §6) |
 
-`expo` is still a root dependency. It anchors the EAS project that runs CI,
-and nothing else — npm is blocked on the primary dev machine, so EAS Workflows
-is the only place anything can be verified. It is not a stack choice.
+**Verification runs in CI, because it cannot run here.** npm is blocked on the
+primary dev machine by endpoint protection, so nothing installs, typechecks,
+lints or tests locally. `.github/workflows/verify.yml` is the gate.
+
+`expo` is still a root dependency and `app.config.ts` with it. They anchor the
+EAS project in `.eas/workflows/`, which was the original gate until the free
+plan's CI minutes ran out on 9 September 2026. Kept as a fallback and as the
+only thing that could build a native app if one ever returns. Neither is a
+stack choice.
 
 Do not introduce a dependency without asking. Justify: what it does, size,
 last publish date, and why the stack above cannot do it.
@@ -74,8 +80,14 @@ locales/
 docs/             ADRs and the records that outlive a stage
 ```
 
-`web/` and `worker/` are deliberately **not** npm workspaces. Making the root a
-workspace root would rewrite their dependency trees.
+`web/`, `worker/` and `ingest/` are deliberately **not** npm workspaces. Making
+the root a workspace root would rewrite their dependency trees.
+
+`ingest/` sets `rootDir` to the repo root so it can import the payload types
+from `src/types/`, which is also what `web/` renders — the shape written and
+the shape displayed cannot be allowed to drift. The cost is a nested
+`dist/ingest/src/` output, which is spelled out in its tsconfig rather than
+left to tsc's inferred root.
 
 ---
 
@@ -263,4 +275,12 @@ npm run web:build      # astro build
 npm run worker:test    # worker unit tests
 ```
 
-Per-workspace: `npm run <script> --prefix web|worker`.
+Per-workspace: `npm run <script> --prefix web|worker|ingest`.
+
+Ingestion is run one source at a time, on a schedule, never all at once:
+
+```bash
+npm run sync:schools --prefix ingest
+npm run sync:transit --prefix ingest   # not implemented — fails with why
+npm run sync:places  --prefix ingest   # not implemented — fails with why
+```
