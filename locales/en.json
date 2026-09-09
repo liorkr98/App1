@@ -159,6 +159,15 @@
       "reserved": "",
       "numbers": "",
       "clean": ""
+    },
+    "templates": {
+      "hint": "",
+      "clean": "",
+      "cleanNote": "",
+      "gallery": "",
+      "galleryNote": "",
+      "luxury": "",
+      "luxuryNote": ""
     }
   }
 }

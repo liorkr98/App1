@@ -403,7 +403,19 @@ export interface Seller {
 
 export type ListingStatus = 'draft' | 'published' | 'sold' | 'archived';
 
-export type TemplateId = 'clean' | 'gallery' | 'luxury';
+/**
+ * The page templates.
+ *
+ * An array with the union derived from it, not a bare union, for the same
+ * reason BLOCKER_CODES is: a union exists only at compile time, and both the
+ * picker that offers these and the draft validator that has to reject
+ * anything else need to enumerate them at runtime. draft.ts previously
+ * carried its own hand-written copy of this list, which is exactly the kind
+ * of second definition that agrees right up until someone adds a template.
+ */
+export const TEMPLATE_IDS = ['clean', 'gallery', 'luxury'] as const;
+
+export type TemplateId = (typeof TEMPLATE_IDS)[number];
 
 export interface Listing {
   id: string;

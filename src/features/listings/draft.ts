@@ -1,4 +1,10 @@
-import type { Fact, FactType, FactValue, TemplateId } from '../../types/listing.js';
+import {
+  TEMPLATE_IDS,
+  type Fact,
+  type FactType,
+  type FactValue,
+  type TemplateId,
+} from '../../types/listing.js';
 import type { EditorState } from './editor.js';
 import { LISTING_CATEGORIES, type ListingCategory } from './schemas/index.js';
 
@@ -52,7 +58,6 @@ export function toDraft(state: EditorState): Stored {
   };
 }
 
-const TEMPLATES: readonly TemplateId[] = ['clean', 'gallery', 'luxury'];
 const FACT_TYPES: readonly FactType[] = ['text', 'number', 'boolean', 'enum', 'date'];
 
 /**
@@ -96,7 +101,9 @@ export function fromDraft(raw: unknown): Draft | null {
   if (generated !== undefined && typeof generated !== 'string') return null;
 
   const template = parsed.template;
-  if (template !== undefined && !TEMPLATES.includes(template as TemplateId)) return null;
+  if (template !== undefined && !(TEMPLATE_IDS as readonly string[]).includes(template as string)) {
+    return null;
+  }
 
   return {
     ...(category === undefined ? {} : { category }),
@@ -121,12 +128,13 @@ function readCategory(value: unknown): ListingCategory | undefined {
 /**
  * Facts, validated one field at a time.
  *
- * `present` and `source` are checked as strictly as the values are. A draft
- * claiming source:'verified' would put a מאומת badge and a citation on a
- * number the seller typed — the one thing PRD §5 calls legal rather than
- * stylistic — so anything that is not exactly 'seller' or 'verified' fails,
- * and a restored fact that says 'verified' without the enrichment that earns
- * it is rejected outright below.
+ * `present` and `source` are checked as strictly as the values are, and
+ * 'seller' is the ONLY source a stored fact may claim. A draft saying
+ * 'verified' would put a מאומת badge and a citation on a number the seller
+ * typed, which is the one thing PRD §5 calls legal rather than stylistic —
+ * so it is rejected rather than downgraded. Verification is something
+ * enrichment re-applies on the server, where the register's name and date
+ * come from.
  */
 function readFacts(value: unknown): Fact[] | null {
   if (!Array.isArray(value)) return null;

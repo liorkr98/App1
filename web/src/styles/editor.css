@@ -294,3 +294,16 @@
   color: var(--olive);
   font-weight: 600;
 }
+
+/* A choice that explains itself: name, then when it is the wrong pick. */
+.choice-name {
+  display: block;
+  font-weight: 600;
+}
+
+.choice-note {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-block-start: 0.15rem;
+}

@@ -17,6 +17,7 @@ import { t } from '../../lib/i18n';
 import { DescriptionStep } from './DescriptionStep';
 import { FactsStep } from './FactsStep';
 import { Message } from './Message';
+import { TemplateStep } from './TemplateStep';
 import { useDraft } from './useDraft';
 
 /**
@@ -27,13 +28,16 @@ import { useDraft } from './useDraft';
  * the presentation of those rules and holds no product logic of its own, so
  * the answer to "why can I not publish" is testable without a browser.
  *
- * BUILT SO FAR: category, facts, description.
+ * BUILT SO FAR: category, facts, description, template.
  *
  * STILL EMPTY — each renders its heading and nothing else:
  *   - photos and plate. Photos needs an upload target, and R2 vs Supabase
  *     Storage is undecided (CLAUDE.md §2 says R2; worker/src/storage.ts and
  *     migration 0004 still use Supabase Storage). Not mine to settle.
- *   - template and preview
+ *   - preview. It has to show the real listing page, and the site is static
+ *     output — so a faithful preview means either a draft URL built by the
+ *     pipeline or rendering the page markup twice. That is a design decision,
+ *     not a component.
  *
  * The draft is kept in localStorage (useDraft), because PRD §4 locks "no
  * account until publish" and until the seller pays there is nowhere else to
@@ -147,6 +151,13 @@ export default function Editor() {
             category={state.category}
             facts={state.facts}
             onChange={(facts) => setState((current) => ({ ...current, facts }))}
+          />
+        ) : null}
+
+        {step === 'template' ? (
+          <TemplateStep
+            chosen={state.template}
+            onChoose={(template) => setState((current) => ({ ...current, template }))}
           />
         ) : null}
 
