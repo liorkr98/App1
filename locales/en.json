@@ -190,6 +190,15 @@
     "previewProperty": "",
     "previewVehicle": "",
     "previewNote": "",
-    "previewOpen": ""
+    "previewOpen": "",
+    "howTitle": "",
+    "step1": "",
+    "step1Body": "",
+    "step2": "",
+    "step2Body": "",
+    "step3": "",
+    "step3Body": "",
+    "forWhoTitle": "",
+    "forWhoBody": ""
   }
 }

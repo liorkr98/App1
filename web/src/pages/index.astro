@@ -149,15 +149,23 @@ const title = `סיבוב — ${t('home.tagline')}`;
       */
       .hero {
         display: grid;
-        gap: clamp(2.5rem, 5vw, 4.5rem);
-        padding-block: clamp(3rem, 7vw, 5.5rem) clamp(2.5rem, 5vw, 4rem);
+        gap: clamp(2.5rem, 5vw, 4rem);
+        padding-block: clamp(2.25rem, 4vw, 3.5rem) clamp(2.5rem, 4vw, 3.5rem);
         align-items: center;
       }
 
       @media (min-width: 900px) {
         .hero {
-          grid-template-columns: minmax(0, 1fr) auto;
+          /* auto first: the words take the width they need and no more, so
+             the column does not stretch a 46ch paragraph across 630px and
+             leave the difference as air. */
+          grid-template-columns: minmax(0, auto) auto;
+          justify-content: space-between;
         }
+      }
+
+      .hero-copy {
+        max-inline-size: 34rem;
       }
 
       h1 {
@@ -272,14 +280,27 @@ const title = `סיבוב — ${t('home.tagline')}`;
         outline-offset: 3px;
       }
 
+/*
+        Rendered at 390px — a real iPhone viewport — and SCALED to fit the
+        frame, rather than laid out at the frame's own width.
+
+        Letting it lay out at 320px was the mistake: the listing page is
+        designed at phone width but 320 is the floor, so the facts grid
+        wrapped its paired cell onto two lines, the price clipped, and the
+        document was tall enough to grow its own scrollbars inside the frame.
+        What it showed was the page under stress, not the page.
+
+        --dev is unitless so the scale can be derived from it. CSS cannot
+        divide two lengths to get a number, but it can divide two numbers.
+      */
       .device {
+        --dev: 320;
+        --viewport: 390;
         position: relative;
-        /* 320px is a real phone width and the size this is designed at, but a
-           320px VIEWPORT leaves about 280px once the gutter is taken, and a
-           fixed width would push the page sideways. The page inside is
-           mobile-first, so it simply renders narrower. */
-        inline-size: min(320px, 100%);
-        block-size: 660px;
+        inline-size: calc(var(--dev) * 1px);
+        max-inline-size: 100%;
+        /* 780px of page, scaled by the same factor as the width. */
+        block-size: calc(780px * var(--dev) / var(--viewport));
         border: var(--rule);
         border-radius: 20px;
         overflow: hidden;
@@ -289,13 +310,25 @@ const title = `סיבוב — ${t('home.tagline')}`;
 
       .device iframe {
         position: absolute;
-        inset: 0;
-        inline-size: 100%;
-        block-size: 100%;
+        inset-block-start: 0;
+        inset-inline-start: 0;
+        inline-size: calc(var(--viewport) * 1px);
+        block-size: 780px;
         border: 0;
+        /* Anchored at the top of the inline start — the RIGHT edge in an RTL
+           document — so the scale shrinks toward the corner it is pinned to. */
+        transform-origin: 100% 0;
+        transform: scale(calc(var(--dev) / var(--viewport)));
         /* The page inside is a document to look at, not to operate. Tapping
            anywhere opens the real one. */
         pointer-events: none;
+      }
+
+      /* On a narrow phone the frame gives up width; the scale follows it. */
+      @media (max-width: 420px) {
+        .device {
+          --dev: 260;
+        }
       }
 
       /* Only the checked frame is shown. Two radios, no JavaScript. */
@@ -334,6 +367,77 @@ const title = `סיבוב — ${t('home.tagline')}`;
 
       .band {
         border-block-start: var(--rule);
+      }
+
+      /* ---------- Steps ----------
+         Numbered because they are a sequence, and the numeral is set in the
+         serif at display weight so it reads as a marker rather than as data. */
+
+      .steps {
+        display: grid;
+        gap: clamp(1.75rem, 3vw, 2.5rem);
+        padding-block: clamp(2.5rem, 4vw, 3.5rem);
+        list-style: none;
+        counter-reset: step;
+      }
+
+      @media (min-width: 760px) {
+        .steps {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
+
+      .steps li {
+        counter-increment: step;
+        padding-block-start: 1rem;
+        border-block-start: 2px solid var(--olive);
+      }
+
+      .steps li::before {
+        content: counter(step);
+        display: block;
+        font-family: 'Frank Ruhl Libre', serif;
+        font-weight: 700;
+        font-size: 1.5rem;
+        line-height: 1;
+        color: var(--olive);
+        font-variant-numeric: tabular-nums;
+        margin-block-end: 0.5rem;
+      }
+
+      .steps h3 {
+        font-size: 1.05rem;
+        font-weight: 600;
+        margin-block-end: 0.35rem;
+      }
+
+      .steps p {
+        color: var(--muted);
+        max-inline-size: 34ch;
+      }
+
+      /* ---------- Audience ----------
+         The one claim on the page aimed at a specific reader, so it gets the
+         page's only tinted band — the .flaws colour from the vehicle
+         reference, already the product's shade for "worth knowing". */
+
+      .audience {
+        background: #f5f2ea;
+        border-block-start: var(--rule);
+      }
+
+      .audience .shell {
+        padding-block: clamp(2.5rem, 4vw, 3.5rem);
+      }
+
+      .audience h2 {
+        max-inline-size: 20ch;
+      }
+
+      .audience p {
+        color: var(--muted);
+        max-inline-size: 60ch;
+        margin-block-start: 0.65rem;
       }
 
       .band > .shell {
@@ -435,7 +539,7 @@ const title = `סיבוב — ${t('home.tagline')}`;
 
     <div class="shell">
       <div class="hero">
-        <div>
+        <div class="hero-copy">
           <h1>{t('home.tagline')}</h1>
           <p class="tagline">{t('home.subTagline')}</p>
           <p class="lead">{t('home.lead')}</p>
@@ -467,18 +571,46 @@ const title = `סיבוב — ${t('home.tagline')}`;
               src="/a/A7K2M/"
               title={t('home.previewProperty')}
               loading="lazy"
+              scrolling="no"
               tabindex="-1"></iframe>
             <iframe
               class="frame-vehicle"
               src="/a/V3M9Q/"
               title={t('home.previewVehicle')}
               loading="lazy"
+              scrolling="no"
               tabindex="-1"></iframe>
             <a class="device-open" href="/a/A7K2M/" aria-label={t('home.previewOpen')}></a>
           </div>
 
           <p class="preview-note">{t('home.previewNote')}</p>
         </div>
+      </div>
+    </div>
+
+    <div class="band">
+      <div class="shell">
+        <ol class="steps">
+          <li>
+            <h3>{t('home.step1')}</h3>
+            <p>{t('home.step1Body')}</p>
+          </li>
+          <li>
+            <h3>{t('home.step2')}</h3>
+            <p>{t('home.step2Body')}</p>
+          </li>
+          <li>
+            <h3>{t('home.step3')}</h3>
+            <p>{t('home.step3Body')}</p>
+          </li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="audience">
+      <div class="shell">
+        <h2>{t('home.forWhoTitle')}</h2>
+        <p>{t('home.forWhoBody')}</p>
       </div>
     </div>
 
