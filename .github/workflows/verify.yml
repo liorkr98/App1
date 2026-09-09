@@ -80,6 +80,18 @@ jobs:
       - name: Verify exactly four template divergences
         run: node scripts/verify-template-divergences.mjs
 
+      # CLAUDE.md §4.2. A missing <bdi> is invisible in review AND usually on
+      # the page: a bare number reads correctly until the words around it
+      # change, then silently reorders. Runs on built HTML so it sees what is
+      # actually served.
+      - name: Verify every number is inside <bdi>
+        run: node scripts/verify-bdi.mjs
+
+      # §4.1 — a rule that stops firing is worse than no rule, so the rule is
+      # proved against a planted violation on every run.
+      - name: Verify the <bdi> rule actually fires
+        run: bash scripts/verify-bdi-fires.sh
+
       - name: Report built page weight
         run: node scripts/report-page-weight.mjs
 
