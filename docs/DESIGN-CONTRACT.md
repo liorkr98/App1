@@ -1,171 +1,185 @@
 # Design contract
 
-Extracted from the three reference files. **Everything here was read out of
-them directly — nothing is inferred, improved or added.**
+Extracted from the three reference files. **Everything in §1–§7 was read out of
+them directly — nothing is inferred, improved or added.** §8 is the exception
+and says so.
 
 Sources:
 
-- `listing-page-template.html` — property reference (11,073 bytes)
-- `listing-page-vehicle.html` — vehicle reference (10,051 bytes)
-- `rtl-test.html` — RTL fixture (6,874 bytes)
+- `listing-page-template.html` — property reference, **redesigned in Stage B2**
+- `listing-page-vehicle.html` — vehicle reference, **NOT updated by B2**
+- `rtl-test.html` — RTL fixture, unchanged
 
-The CSS comparison below was produced by a brace-depth parser that isolates
-`@media` and `@keyframes` blocks, normalises whitespace and sorts declarations,
-so formatting differences do not read as design differences.
+## The vehicle reference is stale, deliberately
 
+Stage B2 replaced the property reference only. The built vehicle page is
+therefore **derived** from the new property design by applying the four
+permitted divergences, not ported from `listing-page-vehicle.html`, which still
+describes the previous design.
 
-## The immersive figure is deliberately not ported
-
-The reference HTML files still contain `figure.immersive` and its CSS, and the
-tables below still record them — they are a faithful record of the references,
-and falsifying that record to match the build would defeat the point of having
-one.
-
-The Astro port omits that figure. RESEARCH.md v2 §9 defers immersive capture,
-so there is nothing to put in it. This is **not a fifth divergence**: the
-figure is absent from BOTH category templates, so the two remain identical
-where the contract requires it. The port is at the `immersive-v1` tag if the
-block is ever needed again.
+Where this document records a vehicle value, it records what the BUILD
+produces. `scripts/verify-template-divergences.mjs` compares the two built
+pages against each other, so it keeps checking the thing that matters even
+though one of its sources is out of date.
 
 ---
 
 ## 1. Design tokens
 
-Every CSS custom property, with its literal value.
+Every CSS custom property in the new reference, with its literal value.
 
-### Listing pages — identical `:root` in both files
+### Colour
 
-| Token | Value | Comment in source |
+| Token | Value | Note |
 |---|---|---|
 | `--plaster` | `#FBFAF7` | טיח, לא קרם |
 | `--ink` | `#191A15` | |
+| `--ink-deep` | `#111208` | **new in B2** — agent bar and the enrichment inversion |
 | `--olive` | `#4A5D3A` | לא כחול — כל מותגי הנדל"ן בישראל כחולים |
+| `--olive-lift` | `#5F7749` | **new in B2** — the same hue carried up, for type on `--ink-deep` |
 | `--stone` | `#E4E0D6` | |
+| `--stone-warm` | `#F1EDE3` | **new in B2** — `.fact.off`, `.flaws`, `.seller` |
 | `--muted` | `#6E6F66` | |
-| `--shadow` | `0 1px 2px rgba(25,26,21,.06)` | |
 
-### `rtl-test.html`
+`--shadow` from the previous contract is gone. The only shadow in the new
+design is on `.cta`, written inline: `0 6px 22px -10px rgba(25,26,21,.55)`.
 
-Same five colour tokens, **no `--shadow`**, plus one extra:
+### The fluid type scale — the change that matters most
 
 | Token | Value |
 |---|---|
-| `--plaster` | `#FBFAF7` |
-| `--ink` | `#191A15` |
-| `--olive` | `#4A5D3A` |
-| `--stone` | `#E4E0D6` |
-| `--muted` | `#6E6F66` |
-| `--fail` | `#8C2F1E` |
+| `--t-hero` | `clamp(2.6rem, 11.5vw, 4.2rem)` |
+| `--t-price` | `clamp(2.1rem, 8.5vw, 3rem)` |
+| `--t-num` | `clamp(1.5rem, 5.5vw, 1.9rem)` |
+| `--t-h2` | `clamp(1.35rem, 5vw, 1.6rem)` |
+| `--t-body` | `1.02rem` |
+| `--t-label` | `.74rem` |
+
+Roughly **6× from label to hero**. The previous port compressed this to about
+2×, and that compression is what made it read as templated. **Do not collapse
+these back to fixed rem values.**
+
+### Spacing
+
+| Token | Value |
+|---|---|
+| `--gut` | `1.4rem` |
+
+One gutter, used by every full-bleed block. Page width is `620px`.
 
 ### Literal colours used outside the token set
 
 | Value | Where |
 |---|---|
-| `#F5F2EA` | `.flaws` background, vehicle only |
-| `rgba(25,26,21,.82)` | `.hero-veil` gradient, both |
-| `rgba(25,26,21,.34)` | `.immersive-scrim` background, both |
-| `rgba(25,26,21,.2)` | `.immersive-enter` box-shadow, both |
+| `#9C9D93` | muted type on `--ink-deep` — agent bar, `.enrich-sub`, `.count`, `.erow em` |
+| `#83847B` | `.source` |
+| `#96978E` | `.odbl` |
+| `rgba(17,18,8,.9)` / `rgba(17,18,8,.55)` | `.hero-veil` gradient stops |
+| `rgba(251,250,247,.16)` / `rgba(251,250,247,.07)` | hairlines inside `.enrich` |
 
 ---
 
 ## 2. Typography
 
-Loaded in all three files by one stylesheet link:
+One stylesheet link, and the weights widened in B2:
 
 ```
-Frank+Ruhl+Libre:wght@500;700
-Assistant:wght@400;600
+Frank+Ruhl+Libre:wght@400;500;700;900
+Assistant:wght@400;600;700
 display=swap
 ```
 
-Only these four weights are requested. No other weight appears.
+**Seven weights now, not four.** 900 exists for one selector — `.hero-title` —
+and that is the point of it.
+
+### Hebrew cannot use the standard label trick
+
+Small tracked uppercase labels are the usual way to build hierarchy in a Latin
+design. **Hebrew has no case, and positive letter-spacing on Hebrew is wrong.**
+So hierarchy here comes from size, weight and colour only, which is what
+`.label` encodes: `.74rem`, weight 600, `--muted`.
+
+**Never add `text-transform` or positive `letter-spacing` to Hebrew text.**
+Neither appears anywhere in any of the three files.
 
 ### Frank Ruhl Libre — where it is applied
 
-| Selector | Weight | Size |
-|---|---|---|
-| `.hero-title` | 700 | `2rem`, line-height `1.25` |
-| `.price` | 700 | `1.9rem`, letter-spacing `-.01em` |
-| `.fact-val` | 500 | `1.3rem`, line-height `1.2` |
-| `h2` | 500 | `1.15rem` |
-| `.big` *(rtl-test)* | 700 | `1.9rem` |
-| `.fact-val` *(rtl-test)* | — | `1.2rem` |
-| `h1` *(rtl-test)* | — | `1.6rem` |
-| `.strip div` *(rtl-test)* | — | `1.1rem` |
+| Selector | Weight | Size | Tracking |
+|---|---|---|---|
+| `.hero-title` | 900 | `--t-hero` | `-.015em` |
+| `.price` | 700 | `--t-price` | `-.02em` |
+| `.fact-val` | 500 | `--t-num` | `-.01em` |
+| `h2` | 500 | `--t-h2` | — |
+| `.egroup-head h3` | 500 | `1.1rem` | — |
+| `.erow .mins` | 500 | `1.45rem` | — |
+| `.seller-name` | 500 | `1.25rem` | — |
+
+**Numbers are the visual anchor.** Prices, fact values and walk times are all
+set in the serif at large sizes. This is the single strongest signal of
+editorial craft on the page, and it is the reason the serif is in the stack at
+all. Body text stays Assistant.
 
 ### Assistant — where it is applied
 
-| Selector | Weight | Size |
-|---|---|---|
-| `body` | 400 (inherited) | line-height `1.6` |
-| `.immersive-enter` | 600 | `1rem` |
-| `.cta` | 600 | `1.05rem` |
-| `.seller-name` | 600 | — |
-| `.case h2` *(rtl-test)* | 600 | `.8rem` |
+| Selector | Weight |
+|---|---|
+| `body` | 400 |
+| `.label`, `.agent-bar strong`, `.erow .who b` | 600 |
+| `.cta` | 700 |
+| `.erow .mins small` | 400, `.62rem` |
 
 Font stack: `'Assistant',system-ui,sans-serif` on `body`; `'Frank Ruhl
 Libre',serif` on the serif selectors.
-
-**No `font-style:italic` and no `text-transform` appears in any of the three
-files.**
 
 ---
 
 ## 3. Layout order
 
-Top-level landmark sequence, read from each `<body>`.
+Top-level landmark sequence, read from `<body>`.
 
 | # | Property | Vehicle |
 |---|---|---|
-| 1 | `header.hero` | `header.hero` |
-| 2 | `div.price-bar` | `div.price-bar` |
-| 3 | `div.facts` | `div.facts` |
-| 4 | `figure.immersive` | `figure.immersive` |
-| 5 | `section` — על הדירה | `section` — על הרכב |
-| 6 | `div.gallery` | **`section.flaws` — מה שכדאי לדעת** |
-| 7 | `section.map` — מיקום | `div.gallery` |
-| 8 | `section` — seller | `section` — seller |
-| 9 | `div.cta-dock` | `div.cta-dock` |
-| 10 | `footer` | `footer` |
+| 1 | `div.progress` | `div.progress` |
+| 2 | `div.agent-bar` | `div.agent-bar` |
+| 3 | `header.hero` | `header.hero` |
+| 4 | `div.price-bar` | `div.price-bar` |
+| 5 | `div.facts` | `div.facts` |
+| 6 | `section` — על הדירה | `section` — על הרכב |
+| 7 | `div.gallery` | **`section.flaws` — מה שכדאי לדעת** |
+| 8 | `section.enrich` | `div.gallery` |
+| 9 | `section.map` — מיקום | `section.enrich` |
+| 10 | `section.seller` | `section.seller` |
+| 11 | `div.cta-dock` | `div.cta-dock` |
+| 12 | `footer` | `footer` |
 
-Both are 10 landmarks. The vehicle page inserts `.flaws` **between the
-description and the gallery**, and has **no map section**.
+The vehicle inserts `.flaws` **between the description and the gallery** and
+has **no map section**.
+
+`figure.immersive` is gone from the new reference entirely. It is no longer a
+"deliberately not ported" exception — the design does not contain it.
 
 ---
 
 ## 4. Shared components
 
-**42 of 46 property rules are byte-identical to their vehicle counterparts**
-after normalisation. Those 42 are the shared base layout and may be extracted
-wholesale.
-
-Identical rule groups:
-
-- `*`, `html`, `body`
-- `.hero img`, `.hero-place`, `.hero-title`
-- `.price-bar`, `.price`, `.price-note`
-- `.facts`, `.fact`, `.fact:nth-child(3n+1)`, `.fact:nth-child(-n+3)`, `.fact-val`, `.fact-lbl`, `.fact.off .fact-val,.fact.off .fact-lbl`
-- `.immersive`, `.immersive img`, `.immersive-scrim`, `.immersive-enter`, `.immersive-enter:focus-visible`, `.immersive-note`
-- `section`, `h2`, `p`
-- `.gallery`, `.gallery::-webkit-scrollbar`, `.gallery figure`, `.gallery img`, `.gallery figcaption`
-- `.seller`, `.avatar`, `.seller-name`, `.seller-role`
-- `.cta-dock`, `.cta`, `.cta:focus-visible`
-- `footer`, `footer a`
-- `@media (prefers-reduced-motion:no-preference) >> .hero-veil`, and the `rise` keyframe
-
-Shared structural constants:
+Everything below renders identically on both categories. Only the four
+divergences in §5 differ, and `scripts/verify-template-divergences.mjs`
+compares the two built pages' complete CSS — inline blocks **and** every local
+stylesheet they link — to prove it.
 
 | | |
 |---|---|
-| Page max width | `600px`, `margin-inline:auto` |
-| Body bottom padding | `6rem` (clears the fixed CTA dock) |
-| Facts grid | `repeat(3,1fr)`; hairlines only **between** cells, via `:nth-child(3n+1)` and `:nth-child(-n+3)` resets |
-| Absent fact | `.fact.off` → `opacity:.35` on both value and label |
-| Immersive poster | `aspect-ratio:16/10` |
-| Gallery item | `flex:0 0 78%`, `scroll-snap-align:center`, image `aspect-ratio:4/3`, `border-radius:3px` |
-| CTA | `background:var(--olive)`, `border-radius:4px`, `padding:.95rem` |
-| Motion | exactly one animation, `rise`, `.5s .1s cubic-bezier(.2,.7,.3,1)`, gated behind `prefers-reduced-motion:no-preference` |
-| Safe area | `calc(.75rem + env(safe-area-inset-bottom))` on `.cta-dock` |
+| Page max width | `620px`, `margin-inline:auto` |
+| Body bottom padding | `7rem` (clears the fixed CTA dock) |
+| Section padding | `2.4rem var(--gut)` |
+| Facts grid | `repeat(3,1fr)`, `gap:1px` over a `--stone` ground — the hairlines ARE the gap |
+| Absent fact | `.fact.off` → `--stone-warm` ground, `opacity:.42` on value and label |
+| Gallery | first figure `grid-column:1 / -1` at `16/10`, the rest paired at `4/3`, `gap:.5rem`, radius `2px` |
+| Enrichment | `--ink-deep` ground, `padding-block:2.8rem` |
+| Walk-time column | `flex:0 0 3.6rem`, serif `1.45rem`, `--olive-lift` |
+| CTA | `--olive`, radius `6px`, padding `1.02rem`, weight 700 |
+| Safe area | `calc(.8rem + env(safe-area-inset-bottom))` on `.cta-dock` |
+| Hero veil | `padding:7rem var(--gut) 1.6rem` — fixed for both categories now |
 
 ---
 
@@ -173,125 +187,105 @@ Shared structural constants:
 
 ### The allowed list — exactly four. A fifth is a porting bug.
 
-Resolved by the product owner after B0. Nothing else may differ between the
-two category templates.
+**5.1 Hero height.** `--heroH` on `<html>`: `84svh` for a property, `64svh` for
+a vehicle, both over `min-height:440px`.
 
-**1 · The hero block** — aspect ratio and veil padding together
+This replaced the old `--heroRatio` / `--heroVeilPad` pair. B2 made the hero
+full-bleed at a viewport height instead of a cropped aspect-ratio, so the veil
+padding no longer moves with it — the gradient runway is `7rem` for both. The
+rationale is unchanged: a car is a wide object, and a tall frame either crops
+it or fills the rest with asphalt.
 
-| | Property | Vehicle |
-|---|---|---|
-| `.hero` aspect-ratio | `4/5` | `4/3` |
-| `.hero-veil` padding | `5rem 1.5rem 1.25rem` | `4.5rem 1.5rem 1.25rem` |
+One custom property on `<html>` rather than a category class, so the stylesheet
+stays byte-identical and a fifth divergence cannot enter as a style override.
 
-These are **one decision, not two**: the padding differs *because* the aspect
-ratio does. A car is a wide object, so a vertical frame either crops it or
-leaves dead asphalt (the reasoning is inline in the vehicle file), and the
-shorter 4/3 hero needs less gradient runway above the title.
+**5.2 Price note.** `.price-note` content. Driven by DATA, never by
+`listing.category`: a book price selects the comparison form, a per-unit price
+appears when the schema marks a `priceDenominator` fact, and free text fills in
+otherwise. The CSS is identical.
 
-Treat the hero as a single category-parameterised component taking both values
-from one place. Splitting them into two independent overrides invites someone
-to change one and not the other.
+**5.3 `section.flaws`.** Vehicle only in practice, though the component takes a
+list rather than a category. Its own tinted block, deliberately not folded into
+the description: the value is that a buyer can find the bad news without
+reading prose. An olive dot marks each item, never a warning glyph — these are
+disclosures a seller chose to make, and a hazard sign would punish the honesty
+the block exists to reward.
 
-**2 · `.price-note` content**
-
-| Property | Vehicle |
-|---|---|
-| `פינוי גמיש` | `מחיר מחירון: <bdi>₪94,000</bdi>` |
-
-**CSS is identical** — the same `.price-note` rule serves both. This is a
-content divergence only. It must not become a style divergence.
-
-**3 · `section.flaws` — vehicle only**
-
-`מה שכדאי לדעת`, sitting between the description and the gallery.
-
-```
-.flaws            { background:#F5F2EA }
-.flaws ul         { list-style:none; margin-top:.5rem }
-.flaws li         { border-block-end:1px solid var(--stone); font-size:.95rem; padding:.45rem 0 }
-.flaws li:last-child { border:none }
-```
-
-**4 · `section.map` — property only**
-
-```
-.map img { width:100%; border-radius:3px; display:block; background:var(--stone) }
-.addr    { font-size:.9rem; color:var(--muted); margin-top:.6rem }
-```
-
-Not an oversight, and the reason matters for anyone tempted to "fix" it
-later: a vehicle's location is an approximate meeting area, not an address.
-Pinning a private car for sale to a home address on a public page is a
-**theft risk**. The city in `.hero-place` is the correct resolution for
-vehicles, and no map section is rendered for them.
+**5.4 `section.map`.** Property only. A vehicle's location is an approximate
+meeting area, not an address, and pinning a private car for sale to a home
+address on a public page is a theft risk.
 
 ### Two differences that are NOT divergences
 
-Both are per-listing generated metadata, not template CSS. One code path
-produces them for both categories, so neither creates a fifth divergence.
-The property reference file is simply older than the spec.
+`section.enrich` renders on **both**, with different content — property gets
+proximity, vehicle gets the verified specification and ownership history. A
+section present on one page and absent from the other would be a fifth
+divergence and the build refuses it.
 
-| | Property file | Vehicle file | Resolution |
-|---|---|---|---|
-| `og:image` | `a7k2m.jpg`, no hash | `v3m9q-8f21c4.webp` | **WebP, content hash in the filename**, both categories |
-| `robots` | *(absent)* | `noindex` | **`noindex` by default**, driven by `listing.indexable`, both categories |
+The `.erow .mins` column has no walk time on a vehicle, so it carries the years
+an owner held the car, or the year an open period began. Never a duration
+measured against today: on a statically built page that means measured against
+the build, and it would be silently wrong a year later.
 
 ---
 
-## 6. RTL techniques in use
+## 6. RTL and motion
+
+### 6.1 Logical properties only
 
 **No physical `left`/`right`/`margin-left`/`padding-right`/`border-left`/
-`border-right` declaration appears in any of the three files.** Verified by
-regex across all three `<style>` blocks.
+`border-right` declaration appears in any of the three files.**
+`scripts/verify-web-logical-props.mjs` fails the build on one, and
+`scripts/verify-web-lint-fires.sh` plants a violation every run to prove the
+scan still matches.
 
-### Logical properties, by file
+In use: `inset-inline`, `inset-block-start`, `margin-inline`,
+`margin-inline-start`, `margin-block-end`, `padding-block-end`,
+`border-block`, `border-block-start`, `border-block-end`, `text-align:start`,
+`text-align:end`.
 
-| Property | Vehicle | rtl-test |
-|---|---|---|
-| `border-block-start` | `border-block-start` | `border-block-start` |
-| `border-inline-start` | `border-inline-start` | `border-inline-start` |
-| — | `border-block-end` | `border-block-end` |
-| `inset` | `inset` | — |
-| `inset-inline` | `inset-inline` | — |
-| `margin-inline` | `margin-inline` | `margin-inline` |
-| `scroll-snap-align` | `scroll-snap-align` | — |
-| — | — | `padding-block` |
+`transform-origin:right center` on `.progress` is the one physical word in the
+design. It is not a side declaration — it names the anchor the bar grows from,
+which is the inline start of an RTL document.
 
-Where each is used:
+### 6.2 Every number in `<bdi>`
 
-- `border-inline-start` — `.fact` vertical hairline, reset by `:nth-child(3n+1)`
-- `border-block-start` — `.fact` horizontal hairline, reset by `:nth-child(-n+3)`
-- `border-block-end` — `.flaws li` separator (vehicle), `.case` separator (rtl-test)
-- `inset-inline:0` — `.hero-veil`, `.cta-dock`
-- `inset:0` — `.immersive-scrim`
-- `margin-inline:auto` — `body`, `.cta-dock`
-- `padding-block` — `.case` (rtl-test)
+The new design has **more** numbers, not fewer. `scripts/verify-bdi.mjs` scans
+the built HTML and fails on a digit outside one; `scripts/verify-bdi-fires.sh`
+proves it still matches. `/a/_rtltest` is the single exemption and §7 says why.
 
-### `<bdi>` usage sites
+### 6.3 Motion — native scroll-driven only
 
-`listing-page-template.html` — **10 sites**
+| Effect | Mechanism |
+|---|---|
+| Hero parallax | `animation-timeline: view()`, range `entry 0% exit 100%`, `translateY(-7%)` → `7%` |
+| Section reveals | `animation-timeline: view()`, range `entry 4% entry 46%`, opacity + `translateY(22px)` |
+| Progress line | `animation-timeline: scroll(root block)`, `scaleX(0)` → `scaleX(1)` |
+| Hero veil | a plain `.55s` `cubic-bezier(.2,.7,.3,1)` entrance, no timeline |
 
-`4` · `₪1,850,000` · `95` · `3` · `5` · `4` · `12` · `6` · `8` · `42`
+**No animation library, and this is a constraint rather than a preference.**
+GSAP is free now, and it is still ~70KB running on the main thread against a
+page with a hard performance budget and an INP target. Native scroll-driven
+animations run on the compositor. If a visual effect here seems to need
+JavaScript, stop and ask.
 
-Covering: room count in the title, price, m², floor and total floors as two
-separate `<bdi>` elements around a literal `/`, room count fact, balcony m²,
-and the two immersive-note numbers, plus the street number in `.addr`.
+Everything is wrapped in **both** `@media (prefers-reduced-motion:
+no-preference)` and `@supports (animation-timeline: view())`. Support is
+roughly 84% globally; the rest see static, correctly laid-out content. That is
+the whole progressive-enhancement story and it needs no fallback.
 
-`listing-page-vehicle.html` — **11 sites**
+`scripts/verify-motion-fallbacks.mjs` proves the story holds, because both
+ways it breaks are silent:
 
-`3` · `2021` · `₪89,000` · `₪94,000` · `2021` · `62,000` · `1,600` ·
-`03/2027` · `36` · `8,000` · `10`
+- `.reveal` must have **no** rules outside `@supports`. One `opacity:0` that
+  escapes and a Firefox reader loses a third of the page permanently.
+- `.hero-img` must **keep** its layout outside `@supports` — position, size
+  and object-fit are what make the hero a hero.
+- `animation-timeline` must sit inside both wrappers.
 
-Covering: model number and year in the title, both prices, year, km, engine
-cc, test date, frame count, km in prose, and a defect measurement in `.flaws`.
-
-`rtl-test.html` — **27 sites** (see §7)
-
-### Directional icon handling
-
-`rtl-test.html` defines `.chev{display:inline-block;transform:scaleX(-1)}`,
-applied to `›` and `‹`. Its case 8 states that arrows flip while checkmark,
-star, logo and playback controls do not.
+`html{scroll-behavior:smooth}` is set unconditionally in the reference. The
+port guards it under `prefers-reduced-motion: reduce`: smooth scrolling is
+motion too, and a reader who asked for less did not exclude it.
 
 ---
 

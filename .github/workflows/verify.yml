@@ -92,6 +92,14 @@ jobs:
       - name: Verify the <bdi> rule actually fires
         run: bash scripts/verify-bdi-fires.sh
 
+      # Stage B2. The scroll-driven motion is wrapped in both @supports and
+      # the reduced-motion query, and both failures are silent: a reveal that
+      # escapes @supports hides content permanently in Firefox, and an
+      # animation-timeline that escapes the media query moves the page for
+      # someone who switched movement off.
+      - name: Verify the motion degrades correctly
+        run: node scripts/verify-motion-fallbacks.mjs
+
       - name: Report built page weight
         run: node scripts/report-page-weight.mjs
 
