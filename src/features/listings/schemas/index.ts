@@ -1,7 +1,7 @@
-import type { CategorySchema, FactDefinition } from '@/types/listing';
+import type { CategorySchema, FactDefinition } from '@/types/listing.js';
 
-import { propertySchema } from './property';
-import { vehicleSchema } from './vehicle';
+import { propertySchema } from './property.js';
+import { vehicleSchema } from './vehicle.js';
 
 /**
  * Category registry.
@@ -43,5 +43,5 @@ export function requiredFactKeys(category: ListingCategory): string[] {
     .map((fact) => fact.key);
 }
 
-export { propertySchema } from './property';
-export { vehicleSchema } from './vehicle';
+export { propertySchema } from './property.js';
+export { vehicleSchema } from './vehicle.js';

@@ -1,4 +1,4 @@
-import type { CategorySchema } from '@/types/listing';
+import type { CategorySchema } from '@/types/listing.js';
 
 /**
  * Property fact schema (PRD.md §2).

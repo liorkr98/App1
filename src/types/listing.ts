@@ -1,4 +1,4 @@
-import type { ListingCategory } from '@/features/listings/schemas';
+import type { ListingCategory } from '@/features/listings/schemas/index.js';
 
 /**
  * The listing domain (RESEARCH.md §6, PRD.md §2).
