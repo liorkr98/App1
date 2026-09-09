@@ -149,6 +149,8 @@
     "photoCount": "",
     "absent": "",
     "notAnswered": "",
-    "blockedTitle": ""
+    "blockedTitle": "",
+    "required": "",
+    "factsHint": ""
   }
 }

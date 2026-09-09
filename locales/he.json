@@ -149,6 +149,8 @@
     "photoCount": "{count} מתוך {max}",
     "absent": "אין",
     "notAnswered": "לא עניתי",
-    "blockedTitle": "לפני הפרסום"
+    "blockedTitle": "לפני הפרסום",
+    "required": "חובה",
+    "factsHint": "מה שלא ידוע — השאירו ריק. ריק לא יוצג בעמוד, והוא לא אומר שאין."
   }
 }

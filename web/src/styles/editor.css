@@ -138,3 +138,113 @@
   font-size: 0.85rem;
   color: var(--muted);
 }
+
+/* ---------- Facts entry ---------- */
+
+.hint {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin-block-end: 1rem;
+}
+
+.facts-entry {
+  display: grid;
+  gap: 1.1rem;
+  list-style: none;
+}
+
+.fact-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-block-end: 0.35rem;
+}
+
+.fact-head label {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.fact-unit {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.fact-required {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--olive);
+}
+
+/* The אין / לא עניתי toggle. Quiet: it is an alternative to answering, not a
+   second call to action competing with the field beside it. */
+.fact-absent {
+  font: inherit;
+  font-size: 0.75rem;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  padding: 0.1rem 0.2rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.fact-absent[aria-pressed='true'] {
+  color: var(--olive);
+  font-weight: 600;
+}
+
+/* A fact the seller confirmed is absent. The same 35% the published page uses
+   for אין, so the editor and the page agree about what absent looks like. */
+.fact-row.absent .fact-head label {
+  opacity: 0.35;
+}
+
+.fact-row input,
+.fact-row select {
+  inline-size: 100%;
+  padding: 0.7rem 0.8rem;
+  font: inherit;
+  color: var(--ink);
+  background: var(--plaster);
+  border: 1px solid var(--stone);
+  border-radius: 6px;
+}
+
+.fact-row input:focus-visible,
+.fact-row select:focus-visible,
+.choice:focus-visible,
+.nav button:focus-visible,
+.fact-absent:focus-visible {
+  outline: 2px solid var(--olive);
+  outline-offset: 2px;
+}
+
+/* entry_date offers both controls — one of מיידי / גמיש, or a real date — so
+   the date input sits under its select rather than beside it. */
+.fact-row select + input {
+  margin-block-start: 0.5rem;
+}
+
+.fact-toggle {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.fact-toggle button {
+  flex: 1;
+  padding: 0.6rem 0.8rem;
+  font: inherit;
+  color: var(--ink);
+  background: var(--plaster);
+  border: 1px solid var(--stone);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.fact-toggle button[aria-pressed='true'] {
+  border-color: var(--olive);
+  box-shadow: inset 0 0 0 1px var(--olive);
+  font-weight: 600;
+}

@@ -10,9 +10,11 @@ import {
   type EditorState,
   type Step,
 } from '@/features/listings/editor';
+import { blankFacts } from '@/features/listings/fact-entry';
 import { LISTING_CATEGORIES, schemaFor } from '@/features/listings/schemas';
 
 import { t } from '../../lib/i18n';
+import { FactsStep } from './FactsStep';
 import { Message } from './Message';
 
 /**
@@ -67,6 +69,23 @@ export default function Editor() {
     if (target) setStep(target);
   };
 
+  /**
+   * Choosing a category also builds its fact list.
+   *
+   * CHANGING it rebuilds from the new schema, discarding the old answers.
+   * They cannot be carried over — the two schemas share no keys, and a
+   * silent partial merge would leave a vehicle listing holding a room count.
+   * Re-choosing the SAME category is a no-op, so a stray second tap on the
+   * button already selected does not wipe the form.
+   */
+  const choose = (category: NonNullable<EditorState['category']>) => {
+    setState((current) =>
+      current.category === category
+        ? current
+        : { ...current, category, facts: blankFacts(category) },
+    );
+  };
+
   return (
     <main className="editor">
       <header className="rail">
@@ -97,9 +116,14 @@ export default function Editor() {
 
       <section className="step">
         {step === 'category' ? (
-          <CategoryStep
-            chosen={state.category}
-            onChoose={(category) => setState((current) => ({ ...current, category }))}
+          <CategoryStep chosen={state.category} onChoose={choose} />
+        ) : null}
+
+        {step === 'facts' && state.category ? (
+          <FactsStep
+            category={state.category}
+            facts={state.facts}
+            onChange={(facts) => setState((current) => ({ ...current, facts }))}
           />
         ) : null}
       </section>
