@@ -108,6 +108,42 @@ that advertises itself as verified is worse than no יד at all.
 
 ---
 
+## Transit — code written, feed never downloaded
+
+`ingest/src/sources/transit.ts` reads `routes.txt`, `trips.txt`,
+`stop_times.txt` and `stops.txt` out of the archive at
+`gtfs.mot.gov.il/gtfsfiles/israel-public-transportation.zip`.
+
+**The archive was never fetched.** The development machine cannot download and
+unzip a few hundred megabytes, so:
+
+- the field names come from the GTFS **specification**, not from the Israeli
+  export — if the ministry ships a non-standard column, this breaks on the
+  first run;
+- **how the feed encodes light rail is unconfirmed.** The stage asked for this
+  specifically and it is the one thing I could not answer.
+
+`ingest/src/gtfs/mode.ts` maps both the basic route types (0 tram/light rail,
+1 metro, 2 rail, 3 bus) and the extended 100–999 hierarchy, because different
+Israeli exports have been reported using each.
+
+**It THROWS on an unmapped value rather than defaulting to bus.** That is the
+important decision in the file. A default would make the sync succeed and the
+red line show up as a bus stop — wrong, silent, and discovered by a reader.
+Throwing means the first real sync fails with the exact unmapped number in the
+message and someone adds one line.
+
+Two other things worth knowing before the first run:
+
+- **Memory.** `trips.txt` holds millions of rows and the trip→route map has one
+  entry per trip. Route ids are interned, so only the keys are new
+  allocations, but this is the line that will exhaust a small machine first. If
+  it does, stage the join in Postgres rather than shrinking the map.
+- **`unzip` must be in the image.** `ingest/Dockerfile` installs it. There is
+  no Node zip dependency by choice (CLAUDE.md §2).
+
+---
+
 ## Property — NOT TESTED
 
 The Israel Tax Authority נדל"ן database was **not** exercised. Its search

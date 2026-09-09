@@ -1,4 +1,5 @@
 import { syncSchools } from './sources/schools.js';
+import { syncTransit } from './sources/transit.js';
 import { SyncCollapsed } from './sync.js';
 
 /**
@@ -17,16 +18,11 @@ type SourceName = 'schools' | 'transit' | 'places';
 
 const SOURCES: Record<SourceName, () => Promise<{ rows: number; skipped: Record<string, number> }>> = {
   schools: syncSchools,
+  transit: syncTransit,
 
-  // Not written yet. Named here so `sync transit` fails with a sentence
+  // Not written yet. Named here so `sync places` fails with a sentence
   // instead of "unknown source", which reads like a typo rather than a
   // deliberately unfinished job.
-  transit: () => {
-    throw new Error(
-      'transit sync is not implemented: the GTFS feed is a zip at gtfs.mot.gov.il ' +
-        'and how it encodes light rail has not been verified. See docs/DATA-SOURCES.md.',
-    );
-  },
   places: () => {
     throw new Error(
       'places sync is not implemented: it needs the Israel OSM extract loaded into ' +
