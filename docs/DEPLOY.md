@@ -37,13 +37,22 @@ only the site's dependencies, not the mobile app's.
 SITE_URL  →  CF_PAGES_URL  →  https://example.com
 ```
 
-Cloudflare sets `CF_PAGES_URL` automatically on every build, so **production
-and preview deploys each get a correct absolute `og:image`** with no
-configuration. Preview branches produce working WhatsApp cards too, which is
-what makes the card testable before anything is live.
+**`SITE_URL` has to be set. There is no working fallback.**
 
-Set `SITE_URL` as an environment variable only when a custom domain is
-attached — otherwise the cards would point at the `.pages.dev` host forever.
+`CF_PAGES_URL` is set by Cloudflare **Pages**. This site deploys as a
+**Worker**, and Workers Builds does not set it — so with neither variable
+present, every `og:image` on the deployed site read
+`https://example.com/...`. That was live and undetected: the build succeeded,
+every check passed, and the one URL the whole distribution model rests on was
+a placeholder.
+
+Set it in the Worker's **Settings → Variables and Secrets**, as a plain text
+variable, to the origin the site is served from:
+
+    SITE_URL = https://hasivuv.com
+
+Until the custom domain is attached, use the workers.dev origin instead. It
+must be the ORIGIN only — scheme and host, no trailing path.
 
 This matters because **WhatsApp rejects a relative `og:image`** and renders a
 card with no picture. Getting the host wrong does not produce an error

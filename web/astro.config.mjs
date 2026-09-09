@@ -14,12 +14,18 @@ export default defineConfig({
   // ones, and a wrong host here silently produces a preview card with no
   // image — the single most expensive failure in the product.
   //
-  // Cloudflare Pages sets CF_PAGES_URL on every build, so a preview deploy
-  // gets its own hostname and the card works there too. SITE_URL overrides it
-  // for the production custom domain. See docs/DEPLOY.md.
+  // SITE_URL MUST BE SET IN THE DEPLOY ENVIRONMENT. It is not optional and
+  // there is no automatic fallback that works here.
   //
-  // The example.com default only applies to a local build, where nothing is
-  // fetching the card anyway.
+  // CF_PAGES_URL is kept only for a Cloudflare PAGES project, which sets it
+  // per deploy. This site is deployed as a WORKER, and Workers Builds does
+  // NOT set it — so without SITE_URL every card on the deployed site pointed
+  // at https://example.com/... . Confirmed by reading og:image off the live
+  // page, not inferred: the pages built, every check passed, and the single
+  // most important URL in the product was a placeholder.
+  //
+  // The example.com default now exists only so a LOCAL build does not throw.
+  // See docs/DEPLOY.md.
   site: process.env.SITE_URL ?? process.env.CF_PAGES_URL ?? 'https://example.com',
 
   output: 'static',
