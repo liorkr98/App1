@@ -2,6 +2,7 @@
 import BaseListing from '../../../layouts/BaseListing.astro';
 import CtaDock from '../../../components/CtaDock.astro';
 import Disclosures from '../../../components/Disclosures.astro';
+import Enrichment from '../../../components/Enrichment.astro';
 import FactsGrid from '../../../components/FactsGrid.astro';
 import Gallery from '../../../components/Gallery.astro';
 import Hero from '../../../components/Hero.astro';
@@ -38,6 +39,16 @@ const heading = listing.category === 'property' ? 'על הדירה' : 'על הר
 // A vehicle has no street, so no map. See DESIGN-CONTRACT §5.4.
 const showMap = Boolean(listing.location?.street);
 const mapImageUrl = 'https://placehold.co/800x400/E4E0D6/6E6F66?text=+';
+
+/**
+ * Licence attributions, carried by the data rather than the template.
+ *
+ * A page that renders no OpenStreetMap places carries no ODbL credit, and a
+ * page that gains a new attributed source cannot forget to add one. Hardcoding
+ * it in the footer would make the credit depend on a template remembering.
+ */
+const attributions =
+  listing.enrichment?.category === 'property' ? listing.enrichment.attributions : [];
 ---
 <BaseListing
   listing={listing}
@@ -64,6 +75,11 @@ const mapImageUrl = 'https://placehold.co/800x400/E4E0D6/6E6F66?text=+';
 
   <Gallery images={listing.media.gallery} />
 
+  {/* Below the seller's own content, deliberately: what they came to publish
+      comes first, and the enrichment is what makes the page worth forwarding
+      (RESEARCH.md §5). */}
+  {listing.enrichment && <Enrichment enrichment={listing.enrichment} />}
+
   {showMap && listing.location && (
     <MapSection location={listing.location} mapImageUrl={mapImageUrl} />
   )}
@@ -72,5 +88,15 @@ const mapImageUrl = 'https://placehold.co/800x400/E4E0D6/6E6F66?text=+';
 
   <CtaDock phone={listing.seller.phone} message={presentation.whatsappMessage} />
 
-  <footer>נבנה ב<a href="#">מרפסת</a></footer>
+  {/* נבנה בסיבוב is the viral loop (CLAUDE.md §8) — a listing page is
+      forwarded to 30-80 people who are by definition interested in buying
+      something. The ODbL line beside it is a LICENCE CONDITION, not a
+      courtesy (§10), and it is driven by the payload so a page with no OSM
+      places carries no OSM credit. */}
+  <footer>
+    נבנה ב<a href="https://hasivuv.com">סיבוב</a>
+    {attributions.map((attribution) => (
+      <Fragment><br /><span class="attribution"><Prose text={attribution} /></span></Fragment>
+    ))}
+  </footer>
 </BaseListing>

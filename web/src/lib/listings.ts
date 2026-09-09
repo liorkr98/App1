@@ -5,6 +5,8 @@ import {
   type FactValue,
   type Listing,
   type Provenance,
+  type PropertyEnrichment,
+  type VehicleEnrichment,
 } from '@/types/listing';
 import { propertySchema, vehicleSchema } from '@/features/listings/schemas';
 
@@ -55,6 +57,41 @@ function answer(
 
 const HOST = 'https://placehold.co';
 
+
+/**
+ * Proximity for the sample property.
+ *
+ * Stands in for what the ingestion writes at publish. Deliberately includes a
+ * light rail stop that is NOT the nearest — bus stops are closer — because
+ * that is the case the ordering exists to handle.
+ */
+const propertyEnrichment: PropertyEnrichment = {
+  category: 'property',
+  transit: [
+    { id: 't1', name: 'וולפסון', mode: 'light_rail', routes: ['הקו הסגול'], walkMinutes: 7, ...{ sourceName: 'משרד התחבורה', sourceDate: '2026-09-01' } },
+    { id: 't2', name: 'סוקולוב/ההסתדרות', mode: 'bus', routes: ['3', '5', '89'], walkMinutes: 3, ...{ sourceName: 'משרד התחבורה', sourceDate: '2026-09-01' } },
+    { id: 't3', name: 'תחנת רכבת חולון', mode: 'train', routes: ['רכבת ישראל'], walkMinutes: 18, ...{ sourceName: 'משרד התחבורה', sourceDate: '2026-09-01' } },
+  ],
+  schools: [
+    { id: 's1', name: 'בית ספר יסודי אלונים', type: 'בית ספר יסודי', stream: 'ממלכתי', gradeSpan: 'א׳–ו׳', walkMinutes: 6, ...{ sourceName: 'משרד החינוך', sourceDate: '2026-08-14' } },
+    { id: 's2', name: 'גן ילדים רימון', type: 'גן ילדים', stream: 'ממלכתי', walkMinutes: 4, ...{ sourceName: 'משרד החינוך', sourceDate: '2026-08-14' } },
+  ],
+  places: [
+    { id: 'p1', name: 'שופרסל שלי', category: 'grocery', walkMinutes: 5, ...{ sourceName: 'OpenStreetMap', sourceDate: '2026-09-05' } },
+    { id: 'p2', name: 'סופר פארם', category: 'pharmacy', walkMinutes: 8, ...{ sourceName: 'OpenStreetMap', sourceDate: '2026-09-05' } },
+    { id: 'p3', name: 'פארק פרס', category: 'park', walkMinutes: 9, ...{ sourceName: 'OpenStreetMap', sourceDate: '2026-09-05' } },
+    { id: 'p4', name: 'קפה גרג', category: 'cafe', walkMinutes: 6, ...{ sourceName: 'OpenStreetMap', sourceDate: '2026-09-05' } },
+    { id: 'p5', name: 'מסעדת הדרים', category: 'restaurant', walkMinutes: 11, ...{ sourceName: 'OpenStreetMap', sourceDate: '2026-09-05' } },
+  ],
+  summary: {
+    restaurantsWithin500m: 7,
+    nearestGrocery: { name: 'שופרסל שלי', walkMinutes: 5 },
+    nearestPark: { name: 'פארק פרס', walkMinutes: 9 },
+  },
+  // Carried by the data, so a page with no OSM places carries no OSM credit.
+  attributions: ['© מפתחי OpenStreetMap, ברישיון ODbL'],
+};
+
 export const propertyListing: Listing = {
   id: 'sample-property',
   slug: 'A7K2M',
@@ -98,6 +135,8 @@ export const propertyListing: Listing = {
     ],
   },
 
+  enrichment: propertyEnrichment,
+
   // Street present, so the map section renders.
   location: { city: 'חולון', street: 'סוקולוב 42' },
   seller: { name: 'ליאור', phone: '972500000000', role: 'בעל הדירה' },
@@ -105,6 +144,25 @@ export const propertyListing: Listing = {
   status: 'published',
   publishedAt: '2026-09-07T00:00:00.000Z',
   indexable: false,
+};
+
+
+/**
+ * Vehicle enrichment: what the registers hold, and nothing the seller said.
+ *
+ * No proximity — a car has no fixed location, and pinning one to an address is
+ * the theft risk the design already refuses (RESEARCH.md §4.6).
+ */
+const vehicleEnrichment: VehicleEnrichment = {
+  category: 'vehicle',
+  verifiedSpecKeys: ['make', 'model', 'year', 'engine_cc', 'fuel', 'hand', 'previous_ownership', 'test_until'],
+  ownershipHistory: [
+    { type: 'פרטית', fromMonth: '2023-04', ...{ sourceName: 'משרד התחבורה', sourceDate: '2026-09-01' } },
+    { type: 'ליסינג', fromMonth: '2021-03', toMonth: '2023-04', ...{ sourceName: 'משרד התחבורה', sourceDate: '2026-09-01' } },
+  ],
+  testValidUntil: '2027-03',
+  specSource: { sourceName: 'משרד התחבורה', sourceDate: '2026-09-01' },
+  testSource: { sourceName: 'משרד התחבורה', sourceDate: '2026-09-01' },
 };
 
 export const vehicleListing: Listing = {
@@ -163,6 +221,8 @@ export const vehicleListing: Listing = {
       { id: 'v4', url: `${HOST}/800x600/E4E0D6/6E6F66?text=+`, width: 800, height: 600, alt: 'תא מטען', caption: 'תא מטען' },
     ],
   },
+
+  enrichment: vehicleEnrichment,
 
   // City only, no street: a vehicle's location is an approximate meeting
   // area. No street means no map section (DESIGN-CONTRACT §5.4).

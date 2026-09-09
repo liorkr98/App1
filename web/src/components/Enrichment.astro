@@ -1,0 +1,165 @@
+---
+import type { EnrichmentBlock } from '@/types/listing';
+
+import { citations, groupPlaces, modeLabel, orderTransit } from '../lib/enrichment';
+import Prose from './Prose.astro';
+
+interface Props {
+  enrichment: EnrichmentBlock;
+}
+
+const { enrichment } = Astro.props;
+
+/**
+ * ONE section class for both categories, deliberately.
+ *
+ * Exactly four divergences are permitted between the property and vehicle
+ * templates (DESIGN-CONTRACT §5), and a section present on one page but absent
+ * from the other is a fifth — scripts/verify-template-divergences.mjs fails
+ * the build on it. So `section.enrich` renders on both, and what differs is
+ * the CONTENT, exactly as the price-note divergence already does.
+ *
+ * Property gets proximity: what is around this address. Vehicle gets the
+ * verified specification and ownership history, because a car has no fixed
+ * location and pinning one to an address is the theft risk the design already
+ * refuses.
+ */
+
+const isProperty = enrichment.category === 'property';
+
+const transit = isProperty ? orderTransit(enrichment.transit) : [];
+const schools = isProperty ? enrichment.schools : [];
+const placeGroups = isProperty ? groupPlaces(enrichment.places) : [];
+const summary = isProperty ? enrichment.summary : undefined;
+
+const ownership = !isProperty ? enrichment.ownershipHistory : [];
+
+/**
+ * Every citation on the section, once each.
+ *
+ * A source that has never successfully synced carries an empty date and is
+ * dropped by citations() rather than printed as "נכון ל־" with nothing after
+ * it — an empty date is worse than no citation.
+ */
+const sources = isProperty
+  ? citations([...transit, ...schools, ...enrichment.places])
+  : citations([
+      ...(enrichment.specSource ? [enrichment.specSource] : []),
+      ...(enrichment.testSource ? [enrichment.testSource] : []),
+      ...ownership,
+    ]);
+
+/** Month as the register holds it: YYYY-MM, shown as MM/YYYY. */
+const asMonth = (value: string): string => {
+  const [year, month] = value.split('-');
+  return year && month ? `${month}/${year}` : value;
+};
+---
+<section class="enrich">
+  <h2>{isProperty ? 'מה יש בסביבה' : 'מה מאומת'}</h2>
+
+  {isProperty && summary && (summary.restaurantsWithin500m || summary.nearestGrocery || summary.nearestPark) && (
+    <p class="enrich-lede">
+      {summary.nearestGrocery && (
+        <Fragment>מכולת במרחק <bdi>{summary.nearestGrocery.walkMinutes}</bdi> דקות הליכה. </Fragment>
+      )}
+      {summary.nearestPark && (
+        <Fragment>פארק במרחק <bdi>{summary.nearestPark.walkMinutes}</bdi> דקות הליכה. </Fragment>
+      )}
+      {summary.restaurantsWithin500m && (
+        <Fragment><bdi>{summary.restaurantsWithin500m}</bdi> מסעדות ברדיוס <bdi>500</bdi> מ׳.</Fragment>
+      )}
+    </p>
+  )}
+
+  {transit.length > 0 && (
+    <div class="enrich-group">
+      <h3>תחבורה ציבורית</h3>
+      <ul>
+        {transit.map((stop) => (
+          <li>
+            <span class="enrich-name"><Prose text={stop.name} /></span>
+            <span class="enrich-meta">
+              {modeLabel(stop.mode)}
+              {stop.routes.length > 0 && (
+                <Fragment> · <bdi>{stop.routes.join(', ')}</bdi></Fragment>
+              )}
+              {' · '}<bdi>{stop.walkMinutes}</bdi> דקות הליכה
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )}
+
+  {schools.length > 0 && (
+    <div class="enrich-group">
+      <h3>חינוך</h3>
+      <ul>
+        {schools.map((school) => (
+          <li>
+            <span class="enrich-name"><Prose text={school.name} /></span>
+            <span class="enrich-meta">
+              {[school.type, school.stream, school.gradeSpan].filter(Boolean).join(' · ')}
+              {' · '}<bdi>{school.walkMinutes}</bdi> דקות הליכה
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )}
+
+  {placeGroups.map((group) => (
+    <div class="enrich-group">
+      <h3>{group.label}</h3>
+      <ul>
+        {group.places.map((place) => (
+          <li>
+            <span class="enrich-name"><Prose text={place.name} /></span>
+            <span class="enrich-meta"><bdi>{place.walkMinutes}</bdi> דקות הליכה</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  ))}
+
+  {!isProperty && enrichment.testValidUntil && (
+    <div class="enrich-group">
+      <h3>טסט</h3>
+      <ul>
+        <li>
+          <span class="enrich-name">בתוקף עד <bdi>{asMonth(enrichment.testValidUntil)}</bdi></span>
+        </li>
+      </ul>
+    </div>
+  )}
+
+  {ownership.length > 0 && (
+    <div class="enrich-group">
+      <h3>היסטוריית בעלות</h3>
+      <ul>
+        {ownership.map((period) => (
+          <li>
+            <span class="enrich-name">{period.type}</span>
+            <span class="enrich-meta">
+              <bdi>{asMonth(period.fromMonth)}</bdi>
+              {period.toMonth ? <Fragment> – <bdi>{asMonth(period.toMonth)}</bdi></Fragment> : ' – היום'}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )}
+
+  {sources.length > 0 && (
+    <p class="enrich-src">
+      {sources.map((source, index) => (
+        <Fragment>
+          {index > 0 && ' · '}
+          <span class="verified">מאומת</span>{' '}
+          <Prose text={source.sourceName} /> · נכון ל־<bdi>{source.sourceDate}</bdi>
+        </Fragment>
+      ))}
+    </p>
+  )}
+</section>

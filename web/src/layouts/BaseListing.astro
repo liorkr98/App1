@@ -142,6 +142,28 @@ body{
 }
 .fact-cite{font-size:.66rem;color:var(--muted);line-height:1.4}
 
+/* ---------- Enrichment ----------
+   One section class for both categories. A section on one page and not the
+   other is a fifth divergence, which the build refuses — so what differs here
+   is content, never structure. Logical properties only (CLAUDE.md §4.1). */
+.enrich{border-block-start:1px solid var(--stone)}
+.enrich-lede{color:var(--muted);font-size:.95rem;margin-block-end:1rem}
+.enrich-group{margin-block-start:1.1rem}
+.enrich-group h3{
+  font-family:'Assistant',sans-serif;font-size:.8rem;font-weight:600;
+  color:var(--muted);margin-block-end:.4rem
+}
+.enrich-group ul{list-style:none}
+.enrich-group li{
+  border-block-end:1px solid var(--stone);padding-block:.45rem;
+  display:flex;flex-wrap:wrap;gap:.15rem .6rem;align-items:baseline
+}
+.enrich-group li:last-child{border-block-end:none}
+.enrich-name{font-size:.95rem}
+.enrich-meta{color:var(--muted);font-size:.8rem;margin-inline-start:auto}
+.enrich-src{margin-block-start:1rem;color:var(--muted);font-size:.7rem;line-height:1.6}
+.attribution{font-size:.68rem;opacity:.85}
+
 /* ---------- Sections ---------- */
 section{padding:1.75rem 1.5rem;border-bottom:1px solid var(--stone)}
 h2{
