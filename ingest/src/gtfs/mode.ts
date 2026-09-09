@@ -79,7 +79,16 @@ const EXTENDED: { from: number; to: number; mode: TransitMode }[] = [
  * than become NaN and then quietly match nothing.
  */
 export function toMode(routeType: string): TransitMode {
-  const value = Number(routeType.trim());
+  const raw = routeType.trim();
+
+  // Number('') is 0, and 0 is light_rail. So without this line a BLANK
+  // route_type — which real feeds do contain — silently becomes the red line:
+  // the single most consequential mislabel in the product, produced by the
+  // one function written to prevent it. Caught by its own test on the first
+  // run, which is the entire argument for having written the test.
+  if (raw === '') throw new UnmappedRouteType(routeType);
+
+  const value = Number(raw);
   if (!Number.isInteger(value)) throw new UnmappedRouteType(routeType);
 
   const basic = BASIC[value];

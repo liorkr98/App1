@@ -39,8 +39,16 @@ describe('toMode', () => {
     // and discovered by a reader rather than by us.
     assert.throws(() => toMode('4'), UnmappedRouteType); // ferry
     assert.throws(() => toMode('1501'), UnmappedRouteType);
-    assert.throws(() => toMode(''), UnmappedRouteType);
     assert.throws(() => toMode('bus'), UnmappedRouteType);
+  });
+
+  it('throws on a BLANK route_type, which Number() turns into 0', () => {
+    // The nastiest case, and the reason this suite exists. Number('') is 0,
+    // and 0 is light_rail — so a missing value would have become the red line
+    // rather than an error. Real feeds do contain blank cells.
+    assert.throws(() => toMode(''), UnmappedRouteType);
+    assert.throws(() => toMode('   '), UnmappedRouteType);
+    assert.throws(() => toMode('	'), UnmappedRouteType);
   });
 
   it('names the offending value in the error, so the fix is obvious', () => {
