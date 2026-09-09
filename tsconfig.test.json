@@ -14,6 +14,13 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "noEmit": false,
-    "outDir": "test-build"
+    "outDir": "test-build",
+    // Stated rather than inferred. TypeScript 6 refuses to guess it when
+    // emitting, and leaving it to the inferred common directory would move
+    // the output the moment the import graph changes — silently relocating
+    // the entry point the test glob depends on. The same reasoning as
+    // ingest/tsconfig.json, opposite conclusion: there the shared types are
+    // deliberately pulled in from above, here nothing outside src/ is.
+    "rootDir": "src"
   }
 }
