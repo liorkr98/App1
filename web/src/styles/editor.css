@@ -339,7 +339,10 @@ textarea {
   text-align: center;
   font-weight: 600;
   color: var(--olive);
-  border: 1px dashed var(--stone);
+  /* Solid, not dashed. There is no dashed border anywhere in the contract,
+     and the dashed drop-zone is a convention from a different design language
+     than this page speaks. */
+  border: 1px solid var(--stone);
   border-radius: 3px;
   cursor: pointer;
 }
@@ -451,11 +454,4 @@ textarea {
   border-color: var(--stone);
   box-shadow: none;
   cursor: default;
-}
-
-.publish-state {
-  padding: 0 1.5rem 0.5rem;
-  text-align: center;
-  font-size: 0.85rem;
-  color: var(--muted);
 }

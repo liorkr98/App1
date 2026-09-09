@@ -3,7 +3,6 @@ import { useMemo, useState } from 'react';
 import {
   blockers,
   canAdvance,
-  canPublish,
   MAX_IMAGES,
   nextStep,
   stepsFor,
@@ -237,15 +236,6 @@ export default function Editor() {
           {t('common.next')}
         </button>
       </footer>
-
-      {/*
-        Rendered, not hidden, when publishing is blocked. A disabled button
-        with no stated reason is the single most common way a form loses
-        someone at the last step.
-      */}
-      <p className="publish-state">
-        {canPublish(state) ? t('listing.publish') : t('editor.fixLater')}
-      </p>
     </main>
   );
 }
