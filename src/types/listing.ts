@@ -140,6 +140,18 @@ export interface FactDefinition {
 /** A category's ordered fact definitions. Order is display order. */
 export interface CategorySchema {
   category: string;
+
+  /**
+   * What the seller is selling, in Hebrew, for the category picker.
+   *
+   * Lives on the schema rather than in locales/ for the same reason the fact
+   * labels do (CLAUDE.md §12): a category IS its schema, and the registry
+   * promises that adding one means writing a schema file and adding a line.
+   * A label in a second file would quietly break that promise — the category
+   * would exist and have no name.
+   */
+  label: string;
+
   facts: readonly FactDefinition[];
 }
 

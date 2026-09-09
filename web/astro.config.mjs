@@ -1,3 +1,4 @@
+import react from '@astrojs/react';
 import { defineConfig } from 'astro/config';
 
 /**
@@ -24,6 +25,16 @@ export default defineConfig({
   output: 'static',
   build: { format: 'directory' },
 
+  // React exists for ONE page. /new is a multi-step form with drag-ordered
+  // photos and live validation, which is a genuine application; the listing
+  // pages stay pure HTML and ship no JavaScript at all.
+  //
+  // Astro only sends a framework to pages that use an island, so this costs
+  // the listing pages nothing — and report-page-weight.mjs now attributes
+  // bundles per page, so if that ever stops being true the number will say so
+  // instead of averaging it away.
+  integrations: [react()],
+
   // Share the Listing type and category schemas with the mobile app without
   // making the repo an npm workspace. Turning the root into a workspace root
   // would rewrite the React Native dependency tree for no benefit here.
@@ -34,6 +45,11 @@ export default defineConfig({
     resolve: {
       alias: {
         '@': new URL('../src', import.meta.url).pathname,
+        // Hebrew copy (CLAUDE.md §12). Same mirroring rule as "@" above: this
+        // guides the bundler, the "paths" entry guides the typechecker, and
+        // if they disagree the build and the typecheck disagree about what
+        // the code means.
+        '@locales': new URL('../locales', import.meta.url).pathname,
       },
     },
   },

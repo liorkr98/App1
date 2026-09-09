@@ -1,0 +1,140 @@
+/*
+  The editor (/new).
+
+  Logical properties only (CLAUDE.md §4.1) — inline-start is the RIGHT edge
+  here, and scripts/verify-web-logical-props.mjs fails the build on a physical
+  side. The rule matters most in this file: a form is nothing but gutters and
+  alignment, so a physical margin looks correct in every English screenshot
+  and wrong on every phone that will actually open it.
+
+  Not the design pass. This is the structure the steps need in order to be
+  built and read in Hebrew; DESIGN-CONTRACT.md governs what it finally looks
+  like.
+*/
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 100dvh;
+  padding: 1.25rem 1.5rem 1.5rem;
+  gap: 1.5rem;
+}
+
+/* ---------- Progress rail ---------- */
+
+.rail-count {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.rail-title {
+  font-family: 'Frank Ruhl Libre', serif;
+  font-weight: 700;
+  font-size: 1.6rem;
+  line-height: 1.3;
+  margin-block-start: 0.15rem;
+}
+
+.rail-bar {
+  block-size: 3px;
+  background: var(--stone);
+  border-radius: 2px;
+  margin-block-start: 0.9rem;
+  overflow: hidden;
+}
+
+/*
+  Fills from the inline start, which is the right edge in Hebrew. The element
+  is placed by normal flow inside a flex-free block, so it needs no offset
+  property at all — which is also how it avoids naming a physical side.
+*/
+.rail-fill {
+  block-size: 100%;
+  background: var(--olive);
+  transition: inline-size 0.25s ease;
+}
+
+/* ---------- Steps ---------- */
+
+.step {
+  flex: 1;
+}
+
+.choices {
+  display: grid;
+  gap: 0.75rem;
+  list-style: none;
+}
+
+.choice {
+  inline-size: 100%;
+  padding: 1.1rem 1.25rem;
+  font: inherit;
+  font-size: 1.05rem;
+  text-align: start;
+  color: var(--ink);
+  background: var(--plaster);
+  border: 1px solid var(--stone);
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+
+.choice.chosen {
+  border-color: var(--olive);
+  /* Two signals, not one: a colour alone excludes anyone who cannot see it. */
+  box-shadow: inset 0 0 0 1px var(--olive);
+  font-weight: 600;
+}
+
+/* ---------- Blockers ---------- */
+
+.blockers {
+  padding: 0.9rem 1.1rem;
+  background: var(--stone);
+  border-radius: 6px;
+}
+
+.blockers-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-block-end: 0.35rem;
+}
+
+.blockers ul {
+  /* The bullets sit on the inline start, which the logical property picks. */
+  padding-inline-start: 1.1rem;
+  font-size: 0.95rem;
+}
+
+/* ---------- Navigation ---------- */
+
+.nav {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.nav button {
+  flex: 1;
+  padding: 0.9rem 1rem;
+  font: inherit;
+  font-weight: 600;
+  color: var(--plaster);
+  background: var(--olive);
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.nav button:disabled {
+  background: var(--stone);
+  color: var(--muted);
+  cursor: default;
+}
+
+.publish-state {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--muted);
+}

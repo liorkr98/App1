@@ -1,0 +1,64 @@
+---
+import Editor from '../../components/editor/Editor.tsx';
+import { t } from '../../lib/i18n';
+import '../../styles/tokens.css';
+import '../../styles/editor.css';
+
+/**
+ * The editor (Stage E).
+ *
+ * Static, like everything else here — the shell is a file on the CDN and the
+ * island boots on the client. There is no server rendering to wait for, which
+ * matters because the seller arriving here is usually on cellular and already
+ * holding a phone full of photographs.
+ *
+ * client:load, not client:visible: the island IS the page. Deferring it until
+ * it scrolls into view would mean deferring it until after it is needed.
+ */
+---
+
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{t('listing.create')}</title>
+
+    {/*
+      Never indexed, and not for the same reason a listing page might not be.
+      A listing page is noindex by default because the seller may not want
+      their address searchable; this page is a private workspace holding
+      unpublished drafts, and there is no version of it that belongs in a
+      search result.
+    */}
+    <meta name="robots" content="noindex,nofollow" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Assistant:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <style is:global>
+      html {
+        background: var(--stone);
+      }
+
+      body {
+        font-family: 'Assistant', system-ui, sans-serif;
+        background: var(--plaster);
+        color: var(--ink);
+        line-height: 1.6;
+        max-width: 600px;
+        margin-inline: auto;
+        min-height: 100dvh;
+        -webkit-font-smoothing: antialiased;
+      }
+    </style>
+  </head>
+
+  <body>
+    <Editor client:load />
+  </body>
+</html>

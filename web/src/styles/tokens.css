@@ -1,0 +1,28 @@
+/*
+  The design tokens, in one place.
+
+  DESIGN-CONTRACT.md is the authority for what these values mean; this file is
+  where they live so that the listing page and the editor cannot drift apart.
+  A seller who builds a page in one palette and shares a page in another has
+  been shown two products.
+
+  BaseListing.astro still carries its own copy of this block. That is
+  deliberate for exactly one commit — the listing pipeline is green and the
+  React toolchain here is not yet proven, so the two changes stay separable.
+  The follow-up removes the duplicate.
+*/
+
+:root {
+  --plaster: #fbfaf7; /* טיח, לא קרם */
+  --ink: #191a15;
+  --olive: #4a5d3a; /* לא כחול — כל מותגי הנדל"ן בישראל כחולים */
+  --stone: #e4e0d6;
+  --muted: #6e6f66;
+  --shadow: 0 1px 2px rgba(25, 26, 21, 0.06);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}

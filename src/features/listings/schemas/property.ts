@@ -16,6 +16,7 @@ import type { CategorySchema } from '@/types/listing.js';
  */
 export const propertySchema: CategorySchema = {
   category: 'property',
+  label: 'דירה',
   facts: [
     { key: 'rooms', label: 'חדרים', type: 'number', required: true },
     { key: 'area_sqm', label: 'מ״ר', type: 'number', required: true },

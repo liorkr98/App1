@@ -6,13 +6,27 @@
     // import each other through "@/" — with a different alias here they
     // resolve to nothing and every shared type silently degrades to any.
     "paths": {
-      "@/*": ["../src/*"]
-    }
+      "@/*": ["../src/*"],
+      "@locales/*": ["../locales/*"]
+    },
+
+    // The editor island is React. Astro's base config leaves JSX for Astro's
+    // own compiler, which is right for .astro and wrong for a .tsx file —
+    // without these two, every component below returns an implicit any and
+    // astro check stops seeing prop errors at all.
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+
+    // t() reads locales/he.json through the alias above.
+    "resolveJsonModule": true
   },
   "include": [
     ".astro/types.d.ts",
     "**/*",
     "../src/types/listing.ts",
+    "../src/features/listings/editor.ts",
+    "../src/features/listings/description.ts",
+    "../src/features/listings/photo-order.ts",
     "../src/features/listings/schemas/**/*"
   ],
   "exclude": ["dist", "node_modules"]
