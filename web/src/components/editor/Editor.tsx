@@ -17,6 +17,7 @@ import { t } from '../../lib/i18n';
 import { DescriptionStep } from './DescriptionStep';
 import { FactsStep } from './FactsStep';
 import { Message } from './Message';
+import { useDraft } from './useDraft';
 
 /**
  * The editor island (Stage E).
@@ -34,9 +35,9 @@ import { Message } from './Message';
  *     migration 0004 still use Supabase Storage). Not mine to settle.
  *   - template and preview
  *
- * ALSO NOT DONE: there is no persistence, so a refresh loses the draft. PRD
- * §4 locks "no account until publish; signed edit link", which makes local
- * persistence the only thing standing between a seller and a lost afternoon.
+ * The draft is kept in localStorage (useDraft), because PRD §4 locks "no
+ * account until publish" and until the seller pays there is nowhere else to
+ * put their work.
  *
  * Publish is inert, and gated on entitlement with no provider chosen.
  * Entitlement is hard-coded to 'unknown' below. See the banner there.
@@ -70,6 +71,21 @@ export default function Editor() {
 
   const position = steps.indexOf(step);
   const here = outstanding.filter((blocker) => blocker.step === step);
+
+  /**
+   * Restores a saved draft, then lands the seller on the step that needs
+   * work rather than at the beginning.
+   *
+   * That is what nextStep is for. Someone coming back to a listing missing
+   * only photos should see the photos step, not the category question they
+   * answered yesterday.
+   *
+   * Entitlement is untouched: `Draft` has no such field. See useDraft.
+   */
+  useDraft(state, (draft) => {
+    setState((current) => ({ ...current, ...draft }));
+    setStep(nextStep({ ...START, ...draft }));
+  });
 
   const go = (delta: number) => {
     const target = steps[position + delta];
