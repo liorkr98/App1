@@ -1,8 +1,11 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, it } from 'node:test';
 
 import type { Fact } from '../../types/listing.js';
 import {
+  BLOCKER_CODES,
   blockers,
   canAdvance,
   canPublish,
@@ -83,9 +86,12 @@ describe('blockers', () => {
     assert.ok(steps.includes('publish'));
   });
 
-  it('names the missing fact, so the message is actionable', () => {
+  it('names the missing fact, so the message can be actionable', () => {
+    // The label rides on the blocker rather than being baked into a sentence
+    // here: the copy lives in locales/he.json, and it needs something to
+    // interpolate. "חסר: חדרים" is useful; "משהו חסר" is not.
     const found = blockers({ ...ready(), facts: [fact('rooms', 'חדרים', null, true)] });
-    assert.ok(found.some((blocker) => blocker.message.includes('חדרים')));
+    assert.equal(found.find((blocker) => blocker.code === 'factMissing')?.factLabel, 'חדרים');
   });
 
   it('ignores optional facts left unanswered', () => {
@@ -153,14 +159,56 @@ describe('entitlement — fail closed', () => {
 
   it('says something different for unpaid than for unreachable', () => {
     // "Pay to publish" and "we could not check" are different situations and
-    // the seller can act on only one of them.
-    const unpaid = blockers({ ...ready(), entitlement: 'unpaid' });
-    const unknown = blockers({ ...ready(), entitlement: 'unknown' });
-
-    assert.notEqual(
-      unpaid.find((b) => b.step === 'publish')?.message,
-      unknown.find((b) => b.step === 'publish')?.message,
+    // the seller can act on only one of them. Same block, different code, so
+    // the copy layer cannot accidentally collapse them into one sentence.
+    assert.equal(
+      blockers({ ...ready(), entitlement: 'unpaid' }).find((b) => b.step === 'publish')?.code,
+      'paymentRequired',
     );
+    assert.equal(
+      blockers({ ...ready(), entitlement: 'unknown' }).find((b) => b.step === 'publish')?.code,
+      'paymentUnverified',
+    );
+  });
+});
+
+describe('the blocker codes and their copy', () => {
+  /**
+   * Read, not imported. A JSON import would need resolveJsonModule and would
+   * pull a file from outside this workspace's rootDir into the build output.
+   * npm test runs from the repository root.
+   */
+  const he = JSON.parse(
+    readFileSync(resolve(process.cwd(), 'locales/he.json'), 'utf8'),
+  ) as { editor: { blockers: Record<string, string> } };
+
+  it('has Hebrew copy for every code the machine can emit', () => {
+    // The failure this catches: a new blocker ships, the seller is stopped,
+    // and the reason renders as "editor.blockers.somethingNew" — or as
+    // nothing at all, which is worse, because then they are stuck on a step
+    // with no stated reason.
+    for (const code of BLOCKER_CODES) {
+      assert.ok(he.editor.blockers[code], `no Hebrew for ${code}`);
+    }
+  });
+
+  it('has no copy for codes that no longer exist', () => {
+    // The other direction. Dead copy is how a locale file becomes something
+    // nobody trusts enough to edit.
+    for (const key of Object.keys(he.editor.blockers)) {
+      assert.ok(
+        (BLOCKER_CODES as readonly string[]).includes(key),
+        `${key} is in he.json but no blocker emits it`,
+      );
+    }
+  });
+
+  it('interpolates the image cap rather than spelling it out', () => {
+    // 25 appears in exactly one place (MAX_IMAGES). A locale string with the
+    // number written into it is a second place, and the two drift the day the
+    // cap changes.
+    assert.ok(he.editor.blockers.photosTooMany.includes('{max}'));
+    assert.ok(!he.editor.blockers.photosTooMany.includes(String(MAX_IMAGES)));
   });
 });
 

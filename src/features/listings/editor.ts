@@ -73,10 +73,45 @@ export function stepsFor(category: ListingCategory | undefined): Step[] {
   return STEPS.filter((step) => step !== 'plate' || category === 'vehicle');
 }
 
+/**
+ * Why a listing cannot be published, as a code rather than a sentence.
+ *
+ * The Hebrew lives in locales/he.json (CLAUDE.md §12). A state machine that
+ * also carried its own display strings would be two things at once, and the
+ * half that changes most often — the wording — would be the half nobody can
+ * touch without editing the rules.
+ */
+export const BLOCKER_CODES = [
+  'categoryMissing',
+  'photosTooFew',
+  'photosTooMany',
+  'factMissing',
+  'descriptionEmpty',
+  'descriptionUnedited',
+  'templateMissing',
+  'paymentRequired',
+  'paymentUnverified',
+] as const;
+
+/**
+ * An array first, and the union derived from it, so the set can be ITERATED.
+ * A bare union exists only at compile time, and the test that every code has
+ * Hebrew copy needs something to loop over at runtime.
+ */
+export type BlockerCode = (typeof BLOCKER_CODES)[number];
+
 export interface Blocker {
   step: Step;
-  /** Hebrew, because it is shown to the seller. */
-  message: string;
+  code: BlockerCode;
+
+  /**
+   * The fact's label, for `factMissing` only.
+   *
+   * Hebrew, and deliberately not a locale key: it comes from the category
+   * schema, which CLAUDE.md §12 names as the other place Hebrew may live.
+   * Which fields a category has is a product fact, not a translation.
+   */
+  factLabel?: string;
 }
 
 /**
@@ -90,17 +125,14 @@ export function blockers(state: EditorState): Blocker[] {
   const found: Blocker[] = [];
 
   if (!state.category) {
-    found.push({ step: 'category', message: 'צריך לבחור סוג מודעה' });
+    found.push({ step: 'category', code: 'categoryMissing' });
   }
 
   if (state.photoCount < MIN_IMAGES) {
-    found.push({ step: 'photos', message: 'צריך להעלות לפחות תמונה אחת' });
+    found.push({ step: 'photos', code: 'photosTooFew' });
   }
   if (state.photoCount > MAX_IMAGES) {
-    found.push({
-      step: 'photos',
-      message: `אפשר להעלות עד ${MAX_IMAGES} תמונות`,
-    });
+    found.push({ step: 'photos', code: 'photosTooMany' });
   }
 
   // Only the three required facts per category. A required field the seller
@@ -109,11 +141,11 @@ export function blockers(state: EditorState): Blocker[] {
     (fact) => fact.required && (fact.value === null || fact.value === ''),
   );
   for (const fact of missing) {
-    found.push({ step: 'facts', message: `חסר: ${fact.label}` });
+    found.push({ step: 'facts', code: 'factMissing', factLabel: fact.label });
   }
 
   if (state.description.trim() === '') {
-    found.push({ step: 'description', message: 'צריך לכתוב תיאור' });
+    found.push({ step: 'description', code: 'descriptionEmpty' });
   } else if (
     state.generatedDescription &&
     isUnedited(state.generatedDescription, state.description)
@@ -121,28 +153,26 @@ export function blockers(state: EditorState): Blocker[] {
     // E6. Not because the model writes badly — because the seller is the one
     // making a representation about their own property, and a description
     // nobody read is a claim nobody stands behind.
-    found.push({
-      step: 'description',
-      message: 'עברו על התיאור ותקנו אותו לפני הפרסום',
-    });
+    found.push({ step: 'description', code: 'descriptionUnedited' });
   }
 
   if (!state.template) {
-    found.push({ step: 'template', message: 'צריך לבחור תבנית' });
+    found.push({ step: 'template', code: 'templateMissing' });
   }
 
   // ========================== HUMAN REVIEW ==========================
   // The entitlement read. Anything that is not 'paid' blocks publishing,
   // including 'unknown' — a provider we could not reach is not a licence
   // to give the product away (CLAUDE.md §8).
+  //
+  // The two cases get DIFFERENT codes because they are different
+  // situations and the seller can act on only one of them: "pay to
+  // publish" is a button, "we could not check" is a wait.
   // ==================================================================
   if (state.entitlement !== 'paid') {
     found.push({
       step: 'publish',
-      message:
-        state.entitlement === 'unpaid'
-          ? 'הפרסום דורש תשלום'
-          : 'לא הצלחנו לאמת את התשלום. נסו שוב בעוד רגע.',
+      code: state.entitlement === 'unpaid' ? 'paymentRequired' : 'paymentUnverified',
     });
   }
 

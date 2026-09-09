@@ -118,5 +118,37 @@
     "plate": "",
     "plateHelp": "",
     "ownerDeclare": ""
+  },
+  "editor": {
+    "steps": {
+      "category": "",
+      "photos": "",
+      "plate": "",
+      "facts": "",
+      "description": "",
+      "template": "",
+      "preview": "",
+      "publish": ""
+    },
+    "blockers": {
+      "categoryMissing": "",
+      "photosTooFew": "",
+      "photosTooMany": "",
+      "factMissing": "",
+      "descriptionEmpty": "",
+      "descriptionUnedited": "",
+      "templateMissing": "",
+      "paymentRequired": "",
+      "paymentUnverified": ""
+    },
+    "fixLater": "",
+    "stepOf": "",
+    "coverPhoto": "",
+    "dragToReorder": "",
+    "addPhotos": "",
+    "photoCount": "",
+    "absent": "",
+    "notAnswered": "",
+    "blockedTitle": ""
   }
 }

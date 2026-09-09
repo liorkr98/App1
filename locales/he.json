@@ -118,5 +118,37 @@
     "plate": "מספר רישוי",
     "plateHelp": "נשתמש בו כדי למלא את הפרטים אוטומטית. מספר הרישוי לא יופיע במודעה",
     "ownerDeclare": "אני מצהיר שהרכב בבעלותי"
+  },
+  "editor": {
+    "steps": {
+      "category": "מה מוכרים?",
+      "photos": "תמונות",
+      "plate": "מספר רכב",
+      "facts": "פרטים",
+      "description": "תיאור",
+      "template": "עיצוב",
+      "preview": "תצוגה מקדימה",
+      "publish": "פרסום"
+    },
+    "blockers": {
+      "categoryMissing": "צריך לבחור סוג מודעה",
+      "photosTooFew": "צריך להעלות לפחות תמונה אחת",
+      "photosTooMany": "אפשר להעלות עד {max} תמונות",
+      "factMissing": "חסר: {label}",
+      "descriptionEmpty": "צריך לכתוב תיאור",
+      "descriptionUnedited": "עברו על התיאור ותקנו אותו לפני הפרסום",
+      "templateMissing": "צריך לבחור תבנית",
+      "paymentRequired": "הפרסום דורש תשלום",
+      "paymentUnverified": "לא הצלחנו לאמת את התשלום. נסו שוב בעוד רגע."
+    },
+    "fixLater": "אפשר להשלים אחר כך",
+    "stepOf": "שלב {current} מתוך {total}",
+    "coverPhoto": "תמונת שער",
+    "dragToReorder": "גררו כדי לסדר מחדש",
+    "addPhotos": "הוספת תמונות",
+    "photoCount": "{count} מתוך {max}",
+    "absent": "אין",
+    "notAnswered": "לא עניתי",
+    "blockedTitle": "לפני הפרסום"
   }
 }
