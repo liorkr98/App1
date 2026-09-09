@@ -12,14 +12,49 @@ import type { Image } from '@/types/listing';
 export const HERO_WIDTHS = [400, 800, 1200] as const;
 export const GALLERY_WIDTHS = [400, 800] as const;
 
+/**
+ * The URL of one width variant, or the original when there is none.
+ *
+ * THE BUG THIS FIXES. It used to take `url.lastIndexOf('.')` across the whole
+ * string. For any URL whose path carries no file extension, the last dot is
+ * in the HOST — so
+ *
+ *     https://placehold.co/900x1125/E4E0D6/6E6F66?text=+
+ *
+ * became `https://placehold-1200.webp`, a URL to nowhere. Every image on every
+ * sample page was a broken link, which is why those pages rendered with no
+ * photograph at all and the homepage preview showed an empty frame. The pages
+ * still built, still passed every check, and still looked deliberate.
+ *
+ * A dot only marks an extension when it sits INSIDE the last path segment.
+ * When it does not, the pipeline has produced no variants for this URL and
+ * the honest answer is the URL as given.
+ */
 function variant(url: string, width: number): string {
-  const dot = url.lastIndexOf('.');
-  const base = dot === -1 ? url : url.slice(0, dot);
-  return `${base}-${width}.webp`;
+  const marker = url.search(/[?#]/);
+  const path = marker === -1 ? url : url.slice(0, marker);
+  const suffix = marker === -1 ? '' : url.slice(marker);
+
+  const slash = path.lastIndexOf('/');
+  const dot = path.lastIndexOf('.');
+
+  if (dot <= slash) return url;
+
+  return `${path.slice(0, dot)}-${width}.webp${suffix}`;
 }
 
+/**
+ * A srcset, or an empty string when no variants exist.
+ *
+ * Empty rather than a list of identical URLs at different widths: telling the
+ * browser the same file is both 400w and 1200w is a lie it will act on, and
+ * the caller omits the attribute instead.
+ */
 export function srcset(url: string, widths: readonly number[]): string {
-  return widths.map((width) => `${variant(url, width)} ${width}w`).join(', ');
+  const composed = widths.map((width) => variant(url, width));
+  if (composed.every((candidate) => candidate === url)) return '';
+
+  return composed.map((candidate, index) => `${candidate} ${widths[index]}w`).join(', ');
 }
 
 /** Largest variant, used as the src fallback. */
