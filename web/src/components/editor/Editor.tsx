@@ -17,6 +17,7 @@ import { t } from '../../lib/i18n';
 import { DescriptionStep } from './DescriptionStep';
 import { FactsStep } from './FactsStep';
 import { Message } from './Message';
+import { PhotosStep, type EditorPhoto } from './PhotosStep';
 import { TemplateStep } from './TemplateStep';
 import { useDraft } from './useDraft';
 
@@ -28,16 +29,19 @@ import { useDraft } from './useDraft';
  * the presentation of those rules and holds no product logic of its own, so
  * the answer to "why can I not publish" is testable without a browser.
  *
- * BUILT SO FAR: category, facts, description, template.
+ * BUILT SO FAR: category, photos, facts, description, template.
  *
  * STILL EMPTY — each renders its heading and nothing else:
- *   - photos and plate. Photos needs an upload target, and R2 vs Supabase
- *     Storage is undecided (CLAUDE.md §2 says R2; worker/src/storage.ts and
- *     migration 0004 still use Supabase Storage). Not mine to settle.
+ *   - plate. The lookup has no endpoint yet, and a button that looks
+ *     something up and cannot would be worse than an empty step.
  *   - preview. It has to show the real listing page, and the site is static
  *     output — so a faithful preview means either a draft URL built by the
  *     pipeline or rendering the page markup twice. That is a design decision,
  *     not a component.
+ *
+ * Photos are picked and ordered but NOT UPLOADED: R2 vs Supabase Storage is
+ * undecided (CLAUDE.md §2 says R2; worker/src/storage.ts and migration 0004
+ * still use Supabase Storage). Everything except the transport works.
  *
  * The draft is kept in localStorage (useDraft), because PRD §4 locks "no
  * account until publish" and until the seller pays there is nowhere else to
@@ -69,6 +73,22 @@ const START: EditorState = {
 export default function Editor() {
   const [state, setState] = useState<EditorState>(START);
   const [step, setStep] = useState<Step>(() => nextStep(START));
+
+  /**
+   * The photographs live HERE and not in EditorState.
+   *
+   * EditorState is the shared, serialisable surface the rules run on. An
+   * object URL backed by a browser File is neither shared nor serialisable,
+   * so what crosses into the state machine is the only part it needs: how
+   * many there are. Keeping the files out is what stops photoCount and the
+   * actual photos ever disagreeing.
+   */
+  const [photos, setPhotos] = useState<EditorPhoto[]>([]);
+
+  const changePhotos = (next: EditorPhoto[]) => {
+    setPhotos(next);
+    setState((current) => ({ ...current, photoCount: next.length }));
+  };
 
   const steps = useMemo(() => stepsFor(state.category), [state.category]);
   const outstanding = useMemo(() => blockers(state), [state]);
@@ -144,6 +164,10 @@ export default function Editor() {
       <section className="step">
         {step === 'category' ? (
           <CategoryStep chosen={state.category} onChoose={choose} />
+        ) : null}
+
+        {step === 'photos' ? (
+          <PhotosStep photos={photos} onChange={changePhotos} />
         ) : null}
 
         {step === 'facts' && state.category ? (

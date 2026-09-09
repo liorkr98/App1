@@ -1,26 +1,50 @@
 /*
   The editor (/new).
 
+  Rewritten against docs/DESIGN-CONTRACT.md rather than styled from scratch.
+  The first version was a form in the product's colours; this one is built
+  from the listing page's own vocabulary, so the thing a seller makes and the
+  thing they make it in do not look like two products.
+
+  WHAT CHANGED, AND WHY IT WAS WRONG BEFORE
+
+  No cards. The reference page contains not one: it is a single column divided
+  by 1px stone hairlines, and every boundary in it is a rule rather than a
+  box. The first draft here wrapped each choice in a bordered, shadowed,
+  6px-rounded rectangle — three separate ways of saying the same thing, and
+  the most reliable tell that a different hand drew the screen.
+
+  Two radii exist in this product, 3px on images and 4px on the CTA, plus the
+  999px pill. The 6px was mine and belonged to nothing.
+
+  One shadow, --shadow, on the buttons that sit above the page. Nothing else
+  is raised, because nothing else is above anything.
+
+  Motion is a single transition on the progress fill, on the contract's own
+  cubic-bezier(.2,.7,.3,1), and it is switched off under prefers-reduced-
+  motion.
+
   Logical properties only (CLAUDE.md §4.1) — inline-start is the RIGHT edge
   here, and scripts/verify-web-logical-props.mjs fails the build on a physical
-  side. The rule matters most in this file: a form is nothing but gutters and
-  alignment, so a physical margin looks correct in every English screenshot
-  and wrong on every phone that will actually open it.
-
-  Not the design pass. This is the structure the steps need in order to be
-  built and read in Hebrew; DESIGN-CONTRACT.md governs what it finally looks
-  like.
+  side. It matters most in a form, which is nothing but gutters and alignment:
+  a physical margin looks correct in every English screenshot and wrong on
+  every phone that will actually open it.
 */
 
 .editor {
   display: flex;
   flex-direction: column;
   min-block-size: 100dvh;
-  padding: 1.25rem 1.5rem 1.5rem;
-  gap: 1.5rem;
+  /* Clears the fixed nav dock, exactly as the listing page clears its CTA. */
+  padding-block-end: 6rem;
 }
 
 /* ---------- Progress rail ---------- */
+
+.rail {
+  padding: 1.75rem 1.5rem 1.25rem;
+  border-block-end: 1px solid var(--stone);
+}
 
 .rail-count {
   font-size: 0.8rem;
@@ -31,126 +55,116 @@
   font-family: 'Frank Ruhl Libre', serif;
   font-weight: 700;
   font-size: 1.6rem;
-  line-height: 1.3;
+  line-height: 1.25;
   margin-block-start: 0.15rem;
 }
 
+/*
+  A hairline that fills, not a rounded pill on a track. The page already draws
+  1px stone rules between everything; the progress indicator is one of those
+  rules with olive laid over it, so it reads as part of the structure rather
+  than as a widget sitting on top of it.
+*/
 .rail-bar {
-  block-size: 3px;
+  block-size: 2px;
   background: var(--stone);
-  border-radius: 2px;
-  margin-block-start: 0.9rem;
+  margin-block-start: 1rem;
   overflow: hidden;
 }
 
-/*
-  Fills from the inline start, which is the right edge in Hebrew. The element
-  is placed by normal flow inside a flex-free block, so it needs no offset
-  property at all — which is also how it avoids naming a physical side.
-*/
 .rail-fill {
   block-size: 100%;
   background: var(--olive);
-  transition: inline-size 0.25s ease;
+  transition: inline-size 0.3s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rail-fill {
+    transition: none;
+  }
 }
 
 /* ---------- Steps ---------- */
 
 .step {
   flex: 1;
+  padding: 1.75rem 1.5rem;
 }
 
+.hint {
+  font-size: 0.95rem;
+  color: var(--muted);
+  margin-block-end: 1.25rem;
+  max-width: 46ch;
+}
+
+.note {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-block-start: 0.9rem;
+}
+
+/* ---------- Choices ----------
+   Hairline rows, like .fact. The selected one is marked by an olive rule on
+   the reading edge and a heavier weight — two signals, since colour alone
+   excludes anyone who cannot see it. */
+
 .choices {
-  display: grid;
-  gap: 0.75rem;
   list-style: none;
 }
 
 .choice {
+  display: block;
   inline-size: 100%;
-  padding: 1.1rem 1.25rem;
+  padding-block: 1.1rem;
+  padding-inline-start: 0.9rem;
   font: inherit;
   font-size: 1.05rem;
   text-align: start;
   color: var(--ink);
-  background: var(--plaster);
-  border: 1px solid var(--stone);
-  border-radius: 6px;
-  box-shadow: var(--shadow);
+  background: none;
+  border: 0;
+  border-block-start: 1px solid var(--stone);
+  border-inline-start: 2px solid transparent;
   cursor: pointer;
+}
+
+.choices li:first-child .choice {
+  border-block-start: none;
 }
 
 .choice.chosen {
-  border-color: var(--olive);
-  /* Two signals, not one: a colour alone excludes anyone who cannot see it. */
-  box-shadow: inset 0 0 0 1px var(--olive);
+  border-inline-start-color: var(--olive);
   font-weight: 600;
 }
 
-/* ---------- Blockers ---------- */
-
-.blockers {
-  padding: 0.9rem 1.1rem;
-  background: var(--stone);
-  border-radius: 6px;
+.choice-name {
+  display: block;
+  font-weight: 600;
 }
 
-.blockers-title {
+.choice-note {
+  display: block;
   font-size: 0.85rem;
-  font-weight: 600;
+  font-weight: 400;
   color: var(--muted);
-  margin-block-end: 0.35rem;
-}
-
-.blockers ul {
-  /* The bullets sit on the inline start, which the logical property picks. */
-  padding-inline-start: 1.1rem;
-  font-size: 0.95rem;
-}
-
-/* ---------- Navigation ---------- */
-
-.nav {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.nav button {
-  flex: 1;
-  padding: 0.9rem 1rem;
-  font: inherit;
-  font-weight: 600;
-  color: var(--plaster);
-  background: var(--olive);
-  border: 0;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.nav button:disabled {
-  background: var(--stone);
-  color: var(--muted);
-  cursor: default;
-}
-
-.publish-state {
-  text-align: center;
-  font-size: 0.85rem;
-  color: var(--muted);
+  margin-block-start: 0.1rem;
 }
 
 /* ---------- Facts entry ---------- */
 
-.hint {
-  font-size: 0.9rem;
-  color: var(--muted);
-  margin-block-end: 1rem;
+.facts-entry {
+  list-style: none;
 }
 
-.facts-entry {
-  display: grid;
-  gap: 1.1rem;
-  list-style: none;
+.fact-row {
+  padding-block: 1.1rem;
+  border-block-start: 1px solid var(--stone);
+}
+
+.facts-entry > li:first-child .fact-row,
+.facts-entry > li:first-child {
+  border-block-start: none;
 }
 
 .fact-head {
@@ -158,7 +172,7 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 0.75rem;
-  margin-block-end: 0.35rem;
+  margin-block-end: 0.45rem;
 }
 
 .fact-head label {
@@ -177,16 +191,16 @@
   color: var(--olive);
 }
 
-/* The אין / לא עניתי toggle. Quiet: it is an alternative to answering, not a
-   second call to action competing with the field beside it. */
+/* An alternative to answering, not a second call to action beside the field. */
 .fact-absent {
   font: inherit;
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   color: var(--muted);
   background: none;
   border: 0;
-  padding: 0.1rem 0.2rem;
+  padding: 0;
   text-decoration: underline;
+  text-underline-offset: 3px;
   cursor: pointer;
 }
 
@@ -195,36 +209,38 @@
   font-weight: 600;
 }
 
-/* A fact the seller confirmed is absent. The same 35% the published page uses
-   for אין, so the editor and the page agree about what absent looks like. */
+/* The same 35% the published page uses for אין, so the editor and the page
+   agree about what absent looks like. */
 .fact-row.absent .fact-head label {
   opacity: 0.35;
 }
 
-.fact-row input,
-.fact-row select {
+input[type='text'],
+input[type='number'],
+input[type='date'],
+select,
+textarea {
   inline-size: 100%;
   padding: 0.7rem 0.8rem;
   font: inherit;
   color: var(--ink);
   background: var(--plaster);
   border: 1px solid var(--stone);
-  border-radius: 6px;
+  border-radius: 3px;
 }
 
-.fact-row input:focus-visible,
-.fact-row select:focus-visible,
-.choice:focus-visible,
-.nav button:focus-visible,
-.fact-absent:focus-visible {
-  outline: 2px solid var(--olive);
-  outline-offset: 2px;
+textarea {
+  line-height: 1.6;
+  resize: vertical;
 }
 
-/* entry_date offers both controls — one of מיידי / גמיש, or a real date — so
-   the date input sits under its select rather than beside it. */
 .fact-row select + input {
   margin-block-start: 0.5rem;
+}
+
+:focus-visible {
+  outline: 2px solid var(--olive);
+  outline-offset: 2px;
 }
 
 .fact-toggle {
@@ -234,60 +250,131 @@
 
 .fact-toggle button {
   flex: 1;
-  padding: 0.6rem 0.8rem;
+  padding: 0.65rem 0.8rem;
   font: inherit;
   color: var(--ink);
-  background: var(--plaster);
+  background: none;
   border: 1px solid var(--stone);
-  border-radius: 6px;
+  border-radius: 3px;
   cursor: pointer;
 }
 
 .fact-toggle button[aria-pressed='true'] {
   border-color: var(--olive);
-  box-shadow: inset 0 0 0 1px var(--olive);
+  color: var(--olive);
   font-weight: 600;
 }
 
-/* ---------- Description ---------- */
+/* ---------- Photos ----------
+   A wrapping grid, which in RTL fills from the right: the first cell — the
+   cover — is top-RIGHT, where a Hebrew reader starts. Nothing here computes
+   that; `direction: rtl` on the document does, and the grid follows. */
 
-.description {
-  inline-size: 100%;
-  padding: 0.85rem 0.9rem;
-  font: inherit;
-  line-height: 1.6;
-  color: var(--ink);
-  background: var(--plaster);
-  border: 1px solid var(--stone);
-  border-radius: 6px;
-  /* Hebrew needs room to breathe; §5 sets the floor at 1.5. */
-  resize: vertical;
+.strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+  list-style: none;
+  margin-block-end: 1.25rem;
 }
 
-.description:focus-visible {
+.shot {
+  position: relative;
+}
+
+.shot img {
+  inline-size: 100%;
+  aspect-ratio: 4/3;
+  object-fit: cover;
+  border-radius: 3px;
+  background: var(--stone);
+  display: block;
+}
+
+.shot.dragging {
+  opacity: 0.4;
+}
+
+/* Sits on the reading edge of the cover thumbnail — right, in Hebrew. */
+.cover {
+  position: absolute;
+  inset-block-start: 0.35rem;
+  inset-inline-start: 0.35rem;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: var(--plaster);
+  background: var(--olive);
+  border-radius: 2px;
+}
+
+.shot-controls {
+  display: flex;
+  gap: 0.3rem;
+  margin-block-start: 0.35rem;
+}
+
+.shot-controls button {
+  flex: 1;
+  padding: 0.2rem 0;
+  font: inherit;
+  font-size: 0.72rem;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--stone);
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.shot-controls button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* The file input is hidden and its label is the control: a native file input
+   cannot be styled and announces itself in English on most phones. */
+.picker {
+  display: block;
+  padding: 0.9rem;
+  text-align: center;
+  font-weight: 600;
+  color: var(--olive);
+  border: 1px dashed var(--stone);
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.picker input {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.picker:focus-within {
   outline: 2px solid var(--olive);
   outline-offset: 2px;
 }
 
+/* ---------- Description review ---------- */
+
 .review {
   display: grid;
-  gap: 0.5rem;
-  margin-block-start: 0.75rem;
-  font-size: 0.88rem;
+  gap: 0.6rem;
+  margin-block-start: 1rem;
+  font-size: 0.9rem;
 }
 
 /*
   A note, not an error. These flags are advisory — nothing here blocks
   publishing — and red would tell the seller they had done something wrong
-  when what they have is a suggestion.
+  when what they have is a suggestion. The accent sits on the reading edge.
 */
 .review-flag {
-  padding: 0.6rem 0.75rem;
-  color: var(--ink);
-  background: var(--stone);
-  border-radius: 6px;
-  /* The accent sits on the reading edge: right in Hebrew, left in English. */
-  border-inline-start: 3px solid var(--olive);
+  padding-inline-start: 0.75rem;
+  border-inline-start: 2px solid var(--olive);
+  color: var(--muted);
 }
 
 .review-clean {
@@ -295,15 +382,80 @@
   font-weight: 600;
 }
 
-/* A choice that explains itself: name, then when it is the wrong pick. */
-.choice-name {
-  display: block;
-  font-weight: 600;
+/* ---------- Blockers ----------
+   #F5F2EA is the .flaws panel from the vehicle reference — the page's
+   existing colour for "things worth knowing before you commit", which is
+   exactly what this is. */
+
+.blockers {
+  padding: 1.1rem 1.5rem;
+  background: #f5f2ea;
+  border-block-start: 1px solid var(--stone);
 }
 
-.choice-note {
-  display: block;
+.blockers-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-block-end: 0.3rem;
+}
+
+.blockers ul {
+  padding-inline-start: 1.1rem;
+  font-size: 0.95rem;
+}
+
+/* ---------- Navigation ----------
+   The listing page's CTA dock, carrying two buttons instead of one. Same
+   fixed position, same gradient, same safe-area padding, same 4px radius. */
+
+.nav {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  max-width: 600px;
+  margin-inline: auto;
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, var(--plaster) 72%, transparent);
+}
+
+.nav button {
+  flex: 1;
+  padding: 0.95rem;
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--plaster);
+  background: var(--olive);
+  border: none;
+  border-radius: 4px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+
+/* Back is secondary: an outline, so the forward action is the only filled
+   thing on screen and the eye has one place to go. */
+.nav button:first-child {
+  flex: 0 0 33%;
+  color: var(--ink);
+  background: none;
+  border: 1px solid var(--stone);
+  box-shadow: none;
+}
+
+.nav button:disabled {
+  color: var(--muted);
+  background: var(--stone);
+  border-color: var(--stone);
+  box-shadow: none;
+  cursor: default;
+}
+
+.publish-state {
+  padding: 0 1.5rem 0.5rem;
+  text-align: center;
   font-size: 0.85rem;
   color: var(--muted);
-  margin-block-start: 0.15rem;
 }

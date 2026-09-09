@@ -22,7 +22,6 @@ describe('a draft survives a refresh', () => {
 
     assert.ok(restored);
     assert.equal(restored.category, 'property');
-    assert.equal(restored.photoCount, 6);
     assert.equal(restored.description, 'הדירה משופצת ופונה לדרום.');
     assert.equal(restored.template, 'clean');
     assert.equal(restored.facts.find((fact) => fact.key === 'rooms')?.value, 4);
@@ -117,11 +116,22 @@ describe('anything unrecognised starts clean', () => {
     assert.equal(fromDraft(bad), null);
   });
 
-  it('rejects a negative or fractional photo count', () => {
-    for (const photoCount of [-1, 1.5, Number.NaN]) {
-      const bad = JSON.stringify({ ...toDraft(state()), photoCount });
-      assert.equal(fromDraft(bad), null, String(photoCount));
-    }
+  it('never writes a photo count', () => {
+    assert.ok(!JSON.stringify(toDraft(state())).includes('photoCount'));
+  });
+
+  it('ignores a stored photo count instead of trusting it', () => {
+    // The photos are File objects behind object URLs; neither survives the
+    // tab. A restored count with no restored photos would walk the seller
+    // into a step that shows nothing, past a blocker that thinks it is
+    // satisfied. Old drafts still carry the field, so it is ignored rather
+    // than rejected — throwing away someone's work over a field we stopped
+    // using is the worse failure.
+    const stored = JSON.stringify({ ...toDraft(state()), photoCount: 6 });
+
+    const restored = fromDraft(stored);
+    assert.ok(restored);
+    assert.ok(!('photoCount' in restored));
   });
 
   it('rejects a fact with the wrong shape', () => {

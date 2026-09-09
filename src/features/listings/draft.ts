@@ -37,8 +37,22 @@ import { LISTING_CATEGORIES, type ListingCategory } from './schemas/index.js';
 /** Bumped whenever the shape below changes incompatibly. */
 export const DRAFT_VERSION = 1;
 
-/** Everything a draft holds. Note what is missing: entitlement. */
-export type Draft = Omit<EditorState, 'entitlement'>;
+/**
+ * Everything a draft holds. Note the two fields missing from it.
+ *
+ * entitlement — see the banner above.
+ *
+ * photoCount — the photos themselves cannot go in localStorage. They are
+ * browser File objects behind object URLs, both of which die with the tab,
+ * and 25 images as data URLs would exceed the storage quota on their own. A
+ * restored count with no restored photos is a claim about files that are not
+ * there: blockers() would see six photos and let the seller through a step
+ * showing nothing. So the count is derived from the photos actually in hand.
+ *
+ * This becomes storable once images have URLs on a server, which is the same
+ * decision that unblocks uploading at all.
+ */
+export type Draft = Omit<EditorState, 'entitlement' | 'photoCount'>;
 
 interface Stored extends Draft {
   version: number;
@@ -48,7 +62,6 @@ export function toDraft(state: EditorState): Stored {
   return {
     version: DRAFT_VERSION,
     ...(state.category === undefined ? {} : { category: state.category }),
-    photoCount: state.photoCount,
     facts: state.facts,
     description: state.description,
     ...(state.generatedDescription === undefined
@@ -90,11 +103,10 @@ export function fromDraft(raw: unknown): Draft | null {
   // A draft naming a category that no longer exists cannot have usable facts.
   if (parsed.category !== undefined && category === undefined) return null;
 
-  const photoCount = parsed.photoCount;
+  // parsed.photoCount is ignored rather than rejected: drafts written before
+  // photoCount left the shape still carry one, and discarding a seller's work
+  // over a field we have stopped using would be the worse failure.
   const description = parsed.description;
-  if (typeof photoCount !== 'number' || !Number.isInteger(photoCount) || photoCount < 0) {
-    return null;
-  }
   if (typeof description !== 'string') return null;
 
   const generated = parsed.generatedDescription;
@@ -107,7 +119,6 @@ export function fromDraft(raw: unknown): Draft | null {
 
   return {
     ...(category === undefined ? {} : { category }),
-    photoCount,
     facts,
     description,
     ...(generated === undefined ? {} : { generatedDescription: generated }),
