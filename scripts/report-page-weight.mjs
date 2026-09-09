@@ -48,6 +48,17 @@ console.log(`  shared css/js across all pages: ${(sharedBytes / 1024).toFixed(1)
 
 let over = 0;
 
+/**
+ * Also emit the numbers as a GitHub Actions notice.
+ *
+ * The measured page weight is the ONE hard number this pipeline produces, and
+ * it was landing only in a job log — which needs authentication to read, so it
+ * was invisible to anyone reviewing a run from outside. Annotations are public
+ * on a public repository, so this puts the number where it can actually be
+ * checked against the budget.
+ */
+const summary = [];
+
 for (const page of pages.sort()) {
   const htmlBytes = fs.statSync(page).size;
   const total = htmlBytes + sharedBytes;
@@ -58,6 +69,14 @@ for (const page of pages.sort()) {
     `  ${route.padEnd(18)} html ${(htmlBytes / 1024).toFixed(1).padStart(7)} KB   ` +
       `total ${(total / 1024).toFixed(1).padStart(7)} KB   ${status}`,
   );
+  summary.push(`${route} html ${(htmlBytes / 1024).toFixed(1)}KB total ${(total / 1024).toFixed(1)}KB ${status}`);
+}
+
+if (process.env.GITHUB_ACTIONS) {
+  // One line, no newlines — a notice is truncated at the first one.
+  const shared = `shared ${(sharedBytes / 1024).toFixed(1)}KB`;
+  const budget = `budget ${(BUDGET_BYTES / 1024).toFixed(0)}KB`;
+  console.log(`::notice title=Page weight::${shared} | ${summary.join(' | ')} | ${budget}`);
 }
 
 console.log(`\n  budget: ${(BUDGET_BYTES / 1024).toFixed(0)} KB total, enrichment included`);
