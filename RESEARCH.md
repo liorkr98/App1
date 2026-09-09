@@ -100,26 +100,51 @@ company with lawyers.
 Madlan is itself built on public sources. **Go to the primary sources.** It is
 legal, free, and a better moat, because the assembly is the work.
 
-### 4.2 Property sources
+### 4.2 Property sources — PROXIMITY, not transactions
+
+**v1 answers "what is around this address", not "what sold in this building".**
+
+That is a simplification, not a reduction in ambition. The transaction chain is
+address → normalise → גוש/חלקה → transactions → match to building: four links,
+three of them fragile, and the failure mode of the fragile ones is a
+confidently wrong comparable rather than a missing one. The proximity chain is
+address → coordinate → what is nearby. One link, and geocoding an Israeli
+address is a solved problem.
+
+**data.gov.il (CKAN)** — Ministry of Education institutions: name, supervision
+stream, grade span, locality; coordinates in a companion dataset keyed by
+סמל מוסד.
+
+**Ministry of Transport GTFS** — transit stops, the routes serving each, and
+the mode. Light rail must be distinguishable from bus: proximity to the light
+rail is one of the highest-value facts on a Tel Aviv page.
+
+**OpenStreetMap**, Israel extract, in PostGIS — food, culture, parks,
+groceries, pharmacies, gyms. Licence **ODbL**, so attribution is required on
+any page that displays it.
+
+**OSRM**, foot profile, on the same extract — real walking minutes. Straight
+line distance lies in Israel: a motorway, a rail cutting or a wadi turns 300
+metres into a twenty-minute walk, and a page that claims otherwise loses trust
+the first time a buyer walks it.
+
+#### Deferred to v2 — transactions, and only as an agent-facing feature
+
+Not cancelled. Documented here so the reasoning is not lost.
 
 **Israel Tax Authority — מאגר מידע נדל"ן.** Free, public, no registration.
 Every property transaction in Israel is legally required to be reported and
 recorded. Searchable by city, neighbourhood, address, block and parcel
-(גוש/חלקה), price range and date.
+(גוש/חלקה), price range and date. The headline feature it would give is *what
+actually sold in this building, and for how much.*
 
-This is the headline feature: *what actually sold in this building, and for
-how much.*
+**GovMap** — address and גוש/חלקה search, and layered geographic data.
 
-**GovMap** — the official state map portal: address and גוש/חלקה search, and
-layered geographic data.
+**Planning Administration (מנהל התכנון)** — plans affecting the parcel.
+Deliberately last: least mature source, lowest value per unit of work.
 
-**Planning Administration (מנהל התכנון)** — plans affecting the parcel. A
-buyer wants to know if a tower is going up across the street.
-
-**data.gov.il (CKAN)** — schools, education, transport, CBS statistics.
-
-**Ministry of Transport GTFS** — public transit stops and routes, for genuine
-walking-distance figures rather than a marketing claim.
+When transactions return, so does the appraisal disclaimer in §4.7. It is not
+needed in v1 because v1 shows no valuation data at all.
 
 ### 4.3 Vehicle sources — the strongest single feature in the product
 
@@ -170,13 +195,20 @@ The hard part is not fetching, it is **normalisation**:
 ### 4.6 What the page shows
 
 **Property**
-- Recent transactions in the building, then the street, then the neighbourhood
-- Price per m² in context, with the comparison set stated
-- Schools and kindergartens within walking distance
-- Transit stops and real walking time, from GTFS
-- Planning items affecting the parcel
+- Transit stops, the routes serving them, and real walking time from OSRM
+- Schools and kindergartens, with supervision stream and grade span
+- Food, groceries, pharmacies, parks, culture and gyms nearby — nearest few
+  per category plus a count for the rest
+- A short summary: restaurants within 500m, nearest grocery, nearest park
 
-**Vehicle**
+Each group is omitted entirely when it has no results. A moshav listing
+legitimately has no light rail, and its page must look intentional rather than
+broken.
+
+*Deferred to v2: recent transactions, price per m², planning items.*
+
+**Vehicle** — no proximity enrichment. A car has no fixed location, and
+pinning one to an address is the theft risk §5 already refuses.
 - Full verified technical specification
 - Ownership count and type, marked as verified
 - Test validity

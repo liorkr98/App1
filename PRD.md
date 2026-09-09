@@ -43,6 +43,12 @@ Ministry of Transport, is months of assembly work and it compounds.
 **This is not an enhancement to be added later. It is the product.** Shipping a
 beautiful page without the data layer is shipping Canva.
 
+**In v1 the property half of that is PROXIMITY, not transactions** — what is
+around this address rather than what sold in this building. RESEARCH.md §1
+still describes transactions as the headline because that is where it is
+going; §4.2 records why it is not where v1 starts. The vehicle half is
+unchanged and already verified against the registers.
+
 ---
 
 ## 2. The two categories and their fact schemas
@@ -173,8 +179,44 @@ listing. Log it.
   the reader only needs to know which figures somebody else stands behind.
 - A fact flagged verified with no `sourceName` and `sourceDate` renders as an
   ordinary cell. An unbacked badge is worse than no badge.
-- The appraisal disclaimer — `המידע להשוואה בלבד ואינו מהווה שומה` — sits with
-  comparable sales and cannot be dismissed or hidden.
+- The appraisal disclaimer — `המידע להשוואה בלבד ואינו מהווה שומה` — is
+  **not shown in v1**, because v1 displays no valuation data: proximity
+  enrichment says what is nearby, never what anything is worth. The string
+  stays in `locales/he.json`. It is reinstated, non-dismissibly, the moment
+  transaction data returns (RESEARCH.md §4.2).
+
+---
+
+## 5a. What enrichment is in v1
+
+**Proximity: what is around this address.** Not what sold in this building —
+that is deferred to v2 and to agents (RESEARCH.md §4.2).
+
+| Group | Source | Licence |
+|---|---|---|
+| Transit stops, routes, mode | Ministry of Transport GTFS | open |
+| Schools and kindergartens | data.gov.il — Ministry of Education | open |
+| Food, groceries, pharmacies, parks, culture, gyms | OpenStreetMap, Israel extract | **ODbL — attribution required** |
+| Walking minutes for all of the above | OSRM, foot profile, same extract | open |
+
+**Walking time is routed, never straight-line.** A motorway, a rail cutting or
+a wadi turns 300 metres into a twenty-minute walk. A page that claims otherwise
+loses trust the first time a buyer walks it — and routing is a fixed
+infrastructure cost rather than a per-listing one, which is the whole economic
+argument of the v2 model.
+
+Rules that follow from §5:
+
+- Every group carries `sourceName` and `sourceDate`. The date is the source's
+  `last_synced_at`, so staleness is visible rather than implied.
+- Results are capped per category — nearest three to five, plus a count for the
+  rest. Nobody reads forty restaurants.
+- **A group with no results is omitted.** Never an empty block, a placeholder
+  or an error. A moshav has no light rail, and its page must look intentional.
+- **ODbL attribution is rendered in the page footer, in Hebrew.** It is a
+  licence condition, not a courtesy.
+- **Vehicles get no proximity enrichment at all.** A car has no fixed location,
+  and pinning one to an address is the theft risk the design already refuses.
 
 ---
 
