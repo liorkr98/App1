@@ -5,11 +5,16 @@
 
 FROM node:22-slim AS base
 
-# unzip reads members out of the GTFS archive. The feed is a few hundred
-# megabytes and `unzip -p` streams one member at a time, which is why there is
-# no Node zip dependency (ingest/src/gtfs/zip.ts).
+# Two system binaries, both chosen over an npm dependency (CLAUDE.md §2):
+#
+#   unzip        streams one member at a time out of the GTFS archive, which
+#                is a few hundred megabytes (src/gtfs/zip.ts).
+#   osmium-tool  filters and exports the OSM extract. A .osm.pbf is protobuf,
+#                and every Node parser for it is heavier and less maintained
+#                than the standard OSM command-line tool (src/osm/extract.ts).
 RUN apt-get update && apt-get install -y --no-install-recommends \
       unzip \
+      osmium-tool \
       ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 

@@ -144,6 +144,40 @@ Two other things worth knowing before the first run:
 
 ---
 
+## Places — code written, extract never downloaded
+
+`ingest/src/sources/places.ts` pulls the Geofabrik Israel and Palestine
+extract and reduces it to seven categories: restaurant, cafe, grocery,
+pharmacy, park, culture, gym.
+
+**The extract was never downloaded and osmium was never run.** A few hundred
+megabytes of protobuf is not something this machine can fetch or process.
+
+Two passes, and the order is the point:
+
+1. `osmium tags-filter` throws away everything we do not display, so pass two
+   never sees a power line.
+2. `osmium export -f geojsonseq -n` emits one feature per line, which streams.
+   `-n` gives ways and relations a centroid — a park is a polygon in OSM, and
+   for "how far is the nearest park" its centre is the honest answer.
+
+Reversing that order means exporting all of OSM to GeoJSON and filtering in
+Node: minutes of CPU and gigabytes of garbage for the same answer.
+
+**`name:he` is preferred over `name`.** OSM's plain `name` in Israel is often
+a Latin transliteration, and a Hebrew page listing "Cafe Landwer" among Hebrew
+place names reads as broken. Names that are Latin-only are counted and reported
+rather than dropped — a places list that is mostly Latin is a coverage problem
+worth seeing, and it would be invisible from the row count.
+
+**ODbL.** The attribution is already seeded in `source_sync` (0007) and travels
+into the enrichment payload, so a page cannot render places without the credit.
+
+`osmium-tool` must be in the image; `ingest/Dockerfile` installs it alongside
+`unzip`. Neither is an npm dependency, by choice (CLAUDE.md §2).
+
+---
+
 ## Property — NOT TESTED
 
 The Israel Tax Authority נדל"ן database was **not** exercised. Its search

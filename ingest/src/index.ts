@@ -1,4 +1,5 @@
 import { syncSchools } from './sources/schools.js';
+import { syncPlaces } from './sources/places.js';
 import { syncTransit } from './sources/transit.js';
 import { SyncCollapsed } from './sync.js';
 
@@ -19,16 +20,7 @@ type SourceName = 'schools' | 'transit' | 'places';
 const SOURCES: Record<SourceName, () => Promise<{ rows: number; skipped: Record<string, number> }>> = {
   schools: syncSchools,
   transit: syncTransit,
-
-  // Not written yet. Named here so `sync places` fails with a sentence
-  // instead of "unknown source", which reads like a typo rather than a
-  // deliberately unfinished job.
-  places: () => {
-    throw new Error(
-      'places sync is not implemented: it needs the Israel OSM extract loaded into ' +
-        'PostGIS, which has never been run. See docs/DATA-SOURCES.md.',
-    );
-  },
+  places: syncPlaces,
 };
 
 function log(event: string, fields: Record<string, unknown> = {}): void {

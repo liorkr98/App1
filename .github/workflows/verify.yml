@@ -112,3 +112,6 @@ jobs:
 
       - name: Ingest typecheck
         run: npm run typecheck --prefix ingest
+
+      - name: Ingest tests
+        run: npm run test --prefix ingest
