@@ -1,8 +1,12 @@
 name: Verify
 
 # Stage verification runs in Expo's cloud because registry.npmjs.org is
-# blocked on the primary dev machine. This is the CLAUDE.md §9 step 4 gate:
+# blocked on the primary dev machine. This is the CLAUDE.md §10 step 4 gate:
 # typecheck and lint must pass before a stage is considered done.
+#
+# EAS runs this even though the product is no longer a React Native app: the
+# `expo` root dependency and app.config.ts exist to anchor this project, and
+# without them there is nowhere to verify anything at all.
 
 on:
   push:
@@ -18,21 +22,20 @@ jobs:
       - name: Checkout
         uses: eas/checkout
 
-      # --- Mobile app -----------------------------------------------------
+      # --- Shared domain --------------------------------------------------
+      # src/types and src/features only. The React Native app that used to
+      # live here is at the react-native-v1 tag (RESEARCH.md v2: web only).
       - name: Install dependencies
         run: npm install --no-audit --no-fund
       - name: Typecheck
         run: npm run typecheck
       - name: Lint
         run: npm run lint
-      - name: Test
-        run: npm run test
-      - name: Verify the RTL lint rules actually fire
-        run: bash scripts/verify-rtl-lint.sh
 
       # --- Web workspace --------------------------------------------------
       # Its own package.json, deliberately not an npm workspace: making the
-      # root a workspace root would rewrite the React Native dependency tree.
+      # root a workspace root would rewrite web's and worker's dependency
+      # trees.
       - name: Install web dependencies
         run: npm install --no-audit --no-fund --prefix web
       - name: Web typecheck

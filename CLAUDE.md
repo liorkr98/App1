@@ -1,19 +1,30 @@
 # CLAUDE.md
 Project instructions for Claude Code. Read this fully before writing any code.
 
+> **Rewritten September 2026.** This file previously described a Hebrew-first
+> React Native base template. RESEARCH.md v2 made the product a website, so the
+> stack, the directory structure and the store-compliance rules all changed.
+> The React Native template is complete and CI-green at the `react-native-v1`
+> tag; it was not deleted, and the next mobile thing should start from it.
+
 ---
 
 ## 1. What this repo is
 
-This is the **base template** for a portfolio of Hebrew-first mobile apps.
-Every new app starts as a clone of this repo. Therefore:
+A **web product**: Hebrew-first enriched listing pages for the Israeli market.
+A seller uploads photos of an apartment or a car and gets back a short,
+professional Hebrew page, enriched with verified public data, shareable by
+link.
 
-- Nothing in `src/core/` may contain app-specific logic.
-- App-specific code lives only in `src/features/` and `src/app/`.
-- If you find yourself editing `src/core/` for a single app's needs, stop and ask.
+Read `RESEARCH.md` first, then `PRD.md`. Where this file and RESEARCH.md
+disagree, RESEARCH.md wins.
 
-**Primary market:** Israel. **Primary language:** Hebrew. **Primary layout:** RTL.
-English is a secondary locale, never the design baseline.
+**Primary market:** Israel. **Primary language:** Hebrew. **Primary layout:**
+RTL. English is a secondary locale, never the design baseline.
+
+**The moat is the data, not the page.** A pretty page is a one-week build for
+anyone who wants to copy it. Treat the enrichment layer as the product and the
+page as its presentation.
 
 ---
 
@@ -21,20 +32,23 @@ English is a secondary locale, never the design baseline.
 
 | Layer | Choice |
 |---|---|
-| Framework | React Native via **Expo (managed)** |
-| Language | **TypeScript**, `strict: true` |
-| Routing | **expo-router** (file-based) |
-| Backend | **Supabase** (Postgres, Auth, Storage, RLS) |
-| Subscriptions | **RevenueCat** |
-| Server state | **TanStack Query** |
-| Client state | **Zustand** — only when Query is not the right tool |
-| i18n | **i18next** + `react-i18next` |
-| Locale/RTL | **expo-localization** + `I18nManager` |
-| Errors | **Sentry** (`@sentry/react-native`) |
-| Storage | `expo-secure-store` for tokens, `react-native-mmkv` for cache |
-| Build/ship | **EAS Build** + **EAS Submit** |
+| Listing pages | **Astro**, static output, no runtime rendering |
+| Hosting | **Cloudflare Pages** |
+| Editor | **React island** at `/new`, mobile-first |
+| Language | **TypeScript**, `strict: true` everywhere |
+| Database | **Supabase** (Postgres, Auth, Storage, Realtime, RLS) |
+| Spatial | **PostGIS** for proximity queries |
+| Routing | **OSRM**, foot profile, self-hosted |
+| Worker | **Fly.io** container, Postgres job queue |
+| Images | **sharp**/libvips, local, no external API in v1 |
+| PDF | **Puppeteer**, in its own Fly process group |
+| Payments | **Undecided.** Build behind a provider interface (PRD §6) |
 
-Do not introduce a new dependency without asking. Justify: what it does, size,
+`expo` is still a root dependency. It anchors the EAS project that runs CI,
+and nothing else — npm is blocked on the primary dev machine, so EAS Workflows
+is the only place anything can be verified. It is not a stack choice.
+
+Do not introduce a dependency without asking. Justify: what it does, size,
 last publish date, and why the stack above cannot do it.
 
 ---
@@ -43,238 +57,210 @@ last publish date, and why the stack above cannot do it.
 
 ```
 src/
-  app/            # expo-router routes only. Thin. No business logic.
-  core/           # SHARED ACROSS ALL APPS — treat as a library
-    auth/
-    billing/      # RevenueCat wrapper. See §6.
-    i18n/
-    ui/           # base components (see §5)
-    supabase/
-    analytics/
-    config/
-  features/       # app-specific. One folder per feature.
-  types/
+  types/          shared domain — imported by web/ via @/
+  features/
+    listings/schemas/   category fact schemas. Hebrew labels live here.
+web/              Astro. Its own package.json, tsconfig and lint pass.
+  src/pages/a/[slug]/   the listing page
+  src/components/       one concern each
+  src/lib/              formatting, facts, enrichment queries
+worker/           Fly container: image enhancement, OG, PDF
+ingest/           Fly scheduled jobs: schools, GTFS, OSM
+supabase/
+  migrations/     numbered, append-only. Never rewrite an applied migration.
 locales/
-  he.json         # source of truth
-  en.json
-  ar.json         # optional
+  he.json         source of truth
+  en.json         same keys, empty values
+docs/             ADRs and the records that outlive a stage
 ```
 
-**Rule:** a file in `src/app/` should be under ~60 lines. If a screen grows,
-the logic moves to `src/features/<name>/`.
+`web/` and `worker/` are deliberately **not** npm workspaces. Making the root a
+workspace root would rewrite their dependency trees.
 
 ---
 
 ## 4. RTL — the most important section in this file
 
-Hebrew RTL bugs are the #1 quality problem in this portfolio. These rules are
-not suggestions.
+Hebrew RTL bugs are the #1 quality problem here. These rules are not
+suggestions. This is HTML and CSS, not React Native — the old `marginStart`
+rules are gone with the app.
 
-### 4.1 Never use directional properties
+### 4.1 Logical properties only
 
-**Banned outright.** Never write any of these in a style object:
-
-```
-marginLeft   marginRight   paddingLeft   paddingRight
-left         right         borderLeftWidth   borderRightWidth
-textAlign: 'left'   textAlign: 'right'
-```
-
-**Use instead:**
+`html { direction: rtl }`, and then **never a physical side in CSS**:
 
 ```
-marginStart  marginEnd  paddingStart  paddingEnd
-start        end        borderStartWidth  borderEndWidth
-textAlign: 'auto'   (or omit — 'auto' follows text direction)
+BANNED    margin-left  margin-right  padding-left  padding-right
+          left  right  border-left  border-right  float
+          text-align: left  text-align: right
+
+USE       margin-inline-start  margin-inline-end
+          padding-inline-start  padding-inline-end
+          inset-inline-start  inset-inline-end  inset-inline
+          border-inline-start  border-inline-end
+          text-align: start  text-align: end
 ```
 
-If a lint rule for this does not exist yet, add it.
+`scripts/verify-web-logical-props.mjs` fails the build on any of these, and
+`scripts/verify-web-lint-fires.sh` plants a violation on every CI run to prove
+the check still matches. If you add a rule, add its proof too — a rule that
+silently stops firing is worse than no rule.
 
-### 4.2 flexDirection
+### 4.2 Every number goes in `<bdi>`
 
-With RTL active, `flexDirection: 'row'` **already flips automatically**.
-Do NOT write `I18nManager.isRTL ? 'row-reverse' : 'row'`. That double-flips
-and is a bug. Use plain `'row'`.
+Prices, floors, m², km, סמ״ק, years, phone numbers, dates, ratios, route
+numbers. Latin text inside a Hebrew sentence too.
 
-The only legitimate use of `row-reverse` is when the visual order must be
-opposite to the reading order for a specific design reason. Comment it.
+Without it, bidi reordering puts the currency symbol on the wrong end and turns
+`03/2027` into something else entirely. It is one tag and it is not optional.
+
+Never string-concatenate a number into a Hebrew sentence — interpolate, so the
+formatter runs.
 
 ### 4.3 Icons
 
-Two categories. Get this right per icon, not globally.
+Two categories; decide per icon, not globally.
 
-**Must flip** — icons that express direction or progress:
-back/forward chevrons, arrows, undo/redo, indent, send, next/previous,
-progress indicators, trend lines that imply a timeline.
+**Flip** — direction or progress: back/forward chevrons, arrows, undo/redo,
+send, next/previous, progress indicators.
 
-Use the shared helper:
-
-```ts
-import { flipForRTL } from '@/core/ui/rtl';
-<Icon style={flipForRTL()} />   // { transform: [{ scaleX: I18nManager.isRTL ? -1 : 1 }] }
-```
-
-**Must NOT flip** — icons that are objects or universal symbols:
-logos, brand marks, media play/pause, clocks, checkmarks, X, search
-magnifier, hamburger, settings gear, camera, trash, heart, star,
+**Do not flip** — objects and universal symbols: logos, play/pause, clocks,
+checkmarks, X, magnifier, hamburger, gear, camera, trash, heart, star,
 numerals, phone.
 
-When in doubt: does the icon depict a real object? Then it does not flip.
+When in doubt: does it depict a real object? Then it does not flip.
 
-### 4.4 Numbers, dates, and mixed text
+### 4.4 Definition of done for any page
 
-Numbers, prices, phone numbers, IDs, and Latin-script words inside Hebrew
-sentences break bidi. Always render them through the shared helpers:
-
-```ts
-import { ltr, ils, heDate } from '@/core/i18n/format';
-ltr('054-1234567')     // wraps in U+200E LRM
-ils(1290)              // "₪1,290" with correct direction
-heDate(new Date())     // Hebrew locale, dd/MM/yyyy
-```
-
-Never string-concatenate a number into a translated sentence. Use i18next
-interpolation so the formatter runs:
-
-```ts
-t('cart.total', { amount: ils(total) })   // correct
-`סה"כ ${total} ₪`                          // wrong — will break
-```
-
-### 4.5 Enabling RTL
-
-RTL is forced at app start in `src/core/i18n/rtl.ts` via
-`I18nManager.allowRTL(true)` + `I18nManager.forceRTL(true)`.
-This requires a reload to take effect — that reload is handled once on first
-launch. **Do not call `forceRTL` anywhere else.**
-
-### 4.6 Definition of done for any screen
-
-A screen is not finished until it has been checked in Hebrew RTL with:
-long Hebrew strings, a mixed Hebrew+English string, a price, a phone number,
-and a date. Screenshots in Hebrew, not English.
+Checked in Hebrew with: long Hebrew strings, a mixed Hebrew+English string, a
+price, a phone number, and a date. Screenshots in Hebrew, not English.
+`/a/_rtltest` is the regression fixture — all ten cases must stay intact.
 
 ---
 
-## 5. Hebrew typography and UI
+## 5. Hebrew typography
 
-- **Fonts:** Assistant (default), Rubik or Heebo as alternates. Loaded via
-  `expo-font`. Never rely on system default — it renders Hebrew badly on Android.
-- **Line height:** Hebrew needs more than Latin. Minimum `1.5×` font size.
-  Hebrew has no ascenders/descenders like Latin, so tight leading looks cramped.
+- **Fonts:** Frank Ruhl Libre 500/700 for headlines, prices and numeric facts;
+  Assistant 400/600 for body and UI. `font-display: swap`.
+- **Line height:** minimum `1.5×`. Hebrew has no ascenders or descenders, so
+  tight leading looks cramped.
 - **No italics.** Hebrew has no italic form; synthetic italics look broken.
-  Use weight or color for emphasis.
-- **No all-caps.** Hebrew has no case. Never `textTransform: 'uppercase'`.
-- **Letter-spacing:** do not apply positive tracking to Hebrew text.
-- **Truncation:** test with real Hebrew — it is typically ~15% shorter than
-  English for the same content, so English-designed layouts leave gaps.
+  Use weight or colour.
+- **No `text-transform: uppercase`.** Hebrew has no case.
+- **No positive letter-spacing** on Hebrew text.
+- **Punctuation:** gershayim `״` is U+05F4, geresh `׳` is U+05F3, maqaf `־` is
+  U+05BE. Not the ASCII lookalikes. Verify at codepoint level, not by eye.
 
-All base components live in `src/core/ui/`: `Text`, `Screen`, `Button`,
-`Input`, `Sheet`, `ListRow`, `Empty`, `Loading`, `ErrorState`.
-
-**Never use bare `<Text>` from react-native** — always the wrapper, which
-carries font, line-height, and direction defaults.
+Design tokens and the visual contract are in `docs/DESIGN-CONTRACT.md`. The
+reference HTML files are the contract — port them, do not redesign them.
 
 ---
 
-## 6. Billing — read carefully, this is the money
+## 6. Provenance — the trust proposition
 
-**You may scaffold. You may not decide entitlement.**
+Read `PRD.md §5`. Those rules are **legal, not stylistic.**
 
-Allowed for you to write:
-- Paywall UI and copy
-- RevenueCat SDK initialization
-- Offering/package fetching and display
-- Purchase and restore button wiring
-- Loading and error states
+Two visual classes, never mixed: `מאומת` (public record) and `לפי המוכר`
+(seller declaration). Every verified item cites its source body by name and the
+date it was current.
 
-**Requires explicit human review before merge** (flag it in your summary):
-- Any code that reads `customerInfo.entitlements` and decides what the user can access
-- Trial eligibility logic
-- Grace period, billing retry, or expiration handling
-- Anything that grants access when a network call fails
-
-Rules:
-- The entitlement identifier is `pro`. One entitlement per app.
-- **Fail closed.** If entitlement state is unknown, treat as not subscribed.
-  Never default to granting access.
-- Never cache entitlement state to disk and trust it on next launch.
-- A **Restore Purchases** button is mandatory and must be reachable without login.
-- Never write custom receipt validation. RevenueCat owns that.
+- A fact flagged verified with no `sourceName` and `sourceDate` renders as an
+  ordinary cell. An unbacked badge is worse than no badge.
+- **Never present data as a valuation.** No appraisal, no estimate of worth.
+- **Never publish a licence plate.** It is a lookup key only.
+- Missing enrichment is normal. A group with no results is **omitted** — never
+  an empty block, a placeholder, or an error.
 
 ---
 
-## 7. Store compliance — build these in from day one
+## 7. Billing — read carefully, this is the money
 
-Every app in this portfolio must ship with:
+You may build the paywall. **You may not decide entitlement.**
 
-- [ ] **In-app account deletion**, reachable from Settings, that actually deletes
-      server-side data. Apple rejects without this. Non-negotiable.
-- [ ] Privacy Policy and Terms URLs, live, in Hebrew, linked from Settings.
-- [ ] `PrivacyInfo.xcprivacy` privacy manifest, accurate.
-- [ ] App Tracking Transparency prompt **only if** tracking actually happens.
-      Default: no tracking, no prompt.
-- [ ] Restore Purchases (see §6).
-- [ ] Subscription terms shown on the paywall: price, period, auto-renewal,
-      and how to cancel. Apple checks this.
-- [ ] A support email that a human reads.
-- [ ] Hebrew App Store metadata and Hebrew screenshots.
+Requires explicit human review before merge — flag every instance in your
+summary:
 
-If a health-adjacent app: it logs and displays user-entered data only. It does
-not calculate dosage, diagnose, or recommend treatment. Disclaimer required.
+- any code that reads entitlement state and decides what a user can access
+- trial eligibility, grace period, expiry
+- anything that grants access when a network call fails
+
+**Fail closed.** Unknown or errored entitlement means not paid. Never grant on
+network failure. The payments provider is undecided — build behind an
+interface with one adapter and say what the interface needs.
 
 ---
 
 ## 8. Data and security
 
-- **RLS is mandatory** on every Supabase table. No exceptions, no "we'll add it
-  later". A table without a policy is a data leak.
-- Never put secrets in the client bundle. `EXPO_PUBLIC_*` vars are public —
-  treat them as visible to anyone.
-- Tokens go in `expo-secure-store`, never AsyncStorage.
-- Health, financial, and children's data: minimize collection, encrypt at rest,
-  never send to third-party analytics.
-- Never log PII to Sentry. Scrub before send.
+- **RLS is mandatory** on every Supabase table. A table without a policy is a
+  data leak.
+- The service-role key bypasses RLS. It lives in Fly secrets, never in the
+  repo, never in a client bundle, never in a `PUBLIC_` variable.
+- **Strip EXIF before publishing any image.** GPS in a photo of someone's home
+  is a privacy leak even when the page is noindex and the seller hid the
+  street.
+- Never log PII. Scrub before send.
+- Job payloads carry client-supplied paths and the worker reads them with the
+  service role — always validate that a path is inside the listing it claims.
 
 ---
 
-## 9. How to work
+## 9. Licensing
 
-1. **Read `PRD.md` first** if one exists in the repo root.
-2. **Plan before coding.** For anything beyond a single file, state the plan and
-   the files you will touch, then wait for confirmation.
-3. **One feature per branch.** Small, reviewable commits. Conventional commits.
-4. **Verify before claiming done.** Run `npm run typecheck` and `npm run lint`.
-   Do not report success on code you have not type-checked.
-5. **Never** run `eas submit`, modify `app.json` version/build numbers, touch
-   `.env`, or force-push. Ask.
-6. If a requirement is ambiguous, ask one question. Do not guess and build.
+**OpenStreetMap data is ODbL.** Attribution is a licence condition, not a
+courtesy: any page displaying OSM-derived data carries it in the footer, in
+Hebrew. This is not optional and it is not a to-do.
+
+**Never scrape Madlan, Yad2, or any commercial portal.** Not for schools, not
+for anything. Everything needed is available from primary sources at better
+quality. If you believe a field is only obtainable from a portal, report it and
+leave it out.
 
 ---
 
-## 10. Never do these
+## 10. How to work
 
-- Write `marginLeft` / `paddingRight` / `textAlign: 'left'` (§4.1)
-- Write `I18nManager.isRTL ? 'row-reverse' : 'row'` (§4.2)
-- Hardcode a user-facing string outside `locales/` — Hebrew or English
-- Use bare `<Text>` from react-native instead of `@/core/ui/Text`
+1. **Read `RESEARCH.md` and `PRD.md` first.**
+2. **Plan before coding.** For anything beyond a single file, state the plan
+   and the files you will touch, then wait for confirmation.
+3. **Verify the artifacts a stage depends on before starting it.** On a missing
+   artifact: stop, report, build nothing.
+4. **Verify before claiming done.** `npm run typecheck` and `npm run lint`, for
+   every workspace you touched.
+5. **Say plainly what you could not verify.** Never report a number you did not
+   measure. npm is blocked on the primary dev machine and there is no Docker,
+   no Postgres and no PostGIS — a great deal cannot be run locally, and
+   pretending otherwise is the expensive failure.
+6. **Never** touch `.env`, commit a credential, or deploy to production.
+7. If a requirement is ambiguous, ask one question. Do not guess and build.
+
+---
+
+## 11. Never do these
+
+- A physical `left`/`right` in CSS (§4.1)
+- A number outside `<bdi>` (§4.2)
+- Hardcode a user-facing string outside `locales/` or a category schema
 - Create a Supabase table without an RLS policy
-- Decide subscription entitlement without human review (§6)
-- Add a dependency without asking
-- Put app-specific logic in `src/core/`
-- Ship a screen you have not viewed in Hebrew
+- Decide subscription entitlement without human review (§7)
+- Display OSM data without ODbL attribution (§9)
+- Scrape a commercial portal (§9)
+- Publish a licence plate, or present data as a valuation (§6)
+- Render an empty enrichment block instead of omitting it (§6)
+- Query an external source at page render time — ingestion is scheduled, the
+  page reads only from us
 - Claim a task is complete without running typecheck and lint
 
 ---
 
-## 11. Commands
+## 12. Commands
 
 ```bash
-npm run start          # expo start
-npm run ios            # local iOS
-npm run android        # local Android
-npm run typecheck      # tsc --noEmit
-npm run lint           # eslint, includes RTL rules
-npm run test           # jest
-npm run build:preview  # eas build --profile preview
+npm run typecheck      # shared domain
+npm run lint           # shared domain + scripts
+npm run web            # astro dev
+npm run web:build      # astro build
+npm run worker:test    # worker unit tests
 ```
+
+Per-workspace: `npm run <script> --prefix web|worker`.

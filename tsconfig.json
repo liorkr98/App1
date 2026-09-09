@@ -1,24 +1,36 @@
 {
-  "extends": "expo/tsconfig.base",
+  // The SHARED DOMAIN only: src/types and src/features. Both are imported by
+  // web/ through the @/ alias, and by nothing else.
+  //
+  // Standalone rather than extending expo/tsconfig.base. The Expo dependency
+  // is still in package.json, but only to anchor the EAS project that runs
+  // CI — it is not a stack choice any more (RESEARCH.md v2: web only, and the
+  // React Native template is at the react-native-v1 tag).
   "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": ["node"],
+
     "strict": true,
-    // expo/tsconfig.base pulls in neither test-runner globals (describe/it/expect)
-    // nor Node types, which scripts/new-app.ts needs.
-    "types": ["jest", "node"],
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "exactOptionalPropertyTypes": true,
+
+    "noEmit": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+
     "paths": {
       "@/*": ["./src/*"]
     }
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    ".expo/types/**/*.ts",
-    "expo-env.d.ts"
-  ],
-  // supabase/functions is Deno, not React Native: it uses the Deno global and
-  // jsr: imports, which this tsconfig cannot resolve. Supabase typechecks it
-  // on deploy.
-  // web/ is Astro with its own tsconfig, DOM libs and path aliases. Checking
-  // it with React Native settings would produce hundreds of false errors.
-  "exclude": ["node_modules", ".expo", "dist", "supabase/functions", "web", "worker"]
+  "include": ["src/**/*.ts"],
+  // supabase/functions is Deno — the Deno global and jsr: imports do not
+  // resolve here, and Supabase typechecks it on deploy.
+  // web/ and worker/ each have their own tsconfig, libs and aliases.
+  "exclude": ["node_modules", "dist", "supabase/functions", "web", "worker", "ingest"]
 }
