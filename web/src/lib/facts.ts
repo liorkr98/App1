@@ -15,10 +15,18 @@ import { factValue, needsBdi } from './format';
 export interface FactCell {
   key: string;
   label: string;
-  /** Already display-formatted, without the unit. */
+  /**
+   * Already display-formatted, and WITHOUT its unit.
+   *
+   * There is no `unit` field any more: it is folded into `label` by
+   * unitLabel(). The B2 reference puts the unit under the number and never
+   * beside it — `95` under `מ״ר`, `12` under `מרפסת, מ״ר`. The previous port
+   * appended it to the value instead, which rendered "1,600סמ״ק": no space,
+   * and the same unit printed twice, once glued to the digits and once as the
+   * label underneath.
+   */
   value: string;
-  /** Rendered after the value, outside the <bdi>. */
-  unit?: string;
+
   /** Second value for a paired cell, e.g. floor 3 / 5. */
   pairedValue?: string;
   /** Wrap value (and pairedValue) in <bdi>. */
@@ -45,6 +53,23 @@ export interface FactCell {
  * Collapsing these would turn "we do not know" into "no", which is the
  * difference between an honest page and an ad.
  */
+/**
+ * The cell label, carrying its unit.
+ *
+ * `מרפסת שמש` + `מ״ר` becomes `מרפסת, מ״ר`; `מ״ר` + `מ״ר` stays `מ״ר`, because
+ * a label that already IS the unit must not repeat it. The comma is the
+ * reference's own — read out of listing-page-template.html, not invented.
+ */
+function unitLabel(label: string, unit: string | undefined): string {
+  if (!unit || label === unit) return label;
+  if (label.includes(unit)) return label;
+
+  // The label is trimmed of a trailing unit-less noun so the pair reads as
+  // one phrase: מרפסת שמש, מ״ר would be three words fighting for one line.
+  const head = label.split(' ')[0] ?? label;
+  return `${head}, ${unit}`;
+}
+
 export function toCells(category: ListingCategory, facts: Fact[]): FactCell[] {
   const byKey = new Map(facts.map((fact) => [fact.key, fact]));
 
@@ -66,7 +91,7 @@ export function toCells(category: ListingCategory, facts: Fact[]): FactCell[] {
     if (fact.present === false) {
       cells.push({
         key: fact.key,
-        label: definition?.gridLabel ?? fact.label,
+        label: unitLabel(definition?.gridLabel ?? fact.label, fact.unit),
         value: 'אין',
         bdi: false,
         absent: true,
@@ -96,9 +121,8 @@ export function toCells(category: ListingCategory, facts: Fact[]): FactCell[] {
 
     cells.push({
       key: fact.key,
-      label: definition?.gridLabel ?? fact.label,
+      label: unitLabel(definition?.gridLabel ?? fact.label, fact.unit),
       value: factValue(fact.value, definition?.grouped),
-      ...(fact.unit === undefined ? {} : { unit: fact.unit }),
       ...(partnerValue === undefined ? {} : { pairedValue: partnerValue }),
       bdi: needsBdi(fact.value),
       absent: false,

@@ -36,7 +36,6 @@ const cells = toCells(category, facts);
       <div class="fact-val">
         {cell.bdi ? <bdi>{cell.value}</bdi> : cell.value}
         {cell.pairedValue !== undefined && <Fragment> / <bdi>{cell.pairedValue}</bdi></Fragment>}
-        {cell.unit !== undefined && <Fragment> {cell.unit}</Fragment>}
       </div>
       <div class="fact-lbl">{cell.label}</div>
       {cell.verified && (
