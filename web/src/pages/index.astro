@@ -274,7 +274,11 @@ const title = `סיבוב — ${t('home.tagline')}`;
 
       .device {
         position: relative;
-        inline-size: 320px;
+        /* 320px is a real phone width and the size this is designed at, but a
+           320px VIEWPORT leaves about 280px once the gutter is taken, and a
+           fixed width would push the page sideways. The page inside is
+           mobile-first, so it simply renders narrower. */
+        inline-size: min(320px, 100%);
         block-size: 660px;
         border: var(--rule);
         border-radius: 20px;

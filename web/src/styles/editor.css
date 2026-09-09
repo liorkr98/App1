@@ -293,10 +293,12 @@ textarea {
 
 .strip {
   display: grid;
-  /* auto-fill from a 140px floor: two columns on a 320px phone, more as the
-     viewport allows. Three fixed columns left each thumbnail 90px wide with
-     three text buttons beneath it, which is not a usable target on a thumb. */
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  /* auto-fill from a 120px floor. The step's own padding takes 48px, so a
+     320px phone has 272px to work with: at 140px that collapses to a single
+     column, at 120px it holds two. Three FIXED columns was the original bug —
+     90px thumbnails carrying three text buttons, which is not a usable target
+     on a thumb. */
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 0.75rem;
   list-style: none;
   margin-block-end: 1.25rem;
