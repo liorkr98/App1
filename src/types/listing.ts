@@ -310,17 +310,22 @@ export interface PropertyEnrichment {
 /**
  * One ownership period from the Ministry of Transport history register.
  *
- * Dates are held by QUARTER, not by day, and are presented that way. Rounding
- * a quarter into a date would be inventing precision the register does not
- * have.
+ * MONTHLY, not quarterly. RESEARCH.md §4.3 describes these as quarterly; the
+ * register disagrees — `baalut_dt` comes back as `202202`, a year and a month.
+ * Verified against resource bb2355dc on data.gov.il, 5,429,381 rows
+ * (docs/DATA-SOURCES.md).
+ *
+ * Named for what it holds, because a field called fromQuarter carrying a month
+ * would have quietly thrown away precision the state actually publishes — and
+ * the loss would have been invisible at every later call site.
  */
 export interface OwnershipPeriod extends Provenance {
   /** Hebrew ownership type: פרטית, חברה, ליסינג, השכרה, מונית, לימוד נהיגה. */
   type: string;
-  /** Quarter the ownership began, e.g. 2021-Q3. */
-  fromQuarter: string;
+  /** Month the ownership began, as YYYY-MM. */
+  fromMonth: string;
   /** Absent for the current owner. */
-  toQuarter?: string;
+  toMonth?: string;
 }
 
 export interface VehicleEnrichment {
