@@ -13,6 +13,20 @@ The CSS comparison below was produced by a brace-depth parser that isolates
 `@media` and `@keyframes` blocks, normalises whitespace and sorts declarations,
 so formatting differences do not read as design differences.
 
+
+## The immersive figure is deliberately not ported
+
+The reference HTML files still contain `figure.immersive` and its CSS, and the
+tables below still record them — they are a faithful record of the references,
+and falsifying that record to match the build would defeat the point of having
+one.
+
+The Astro port omits that figure. RESEARCH.md v2 §9 defers immersive capture,
+so there is nothing to put in it. This is **not a fifth divergence**: the
+figure is absent from BOTH category templates, so the two remain identical
+where the contract requires it. The port is at the `immersive-v1` tag if the
+block is ever needed again.
+
 ---
 
 ## 1. Design tokens

@@ -9,13 +9,13 @@
 
 export type JobStatus = 'queued' | 'processing' | 'done' | 'failed';
 
-export type JobType =
-  | 'enhance_images'
-  | 'stitch_panorama'
-  | 'extract_frames'
-  | 'build_sprite'
-  | 'generate_og'
-  | 'render_pdf';
+/**
+ * stitch_panorama, extract_frames and build_sprite were here and are gone:
+ * immersive capture is deferred (RESEARCH.md §9). The database CHECK
+ * constraint in 0003_jobs.sql still permits them — deliberately left wide, so
+ * that restoring the handlers is a code change and not a migration.
+ */
+export type JobType = 'enhance_images' | 'generate_og' | 'render_pdf';
 
 export interface Job {
   id: string;

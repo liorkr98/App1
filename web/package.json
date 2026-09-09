@@ -12,11 +12,6 @@
     "check:divergences": "node ../scripts/verify-template-divergences.mjs"
   },
   "dependencies": {
-    "@cloudimage/360-view": "4.10.0",
-    "@photo-sphere-viewer/core": "5.15.1",
-    "@photo-sphere-viewer/gyroscope-plugin": "5.15.1",
-    "@photo-sphere-viewer/markers-plugin": "5.15.1",
-    "@photo-sphere-viewer/virtual-tour-plugin": "5.15.1",
     "astro": "7.3.1"
   },
   "devDependencies": {

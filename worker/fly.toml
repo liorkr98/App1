@@ -32,16 +32,16 @@ primary_region = "fra"   # Frankfurt, matching the eu-central-1 Supabase project
 # Process groups
 # ---------------------------------------------------------------------------
 #
-# Chrome is memory-hungry and it crashes. Sharing a process with stitching
-# means a Chrome OOM kills a panorama job mid-run — a bug that presents as
-# "sometimes a room fails" and is very hard to trace back.
+# Chrome is memory-hungry and it crashes. Sharing a process with image work
+# means a Chrome OOM kills an enhancement job mid-run — a bug that presents as
+# "sometimes a photo fails" and is very hard to trace back.
 
 [processes]
   worker = "node dist/index.js"
   pdf = "node dist/index.js"
 
 # ---------------------------------------------------------------------------
-# worker — image enhancement, stitching, ffmpeg
+# worker — image enhancement and Open Graph
 # ---------------------------------------------------------------------------
 
 [[vm]]

@@ -21,6 +21,12 @@ const { category, facts } = Astro.props;
  *
  * Collapsing the last two would turn "we do not know" into "no", which is
  * what makes a listing page an ad instead of a description.
+ *
+ * A fourth thing this grid carries is provenance. A verified cell shows מאומת
+ * and cites the body and the date beneath it; everything else is the seller's
+ * word and is left unmarked. Marking BOTH classes would be noise — the reader
+ * only needs to know which figures somebody else stands behind
+ * (RESEARCH.md §4.7).
  */
 const cells = toCells(category, facts);
 ---
@@ -33,6 +39,12 @@ const cells = toCells(category, facts);
         {cell.unit !== undefined && <Fragment> {cell.unit}</Fragment>}
       </div>
       <div class="fact-lbl">{cell.label}</div>
+      {cell.verified && (
+        <div class="fact-src">
+          <span class="verified">מאומת</span>
+          <span class="fact-cite">{cell.sourceName} · נכון ל־<bdi>{cell.sourceDate}</bdi></span>
+        </div>
+      )}
     </div>
   ))}
 </div>

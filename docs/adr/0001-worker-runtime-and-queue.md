@@ -105,3 +105,17 @@ holds either way.
 - Stage D acceptance cannot be verified from the development machine: it needs
   the container running against the real project. The checks are written to be
   runnable; their results are not assumed.
+
+---
+
+## Amendment — September 2026
+
+RESEARCH.md v2 defers immersive capture (§9), so `ffmpeg` left the image and
+stitching left the `worker` group. Read every mention of them above as
+historical.
+
+**The decision does not change.** `sharp`/libvips and Chrome each still need a
+container with native binaries and more memory than an edge function gets, and
+the queue argument never depended on the video work at all. Had the remaining
+jobs been small enough for serverless, this is where that would be
+reconsidered — they are not.

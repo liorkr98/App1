@@ -56,20 +56,6 @@ export async function downloadOriginal(listingId: string, path: string): Promise
   return download(ORIGINALS, path);
 }
 
-/**
- * Reads pipeline output back — the sprite builder consumes the frames the
- * extractor produced.
- *
- * `derived` is a public bucket, so this leaks nothing that a URL would not.
- * The listing check is still here because the job payload names the paths and
- * the client composes the payload: without it, a sprite job could assemble a
- * sheet out of another listing's frames and publish it under this slug.
- */
-export async function downloadDerived(listingId: string, path: string): Promise<Buffer> {
-  assertWithinListing(listingId, path);
-  return download(DERIVED, path);
-}
-
 export async function upload(
   path: string,
   body: Buffer,
@@ -96,7 +82,7 @@ export async function upload(
  * A listing photo of someone's home carries GPS coordinates in EXIF. Publish
  * that and the address is public even when the seller chose to hide the
  * street, and even when the page is noindex — which makes it a privacy leak,
- * not a nicety (CLAUDE.md §8, Stage D6).
+ * not a nicety (CLAUDE.md §8, RESEARCH.md §6).
  *
  * sharp drops all metadata unless `withMetadata()` is called, so this is
  * really a guarantee that nothing downstream reintroduces it. The explicit
@@ -107,7 +93,7 @@ export function stripMetadata(input: Sharp): Sharp {
   return input.rotate();
 }
 
-/** True when the buffer still carries EXIF. Used by the D6 acceptance check. */
+/** True when the buffer still carries EXIF. Used by the Stage E acceptance check. */
 export async function hasExif(buffer: Buffer): Promise<boolean> {
   const metadata = await sharp(buffer).metadata();
   return Boolean(metadata.exif ?? metadata.icc ?? metadata.iptc ?? metadata.xmp);

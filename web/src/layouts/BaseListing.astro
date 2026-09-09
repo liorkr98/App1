@@ -129,26 +129,18 @@ body{
 .fact-lbl{font-size:.78rem;color:var(--muted);margin-top:.15rem}
 .fact.off .fact-val,.fact.off .fact-lbl{opacity:.35}
 
-/* ---------- Immersive placeholder ----------
-   השלב הזה נשאר placeholder עד Stage C. הצופה נטען עצלנית
-   מאחורי פוסטר, לעולם לא אוטומטית — סיור שוקל מגהבייטים
-   והקורא נמצא על סלולרי. */
-.immersive{position:relative;margin:0;border-bottom:1px solid var(--stone)}
-.immersive img{width:100%;aspect-ratio:16/10;object-fit:cover;display:block;background:var(--stone)}
-.immersive-scrim{
-  position:absolute;inset:0;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:.7rem;
-  background:rgba(25,26,21,.34);
+/* ---------- Provenance ----------
+   The verified/declared distinction is the product, so it is a visual class
+   and not a tooltip. Olive rather than the usual green tick: a tick reads as
+   "good", and this is not an endorsement of the car — it is a statement about
+   who recorded the number. */
+.fact-src{margin-top:.3rem;display:flex;flex-direction:column;gap:.1rem}
+.verified{
+  align-self:flex-start;font-family:'Assistant',sans-serif;font-size:.66rem;
+  font-weight:600;color:var(--olive);border:1px solid var(--olive);
+  border-radius:2px;padding:.05rem .3rem;line-height:1.4
 }
-.immersive-enter{
-  display:inline-flex;align-items:center;gap:.5rem;
-  padding:.7rem 1.4rem;border:none;border-radius:999px;
-  background:var(--plaster);color:var(--ink);
-  font-family:'Assistant',sans-serif;font-size:1rem;font-weight:600;
-  box-shadow:0 2px 10px rgba(25,26,21,.2);cursor:pointer;
-}
-.immersive-enter:focus-visible{outline:3px solid var(--plaster);outline-offset:3px}
-.immersive-note{color:var(--plaster);font-size:.82rem;opacity:.9}
+.fact-cite{font-size:.66rem;color:var(--muted);line-height:1.4}
 
 /* ---------- Sections ---------- */
 section{padding:1.75rem 1.5rem;border-bottom:1px solid var(--stone)}

@@ -17,6 +17,18 @@ export type FactValue = string | number | boolean | null;
 export type FactType = 'text' | 'number' | 'boolean' | 'enum' | 'date';
 
 /**
+ * Provenance of a fact's value.
+ *
+ * 'verified'  came from a public register and is displayed as מאומת with the
+ *             source body and the date it was current.
+ * 'seller'    the seller said so, and is displayed as לפי המוכר.
+ *
+ * There is no third class and there is no mixing. See RESEARCH.md §4.7 —
+ * those rules are legal, not stylistic.
+ */
+export type FactSource = 'seller' | 'verified';
+
+/**
  * One answered — or deliberately unanswered — fact on a listing.
  *
  * `present` and `value` carry DIFFERENT information and must not be collapsed
@@ -46,6 +58,31 @@ export interface Fact {
   type: FactType;
   present: boolean;
   required: boolean;
+
+  /**
+   * Where this number came from. NOT optional metadata — this is the trust
+   * proposition (RESEARCH.md §4.7).
+   *
+   * An Israeli used-car buyer distrusts every figure in a listing. A page
+   * that can say "the hand and the prior ownership are what the Ministry of
+   * Transport holds, and here is the date" is offering something a classified
+   * ad cannot. Collapse this into one visual class and the product is a
+   * prettier Yad2.
+   */
+  source: FactSource;
+
+  /**
+   * Which body stands behind a verified fact, by name — משרד התחבורה,
+   * רשות המסים. Cited, never paraphrased as "official data".
+   */
+  sourceName?: string;
+
+  /**
+   * When that record was current, rendered after נכון ל־. Public registers
+   * lag by months, and a date the reader can judge for themselves is the
+   * difference between a citation and a claim.
+   */
+  sourceDate?: string;
 }
 
 /**
@@ -61,6 +98,16 @@ export interface FactDefinition {
   /** Defaults to false. Only three fields per category are required. */
   required?: boolean;
   options?: readonly string[];
+
+  /**
+   * Defaults to 'seller'. Set 'verified' for fields a public register can
+   * fill — the vehicle schema marks eight of its twelve that way.
+   *
+   * Schema-side rather than per-listing because whether a field CAN be
+   * verified is a property of the field. Whether it WAS is a property of the
+   * listing, and lives on the Fact.
+   */
+  source?: FactSource;
 
   /**
    * Shorter label for the three-column facts grid, where the full label does
@@ -106,6 +153,9 @@ export function factsFromSchema(schema: CategorySchema): Fact[] {
     type: definition.type,
     present: true,
     required: definition.required ?? false,
+    // A fresh fact is always seller-sourced: nothing has been looked up yet.
+    // A plate lookup promotes the fields it fills, and only those.
+    source: 'seller',
   }));
 }
 
@@ -126,70 +176,171 @@ export interface Image {
   caption?: string;
 }
 
-/** One captured room, rendered as a panorama scene in the tour. */
-export interface PanoScene {
-  id: string;
-  /** Schema key of the room type, e.g. 'living_room'. */
-  roomKey: string;
-  /** Hebrew display label, e.g. סלון. */
-  label: string;
-  panoUrl: string;
-  thumbUrl: string;
-  /** Initial camera yaw in degrees. Defaults to 0 when absent. */
-  yaw?: number;
-  /** Initial camera pitch in degrees. Defaults to 0 when absent. */
-  pitch?: number;
-  /**
-   * Encoded size of panoUrl. Written by the stitcher; the database sums these
-   * into the tour's payloadMb, which is what the cellular opt-in shows.
-   */
-  bytes?: number;
-}
-
-/** A doorway hotspot linking one scene to another. */
-export interface SceneLink {
-  fromSceneId: string;
-  toSceneId: string;
-  /** Hotspot position within the source panorama, in degrees. */
-  yaw: number;
-  pitch: number;
-  /** Hebrew label shown on the hotspot, e.g. למטבח. */
-  label: string;
-}
-
-export interface TourImmersive {
-  type: 'tour';
-  scenes: PanoScene[];
-  /** May be empty. An unlinked tour still works as a room selector. */
-  links: SceneLink[];
-  /** Download size, shown before the user opts in on cellular. */
-  payloadMb?: number;
-}
-
-export interface SpinImmersive {
-  type: 'spin';
-  frames: string[];
-  /** Preferred over individual frames — 36 requests on cellular is slow. */
-  spriteUrl?: string;
-  /** Read from here, never hardcoded. 36 is the v1 default. */
-  frameCount: number;
-  /** Download size, shown before the user opts in on cellular. */
-  payloadMb?: number;
-}
-
-export type Immersive = TourImmersive | SpinImmersive;
-
 export interface Media {
   cover: Image;
   gallery: Image[];
-  /** Absent until capture has been processed. The page works without it. */
-  immersive?: Immersive;
   /**
    * The rendered PDF, once the render_pdf job has produced one. Absent means
    * the download is not offered yet — never a broken link.
    */
   pdfUrl?: string;
 }
+
+// ---------------------------------------------------------------------------
+// Enrichment
+// ---------------------------------------------------------------------------
+
+/**
+ * Public-record context assembled around the seller's own listing.
+ *
+ * THIS IS THE PRODUCT (RESEARCH.md §1). A page with photos and a price is a
+ * one-week build for anyone who wants to copy it. A page that knows what sold
+ * in this building over the last two years, or that the ownership history is
+ * what the Ministry of Transport holds, is months of assembly and it
+ * compounds.
+ *
+ * Everything here is baked in at build time from our own Postgres. Government
+ * endpoints are never queried while a page renders — they are slow,
+ * rate-limited and occasionally down, and the page has a hard performance
+ * floor (RESEARCH.md §4.5).
+ *
+ * Every block is OPTIONAL and missing data is normal, not an error. A listing
+ * with no comparable sales renders without that block: not an empty block,
+ * not a placeholder, not an apology (RESEARCH.md §4.6).
+ */
+
+/**
+ * Attribution carried by every enriched item, individually.
+ *
+ * Not hoisted to the block: two comparable sales can come from different
+ * extracts with different dates, and averaging that away would be exactly the
+ * kind of tidy lie §4.7 forbids.
+ */
+export interface Provenance {
+  /** The body, by name: רשות המסים, משרד התחבורה, מנהל התכנון. */
+  sourceName: string;
+  /** When the record was current. Rendered after נכון ל־. */
+  sourceDate: string;
+}
+
+// --- Property ---------------------------------------------------------------
+
+/**
+ * One transaction from the Tax Authority register.
+ *
+ * Every property transaction in Israel is legally required to be reported, so
+ * this is the strongest single property signal available — and it is free and
+ * public (RESEARCH.md §4.2).
+ */
+export interface ComparableSale extends Provenance {
+  id: string;
+  /** Sale price in ILS. */
+  price: number;
+  /** Registered floor area. Absent in older records. */
+  areaSqm?: number;
+  rooms?: number;
+  floor?: number;
+  /** ISO date of the transaction. */
+  soldAt: string;
+  /**
+   * How close this sale is to the listing. Drives display order — a sale in
+   * the same building is worth more than ten in the neighbourhood.
+   */
+  proximity: 'building' | 'street' | 'neighbourhood';
+  /** Shown only for street and neighbourhood matches. */
+  address?: string;
+}
+
+export interface School extends Provenance {
+  id: string;
+  /** Hebrew name as the register holds it. */
+  name: string;
+  /** Hebrew stage label, e.g. יסודי, חטיבת ביניים, גן ילדים. */
+  stage: string;
+  /** Straight-line metres. Walking time is only claimed where GTFS gives it. */
+  distanceMetres: number;
+}
+
+export interface TransitStop extends Provenance {
+  id: string;
+  name: string;
+  /** Hebrew mode label, e.g. אוטובוס, רכבת קלה, רכבת. */
+  mode: string;
+  /** Route numbers or names served, as strings — line 5 and line 5א both exist. */
+  routes: string[];
+  /**
+   * Real walking minutes from the GTFS network, never a marketing claim
+   * (RESEARCH.md §4.2). Absent when the network cannot produce one.
+   */
+  walkMinutes?: number;
+}
+
+export interface PlanningItem extends Provenance {
+  id: string;
+  /** Official plan number. */
+  planNumber: string;
+  /** Hebrew status, e.g. מאושרת, בהפקדה. */
+  status: string;
+  /** One-line Hebrew summary of what the plan does. */
+  summary: string;
+  /** ISO date of the last status change. */
+  updatedAt: string;
+}
+
+export interface PropertyEnrichment {
+  category: 'property';
+  /** Ordered tightest-first by the page, not by the ingestion. */
+  comparableSales: ComparableSale[];
+  schools: School[];
+  transitStops: TransitStop[];
+  planningItems: PlanningItem[];
+  /**
+   * Neighbourhood price per m², with the comparison set stated alongside it.
+   * A number without its denominator is not a comparison, it is a claim.
+   */
+  pricePerSqm?: {
+    value: number;
+    /** Hebrew description of what was averaged, e.g. 24 עסקאות בשכונה. */
+    basis: string;
+  } & Provenance;
+}
+
+// --- Vehicle ----------------------------------------------------------------
+
+/**
+ * One ownership period from the Ministry of Transport history register.
+ *
+ * Dates are held by QUARTER, not by day, and are presented that way. Rounding
+ * a quarter into a date would be inventing precision the register does not
+ * have.
+ */
+export interface OwnershipPeriod extends Provenance {
+  /** Hebrew ownership type: פרטית, חברה, ליסינג, השכרה, מונית, לימוד נהיגה. */
+  type: string;
+  /** Quarter the ownership began, e.g. 2021-Q3. */
+  fromQuarter: string;
+  /** Absent for the current owner. */
+  toQuarter?: string;
+}
+
+export interface VehicleEnrichment {
+  category: 'vehicle';
+  /**
+   * Fact keys the plate lookup filled, so the page can render them under a
+   * single verified heading without re-deriving which ones came from where.
+   * The facts themselves stay in Listing.facts.
+   */
+  verifiedSpecKeys: string[];
+  ownershipHistory: OwnershipPeriod[];
+  /** ISO date. Also mirrored into a fact; here it drives the validity block. */
+  testValidUntil?: string;
+  /** Attribution for the verified specification as a whole. */
+  specSource?: Provenance;
+  /** Attribution for the test date. */
+  testSource?: Provenance;
+}
+
+export type EnrichmentBlock = PropertyEnrichment | VehicleEnrichment;
 
 // ---------------------------------------------------------------------------
 // Listing
@@ -244,6 +395,12 @@ export interface Listing {
 
   facts: Fact[];
   media: Media;
+
+  /**
+   * Public-record context, baked in at build time. Absent is the normal case
+   * for a fresh listing and for anything the registers do not cover.
+   */
+  enrichment?: EnrichmentBlock;
 
   /**
    * Content hash of the generated Open Graph image, set by the Stage D

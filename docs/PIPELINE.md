@@ -1,64 +1,57 @@
 # The processing pipeline
 
-Six job types, two Fly process groups, one Postgres queue. ADR 0001 has the
-runtime reasoning; ADR 0002 has the stitching decision. This file is the map.
+Three job types, two Fly process groups, one Postgres queue. ADR 0001 has the
+runtime reasoning. This file is the map.
+
+Three more job types — `stitch_panorama`, `extract_frames`, `build_sprite` —
+lived here and are gone. Immersive capture is deferred by RESEARCH.md v2 §9:
+sequenced, not cancelled. The code is at the `immersive-v1` tag and 0006 drops
+the two database functions it wrote through.
 
 ## Job types
 
 | type | group | input | output |
 | --- | --- | --- | --- |
 | `enhance_images` | worker | originals | four WebP widths per photo |
-| `stitch_panorama` | worker | shots + attitude | one equirectangular per room |
-| `extract_frames` | worker | walk-around video | 36 frames, angularly resampled |
-| `build_sprite` | worker | those frames | one 6x6 sheet |
 | `generate_og` | worker | cover photo | the 1200x630 WhatsApp card |
 | `render_pdf` | **pdf** | the published page | a print-ready PDF |
 
-`scope_key` carries the scene id for `stitch_panorama` and is null everywhere
-else. That is what lets one room fail without taking the tour with it (D7): a
-failed job never gates publishing, it just leaves that scene out.
+`scope_key` is null on all three today. It exists because a failed job must
+never gate publishing — a listing publishes with whatever succeeded — and
+because per-item work will need it again.
 
 The two groups claim **disjoint** job types. Chrome is the only thing here that
 routinely runs out of memory, and when it does it takes its machine with it.
 
 ## Writing results back
 
-Rooms stitch concurrently. Every write into `listings.media` therefore goes
-through an RPC in `supabase/migrations/0005_attach_immersive.sql`, which merges
-under a row lock. A read-modify-write from the worker would drop whichever
-scene finished second, intermittently.
+Writes into `listings.media` go through an RPC rather than a read-modify-write
+from the worker, so two jobs on the same listing cannot lose each other's
+changes. Only `attach_pdf` remains; 0006 drops the panorama and spin merges
+that went with the deferred immersive work.
 
-`attach_pano_scene` is idempotent by scene id, so a retry replaces rather than
-duplicates. `payloadMb` is recomputed from the scenes on every call rather than
-accumulated, so a retry cannot inflate the number the seller sees.
+`generate_og` writes `og_image_hash` directly, which is safe because it is the
+only writer of that column.
 
 ## What CI proves, and what it does not
 
 The verify workflow runs the worker's typecheck and its unit tests. Those tests
-cover the pure arithmetic: the projection and blending maths, the angular
-resampling, the Hebrew detection, and the sprite grid.
+cover the Hebrew detection used by the PDF check. The panorama and resampling
+maths went with the deferred work, and took most of the unit coverage with it —
+what remains is thinner than it was, and worth saying rather than glossing.
 
 **CI does not run the pipeline.** It has no sample video, no Supabase project,
 no libvips-sized machine and no browser. Specifically, none of the following
 has been executed anywhere yet:
 
-- a real stitch, end to end, against real phone shots;
-- ffmpeg frame extraction against a real walk-around video;
+- a single image enhancement against a real photograph;
+- an Open Graph crop, and therefore the 300KB quality ladder;
 - a Puppeteer render, and therefore the Hebrew-in-PDF check that is the whole
   point of `src/pdf/verify.ts`;
-- any measurement of how long a stitch takes, or how much memory it uses.
+- any measurement of how long a job takes or how much memory it uses.
 
-The inner loop of the stitcher visits every output pixel once per shot —
-roughly 84 million times for a ten-shot room at 4096x2048. It is written for
-legibility, leaning on V8 to eliminate the small allocations in that loop.
-**That has not been measured.** If stitching turns out to be slow, that loop is
-where to look first, and the fix is to inline the transpose and the projection
-so nothing is allocated per pixel.
-
-The one cross-boundary invariant that *is* checked mechanically is the sprite
-layout: `scripts/verify-sprite-layout.mjs` compares the pipeline's `gridFor`
-against the viewer's, because a mismatch there produces a spin that shows the
-wrong frame while breaking nothing.
+Every timing and memory figure in this file and in the code comments is a
+design intent, not a measurement.
 
 ## Known risk: Chrome runs without its sandbox
 
@@ -103,15 +96,13 @@ and a wrong one would quietly render 404 pages into PDFs.
 Permanent — the queue does not retry, because the same input produces the same
 result:
 
-`no_cover`, `no_sources`, `no_scene`, `no_shots`, `no_frames`, `no_video`,
-`no_slug`, `path_outside_listing`, `source_unreadable`, `video_unreadable`,
-`frame_unreadable`, `incomplete_sweep`, `insufficient_coverage`,
-`page_unavailable`, `pdf_missing_hebrew`, `no_handler`.
+`no_cover`, `no_sources`, `no_slug`, `path_outside_listing`,
+`source_unreadable`, `page_unavailable`, `pdf_missing_hebrew`, `no_handler`.
 
 Retryable — transient, worth another attempt with backoff:
 
-`upload_failed`, `listing_update_failed`, `attach_*_failed`,
-`frame_extraction_failed`, `pdf_render_failed`, `internal_error`.
+`upload_failed`, `listing_update_failed`, `attach_pdf_failed`,
+`pdf_render_failed`, `internal_error`.
 
 `attempts` increments at **claim**, not at failure. A worker killed mid-job
 reports nothing, so counting at failure would let a job that crashes the

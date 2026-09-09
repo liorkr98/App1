@@ -60,7 +60,7 @@ for (const page of pages.sort()) {
   );
 }
 
-console.log(`\n  budget: ${(BUDGET_BYTES / 1024).toFixed(0)} KB before the immersive viewer loads`);
+console.log(`\n  budget: ${(BUDGET_BYTES / 1024).toFixed(0)} KB total, enrichment included`);
 
 if (over > 0) {
   console.error(`\n${over} page(s) over budget on local assets alone.`);

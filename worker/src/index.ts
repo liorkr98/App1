@@ -13,7 +13,7 @@ import { JobFailure, type JobType } from './types.js';
  * stop it (ADR 0001).
  *
  * WORKER_ROLE selects which job types this instance claims, which is what
- * keeps a Chrome crash in the pdf group away from a panorama job in the
+ * keeps a Chrome crash in the pdf group away from an image job in the
  * worker group.
  */
 
@@ -72,8 +72,9 @@ async function main(): Promise<void> {
   const jobTypes = Object.keys(handlersFor(env.role)) as JobType[];
 
   if (jobTypes.length === 0) {
-    // The pdf group has no handlers until D-b. Idle rather than exit: exiting
-    // would make Fly restart it in a crash loop.
+    // Both groups have handlers today, so this is unreachable. Kept because
+    // the alternative when it is not is a process that exits on boot, which
+    // Fly restarts in a crash loop until someone reads the logs.
     log('no_handlers_idle');
     while (running) await sleep(env.idlePollMs);
     return;

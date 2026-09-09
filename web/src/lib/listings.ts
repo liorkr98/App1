@@ -1,10 +1,17 @@
-import { factsFromSchema, type Fact, type FactValue, type Listing } from '@/types/listing';
+import {
+  factsFromSchema,
+  type CategorySchema,
+  type Fact,
+  type FactValue,
+  type Listing,
+  type Provenance,
+} from '@/types/listing';
 import { propertySchema, vehicleSchema } from '@/features/listings/schemas';
 
 /**
  * Sample listings, with the content of the two reference pages.
  *
- * Stage D replaces this with Supabase. Until then these are what the build
+ * Stage E replaces this with Supabase. Until then these are what the build
  * renders, and they are real content rather than lorem so the RTL, the
  * gershayim and the fact-grid states are all exercised by the real templates.
  */
@@ -12,14 +19,37 @@ import { propertySchema, vehicleSchema } from '@/features/listings/schemas';
 /** `null` leaves a fact unanswered; `{ absent: true }` marks it confirmed absent. */
 type Answer = FactValue | { absent: true };
 
-function answer(schema: Parameters<typeof factsFromSchema>[0], values: Record<string, Answer>): Fact[] {
+/**
+ * Builds a category's facts from answers, optionally marking the ones a
+ * public register filled.
+ *
+ * `verifiedBy` stands in for a plate lookup having run. It promotes exactly
+ * the facts the SCHEMA says are verifiable and that actually got a value —
+ * never a field the seller typed, and never an empty one. Which fields those
+ * are is read from the schema rather than listed here, so adding a verifiable
+ * field is still a one-file change.
+ */
+function answer(
+  schema: CategorySchema,
+  values: Record<string, Answer>,
+  verifiedBy?: Provenance,
+): Fact[] {
+  const verifiable = new Set(
+    schema.facts.filter((definition) => definition.source === 'verified').map((d) => d.key),
+  );
+
   return factsFromSchema(schema).map((fact) => {
+    const promote = (next: Fact): Fact =>
+      verifiedBy && verifiable.has(next.key) && next.value !== null
+        ? { ...next, source: 'verified', ...verifiedBy }
+        : next;
+
     if (!(fact.key in values)) return fact;
     const given = values[fact.key];
     if (given !== null && typeof given === 'object' && 'absent' in given) {
       return { ...fact, present: false };
     }
-    return { ...fact, value: given ?? null };
+    return promote({ ...fact, value: given ?? null });
   });
 }
 
@@ -66,18 +96,6 @@ export const propertyListing: Listing = {
       { id: 'p3', url: `${HOST}/800x600/E4E0D6/6E6F66?text=+`, width: 800, height: 600, alt: 'חדר שינה', caption: 'חדר הורים' },
       { id: 'p4', url: `${HOST}/800x600/E4E0D6/6E6F66?text=+`, width: 800, height: 600, alt: 'מרפסת', caption: 'מרפסת דרומית' },
     ],
-    immersive: {
-      type: 'tour',
-      scenes: ['סלון', 'מטבח', 'חדר הורים', 'חדר ילדים', 'חדר רחצה', 'מרפסת'].map((label, index) => ({
-        id: `s${index}`,
-        roomKey: `room_${index}`,
-        label,
-        panoUrl: `${HOST}/6000x3000/E4E0D6/6E6F66?text=+`,
-        thumbUrl: `${HOST}/512x256/E4E0D6/6E6F66?text=+`,
-      })),
-      links: [],
-      payloadMb: 8,
-    },
   },
 
   // Street present, so the map section renders.
@@ -116,6 +134,12 @@ export const vehicleListing: Listing = {
     // not a day, and inventing one would be a fact we made up.
     test_until: '03/2027',
     previous_ownership: 'פרטית',
+    condition: 'טוב',
+  }, {
+    // Eight of the twelve vehicle fields come back from a plate lookup. The
+    // page must let a reader see at a glance which four did not.
+    sourceName: 'משרד התחבורה',
+    sourceDate: '08/2026',
   }),
 
   disclosures: [
@@ -138,15 +162,6 @@ export const vehicleListing: Listing = {
       { id: 'v3', url: `${HOST}/800x600/E4E0D6/6E6F66?text=+`, width: 800, height: 600, alt: 'מד אוץ', caption: 'מד אוץ' },
       { id: 'v4', url: `${HOST}/800x600/E4E0D6/6E6F66?text=+`, width: 800, height: 600, alt: 'תא מטען', caption: 'תא מטען' },
     ],
-    immersive: {
-      type: 'spin',
-      // 36 frames on a 6x6 sheet — one request instead of 36, which matters
-      // on cellular. Stage D generates the real sheet; this stands in.
-      spriteUrl: `${HOST}/2400x1800/E4E0D6/6E6F66?text=+`,
-      frames: [],
-      frameCount: 36,
-      payloadMb: 3,
-    },
   },
 
   // City only, no street: a vehicle's location is an approximate meeting

@@ -50,9 +50,9 @@ jobs:
 
       # --- Worker ---------------------------------------------------------
       # Typecheck plus the unit tests over the pure maths. What CI does NOT
-      # prove is the pipeline itself: stitching, ffmpeg and Puppeteer all need
-      # real media, a real Supabase project and a browser, none of which exist
-      # on this runner. docs/PIPELINE.md says so in as many words rather than
+      # prove is the pipeline itself: sharp and Puppeteer both need real
+      # media, a real Supabase project and a browser, none of which exist on
+      # this runner. docs/PIPELINE.md says so in as many words rather than
       # letting a green tick imply otherwise.
       #
       # PUPPETEER_SKIP_DOWNLOAD: nothing here launches a browser, and the
@@ -70,5 +70,3 @@ jobs:
       # './x.js' specifiers that only exist after compilation.
       - name: Worker tests
         run: npm run test --prefix worker
-      - name: Verify the sprite layout matches the viewer
-        run: node scripts/verify-sprite-layout.mjs

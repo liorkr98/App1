@@ -8,7 +8,6 @@
 FROM node:22-slim AS base
 
 # sharp ships prebuilt libvips for linux-x64, so no build toolchain is needed.
-# ffmpeg is D3's frame extraction.
 #
 # The font packages are NOT decoration. Chrome prints Hebrew as empty boxes
 # when it cannot find a face that covers the block, and it does so silently —
@@ -18,7 +17,6 @@ FROM node:22-slim AS base
 # the CDN is having a bad minute. src/pdf/verify.ts is the check that this
 # actually worked.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      ffmpeg \
       ca-certificates \
       fonts-liberation \
       fonts-noto-core \

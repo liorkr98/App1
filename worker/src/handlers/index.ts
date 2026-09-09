@@ -1,26 +1,20 @@
 import type { JobHandler, JobType } from '../types.js';
 
 import { enhanceImages } from './enhance.js';
-import { extractFrames } from './frames.js';
 import { generateOg } from './og.js';
 import { renderPdf } from './pdf.js';
-import { buildSprite } from './sprite.js';
-import { stitchPanorama } from './stitch.js';
 
 /**
  * Handler registry, split by Fly process group (ADR 0001).
  *
  * Chrome is memory-hungry and it crashes. If PDF rendering shared a process
- * with stitching, a Chrome OOM would take a panorama job down with it — so the
- * two groups claim disjoint job types and cannot interfere.
+ * with image work, a Chrome OOM would take an enhancement job down with it —
+ * so the two groups claim disjoint job types and cannot interfere.
  */
 
-/** Image and video work. Concurrency 2-3. */
+/** Image work. Concurrency 2-3. */
 export const WORKER_HANDLERS: Partial<Record<JobType, JobHandler>> = {
   enhance_images: enhanceImages,
-  stitch_panorama: stitchPanorama,
-  extract_frames: extractFrames,
-  build_sprite: buildSprite,
   generate_og: generateOg,
 };
 

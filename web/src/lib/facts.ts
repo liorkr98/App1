@@ -25,6 +25,17 @@ export interface FactCell {
   bdi: boolean;
   /** Confirmed absent — renders at 35% opacity showing אין. */
   absent: boolean;
+
+  /**
+   * True when a public register supplied this value, so the cell can carry
+   * the מאומת marker (RESEARCH.md §4.7).
+   *
+   * Only ever true alongside sourceName and sourceDate: a verified claim with
+   * no citation is just a claim in a nicer font.
+   */
+  verified: boolean;
+  sourceName?: string;
+  sourceDate?: string;
 }
 
 /**
@@ -59,6 +70,9 @@ export function toCells(category: ListingCategory, facts: Fact[]): FactCell[] {
         value: 'אין',
         bdi: false,
         absent: true,
+        // A register does not record the absence of a balcony. Absence is
+        // always the seller's word.
+        verified: false,
       });
       continue;
     }
@@ -71,6 +85,10 @@ export function toCells(category: ListingCategory, facts: Fact[]): FactCell[] {
         ? factValue(partner.value)
         : undefined;
 
+    // Both halves are required. A fact flagged verified without a citation
+    // renders as an ordinary cell rather than as an unbacked badge.
+    const cited = fact.source === 'verified' && Boolean(fact.sourceName && fact.sourceDate);
+
     cells.push({
       key: fact.key,
       label: definition?.gridLabel ?? fact.label,
@@ -79,6 +97,8 @@ export function toCells(category: ListingCategory, facts: Fact[]): FactCell[] {
       ...(partnerValue === undefined ? {} : { pairedValue: partnerValue }),
       bdi: needsBdi(fact.value),
       absent: false,
+      verified: cited,
+      ...(cited ? { sourceName: fact.sourceName, sourceDate: fact.sourceDate } : {}),
     });
   }
 

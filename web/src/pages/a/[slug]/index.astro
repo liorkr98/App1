@@ -5,7 +5,6 @@ import Disclosures from '../../../components/Disclosures.astro';
 import FactsGrid from '../../../components/FactsGrid.astro';
 import Gallery from '../../../components/Gallery.astro';
 import Hero from '../../../components/Hero.astro';
-import Immersive from '../../../components/Immersive.astro';
 import MapSection from '../../../components/MapSection.astro';
 import PriceBar from '../../../components/PriceBar.astro';
 import Prose from '../../../components/Prose.astro';
@@ -51,18 +50,6 @@ const mapImageUrl = 'https://placehold.co/800x400/E4E0D6/6E6F66?text=+';
   <PriceBar price={listing.price} listPrice={listing.listPrice} priceNote={listing.priceNote} />
 
   <FactsGrid category={listing.category} facts={listing.facts} />
-
-  {listing.media.immersive && (
-    <Immersive
-      immersive={listing.media.immersive}
-      posterUrl="https://placehold.co/900x563/E4E0D6/6E6F66?text=+"
-      posterAlt={
-        listing.media.immersive.type === 'tour'
-          ? 'תצוגה מקדימה של הסיור בדירה'
-          : 'תצוגה מקדימה של הרכב מכל הזוויות'
-      }
-    />
-  )}
 
   <section>
     <h2>{heading}</h2>
