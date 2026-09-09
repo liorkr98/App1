@@ -1,0 +1,103 @@
+name: Verify
+
+# The verification gate: typecheck, lint and test before anything is done
+# (CLAUDE.md §10.4).
+#
+# WHY THIS EXISTS ALONGSIDE .eas/workflows/verify.yml
+#
+# npm is blocked on the primary dev machine by corporate endpoint protection,
+# so nothing in this repo can be installed, typechecked, linted or tested
+# locally. EAS Workflows was the only place it could run — and on 9 September
+# 2026 the account hit the free plan's 60 minute CI/CD cap, which does not
+# reset until 1 October. That left no way to verify a single line.
+#
+# GitHub Actions costs nothing here and has no such cap. This is now the
+# primary gate. The EAS workflow stays: it is the one that can build and submit
+# a native app, should that ever return, and it costs nothing to keep.
+#
+# Every step below mirrors the EAS one deliberately. If they drift, the green
+# tick on one of them stops meaning what it appears to mean.
+
+on:
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
+  workflow_dispatch: {}
+
+jobs:
+  verify:
+    name: Typecheck, lint and test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Matches worker/package.json engines, and the version whose test
+          # runner behaviour the worker's npm script depends on.
+          node-version: '22'
+
+      # --- Shared domain ----------------------------------------------------
+      # src/types and src/features only. The React Native app that used to live
+      # here is at the react-native-v1 tag (RESEARCH.md v2: web only).
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      # --- Web workspace ----------------------------------------------------
+      # Its own package.json, deliberately not an npm workspace: making the
+      # root a workspace root would rewrite web's and worker's dependency
+      # trees.
+      - name: Install web dependencies
+        run: npm install --no-audit --no-fund --prefix web
+
+      - name: Web typecheck
+        run: npm run typecheck --prefix web
+
+      - name: Verify no physical left/right in web
+        run: node scripts/verify-web-logical-props.mjs
+
+      # Plants a violation and asserts the rule catches it. A rule that
+      # silently stops matching is worse than no rule.
+      - name: Verify the web logical-property rule actually fires
+        run: bash scripts/verify-web-lint-fires.sh
+
+      - name: Build web
+        run: npm run build --prefix web
+
+      - name: Verify exactly four template divergences
+        run: node scripts/verify-template-divergences.mjs
+
+      - name: Report built page weight
+        run: node scripts/report-page-weight.mjs
+
+      # --- Worker -----------------------------------------------------------
+      # Typecheck and unit tests only. What CI does NOT prove is the pipeline
+      # itself: sharp and Puppeteer both need real media, a real Supabase
+      # project and a browser, none of which exist on a runner.
+      # docs/PIPELINE.md says so in as many words rather than letting a green
+      # tick imply otherwise.
+      - name: Install worker dependencies
+        env:
+          # Nothing here launches a browser, and the download is ~150MB.
+          PUPPETEER_SKIP_DOWNLOAD: 'true'
+        run: npm install --no-audit --no-fund --prefix worker
+
+      - name: Worker typecheck
+        run: npm run typecheck --prefix worker
+
+      # The test command passes an explicit GLOB over compiled output, and both
+      # halves matter. Handed a directory, Node's runner treats every file
+      # under it as a test — it ran the worker's own index.js, started the
+      # queue loop and hung the job. Handed nothing, it falls back to default
+      # discovery, which on Node 22.23 includes .ts files: it then ran the
+      # SOURCES, whose './x.js' specifiers only resolve after compilation.
+      - name: Worker tests
+        run: npm run test --prefix worker
