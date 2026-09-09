@@ -1,5 +1,5 @@
 ---
-import { t } from '../lib/i18n';
+import { parts, t } from '../lib/i18n';
 import '../styles/tokens.css';
 
 /**
@@ -32,9 +32,28 @@ import '../styles/tokens.css';
  * /new is a private workspace. This page is the one that should be found.
  */
 
+/**
+ * The sample links.
+ *
+ * Their labels hold numbers, so they arrive as slots rather than finished
+ * strings and every number lands in its own <bdi> (§4.2). `parts` is
+ * framework-free for exactly this: the React island renders it through
+ * <Message>, and this page renders the same split inline.
+ */
 const samples = [
-  { slug: 'A7K2M', label: t('home.exampleProperty') },
-  { slug: 'V3M9Q', label: t('home.exampleVehicle') },
+  {
+    slug: 'A7K2M',
+    label: 'home.exampleProperty',
+    values: { rooms: t('home.examplePropertyRooms') } as Record<string, string>,
+  },
+  {
+    slug: 'V3M9Q',
+    label: 'home.exampleVehicle',
+    values: {
+      model: t('home.exampleVehicleModel'),
+      year: t('home.exampleVehicleYear'),
+    } as Record<string, string>,
+  },
 ];
 
 const title = `סיבוב — ${t('home.tagline')}`;
@@ -286,7 +305,13 @@ const title = `סיבוב — ${t('home.tagline')}`;
           {/* Every number in Hebrew prose sits in <bdi> — §4.2. */}
           <span class="proof-val"><bdi>{t('home.proofValue')}</bdi> {t('home.proofUnit')}</span>
           <span class="verified">{t('home.proofBadge')}</span>
-          <span class="proof-cite">{t('home.proofCite')}</span>
+          <span class="proof-cite">
+            {
+              parts('home.proofCite').map((part) =>
+                'text' in part ? part.text : <bdi>{t('home.proofDate')}</bdi>,
+              )
+            }
+          </span>
         </div>
 
         <div class="proof-row">
@@ -313,8 +338,13 @@ const title = `סיבוב — ${t('home.tagline')}`;
           samples.map((sample) => (
             <li>
               <a href={`/a/${sample.slug}/`}>
-                <span class="sample-name">{sample.label}</span>
-                <span class="sample-kind">{`/a/${sample.slug}`}</span>
+                <span class="sample-name">
+                  {parts(sample.label).map((part) =>
+                    'text' in part ? part.text : <bdi>{sample.values[part.slot]}</bdi>,
+                  )}
+                </span>
+                {/* A Latin path inside a Hebrew line — §4.2 covers this too. */}
+                <span class="sample-kind"><bdi>{`/a/${sample.slug}`}</bdi></span>
               </a>
             </li>
           ))

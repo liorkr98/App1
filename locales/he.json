@@ -183,7 +183,7 @@
     "proofValue": "62,000",
     "proofUnit": "ק״מ",
     "proofBadge": "מאומת",
-    "proofCite": "משרד התחבורה · נכון ל־08/2026",
+    "proofCite": "משרד התחבורה · נכון ל־{date}",
     "proofSellerValue": "משופצת",
     "proofSellerBadge": "לפי המוכר",
     "gapsTitle": "מה שלא יודעים — לא כותבים",
@@ -192,8 +192,12 @@
     "linkBody": "רוב הקונים פותחים את המודעה בטלפון, בדרך לפגישה. לכן העמוד קל, נקרא מימין לשמאל, והתצוגה המקדימה בוואטסאפ נבנית מראש — שם מחליטים אם בכלל ללחוץ.",
     "examplesTitle": "שתי דוגמאות",
     "examplesNote": "עמודים אמיתיים עם נתוני דוגמה. התמונות עדיין ממלאות מקום.",
-    "exampleProperty": "דירת 4 חדרים בחולון",
-    "exampleVehicle": "מאזדה 3, 2021",
-    "cta": "לבנות מודעה"
+    "exampleProperty": "דירת {rooms} חדרים בחולון",
+    "exampleVehicle": "מאזדה {model}, {year}",
+    "cta": "לבנות מודעה",
+    "proofDate": "08/2026",
+    "examplePropertyRooms": "4",
+    "exampleVehicleModel": "3",
+    "exampleVehicleYear": "2021"
   }
 }
