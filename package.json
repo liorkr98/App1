@@ -2,6 +2,7 @@
   "name": "listing-pages",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "Hebrew-first enriched listing pages. Web product; see RESEARCH.md.",
   "scripts": {
     "typecheck": "tsc --noEmit",

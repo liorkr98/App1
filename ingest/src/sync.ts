@@ -118,7 +118,13 @@ export async function upsertBatches<T extends Record<string, unknown>>(
 
   for (let start = 0; start < rows.length; start += batchSize) {
     const batch = rows.slice(start, start + batchSize);
-    const { error } = await db().from(table).upsert(batch, { onConflict: conflictKey });
+    // supabase-js types upsert against a GENERATED Database schema, and
+    // ingest has none: these tables are defined by 0007 and validated by
+    // Postgres, not by TypeScript. The cast is where that is admitted out
+    // loud rather than papered over with a fake generated type.
+    const { error } = await db()
+      .from(table)
+      .upsert(batch as never, { onConflict: conflictKey });
 
     if (error) {
       throw new Error(`${table}: upsert failed at row ${start}: ${error.message}`);

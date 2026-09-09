@@ -6,7 +6,7 @@ import type {
   PropertyEnrichment,
   ProximitySummary,
   TransitMode,
-} from '@/types/listing';
+} from '@/types/listing.js';
 
 import { db } from './db.js';
 import {
