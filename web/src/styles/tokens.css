@@ -6,10 +6,9 @@
   A seller who builds a page in one palette and shares a page in another has
   been shown two products.
 
-  BaseListing.astro still carries its own copy of this block. That is
-  deliberate for exactly one commit — the listing pipeline is green and the
-  React toolchain here is not yet proven, so the two changes stay separable.
-  The follow-up removes the duplicate.
+  Imported by BaseListing.astro and by the editor page, which are the only
+  two documents in the product. Astro inlines a stylesheet this small back
+  into the page, so it costs no extra request.
 */
 
 :root {

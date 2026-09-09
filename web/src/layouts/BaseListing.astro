@@ -1,6 +1,7 @@
 ---
 import type { Listing } from '@/types/listing';
 import { ogDescription, ogImageUrl, ogTitle } from '../lib/og';
+import '../styles/tokens.css';
 
 interface Props {
   listing: Listing;
@@ -57,17 +58,6 @@ const robots = listing.indexable ? 'index,follow' : 'noindex';
 <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700&family=Assistant:wght@400;600&display=swap" rel="stylesheet">
 
 <style is:global>
-:root{
-  --plaster:#FBFAF7;      /* טיח, לא קרם */
-  --ink:#191A15;
-  --olive:#4A5D3A;        /* לא כחול — כל מותגי הנדל"ן בישראל כחולים */
-  --stone:#E4E0D6;
-  --muted:#6E6F66;
-  --shadow:0 1px 2px rgba(25,26,21,.06);
-}
-
-*{box-sizing:border-box;margin:0;padding:0}
-
 html{background:var(--stone)}
 
 body{
