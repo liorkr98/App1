@@ -7,6 +7,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
+    "test": "tsc -p tsconfig.test.json && node --test \"test-build/**/*.test.js\"",
     "web": "npm run dev --prefix web",
     "web:build": "npm run build --prefix web",
     "worker:test": "npm run test --prefix worker"

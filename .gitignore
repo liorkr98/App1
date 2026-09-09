@@ -64,3 +64,5 @@ Thumbs.db
 ingest/dist/
 ingest/node_modules/
 ingest/test-build/
+
+test-build/

@@ -1,0 +1,19 @@
+{
+  // Compiles the shared domain for `node --test`.
+  //
+  // The base config uses Bundler resolution because web/ consumes these files
+  // through Vite. Node does not: it needs NodeNext, which is why every
+  // specifier in src/ carries an explicit extension. Overriding here rather
+  // than changing the base keeps the web build resolving the way Astro
+  // expects.
+  //
+  // The shared domain has had NO test runner since jest was removed with the
+  // React Native app. That was a real regression and this restores it.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "noEmit": false,
+    "outDir": "test-build"
+  }
+}

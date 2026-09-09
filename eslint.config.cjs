@@ -22,6 +22,7 @@ module.exports = defineConfig([
     ignores: [
       'node_modules/**',
       'dist/**',
+      'test-build/**',
       // Each has its own config, libs and lint pass.
       'web/**',
       'worker/**',

@@ -31,6 +31,10 @@ jobs:
         run: npm run typecheck
       - name: Lint
         run: npm run lint
+      # The shared domain had no test runner between the React Native app's
+      # removal and this. Photo ordering is the first thing that needed one.
+      - name: Test
+        run: npm run test
 
       # --- Web workspace --------------------------------------------------
       # Its own package.json, deliberately not an npm workspace: making the
