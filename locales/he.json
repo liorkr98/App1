@@ -188,7 +188,11 @@
     "audienceResident": "למגורים",
     "audienceResidentNote": "מתחיל בחדרים ובקומה.",
     "audienceInvestor": "להשקעה",
-    "audienceInvestorNote": "מתחיל במ״ר, בארנונה ובועד הבית."
+    "audienceInvestorNote": "מתחיל במ״ר, בארנונה ובועד הבית.",
+    "uploading": "מעלה…",
+    "uploadFailed": "לא עלתה",
+    "notUploaded": "לא נשמרה",
+    "signInToUpload": "כדי לשמור תמונות — התחברו"
   },
   "home": {
     "tagline": "מודעה שאפשר לבדוק",

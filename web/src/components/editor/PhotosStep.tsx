@@ -9,14 +9,29 @@ import { Message } from './Message';
 export interface EditorPhoto {
   /** Stable across reorders, so React keys do not follow position. */
   id: string;
-  /** An object URL. Dies with the tab — see the note on uploading below. */
+  /** An object URL, for showing the picture before it has gone anywhere. */
   url: string;
   name: string;
+  /** The File itself, kept so it can be uploaded. */
+  file?: File;
+
+  /**
+   * Where this photo is in its journey to the private originals bucket.
+   *
+   * Shown per thumbnail rather than as one global spinner: an agent adding
+   * fifteen photos on a train needs to know WHICH of them failed, not that
+   * something did.
+   */
+  status?: 'local' | 'uploading' | 'uploaded' | 'failed';
+  /** Storage key inside `originals`, once it has one. */
+  path?: string;
 }
 
 interface Props {
   photos: readonly EditorPhoto[];
   onChange: (photos: EditorPhoto[]) => void;
+  /** Uploading needs a listing row, which needs a signed-in owner (0004). */
+  signedIn: boolean;
 }
 
 /**
@@ -62,7 +77,7 @@ interface Props {
  * thumb on a moving bus — and because the buttons make the order checkable
  * without a pointer at all.
  */
-export function PhotosStep({ photos, onChange }: Props) {
+export function PhotosStep({ photos, onChange, signedIn }: Props) {
   const [dragging, setDragging] = useState<number | null>(null);
 
   const add = (files: FileList | null) => {
@@ -79,6 +94,8 @@ export function PhotosStep({ photos, onChange }: Props) {
         id: `${file.name}:${file.size}:${file.lastModified}:${Math.random().toString(36).slice(2, 8)}`,
         url: URL.createObjectURL(file),
         name: file.name,
+        file,
+        status: 'local' as const,
       })),
     ]);
   };
@@ -124,6 +141,18 @@ export function PhotosStep({ photos, onChange }: Props) {
 
               {index === 0 ? <span className="cover">{t('editor.coverPhoto')}</span> : null}
 
+              {photo.status && photo.status !== 'uploaded' ? (
+                <span className={`shot-state ${photo.status}`}>
+                  {t(
+                    photo.status === 'uploading'
+                      ? 'editor.uploading'
+                      : photo.status === 'failed'
+                        ? 'editor.uploadFailed'
+                        : 'editor.notUploaded',
+                  )}
+                </span>
+              ) : null}
+
               <div className="shot-controls">
                 {/*
                   "Earlier" means TOWARDS THE RIGHT here, and the labels say
@@ -159,6 +188,12 @@ export function PhotosStep({ photos, onChange }: Props) {
             </li>
           ))}
         </ul>
+      ) : null}
+
+      {!signedIn ? (
+        <p className="note">
+          <a href="/enter/">{t('editor.signInToUpload')}</a>
+        </p>
       ) : null}
 
       <label className="picker">

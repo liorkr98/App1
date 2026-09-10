@@ -590,3 +590,21 @@ textarea {
   padding: 0.75rem 0.8rem;
   text-align: start;
 }
+
+/* Per-thumbnail upload state. Sits on the far corner from the cover badge so
+   the two never collide on the first photo. */
+.shot-state {
+  position: absolute;
+  inset-block-start: 0.35rem;
+  inset-inline-end: 0.35rem;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.62rem;
+  font-weight: 600;
+  border-radius: 2px;
+  color: var(--plaster);
+  background: rgba(17, 18, 8, 0.72);
+}
+
+.shot-state.failed {
+  background: #8c2f1e;
+}

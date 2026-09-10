@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 
 import {
   blockers,
@@ -13,6 +13,8 @@ import { blankFacts } from '@/features/listings/fact-entry';
 import { LISTING_CATEGORIES, schemaFor } from '@/features/listings/schemas';
 
 import { t } from '../../lib/i18n';
+import { createDraft, uploadOriginal } from '../../lib/listing-draft';
+import { supabase, supabaseConfigured } from '../../lib/supabase';
 import { DescriptionStep } from './DescriptionStep';
 import { FactsStep } from './FactsStep';
 import { Message } from './Message';
@@ -85,9 +87,69 @@ export default function Editor() {
    */
   const [photos, setPhotos] = useState<EditorPhoto[]>([]);
 
+  /**
+   * The draft row's id, once one exists.
+   *
+   * Created lazily — on the first photo, not on page load — so opening /new
+   * and closing it again does not litter the table with empty rows.
+   */
+  const listingId = useRef<string | null>(null);
+  const [signedIn, setSignedIn] = useState(false);
+
+  useEffect(() => {
+    if (!supabaseConfigured) return;
+
+    const client = supabase();
+    void client.auth.getSession().then(({ data }) => setSignedIn(Boolean(data.session)));
+
+    const { data: sub } = client.auth.onAuthStateChange((_event, session) =>
+      setSignedIn(Boolean(session)),
+    );
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  /**
+   * Uploads anything newly picked, one at a time.
+   *
+   * Sequential rather than parallel: this runs on a phone on cellular, and
+   * fifteen simultaneous uploads of camera-sized files is how you get fifteen
+   * timeouts instead of fifteen photos.
+   *
+   * Each photo's status is updated on its own, so a single failure is
+   * attributable rather than sinking the batch.
+   */
+  const uploadPending = async (current: EditorPhoto[], category: EditorState['category']) => {
+    if (!supabaseConfigured || !signedIn || !category) return;
+
+    const pending = current.filter((photo) => photo.status === 'local' && photo.file);
+    if (pending.length === 0) return;
+
+    const mark = (id: string, patch: Partial<EditorPhoto>) =>
+      setPhotos((all) => all.map((photo) => (photo.id === id ? { ...photo, ...patch } : photo)));
+
+    try {
+      listingId.current ??= (await createDraft(category)).id;
+    } catch {
+      for (const photo of pending) mark(photo.id, { status: 'failed' });
+      return;
+    }
+
+    for (const photo of pending) {
+      if (!photo.file) continue;
+      mark(photo.id, { status: 'uploading' });
+
+      const result = await uploadOriginal(listingId.current, photo.file);
+      mark(
+        photo.id,
+        'error' in result ? { status: 'failed' } : { status: 'uploaded', path: result.path },
+      );
+    }
+  };
+
   const changePhotos = (next: EditorPhoto[]) => {
     setPhotos(next);
     setState((current) => ({ ...current, photoCount: next.length }));
+    void uploadPending(next, state.category);
   };
 
   const steps = useMemo(() => stepsFor(state.category), [state.category]);
@@ -173,7 +235,7 @@ export default function Editor() {
         ) : null}
 
         {step === 'photos' ? (
-          <PhotosStep photos={photos} onChange={changePhotos} />
+          <PhotosStep photos={photos} onChange={changePhotos} signedIn={signedIn} />
         ) : null}
 
         {step === 'facts' && state.category ? (

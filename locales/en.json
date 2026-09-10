@@ -188,7 +188,11 @@
     "audienceResident": "",
     "audienceResidentNote": "",
     "audienceInvestor": "",
-    "audienceInvestorNote": ""
+    "audienceInvestorNote": "",
+    "uploading": "",
+    "uploadFailed": "",
+    "notUploaded": "",
+    "signInToUpload": ""
   },
   "home": {
     "tagline": "",
