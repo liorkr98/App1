@@ -5,11 +5,17 @@ name: Verify
 #
 # WHY THIS EXISTS ALONGSIDE .eas/workflows/verify.yml
 #
-# npm is blocked on the primary dev machine by corporate endpoint protection,
-# so nothing in this repo can be installed, typechecked, linted or tested
-# locally. EAS Workflows was the only place it could run — and on 9 September
-# 2026 the account hit the free plan's 60 minute CI/CD cap, which does not
-# reset until 1 October. That left no way to verify a single line.
+# This project is developed from two machines, and npm is blocked by corporate
+# endpoint protection on the Windows one — nothing there can be installed,
+# typechecked, linted or tested. EAS Workflows was the only place it could run
+# — and on 9 September 2026 the account hit the free plan's 60 minute CI/CD
+# cap, which does not reset until 1 October. That left no way to verify a
+# single line.
+#
+# npm DOES work on the macOS machine (CLAUDE.md §2), so the same steps can be
+# run locally there before pushing. That makes local verification evidence,
+# not a substitute: this workflow is still the gate, because it is the
+# environment the deploy builds from and the only one both machines share.
 #
 # GitHub Actions costs nothing here and has no such cap. This is now the
 # primary gate. The EAS workflow stays: it is the one that can build and submit
