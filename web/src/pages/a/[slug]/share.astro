@@ -107,7 +107,7 @@ const messageLines = message.split('\n').map(isolate);
 const card = {
   cover: listing.media.cover.url,
   price: ils(listing.price),
-  title: listing.title.replace(/\s*\n\s*/g, ' '),
+  title: flatTitle,
   place: place ?? '',
   facts: teaser.slice(0, 3),
   agent: listing.seller.name,
