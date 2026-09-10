@@ -277,7 +277,9 @@ const card = {
   <body>
     <div class="head">
       <p>שיתוף מודעה</p>
-      <h1>{card.title}</h1>
+      {/* The title is prose with a number in it — "דירת 4 חדרים" — so it goes
+          through the same isolation as the message body. */}
+      <h1>{isolate(card.title).map((part) => (part.bdi ? <bdi>{part.bdi}</bdi> : part.text))}</h1>
     </div>
 
     <section>
