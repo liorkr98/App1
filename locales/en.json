@@ -192,7 +192,15 @@
     "uploading": "",
     "uploadFailed": "",
     "notUploaded": "",
-    "signInToUpload": ""
+    "signInToUpload": "",
+    "plateHint": "",
+    "plateLabel": "",
+    "plateInvalid": "",
+    "plateOk": "",
+    "plateDeclare": "",
+    "plateDeclareWhy": "",
+    "plateLookupSoon": "",
+    "plateSkip": ""
   },
   "home": {
     "tagline": "",

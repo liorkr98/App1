@@ -1,5 +1,5 @@
 import { answer, clear, markAbsent } from '@/features/listings/fact-entry';
-import { factDefinition, type ListingCategory } from '@/features/listings/schemas';
+import { factDefinition, schemaFor, type ListingCategory } from '@/features/listings/schemas';
 import type { Fact, ListingAudience } from '@/types/listing';
 
 import { t } from '../../lib/i18n';
@@ -36,7 +36,14 @@ export function FactsStep({ category, facts, onChange, audience, onAudience }: P
         puts them in. Skippable on purpose: it has a sensible default, and a
         required question the seller does not care about is a form they
         abandon (PRD §2).
+
+        ONLY WHERE THE SCHEMA HAS AN ANSWER FOR IT. The options are למגורים and
+        להשקעה — living in it or investing in it — which is a question about
+        property and nonsense about a car. The condition is the schema's own
+        investorLead rather than a category check: a category that declares no
+        investor ordering has nothing to reorder, so there is nothing to ask.
       */}
+      {schemaFor(category).investorLead ? (
       <fieldset className="audience">
         <legend>{t('editor.audienceTitle')}</legend>
         <p className="hint">{t('editor.audienceHint')}</p>
@@ -63,6 +70,7 @@ export function FactsStep({ category, facts, onChange, audience, onAudience }: P
           ))}
         </div>
       </fieldset>
+      ) : null}
 
       <p className="hint">{t('editor.factsHint')}</p>
 

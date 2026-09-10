@@ -19,6 +19,7 @@ import { DescriptionStep } from './DescriptionStep';
 import { FactsStep } from './FactsStep';
 import { Message } from './Message';
 import { PhotosStep, type EditorPhoto } from './PhotosStep';
+import { PlateStep } from './PlateStep';
 import { TemplateStep } from './TemplateStep';
 import { useDraft } from './useDraft';
 
@@ -33,8 +34,6 @@ import { useDraft } from './useDraft';
  * BUILT SO FAR: category, photos, facts, description, template.
  *
  * STILL EMPTY — each renders its heading and nothing else:
- *   - plate. The lookup has no endpoint yet, and a button that looks
- *     something up and cannot would be worse than an empty step.
  *   - preview. It has to show the real listing page, and the site is static
  *     output — so a faithful preview means either a draft URL built by the
  *     pipeline or rendering the page markup twice. That is a design decision,
@@ -86,6 +85,16 @@ export default function Editor() {
    * actual photos ever disagreeing.
    */
   const [photos, setPhotos] = useState<EditorPhoto[]>([]);
+
+  /**
+   * The plate and its ownership declaration.
+   *
+   * Held HERE and nowhere else — not in EditorState, not in the saved draft.
+   * The plate is a lookup key that must never be published (§7), and the
+   * surest way to keep it off the page is to give it nowhere to travel to.
+   */
+  const [plate, setPlate] = useState('');
+  const [declaredOwner, setDeclaredOwner] = useState(false);
 
   /**
    * The draft row's id, once one exists.
@@ -236,6 +245,15 @@ export default function Editor() {
 
         {step === 'photos' ? (
           <PhotosStep photos={photos} onChange={changePhotos} signedIn={signedIn} />
+        ) : null}
+
+        {step === 'plate' ? (
+          <PlateStep
+            plate={plate}
+            onPlate={setPlate}
+            declared={declaredOwner}
+            onDeclare={setDeclaredOwner}
+          />
         ) : null}
 
         {step === 'facts' && state.category ? (

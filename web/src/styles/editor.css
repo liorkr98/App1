@@ -608,3 +608,35 @@ textarea {
 .shot-state.failed {
   background: #8c2f1e;
 }
+
+/* ---------- Plate ---------- */
+
+.plate-note {
+  font-size: var(--t-label);
+  color: var(--muted);
+  margin-block-start: 0.45rem;
+}
+
+.plate-note.bad {
+  color: #8c2f1e;
+  font-weight: 600;
+}
+
+/* The checkbox and its words are ONE target. A gap between them is a place a
+   thumb can land and nothing happens. */
+.declare {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  min-block-size: 44px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.declare input {
+  inline-size: 1.15rem;
+  block-size: 1.15rem;
+  margin-block-start: 0.2rem;
+  flex: 0 0 auto;
+  accent-color: var(--olive);
+}
