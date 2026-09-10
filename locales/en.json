@@ -226,6 +226,17 @@
     "step3": "",
     "step3Body": "",
     "forWhoTitle": "",
-    "forWhoBody": ""
+    "forWhoBody": "",
+    "sameTitle": "",
+    "sameBody": "",
+    "proofCaption": "",
+    "proofVerifiedNote": "",
+    "proofSellerNote": "",
+    "proofAbsentNote": "",
+    "agentTitle": "",
+    "agentBody": "",
+    "linkCaption": "",
+    "closingTitle": "",
+    "devicesNote": ""
   }
 }
