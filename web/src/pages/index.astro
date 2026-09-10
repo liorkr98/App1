@@ -31,11 +31,20 @@ import '../styles/tokens.css';
  * they were illustrating is the product's whole trust proposition, so it is
  * now shown the honest way: by the real listing page, running, below.
  *
- * THE PREVIEW IS NOT A MOCKUP. It is an iframe of the actual page at
- * /a/A7K2M, rendered at 320px — a real phone width, so nothing is scaled and
- * nothing is faked. It cannot drift from the product, because it IS the
- * product. Two radio inputs switch between the property and the vehicle with
- * no JavaScript at all.
+ * THE PREVIEW IS NOT A MOCKUP. It is an iframe of the actual page, rendered
+ * at a real phone viewport and scaled to fit. It cannot drift from the
+ * product, because it IS the product. Two radio inputs switch between the
+ * property and the vehicle with no JavaScript at all.
+ *
+ * IT OPENS AT #enrich, AND THAT IS NOT A TRICK. The B2 hero is 84svh, and
+ * inside an iframe svh resolves against the FRAME — so the hero is 84% of the
+ * preview no matter how tall the frame is made. Showing the top of the page
+ * therefore shows a dark bar, a photograph and a price, and with no real
+ * photographs in the samples that is a grey rectangle arguing for nothing.
+ *
+ * The enrichment block is what the paragraphs beside this are about, so the
+ * preview opens there. A fragment, not an offset: an offset would be a pixel
+ * number tied to one listing's length and wrong for the next one.
  */
 
 const title = `סיבוב — ${t('home.tagline')}`;
@@ -568,14 +577,14 @@ const title = `סיבוב — ${t('home.tagline')}`;
           <div class="device">
             <iframe
               class="frame-property"
-              src="/a/A7K2M/"
+              src="/a/A7K2M/#enrich"
               title={t('home.previewProperty')}
               loading="lazy"
               scrolling="no"
               tabindex="-1"></iframe>
             <iframe
               class="frame-vehicle"
-              src="/a/V3M9Q/"
+              src="/a/V3M9Q/#enrich"
               title={t('home.previewVehicle')}
               loading="lazy"
               scrolling="no"

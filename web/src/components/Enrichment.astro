@@ -92,7 +92,12 @@ const sources = isProperty
       ...ownership,
     ]);
 ---
-<section class="enrich reveal">
+{/*
+  The id is not decoration. The homepage preview embeds this page in a frame
+  and opens it at #enrich — see web/src/pages/index.astro for why the top of
+  the page cannot be used.
+*/}
+<section class="enrich reveal" id="enrich">
   <h2>{isProperty ? <Fragment>מה יש <span class="h2-num">מסביב</span></Fragment> : <Fragment>מה <span class="h2-num">מאומת</span></Fragment>}</h2>
   <p class="enrich-sub">
     {isProperty ? 'מרחקי הליכה אמיתיים, לא מרחק אווירי.' : 'מה שרשום במרשם הציבורי, עם התאריך שבו היה נכון.'}
