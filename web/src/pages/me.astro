@@ -1,0 +1,553 @@
+---
+import { t } from '../lib/i18n';
+import '../styles/tokens.css';
+
+/**
+ * The agent's own details.
+ *
+ * WHY THIS PAGE EXISTS. The homepage now promises an agent that their name
+ * sits on top of every page they send, and until this page there was nowhere
+ * to tell us what that name is. Migration 0009 added the columns — phone,
+ * agency_name, role, licence_number — and nothing has ever written to them.
+ * `listings.seller` was jsonb that only the two sample listings filled in.
+ *
+ * ASKED ONCE, NOT PER LISTING. CLAUDE.md §1: a private seller does this every
+ * seven years, an agent every week. Putting these fields in the editor would
+ * make an agent retype their agency twenty times a month, and guarantee that
+ * listing twenty spells it differently from listing one — which is precisely
+ * the inconsistency this product sells the cure for.
+ *
+ * NO REACT. astro.config.mjs is explicit that React exists for ONE page —
+ * /new, a genuine multi-step application. This is a five-field form with a
+ * live preview, which is a script. Pulling a framework in here would put a
+ * bundle in front of a form that does not need one, on the same cellular
+ * connection everything else on this site is optimised for.
+ *
+ * THE PREVIEW IS THE POINT, not decoration. An agent typing their agency name
+ * into a text input has no idea what they are buying. The same agent watching
+ * the strip above it fill in with their own name does. It is also the honest
+ * way to show what happens when the agency is left blank — the bar falls back
+ * to נבנה בסיבוב — rather than explaining that in a hint nobody reads.
+ */
+---
+
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#FBFAF7" />
+    <title>{t('agent.title')} · סיבוב</title>
+
+    {/* A private settings page. There is no version of it that belongs in a
+        search result. */}
+    <meta name="robots" content="noindex,nofollow" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Assistant:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style is:global>
+      html {
+        background: var(--stone);
+        color-scheme: light;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: rgba(74, 93, 58, 0.18);
+      }
+
+      body {
+        font-family: 'Assistant', system-ui, sans-serif;
+        background: var(--plaster);
+        color: var(--ink);
+        font-size: var(--t-body);
+        /* Hebrew needs more leading than a Latin page at the same size. */
+        line-height: 1.7;
+        max-width: 620px;
+        margin-inline: auto;
+        min-height: 100dvh;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      main {
+        padding: 2.25rem var(--gut) 3rem;
+      }
+
+      .mark {
+        font-family: 'Frank Ruhl Libre', serif;
+        font-weight: 700;
+        font-size: 1.35rem;
+        letter-spacing: -0.015em;
+      }
+
+      .top {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-block-end: 2rem;
+      }
+
+      .top a {
+        font-size: var(--t-label);
+        font-weight: 600;
+        color: var(--muted);
+        text-underline-offset: 3px;
+      }
+
+      h1 {
+        font-family: 'Frank Ruhl Libre', serif;
+        font-weight: 700;
+        font-size: var(--t-h2);
+        line-height: 1.2;
+        letter-spacing: -0.015em;
+      }
+
+      .lead {
+        color: var(--muted);
+        margin-block-start: 0.4rem;
+        max-inline-size: 46ch;
+        text-wrap: pretty;
+      }
+
+      /* ---------- The live preview ----------
+         The agent bar exactly as BaseListing renders it, so what is shown here
+         is what ships. Its values are the only thing that changes. */
+
+      .preview {
+        margin-block: 1.75rem;
+      }
+
+      .preview-label {
+        font-size: var(--t-label);
+        font-weight: 600;
+        color: var(--muted);
+        margin-block-end: 0.45rem;
+      }
+
+      .agent-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.7rem var(--gut);
+        background: var(--ink-deep);
+        color: var(--plaster);
+        font-size: 0.86rem;
+        border-radius: 4px;
+      }
+
+      .agent-bar .dot {
+        inline-size: 26px;
+        block-size: 26px;
+        border-radius: 50%;
+        background: var(--olive-lift);
+        flex: 0 0 auto;
+      }
+
+      .agent-bar strong {
+        font-weight: 600;
+      }
+
+      .agent-bar .brand {
+        color: #9c9d93;
+        margin-inline-start: auto;
+        font-size: 0.8rem;
+      }
+
+      /* Nothing typed yet: the value is shown as a slot rather than as a
+         name, so an empty bar does not read as a finished one. */
+      .agent-bar strong[data-empty='true'] {
+        color: #9c9d93;
+        font-weight: 400;
+        border-block-end: 1px dashed #6f7066;
+      }
+
+      /* ---------- Form ---------- */
+
+      fieldset {
+        border: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .field {
+        margin-block-start: 1.35rem;
+      }
+
+      label {
+        display: block;
+        font-size: var(--t-label);
+        font-weight: 600;
+        color: var(--muted);
+        margin-block-end: 0.35rem;
+      }
+
+      input {
+        inline-size: 100%;
+        min-block-size: 44px;
+        padding: 0.75rem 0.85rem;
+        font: inherit;
+        color: var(--ink);
+        background: var(--plaster);
+        border: 1px solid var(--stone);
+        border-radius: 3px;
+      }
+
+      input:focus-visible {
+        border-color: var(--olive);
+      }
+
+      .hint {
+        font-size: 0.82rem;
+        /* NOT --muted: 4.87:1 on plaster is fine for body, but this is 13px
+           supporting text and the darker value keeps a margin. */
+        color: #62635b;
+        margin-block-start: 0.35rem;
+        max-inline-size: 52ch;
+        line-height: 1.55;
+        text-wrap: pretty;
+      }
+
+      .field[data-bad='true'] input {
+        border-color: #8c2f1e;
+      }
+
+      .bad {
+        display: none;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #8c2f1e;
+        margin-block-start: 0.35rem;
+      }
+
+      .field[data-bad='true'] .bad {
+        display: block;
+      }
+
+      button {
+        inline-size: 100%;
+        min-block-size: 44px;
+        margin-block-start: 1.75rem;
+        padding: 0.95rem;
+        font: inherit;
+        font-size: 1.06rem;
+        font-weight: 700;
+        color: var(--plaster);
+        background: var(--olive);
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition:
+          transform var(--press) var(--ease-out),
+          background var(--press) var(--ease-out);
+      }
+
+      button:hover:not(:disabled) {
+        background: var(--olive-lift);
+      }
+
+      button:active:not(:disabled) {
+        transform: scale(0.97);
+      }
+
+      button:disabled {
+        background: var(--stone);
+        color: var(--muted);
+        cursor: default;
+      }
+
+      :focus-visible {
+        outline: 2px solid var(--olive);
+        outline-offset: 3px;
+      }
+
+      /* Reserves its line before it speaks, so nothing jumps when it does. */
+      .said {
+        min-block-size: 1.5em;
+        margin-block-start: 0.9rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--olive);
+      }
+
+      .said[data-tone='bad'] {
+        color: #8c2f1e;
+      }
+
+      .gate {
+        padding: 1.25rem 0;
+      }
+
+      .gate a {
+        color: var(--olive);
+        font-weight: 700;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        button {
+          transition: none;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <main>
+      <div class="top">
+        <a class="mark" href="/">סיבוב</a>
+        <a href="/mine/">{t('auth.myListings')}</a>
+      </div>
+
+      <h1>{t('agent.title')}</h1>
+      <p class="lead">{t('agent.lead')}</p>
+
+      {/* Shown instead of the form when nobody is signed in. */}
+      <div class="gate" id="gate" hidden>
+        <p>{t('agent.signedOut')}</p>
+        <p><a href="/enter/">{t('agent.signIn')}</a></p>
+      </div>
+
+      {/*
+        VISIBLE BY DEFAULT, and the script hides it if nobody is signed in.
+
+        The other way round — everything hidden until a successful load —
+        renders a blank page whenever the script fails, and it failed here on
+        the first try: a stale Vite dependency returned 504, `loadProfile`
+        never resolved, and the page showed a heading and nothing else. The
+        same doctrine is written into mine.astro.
+      */}
+      <div id="panel">
+        <div class="preview">
+          <p class="preview-label">{t('agent.previewTitle')}</p>
+          <div class="agent-bar">
+            <span class="dot" aria-hidden="true"></span>
+            <strong id="pv-name" data-empty="true">{t('agent.name')}</strong>
+            <span class="brand" id="pv-brand">{t('agent.previewFallback')}</span>
+          </div>
+        </div>
+
+        <form id="form" novalidate>
+          <fieldset id="fields">
+            <div class="field" id="f-name">
+              <label for="name">{t('agent.name')}</label>
+              <input id="name" name="name" type="text" autocomplete="name" required />
+              <p class="hint">{t('agent.nameHint')}</p>
+              <p class="bad" id="e-name"></p>
+            </div>
+
+            <div class="field" id="f-phone">
+              <label for="phone">{t('agent.phone')}</label>
+              {/*
+                dir="ltr" on the input only. A phone number is a run of Latin
+                digits and separators; typed into an RTL field the caret jumps
+                and the separators land on the wrong side of the groups. The
+                LABEL stays RTL, because it is Hebrew.
+              */}
+              <input
+                id="phone"
+                name="phone"
+                type="tel"
+                inputmode="tel"
+                autocomplete="tel"
+                dir="ltr"
+                placeholder="050-123-4567"
+                required
+              />
+              <p class="hint">{t('agent.phoneHint')}</p>
+              <p class="bad" id="e-phone"></p>
+            </div>
+
+            <div class="field" id="f-agency">
+              <label for="agency">{t('agent.agency')}</label>
+              <input id="agency" name="agency" type="text" autocomplete="organization" />
+              <p class="hint">{t('agent.agencyHint')}</p>
+            </div>
+
+            <div class="field" id="f-role">
+              <label for="role">{t('agent.role')}</label>
+              <input id="role" name="role" type="text" />
+              <p class="hint">{t('agent.roleHint')}</p>
+            </div>
+
+            <div class="field" id="f-licence">
+              <label for="licence">{t('agent.licence')}</label>
+              <input id="licence" name="licence" type="text" inputmode="numeric" dir="ltr" />
+              <p class="hint">{t('agent.licenceHint')}</p>
+            </div>
+          </fieldset>
+
+          <button type="submit" id="save">{t('agent.save')}</button>
+        </form>
+
+        <p class="said" role="status" aria-live="polite" id="said"></p>
+      </div>
+    </main>
+
+    <script>
+      import { profileBlockers, type ProfileBlockerCode } from '@/features/agents/profile';
+      import { t } from '../lib/i18n';
+      import { loadProfile, saveProfile } from '../lib/profile';
+      import { supabaseConfigured } from '../lib/supabase';
+
+      const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+
+      const gate = $('gate');
+      const panel = $('panel');
+      const form = $<HTMLFormElement>('form');
+      const save = $<HTMLButtonElement>('save');
+      const said = $('said');
+
+      const name = $<HTMLInputElement>('name');
+      const phone = $<HTMLInputElement>('phone');
+      const agency = $<HTMLInputElement>('agency');
+      const role = $<HTMLInputElement>('role');
+      const licence = $<HTMLInputElement>('licence');
+
+      const pvName = $('pv-name');
+      const pvBrand = $('pv-brand');
+
+      const say = (text: string, tone: 'good' | 'bad' = 'good') => {
+        said.textContent = text;
+        said.dataset.tone = tone;
+      };
+
+      /** The form's fields, as the domain sees them. */
+      const read = () => ({
+        displayName: name.value,
+        phone: phone.value,
+        agencyName: agency.value,
+        role: role.value,
+        licenceNumber: licence.value,
+      });
+
+      /**
+       * The preview, and the fallback that makes the agency field's point.
+       *
+       * With no agency the brand slot reads נבנה בסיבוב — which is what
+       * BaseListing does, and is also the viral loop (CLAUDE.md §8). Showing
+       * it here is the difference between "optional" and "here is what you
+       * get instead".
+       */
+      const paint = () => {
+        const typed = name.value.trim();
+        pvName.textContent = typed || t('agent.name');
+        pvName.dataset.empty = typed ? 'false' : 'true';
+
+        const office = agency.value.trim();
+        pvBrand.textContent = office || t('agent.previewFallback');
+      };
+
+      /**
+       * Errors are shown for a field only after it has been left, or after a
+       * save was attempted. Marking a phone invalid on the third keystroke is
+       * telling someone they are wrong while they are still typing.
+       */
+      let showErrors = false;
+
+      const MESSAGES: Record<ProfileBlockerCode, string> = {
+        nameMissing: t('agent.nameMissing'),
+        phoneMissing: t('agent.phoneMissing'),
+        phoneInvalid: t('agent.phoneInvalid'),
+      };
+
+      const validate = () => {
+        const found = profileBlockers(read());
+
+        const mark = (fieldId: string, errorId: string, codes: ProfileBlockerCode[]) => {
+          const hit = codes.find((code) => found.includes(code));
+          const field = $(fieldId);
+          field.dataset.bad = showErrors && hit ? 'true' : 'false';
+          $(errorId).textContent = hit ? MESSAGES[hit] : '';
+        };
+
+        mark('f-name', 'e-name', ['nameMissing']);
+        mark('f-phone', 'e-phone', ['phoneMissing', 'phoneInvalid']);
+
+        return found.length === 0;
+      };
+
+      for (const input of [name, phone, agency, role, licence]) {
+        input.addEventListener('input', () => {
+          paint();
+          validate();
+        });
+        input.addEventListener('blur', () => {
+          showErrors = true;
+          validate();
+        });
+      }
+
+      const start = async () => {
+        if (!supabaseConfigured) {
+          panel.hidden = true;
+          gate.hidden = false;
+          say(t('auth.unconfigured'), 'bad');
+          return;
+        }
+
+        const result = await loadProfile();
+
+        if ('signedOut' in result) {
+          panel.hidden = true;
+          gate.hidden = false;
+          return;
+        }
+
+        if ('error' in result) {
+          // The form still opens. An agent who cannot read their saved
+          // details can still type new ones, and a page that shows only an
+          // error has taken away the thing they came to do.
+          say(t('agent.loadFailed'), 'bad');
+          paint();
+          return;
+        }
+
+        const { profile } = result;
+        name.value = profile.displayName ?? '';
+        phone.value = profile.phone ?? '';
+        agency.value = profile.agencyName ?? '';
+        role.value = profile.role ?? '';
+        licence.value = profile.licenceNumber ?? '';
+
+        paint();
+      };
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        showErrors = true;
+        if (!validate()) {
+          // The blocker text is already beside the offending field; repeating
+          // it in the status line would say the same thing twice.
+          say('', 'bad');
+          return;
+        }
+
+        save.disabled = true;
+        say(t('agent.saving'));
+
+        const result = await saveProfile(read());
+
+        save.disabled = false;
+
+        if ('ok' in result) {
+          say(t('agent.saved'));
+          return;
+        }
+
+        say('signedOut' in result ? t('agent.signedOut') : t('agent.failed'), 'bad');
+      });
+
+      // A rejection here must not leave a form the seller cannot use. The
+      // fields are already on the page and already typeable; all that is lost
+      // is whatever was saved before, so say so and let them re-enter it.
+      void start().catch(() => say(t('agent.loadFailed'), 'bad'));
+    </script>
+  </body>
+</html>

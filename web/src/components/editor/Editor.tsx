@@ -12,8 +12,11 @@ import {
 import { blankFacts } from '@/features/listings/fact-entry';
 import { LISTING_CATEGORIES, schemaFor } from '@/features/listings/schemas';
 
+import { isProfileComplete } from '@/features/agents/profile';
+
 import { t } from '../../lib/i18n';
 import { createDraft, uploadOriginal } from '../../lib/listing-draft';
+import { loadProfile } from '../../lib/profile';
 import { supabase, supabaseConfigured } from '../../lib/supabase';
 import { DescriptionStep } from './DescriptionStep';
 import { FactsStep } from './FactsStep';
@@ -116,6 +119,44 @@ export default function Editor() {
     );
     return () => sub.subscription.unsubscribe();
   }, []);
+
+  /**
+   * Whether the agent's profile can brand this listing.
+   *
+   * Re-read whenever the session changes, and NOT cached across sign-ins: the
+   * previous user's answer is not this one's.
+   *
+   * Fails closed. Any failure — signed out, no row, a read that threw —
+   * leaves `sellerReady` false, which blocks publishing rather than shipping a
+   * page whose only button goes nowhere. The seller still reaches the preview;
+   * `canAdvance` only consults the blockers belonging to the step it is asked
+   * about, and this one belongs to publish.
+   */
+  useEffect(() => {
+    if (!supabaseConfigured || !signedIn) {
+      setState((current) => ({ ...current, sellerReady: false }));
+      return;
+    }
+
+    let live = true;
+
+    void loadProfile()
+      .then((result) => {
+        if (!live) return;
+        const ready = 'profile' in result && isProfileComplete(result.profile);
+        setState((current) => ({ ...current, sellerReady: ready }));
+      })
+      .catch(() => {
+        if (live) setState((current) => ({ ...current, sellerReady: false }));
+      });
+
+    // The guard is for the sign-out that lands mid-request: without it a
+    // resolved read from the previous session sets sellerReady true after the
+    // effect that should have cleared it has already run.
+    return () => {
+      live = false;
+    };
+  }, [signedIn]);
 
   /**
    * Uploads anything newly picked, one at a time.

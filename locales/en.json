@@ -148,7 +148,8 @@
       "descriptionUnedited": "",
       "templateMissing": "",
       "paymentRequired": "",
-      "paymentUnverified": ""
+      "paymentUnverified": "",
+      "sellerMissing": ""
     },
     "fixLater": "",
     "stepOf": "",
@@ -238,5 +239,32 @@
     "linkCaption": "",
     "closingTitle": "",
     "devicesNote": ""
+  },
+  "agent": {
+    "title": "",
+    "lead": "",
+    "name": "",
+    "nameHint": "",
+    "phone": "",
+    "phoneHint": "",
+    "agency": "",
+    "agencyHint": "",
+    "role": "",
+    "roleHint": "",
+    "licence": "",
+    "licenceHint": "",
+    "save": "",
+    "saving": "",
+    "saved": "",
+    "failed": "",
+    "loadFailed": "",
+    "signedOut": "",
+    "signIn": "",
+    "previewTitle": "",
+    "previewFallback": "",
+    "nameMissing": "",
+    "phoneMissing": "",
+    "phoneInvalid": "",
+    "editDetails": ""
   }
 }

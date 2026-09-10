@@ -21,6 +21,7 @@ import type { CategorySchema } from '@/types/listing.js';
 export const vehicleSchema: CategorySchema = {
   category: 'vehicle',
   label: 'רכב',
+  ownerRole: 'בעל הרכב',
   facts: [
     // Both appear in the hero title, so they are not repeated as grid cells.
     {

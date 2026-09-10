@@ -76,6 +76,24 @@ export interface EditorState {
    */
   audience?: ListingAudience;
 
+  /**
+   * Whether the agent's profile can brand this listing.
+   *
+   * Computed by `profileBlockers` in @/features/agents/profile and passed in,
+   * rather than read here: this module is pure and has no database, and the
+   * profile lives on a different table from everything else in this state.
+   *
+   * IT IS A BLOCKER BECAUSE THE PAGE'S ONLY ACTION DEPENDS ON IT. A listing
+   * with no dialable phone still renders — hero, facts, enrichment, the lot —
+   * and its single button goes nowhere. That is the worst failure this
+   * product has: it looks like success, it gets sent to a broadcast list, and
+   * the first anyone knows is a buyer who could not reply.
+   *
+   * Optional, and undefined counts as NOT ready, so a caller that forgets to
+   * pass it gets a blocked publish rather than a page nobody can answer.
+   */
+  sellerReady?: boolean;
+
   entitlement: Entitlement;
 }
 
@@ -100,6 +118,7 @@ export const BLOCKER_CODES = [
   'descriptionEmpty',
   'descriptionUnedited',
   'templateMissing',
+  'sellerMissing',
   'paymentRequired',
   'paymentUnverified',
 ] as const;
@@ -169,6 +188,14 @@ export function blockers(state: EditorState): Blocker[] {
 
   if (!state.template) {
     found.push({ step: 'template', code: 'templateMissing' });
+  }
+
+  // Belongs to `publish` rather than to a step of its own: it is fixed on a
+  // different page (/me), so there is no step in this flow to send anyone to.
+  // Surfacing it at the last gate is also when it is most obviously worth
+  // doing — the seller is about to send the link.
+  if (state.sellerReady !== true) {
+    found.push({ step: 'publish', code: 'sellerMissing' });
   }
 
   // ========================== HUMAN REVIEW ==========================

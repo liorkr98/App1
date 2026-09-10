@@ -36,7 +36,42 @@ const ready = (): EditorState => ({
   ],
   description: 'הדירה משופצת ופונה לדרום.',
   template: 'clean',
+  // The agent has a name and a dialable phone on their profile. Without this
+  // the page's only button goes nowhere, so it blocks publishing.
+  sellerReady: true,
   entitlement: 'paid',
+});
+
+describe('the seller gate', () => {
+  it('blocks publishing when the profile cannot brand the listing', () => {
+    const state = { ...ready(), sellerReady: false };
+
+    assert.equal(canPublish(state), false);
+    assert.ok(blockers(state).some((blocker) => blocker.code === 'sellerMissing'));
+  });
+
+  it('fails CLOSED when nobody passed the answer', () => {
+    // undefined is not "fine", it is "nobody asked". A caller that forgets
+    // this must get a blocked publish, not a page no buyer can reply to.
+    const { sellerReady: _omitted, ...withoutIt } = ready();
+
+    assert.equal(canPublish(withoutIt), false);
+  });
+
+  it('surfaces at publish, because it is fixed on another page', () => {
+    // There is no step in this flow for it — /me is where it gets answered —
+    // so the last gate is where it has to appear.
+    const found = blockers({ ...ready(), sellerReady: false });
+    const seller = found.find((blocker) => blocker.code === 'sellerMissing');
+
+    assert.equal(seller?.step, 'publish');
+  });
+
+  it('does not stop a seller reaching the preview', () => {
+    // Seeing the finished page is the conversion moment (§8), and an agent
+    // who has not filled in their phone yet should still get there.
+    assert.equal(canAdvance('preview', { ...ready(), sellerReady: false }), true);
+  });
 });
 
 describe('stepsFor', () => {

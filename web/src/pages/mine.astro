@@ -169,13 +169,42 @@ import '../styles/tokens.css';
       [hidden] {
         display: none !important;
       }
+
+      .top-links {
+        display: flex;
+        align-items: baseline;
+        gap: 1.1rem;
+      }
+
+      /* The settings link. Present, findable, and not competing with the
+         primary action beside it. */
+      .top-links .quiet {
+        font-size: var(--t-label);
+        font-weight: 600;
+        color: var(--muted);
+        text-underline-offset: 3px;
+      }
+
+      .top-links .quiet:hover {
+        color: var(--olive);
+      }
     </style>
   </head>
 
   <body>
     <div class="top">
       <h1>{t('auth.myListings')}</h1>
-      <a href="/new/">{t('listing.create')}</a>
+      {/*
+        Two links, and the profile one is deliberately the quieter of the
+        pair. An agent comes here to find a listing they already made; the
+        details page is a thing they do once. It needs to be FINDABLE, not
+        prominent — a settings link competing with the primary action is how
+        the primary action gets missed.
+      */}
+      <span class="top-links">
+        <a class="quiet" href="/me/">{t('agent.editDetails')}</a>
+        <a href="/new/">{t('listing.create')}</a>
+      </span>
     </div>
 
     {/* Every state this page can be in, present from the start and revealed by
