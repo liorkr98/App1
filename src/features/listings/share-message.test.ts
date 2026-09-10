@@ -37,7 +37,7 @@ describe('the message an agent pastes', () => {
   });
 
   it('omits the address when the seller hid it', () => {
-    const { place, ...withoutPlace } = base;
+    const { place: _place, ...withoutPlace } = base;
     const message = shareMessage(withoutPlace);
 
     assert.ok(!message.includes('סוקולוב'));
@@ -55,7 +55,13 @@ describe('the message an agent pastes', () => {
 
   it('never leaves a trailing blank line', () => {
     // A trailing newline sends as an empty line in WhatsApp.
-    for (const input of [base, { ...base, facts: [] }, { ...base, place: undefined }]) {
+    //
+    // The third case OMITS place rather than setting it to undefined:
+    // exactOptionalPropertyTypes distinguishes the two, and `place?: string`
+    // means the key may be absent, not that it may hold undefined.
+    const { place: _place, ...withoutPlace } = base;
+
+    for (const input of [base, { ...base, facts: [] }, withoutPlace]) {
       const message = shareMessage(input);
       assert.equal(message, message.trimEnd());
     }
