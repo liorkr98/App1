@@ -37,7 +37,7 @@ only the site's dependencies, not the mobile app's.
 SITE_URL  →  CF_PAGES_URL  →  https://example.com
 ```
 
-**`SITE_URL` has to be set. There is no working fallback.**
+**`SITE_URL` overrides the host. The fallback is now the real one.**
 
 `CF_PAGES_URL` is set by Cloudflare **Pages**. This site deploys as a
 **Worker**, and Workers Builds does not set it — so with neither variable
@@ -46,13 +46,28 @@ present, every `og:image` on the deployed site read
 every check passed, and the one URL the whole distribution model rests on was
 a placeholder.
 
-Set it in the Worker's **Settings → Variables and Secrets**, as a plain text
-variable, to the origin the site is served from:
+It is a **BUILD** variable, not a runtime one. Cloudflare refuses runtime
+variables on a Worker that only serves static assets, and it is right to:
+nothing looks this up when a page is served. Astro reads it while building and
+bakes the result into the files.
+
+So it goes in **Settings → Build → Variables**, beside the build command — not
+the Runtime panel. Editing it does not rebuild on its own; retry the
+deployment afterwards.
+
+Set it to the origin the site is served from:
 
     SITE_URL = https://hasivuv.com
 
-Until the custom domain is attached, use the workers.dev origin instead. It
-must be the ORIGIN only — scheme and host, no trailing path.
+Until the custom domain is attached the workers.dev origin is correct, and it
+is also the built-in fallback — so a build with no variables set produces
+working links rather than broken ones. It must be the ORIGIN only: scheme and
+host, no trailing path.
+
+**The fallback used to be `https://example.com`.** That shipped: every preview
+card and every share message on the live site pointed at a domain nobody owns,
+and every check passed while it did. A placeholder default is never the right
+answer for a value whose only job is to be correct.
 
 This matters because **WhatsApp rejects a relative `og:image`** and renders a
 card with no picture. Getting the host wrong does not produce an error

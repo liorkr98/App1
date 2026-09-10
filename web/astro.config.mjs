@@ -24,9 +24,18 @@ export default defineConfig({
   // page, not inferred: the pages built, every check passed, and the single
   // most important URL in the product was a placeholder.
   //
-  // The example.com default now exists only so a LOCAL build does not throw.
-  // See docs/DEPLOY.md.
-  site: process.env.SITE_URL ?? process.env.CF_PAGES_URL ?? 'https://example.com',
+  // The FALLBACK IS THE REAL HOST, not example.com. A placeholder here is
+  // never the right answer: it silently produces share messages and preview
+  // cards pointing at a domain nobody owns, and everything still builds green.
+  //
+  // SITE_URL still overrides it, and must be set to the custom domain the day
+  // hasivuv.com is attached. Until then the workers.dev origin is correct, so
+  // a build with no variables set produces working links instead of broken
+  // ones. See docs/DEPLOY.md.
+  site:
+    process.env.SITE_URL ??
+    process.env.CF_PAGES_URL ??
+    'https://besivov.liorkr98.workers.dev',
 
   output: 'static',
   build: { format: 'directory' },
