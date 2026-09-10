@@ -1,14 +1,16 @@
 ---
-import type { Fact } from '@/types/listing';
+import type { Fact, ListingAudience } from '@/types/listing';
 import type { ListingCategory } from '@/features/listings/schemas';
 import { toCells } from '../lib/facts';
 
 interface Props {
   category: ListingCategory;
   facts: Fact[];
+  /** Reorders the grid. Defaults to the resident reading. */
+  audience?: ListingAudience;
 }
 
-const { category, facts } = Astro.props;
+const { category, facts, audience = 'resident' } = Astro.props;
 
 /**
  * Cells come from the schema. No field name appears in this file, so a third
@@ -28,7 +30,7 @@ const { category, facts } = Astro.props;
  * only needs to know which figures somebody else stands behind
  * (RESEARCH.md §4.7).
  */
-const cells = toCells(category, facts);
+const cells = toCells(category, facts, audience);
 ---
 <div class="facts">
   {cells.map((cell) => (

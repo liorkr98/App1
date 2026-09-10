@@ -181,6 +181,8 @@ export default function Editor() {
             category={state.category}
             facts={state.facts}
             onChange={(facts) => setState((current) => ({ ...current, facts }))}
+            audience={state.audience}
+            onAudience={(audience) => setState((current) => ({ ...current, audience }))}
           />
         ) : null}
 

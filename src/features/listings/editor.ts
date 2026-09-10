@@ -1,4 +1,4 @@
-import type { Fact, TemplateId } from '../../types/listing.js';
+import type { Fact, ListingAudience, TemplateId } from '../../types/listing.js';
 // ListingCategory comes from the schemas module, not from types/listing.js —
 // that file imports the name for its own use and does not re-export it.
 import type { ListingCategory } from './schemas/index.js';
@@ -65,6 +65,17 @@ export interface EditorState {
   /** What the model produced, if it was asked. Absent when the seller wrote it. */
   generatedDescription?: string;
   template?: TemplateId;
+
+  /**
+   * Who the seller is aiming the listing at. Reorders the facts grid.
+   *
+   * Not a blocker: it has a sensible default and a seller who ignores the
+   * question still gets a correct page. A required field the seller does not
+   * care about is a form they abandon (PRD §2), and this one is a refinement
+   * rather than a fact about the property.
+   */
+  audience?: ListingAudience;
+
   entitlement: Entitlement;
 }
 

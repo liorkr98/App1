@@ -17,6 +17,14 @@ import type { CategorySchema } from '@/types/listing.js';
 export const propertySchema: CategorySchema = {
   category: 'property',
   label: 'דירה',
+
+  /*
+   * Area first, because price per m² is the number an investor compares
+   * between listings and this is its denominator. Then the two running costs
+   * that decide what the yield actually is — they sit near the bottom of the
+   * schema for a resident, who reads them last if at all.
+   */
+  investorLead: ['area_sqm', 'property_tax', 'building_fee'],
   facts: [
     { key: 'rooms', label: 'חדרים', type: 'number', required: true },
     { key: 'area_sqm', label: 'מ״ר', type: 'number', required: true, priceDenominator: true },

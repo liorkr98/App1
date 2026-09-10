@@ -3,6 +3,7 @@ import {
   type Fact,
   type FactType,
   type FactValue,
+  type ListingAudience,
   type TemplateId,
 } from '../../types/listing.js';
 import type { EditorState } from './editor.js';
@@ -68,6 +69,7 @@ export function toDraft(state: EditorState): Stored {
       ? {}
       : { generatedDescription: state.generatedDescription }),
     ...(state.template === undefined ? {} : { template: state.template }),
+    ...(state.audience === undefined ? {} : { audience: state.audience }),
   };
 }
 
@@ -117,12 +119,16 @@ export function fromDraft(raw: unknown): Draft | null {
     return null;
   }
 
+  const audience = parsed.audience;
+  if (audience !== undefined && audience !== 'resident' && audience !== 'investor') return null;
+
   return {
     ...(category === undefined ? {} : { category }),
     facts,
     description,
     ...(generated === undefined ? {} : { generatedDescription: generated }),
     ...(template === undefined ? {} : { template: template as TemplateId }),
+    ...(audience === undefined ? {} : { audience: audience as ListingAudience }),
   };
 }
 

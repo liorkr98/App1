@@ -39,7 +39,8 @@ const url = `${site}/a/${listing.slug}/`;
  */
 const flatTitle = listing.title.replace(/\s*\n\s*/g, ' ');
 
-const cells = toCells(listing.category, listing.facts);
+// Same ordering as the page, so the teaser leads with whatever the grid does.
+const cells = toCells(listing.category, listing.facts, listing.audience);
 const teaser = cells
   .filter((cell) => !cell.absent && cell.value !== 'אין')
   /*

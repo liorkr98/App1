@@ -1,5 +1,6 @@
-import type { Fact } from '@/types/listing';
-import { factDefinition } from '@/features/listings/schemas';
+import { orderForAudience } from '@/features/listings/audience-order';
+import type { Fact, ListingAudience } from '@/types/listing';
+import { factDefinition, schemaFor } from '@/features/listings/schemas';
 import type { ListingCategory } from '@/features/listings/schemas';
 
 import { factValue, needsBdi } from './format';
@@ -70,7 +71,11 @@ function unitLabel(label: string, unit: string | undefined): string {
   return `${head}, ${unit}`;
 }
 
-export function toCells(category: ListingCategory, facts: Fact[]): FactCell[] {
+export function toCells(
+  category: ListingCategory,
+  facts: Fact[],
+  audience: ListingAudience = 'resident',
+): FactCell[] {
   const byKey = new Map(facts.map((fact) => [fact.key, fact]));
 
   // Facts consumed as the right-hand side of a pair are not rendered alone.
@@ -131,5 +136,13 @@ export function toCells(category: ListingCategory, facts: Fact[]): FactCell[] {
     });
   }
 
-  return cells;
+  /*
+   * Ordered LAST, after the three-state filtering above.
+   *
+   * A promoted key belonging to a fact nobody answered never became a cell, so
+   * ordering the CELLS rather than the definitions means the grid reflows
+   * around what is actually there instead of leaving a hole where a promoted
+   * field would have been.
+   */
+  return orderForAudience(cells, audience, schemaFor(category).investorLead);
 }

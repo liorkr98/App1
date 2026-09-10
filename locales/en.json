@@ -173,7 +173,13 @@
     "earlier": "",
     "later": "",
     "moveEarlier": "",
-    "moveLater": ""
+    "moveLater": "",
+    "audienceTitle": "",
+    "audienceHint": "",
+    "audienceResident": "",
+    "audienceResidentNote": "",
+    "audienceInvestor": "",
+    "audienceInvestorNote": ""
   },
   "home": {
     "tagline": "",

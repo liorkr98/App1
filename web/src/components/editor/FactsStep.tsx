@@ -1,6 +1,6 @@
 import { answer, clear, markAbsent } from '@/features/listings/fact-entry';
 import { factDefinition, type ListingCategory } from '@/features/listings/schemas';
-import type { Fact } from '@/types/listing';
+import type { Fact, ListingAudience } from '@/types/listing';
 
 import { t } from '../../lib/i18n';
 
@@ -8,6 +8,8 @@ interface Props {
   category: ListingCategory;
   facts: readonly Fact[];
   onChange: (facts: Fact[]) => void;
+  audience: ListingAudience | undefined;
+  onAudience: (audience: ListingAudience) => void;
 }
 
 /**
@@ -26,9 +28,42 @@ interface Props {
  *
  * Required fields have no אין control. A flat with no rooms is not a listing.
  */
-export function FactsStep({ category, facts, onChange }: Props) {
+export function FactsStep({ category, facts, onChange, audience, onAudience }: Props) {
   return (
     <>
+      {/*
+        Asked before the fields, because the answer changes the order the page
+        puts them in. Skippable on purpose: it has a sensible default, and a
+        required question the seller does not care about is a form they
+        abandon (PRD §2).
+      */}
+      <fieldset className="audience">
+        <legend>{t('editor.audienceTitle')}</legend>
+        <p className="hint">{t('editor.audienceHint')}</p>
+
+        <div className="fact-toggle">
+          {(['resident', 'investor'] as const).map((option) => (
+            <button
+              key={option}
+              type="button"
+              aria-pressed={audience === option}
+              onClick={() => onAudience(option)}
+            >
+              <span className="choice-name">
+                {t(option === 'resident' ? 'editor.audienceResident' : 'editor.audienceInvestor')}
+              </span>
+              <span className="choice-note">
+                {t(
+                  option === 'resident'
+                    ? 'editor.audienceResidentNote'
+                    : 'editor.audienceInvestorNote',
+                )}
+              </span>
+            </button>
+          ))}
+        </div>
+      </fieldset>
+
       <p className="hint">{t('editor.factsHint')}</p>
 
       <ul className="facts-entry">

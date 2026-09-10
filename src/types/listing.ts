@@ -182,6 +182,18 @@ export interface CategorySchema {
   label: string;
 
   facts: readonly FactDefinition[];
+
+  /**
+   * Fact keys to promote, in order, when the listing targets an investor.
+   *
+   * On the schema for the same reason gridLabel, pairWith and priceDenominator
+   * are: which fields matter to which buyer is a property of the category, and
+   * a third category would otherwise need the ordering code edited rather than
+   * a line added here.
+   *
+   * Anything not listed keeps its schema order behind these.
+   */
+  investorLead?: readonly string[];
 }
 
 /** Builds the unanswered starting state for a category. */
@@ -446,6 +458,21 @@ export interface Seller {
   agencyLogoUrl?: string;
 }
 
+/**
+ * Who the seller is aiming this listing at.
+ *
+ * The two read the same page completely differently. A resident scans rooms,
+ * floor and what the building has; an investor scans area, because the number
+ * they actually compare between listings is price per m², and then the running
+ * costs that decide the yield.
+ *
+ * Asked once in the editor rather than guessed, and rather than averaging the
+ * two into a grid that serves neither. Defaults to 'resident': it is the
+ * commoner case, and a resident reading an investor's grid is merely puzzled
+ * where the reverse hides the number the reader came for.
+ */
+export type ListingAudience = 'resident' | 'investor';
+
 export type ListingStatus = 'draft' | 'published' | 'sold' | 'archived';
 
 /**
@@ -530,4 +557,13 @@ export interface Listing {
    * to make, not ours, so the page ships noindex until they say otherwise.
    */
   indexable: boolean;
+
+  /**
+   * Who the seller is aiming this at. Defaults to 'resident' when absent.
+   *
+   * Reorders the facts grid — see orderForAudience. It is a question the
+   * editor asks once, because a resident and an investor scan the same grid
+   * for different numbers and averaging them serves neither.
+   */
+  audience?: ListingAudience;
 }

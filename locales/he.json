@@ -173,7 +173,13 @@
     "earlier": "ימינה",
     "later": "שמאלה",
     "moveEarlier": "להעביר ימינה, קרוב יותר להתחלה",
-    "moveLater": "להעביר שמאלה, רחוק יותר מההתחלה"
+    "moveLater": "להעביר שמאלה, רחוק יותר מההתחלה",
+    "audienceTitle": "למי המודעה?",
+    "audienceHint": "משנה את סדר הפרטים בעמוד. אפשר לדלג.",
+    "audienceResident": "למגורים",
+    "audienceResidentNote": "מתחיל בחדרים ובקומה.",
+    "audienceInvestor": "להשקעה",
+    "audienceInvestorNote": "מתחיל במ״ר, בארנונה ובועד הבית."
   },
   "home": {
     "tagline": "מודעה שאפשר לבדוק",
