@@ -38,9 +38,10 @@ import { useDraft } from './useDraft';
  *     pipeline or rendering the page markup twice. That is a design decision,
  *     not a component.
  *
- * Photos are picked and ordered but NOT UPLOADED: R2 vs Supabase Storage is
- * undecided (CLAUDE.md §2 says R2; worker/src/storage.ts and migration 0004
- * still use Supabase Storage). Everything except the transport works.
+ * Photos are picked and ordered but NOT UPLOADED YET. The target is settled —
+ * Supabase Storage, CLAUDE.md §2 — and the buckets already exist in
+ * migration 0004; what is missing is the signed-upload call and the
+ * credentials to make it, which are not mine to hold.
  *
  * The draft is kept in localStorage (useDraft), because PRD §4 locks "no
  * account until publish" and until the seller pays there is nowhere else to

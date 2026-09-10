@@ -56,22 +56,34 @@ function answer(
 }
 
 /**
- * The stand-in photograph, served from our own origin.
+ * Sample photographs, and where they came from.
  *
- * Was placehold.co, which renders the pixel dimensions across the image — so
- * the homepage preview led with "900 × 1125" in a third-party service's
- * typeface. A local SVG is one request to us, weighs almost nothing, is
- * counted honestly by report-page-weight.mjs, and is an empty frame in the
- * page's own stone rather than someone else's watermark.
+ * All seven are CC0 or public domain, taken from Wikimedia Commons. The
+ * licence of each was read from the Commons API rather than judged by eye —
+ * the fetch script refuses anything else — and every source page is listed in
+ * docs/SAMPLE-IMAGES.md.
  *
- * A raster, not an SVG, and 1200x630 — the og:image size §6 fixes. og:image
- * falls back to the cover until Stage D generates a real card, and neither
- * WhatsApp nor Facebook renders an SVG there, so an SVG cover would have
- * produced a preview card with no picture at all. One flat colour serves
- * every crop: object-fit does the cropping and a solid tone cannot show the
- * distortion.
+ * Re-encoded to WebP once, at build-prep time, and committed. Commons serves
+ * its thumbnails at roughly q90 with no quality parameter, which put the
+ * vehicle hero at 183KB — about 3.7s on Slow 4G against a 2.5s LCP target.
+ * At q72 it is 64KB. The pages reference files in this repo and talk to no
+ * third party at render time.
+ *
+ * These are DEMO listings. Nothing here is for sale, and the photographs
+ * illustrate a layout rather than a property — which is why PRD §3's ban on
+ * generative imagery is not in play: none of this was generated, and none of
+ * it claims to be the asset described.
  */
-const SAMPLE_IMAGE = '/sample/frame.png';
+const PHOTO = {
+  flatLiving: { url: '/sample/flat-living.webp', width: 900, height: 489 },
+  flatLounge: { url: '/sample/flat-lounge.webp', width: 600, height: 450 },
+  flatKitchen: { url: '/sample/flat-kitchen.webp', width: 600, height: 338 },
+  flatBalcony: { url: '/sample/flat-balcony.webp', width: 600, height: 903 },
+  carFront: { url: '/sample/car-front.webp', width: 900, height: 543 },
+  carSide: { url: '/sample/car-side.webp', width: 600, height: 312 },
+  carRear: { url: '/sample/car-rear.webp', width: 600, height: 347 },
+  carAngle: { url: '/sample/car-angle.webp', width: 600, height: 400 },
+} as const;
 
 
 /**
@@ -142,16 +154,13 @@ export const propertyListing: Listing = {
   media: {
     cover: {
       id: 'p-cover',
-      url: SAMPLE_IMAGE,
-      width: 900,
-      height: 1125,
+      ...PHOTO.flatLiving,
       alt: 'מבט לסלון ולמרפסת השמש',
     },
     gallery: [
-      { id: 'p1', url: SAMPLE_IMAGE, width: 800, height: 600, alt: 'סלון', caption: 'סלון ומרפסת שמש' },
-      { id: 'p2', url: SAMPLE_IMAGE, width: 800, height: 600, alt: 'מטבח', caption: 'מטבח משופץ' },
-      { id: 'p3', url: SAMPLE_IMAGE, width: 800, height: 600, alt: 'חדר שינה', caption: 'חדר הורים' },
-      { id: 'p4', url: SAMPLE_IMAGE, width: 800, height: 600, alt: 'מרפסת', caption: 'מרפסת דרומית' },
+      { id: 'p1', ...PHOTO.flatLounge, alt: 'סלון עם ספה ושולחן', caption: 'סלון' },
+      { id: 'p2', ...PHOTO.flatKitchen, alt: 'מטבח עם משטח עבודה', caption: 'מטבח משופץ' },
+      { id: 'p3', ...PHOTO.flatBalcony, alt: 'מרפסות בחזית הבניין', caption: 'מרפסת דרומית' },
     ],
   },
 
@@ -177,8 +186,9 @@ const vehicleEnrichment: VehicleEnrichment = {
   category: 'vehicle',
   verifiedSpecKeys: ['make', 'model', 'year', 'engine_cc', 'fuel', 'hand', 'previous_ownership', 'test_until'],
   ownershipHistory: [
-    { type: 'פרטית', fromMonth: '2023-04', ...{ sourceName: 'משרד התחבורה', sourceDate: '2026-09-01' } },
-    { type: 'ליסינג', fromMonth: '2021-03', toMonth: '2023-04', ...{ sourceName: 'משרד התחבורה', sourceDate: '2026-09-01' } },
+    { type: 'פרטית', fromMonth: '2019-08', ...{ sourceName: 'משרד התחבורה', sourceDate: '2026-09-01' } },
+    { type: 'פרטית', fromMonth: '2014-02', toMonth: '2019-08', ...{ sourceName: 'משרד התחבורה', sourceDate: '2026-09-01' } },
+    { type: 'ליסינג', fromMonth: '2009-06', toMonth: '2014-02', ...{ sourceName: 'משרד התחבורה', sourceDate: '2026-09-01' } },
   ],
   testValidUntil: '2027-03',
   specSource: { sourceName: 'משרד התחבורה', sourceDate: '2026-09-01' },
@@ -190,20 +200,20 @@ export const vehicleListing: Listing = {
   slug: 'V3M9Q',
   category: 'vehicle',
 
-  title: 'מאזדה 3, 2021\nיד ראשונה פרטית',
+  title: 'מאזדה 3, 2009\nיד שלישית, טסט לשנה',
   description:
-    'הרכב אצלי מהיום הראשון, כל הטיפולים במוסך מורשה ויש תיק טיפולים מלא. שימוש עירוני בעיקר, לא נגרר ולא היה מעורב בתאונה.\n\nמולטימדיה מקורית עם Apple CarPlay, חיישני רוורס, בקרת שיוט. צמיגים הוחלפו לפני כ־8,000 ק״מ.',
-  price: 89000,
+    'הרכב אצלי משבע שנים, כל הטיפולים במוסך מורשה ויש תיק טיפולים מלא. שימוש עירוני בעיקר, לא נגרר ולא היה מעורב בתאונה.\n\nמזגן עובד טוב, חיישני רוורס וגג נפתח. צמיגים הוחלפו לפני כ־8,000 ק״מ ומצבר חדש מהקיץ.',
+  price: 29000,
   currency: 'ILS',
   // Presence of a book price is what selects the comparison note.
-  listPrice: 94000,
+  listPrice: 32000,
 
   facts: answer(vehicleSchema, {
     make: 'מאזדה',
     model: '3',
-    year: 2021,
-    hand: 'ראשונה',
-    mileage: 62000,
+    year: 2009,
+    hand: 'שלישית',
+    mileage: 214000,
     gearbox: 'אוטומטית',
     engine_cc: 1600,
     fuel: 'בנזין',
@@ -229,16 +239,13 @@ export const vehicleListing: Listing = {
   media: {
     cover: {
       id: 'v-cover',
-      url: SAMPLE_IMAGE,
-      width: 900,
-      height: 675,
+      ...PHOTO.carFront,
       alt: 'מאזדה 3 בזווית קדמית',
     },
     gallery: [
-      { id: 'v1', url: SAMPLE_IMAGE, width: 800, height: 600, alt: 'חזית', caption: 'חזית' },
-      { id: 'v2', url: SAMPLE_IMAGE, width: 800, height: 600, alt: 'תא נהג', caption: 'תא נהג' },
-      { id: 'v3', url: SAMPLE_IMAGE, width: 800, height: 600, alt: 'מד אוץ', caption: 'מד אוץ' },
-      { id: 'v4', url: SAMPLE_IMAGE, width: 800, height: 600, alt: 'תא מטען', caption: 'תא מטען' },
+      { id: 'v1', ...PHOTO.carSide, alt: 'הרכב מהצד', caption: 'צד ימין' },
+      { id: 'v2', ...PHOTO.carRear, alt: 'הרכב מאחור', caption: 'חזית אחורית' },
+      { id: 'v3', ...PHOTO.carAngle, alt: 'הרכב משלושת רבעי', caption: 'שלושת רבעי' },
     ],
   },
 

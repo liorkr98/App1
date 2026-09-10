@@ -45,7 +45,7 @@ sellers are secondary. When a design decision trades one against the other,
 | Editor | **React island** at `/new`, mobile-first |
 | Language | **TypeScript**, `strict: true` everywhere |
 | Database | **Supabase** (Postgres, Auth, Realtime, RLS) |
-| Image storage | **Cloudflare R2** — not Supabase Storage. See below. |
+| Image storage | **Supabase Storage**. Decided 10 September 2026 — see below. |
 | Spatial | **PostGIS** for proximity queries |
 | Routing | **OSRM**, foot profile, self-hosted |
 | Worker | **Fly.io** container, Postgres job queue |
@@ -63,13 +63,26 @@ plan's CI minutes ran out on 9 September 2026. Kept as a fallback and as the
 only thing that could build a native app if one ever returns. Neither is a
 stack choice.
 
-### Three exclusions, each with a tempting wrong answer
+### Two exclusions and one decision, each with a tempting wrong answer
 
-**Images live in Cloudflare R2, not Supabase Storage.** R2 charges nothing for
-egress. This is an image-heavy product whose every page is forwarded to dozens
-of people, so egress is the cost line that grows fastest — and it grows with
-success, which is the worst shape a cost can have. Supabase keeps Postgres,
-Auth, Realtime and RLS.
+**Images live in Supabase Storage.** Decided 10 September 2026, reversing the
+R2 choice this section used to record.
+
+The reasoning for R2 still stands and is worth keeping written down: R2 charges
+nothing for egress, this is an image-heavy product whose every page is
+forwarded to dozens of people, and egress is therefore the cost line that grows
+fastest — with success, which is the worst shape a cost can have. Supabase
+Storage charges for egress beyond the free allowance.
+
+It was overruled for two reasons. `worker/src/storage.ts` and
+`supabase/migrations/0004_storage.sql` already implement the two-bucket model
+against Supabase, so R2 was the aspiration and Supabase was the code. And one
+vendor holding Postgres, Auth, RLS and the objects means the storage policies
+and the row policies are the same policies, written once.
+
+**This is a reversible decision and the egress bill is the thing to watch.**
+The buckets are behind `worker/src/storage.ts`; moving them is a change to
+that file and the migration, not to the pipeline.
 
 **Never propose Stripe.** It does not support ILS as a base currency for an
 Israeli business: they cannot settle to a shekel account directly. Israeli

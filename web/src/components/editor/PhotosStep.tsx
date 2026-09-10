@@ -22,12 +22,17 @@ interface Props {
 /**
  * Choosing and ordering the photographs.
  *
- * NOTHING IS UPLOADED. These are local object URLs, and they die with the
- * tab. R2 versus Supabase Storage is undecided (CLAUDE.md §2 says R2;
- * worker/src/storage.ts and migration 0004 still use Supabase Storage), and
- * that decision is not mine. Everything else about this step — picking,
- * ordering, the cover, the cap — is independent of where the bytes land, so
- * it is built now and the transport is wired later.
+ * NOTHING IS UPLOADED YET. These are local object URLs and they die with the
+ * tab.
+ *
+ * Where they will go is decided: Supabase Storage (CLAUDE.md §2), into the
+ * private `originals` bucket that migration 0004 already creates. What is
+ * still missing is the signed upload — which needs a Supabase URL and key
+ * this session has no business holding — and the listing id to scope the path
+ * to, which does not exist until the draft is saved server-side.
+ *
+ * Everything else about this step is independent of where the bytes land:
+ * picking, ordering, the cover, the cap.
  *
  * ============================ THE RTL TRAP ============================
  * CLAUDE.md §4.4. In RTL the FIRST item is the RIGHTMOST. Index 0 is on the
