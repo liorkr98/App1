@@ -1,0 +1,287 @@
+---
+import { t } from '../lib/i18n';
+import '../styles/tokens.css';
+
+/**
+ * The agent's listings.
+ *
+ * THE POINT OF THE WHOLE PRODUCT, per the complaint that reordered the
+ * roadmap: to send a property to a new buyer, an agent currently searches
+ * WhatsApp for a message they typed weeks ago. This is the place they look
+ * instead — every listing they own, each one a tap from its share kit.
+ *
+ * Rendered in the BROWSER, not at build time. These rows belong to whoever is
+ * signed in, and a statically built page cannot know that. Row Level Security
+ * decides what comes back: the query below says `select *` and the database
+ * returns only this agent's rows, because the policy in 0002 says so. The
+ * filter is not in this file, and that is deliberate — a filter in the client
+ * is a suggestion.
+ */
+---
+
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#FBFAF7" />
+    <title>{t('auth.myListings')} · סיבוב</title>
+    <meta name="robots" content="noindex,nofollow" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Assistant:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style is:global>
+      html {
+        background: var(--stone);
+        color-scheme: light;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: rgba(74, 93, 58, 0.18);
+      }
+
+      body {
+        font-family: 'Assistant', system-ui, sans-serif;
+        background: var(--plaster);
+        color: var(--ink);
+        font-size: var(--t-body);
+        line-height: 1.62;
+        max-width: 620px;
+        margin-inline: auto;
+        min-height: 100dvh;
+        padding-block-end: 6rem;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .top {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 1.75rem var(--gut) 1.25rem;
+        border-block-end: 1px solid var(--stone);
+      }
+
+      h1 {
+        font-family: 'Frank Ruhl Libre', serif;
+        font-weight: 700;
+        font-size: var(--t-h2);
+        letter-spacing: -0.015em;
+      }
+
+      .top a {
+        font-size: var(--t-label);
+        font-weight: 600;
+        color: var(--muted);
+        text-decoration: none;
+      }
+
+      .top a:hover {
+        color: var(--olive);
+      }
+
+      ul {
+        list-style: none;
+      }
+
+      /* One row per listing: the thing itself on the right, the two actions on
+         the left. No card — the hairline is the boundary, as everywhere. */
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 0.9rem;
+        padding: 1rem var(--gut);
+        border-block-end: 1px solid var(--stone);
+      }
+
+      .thumb {
+        inline-size: 56px;
+        block-size: 56px;
+        flex: 0 0 auto;
+        object-fit: cover;
+        border-radius: 3px;
+        background: var(--stone);
+      }
+
+      .about {
+        flex: 1;
+        min-inline-size: 0;
+      }
+
+      .about b {
+        display: block;
+        font-weight: 600;
+        /* A long Hebrew title must not push the actions off the row. */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .about span {
+        font-size: var(--t-label);
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .go {
+        flex: 0 0 auto;
+        min-block-size: 44px;
+        display: inline-flex;
+        align-items: center;
+        padding-inline: 0.9rem;
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--plaster);
+        background: var(--olive);
+        border-radius: 6px;
+        text-decoration: none;
+        transition:
+          transform var(--press) var(--ease-out),
+          background var(--press) var(--ease-out);
+      }
+
+      .go:hover {
+        background: var(--olive-lift);
+      }
+
+      .go:active {
+        transform: scale(0.97);
+      }
+
+      .state {
+        padding: 2.5rem var(--gut);
+        color: var(--muted);
+      }
+
+      .state a {
+        color: var(--olive);
+        font-weight: 600;
+      }
+
+      :focus-visible {
+        outline: 2px solid var(--olive);
+        outline-offset: 3px;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="top">
+      <h1>{t('auth.myListings')}</h1>
+      <a href="/new/">{t('listing.create')}</a>
+    </div>
+
+    {/* Every state this page can be in, present from the start and revealed by
+        the script. Rendering them from JavaScript would mean a blank page for
+        anyone whose script fails. */}
+    <p class="state" id="loading">{t('common.loading')}</p>
+
+    <p class="state" id="anon" hidden>
+      <a href="/enter/">{t('auth.title')}</a>
+    </p>
+
+    <p class="state" id="empty" hidden>
+      {t('listing.empty')} <a href="/new/">{t('listing.create')}</a>
+    </p>
+
+    <p class="state" id="failed" hidden>{t('errors.generic')}</p>
+
+    <ul id="rows" hidden></ul>
+
+    <script>
+      import { t } from '../lib/i18n';
+      import { supabase, supabaseConfigured } from '../lib/supabase';
+
+      const show = (id: string) => {
+        for (const name of ['loading', 'anon', 'empty', 'failed', 'rows']) {
+          const node = document.getElementById(name);
+          if (node) node.hidden = name !== id;
+        }
+      };
+
+      const money = new Intl.NumberFormat('he-IL', {
+        style: 'currency',
+        currency: 'ILS',
+        maximumFractionDigits: 0,
+      });
+
+      const load = async () => {
+        if (!supabaseConfigured) return show('failed');
+
+        const client = supabase();
+        const { data: session } = await client.auth.getSession();
+        if (!session.session) return show('anon');
+
+        /*
+         * No `.eq('owner_id', …)` here on purpose.
+         *
+         * The policy in 0002 restricts this to the signed-in agent's own rows.
+         * Adding the filter in the client would look like the security and
+         * quietly become the security the day somebody edits the policy.
+         */
+        const { data, error } = await client
+          .from('listings')
+          .select('slug, title, price, status, media')
+          .order('created_at', { ascending: false });
+
+        if (error) return show('failed');
+        if (!data || data.length === 0) return show('empty');
+
+        const list = document.getElementById('rows') as HTMLUListElement;
+        list.replaceChildren();
+
+        for (const listing of data) {
+          const item = document.createElement('li');
+          item.className = 'row';
+
+          const cover = (listing.media as { cover?: { url?: string } } | null)?.cover?.url;
+          if (cover) {
+            const image = document.createElement('img');
+            image.className = 'thumb';
+            image.src = cover;
+            image.alt = '';
+            image.width = 56;
+            image.height = 56;
+            image.loading = 'lazy';
+            item.append(image);
+          } else {
+            const blank = document.createElement('div');
+            blank.className = 'thumb';
+            item.append(blank);
+          }
+
+          const about = document.createElement('div');
+          about.className = 'about';
+
+          const title = document.createElement('b');
+          // textContent, never innerHTML: this is a title the agent typed.
+          title.textContent = String(listing.title ?? '').replace(/\s*\n\s*/g, ' ');
+
+          const meta = document.createElement('span');
+          meta.textContent = money.format(Number(listing.price ?? 0));
+
+          about.append(title, meta);
+
+          const go = document.createElement('a');
+          go.className = 'go';
+          go.href = `/a/${listing.slug}/share/`;
+          go.textContent = t('common.share');
+
+          item.append(about, go);
+          list.append(item);
+        }
+
+        show('rows');
+      };
+
+      void load();
+    </script>
+  </body>
+</html>

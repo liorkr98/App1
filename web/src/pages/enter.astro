@@ -1,0 +1,267 @@
+---
+import { t } from '../lib/i18n';
+import '../styles/tokens.css';
+
+/**
+ * Sign in.
+ *
+ * A magic link rather than a password. An agent signs in from a phone, between
+ * viewings, perhaps twice a month — a password they set once and never type
+ * again is a password they will reset, and a reset flow is two more screens
+ * and an email template to get wrong.
+ *
+ * The link is the whole mechanism: Supabase mails a one-time token, the
+ * browser reads it back out of the URL on return (detectSessionInUrl), and the
+ * session refreshes itself from then on.
+ *
+ * Never indexed. It is a door, not a page.
+ */
+---
+
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#FBFAF7" />
+    <title>{t('auth.title')} · סיבוב</title>
+    <meta name="robots" content="noindex,nofollow" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Assistant:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style is:global>
+      html {
+        background: var(--stone);
+        color-scheme: light;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: rgba(74, 93, 58, 0.18);
+      }
+
+      body {
+        font-family: 'Assistant', system-ui, sans-serif;
+        background: var(--plaster);
+        color: var(--ink);
+        font-size: var(--t-body);
+        line-height: 1.62;
+        max-width: 620px;
+        margin-inline: auto;
+        min-height: 100dvh;
+        display: flex;
+        align-items: center;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      main {
+        inline-size: 100%;
+        padding: 2.5rem var(--gut);
+      }
+
+      .mark {
+        font-family: 'Frank Ruhl Libre', serif;
+        font-weight: 700;
+        font-size: 1.35rem;
+        letter-spacing: -0.02em;
+        margin-block-end: 2rem;
+      }
+
+      h1 {
+        font-family: 'Frank Ruhl Libre', serif;
+        font-weight: 700;
+        font-size: var(--t-h2);
+        line-height: 1.2;
+        letter-spacing: -0.015em;
+      }
+
+      .lead {
+        color: var(--muted);
+        margin-block-start: 0.4rem;
+        margin-block-end: 1.75rem;
+        max-inline-size: 42ch;
+      }
+
+      label {
+        display: block;
+        font-size: var(--t-label);
+        font-weight: 600;
+        color: var(--muted);
+        margin-block-end: 0.35rem;
+      }
+
+      input {
+        inline-size: 100%;
+        min-block-size: 44px;
+        padding: 0.75rem 0.85rem;
+        font: inherit;
+        color: var(--ink);
+        background: var(--plaster);
+        border: 1px solid var(--stone);
+        border-radius: 3px;
+      }
+
+      button {
+        inline-size: 100%;
+        min-block-size: 44px;
+        margin-block-start: 0.9rem;
+        padding: 0.95rem;
+        font: inherit;
+        font-size: 1.06rem;
+        font-weight: 700;
+        color: var(--plaster);
+        background: var(--olive);
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition:
+          transform var(--press) var(--ease-out),
+          background var(--press) var(--ease-out);
+      }
+
+      button:hover:not(:disabled) {
+        background: var(--olive-lift);
+      }
+
+      button:active:not(:disabled) {
+        transform: scale(0.97);
+      }
+
+      button:disabled {
+        background: var(--stone);
+        color: var(--muted);
+        cursor: default;
+      }
+
+      :focus-visible {
+        outline: 2px solid var(--olive);
+        outline-offset: 3px;
+      }
+
+      /* Reserves its line before it speaks, so nothing jumps when it does. */
+      .said {
+        min-block-size: 1.5em;
+        margin-block-start: 0.9rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--olive);
+      }
+
+      .said[data-tone='bad'] {
+        color: #8c2f1e;
+      }
+
+      .who {
+        padding-block: 1rem;
+        border-block-start: 1px solid var(--stone);
+        margin-block-start: 1.5rem;
+      }
+
+      .who a {
+        color: var(--olive);
+        font-weight: 600;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+    </style>
+  </head>
+
+  <body>
+    <main>
+      <p class="mark">סיבוב</p>
+
+      <h1>{t('auth.title')}</h1>
+      <p class="lead">{t('auth.lead')}</p>
+
+      <form id="form">
+        <label for="email">{t('auth.email')}</label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          inputmode="email"
+          autocomplete="email"
+          spellcheck="false"
+          required
+          dir="ltr"
+          placeholder="name@example.com"
+        />
+        <button type="submit" id="submit">{t('auth.send')}</button>
+      </form>
+
+      <p class="said" role="status" aria-live="polite" id="said"></p>
+
+      <div class="who" id="who" hidden>
+        <span id="who-text"></span>
+        <p><a href="/mine/">{t('auth.myListings')}</a></p>
+        <button type="button" id="out">{t('auth.signOut')}</button>
+      </div>
+    </main>
+
+    <script>
+      import { t } from '../lib/i18n';
+      import { supabase, supabaseConfigured } from '../lib/supabase';
+
+      const form = document.getElementById('form') as HTMLFormElement;
+      const email = document.getElementById('email') as HTMLInputElement;
+      const submit = document.getElementById('submit') as HTMLButtonElement;
+      const said = document.getElementById('said') as HTMLElement;
+      const who = document.getElementById('who') as HTMLElement;
+      const whoText = document.getElementById('who-text') as HTMLElement;
+      const out = document.getElementById('out') as HTMLButtonElement;
+
+      const say = (text: string, tone: 'good' | 'bad' = 'good') => {
+        said.textContent = text;
+        said.dataset.tone = tone;
+      };
+
+      if (!supabaseConfigured) {
+        say(t('auth.unconfigured'), 'bad');
+        submit.disabled = true;
+      } else {
+        const client = supabase();
+
+        const render = async () => {
+          const { data } = await client.auth.getSession();
+          const user = data.session?.user;
+
+          who.hidden = !user;
+          form.hidden = Boolean(user);
+
+          if (user) whoText.textContent = `${t('auth.signedInAs')}${user.email ?? ''}`;
+        };
+
+        void render();
+        client.auth.onAuthStateChange(() => void render());
+
+        form.addEventListener('submit', async (event) => {
+          event.preventDefault();
+          submit.disabled = true;
+          say(t('auth.sending'));
+
+          const { error } = await client.auth.signInWithOtp({
+            email: email.value.trim(),
+            options: {
+              // Back to this page, where detectSessionInUrl reads the token
+              // out of the URL and the session begins.
+              emailRedirectTo: `${window.location.origin}/enter/`,
+            },
+          });
+
+          submit.disabled = false;
+          say(t(error ? 'auth.failed' : 'auth.sent'), error ? 'bad' : 'good');
+        });
+
+        out.addEventListener('click', async () => {
+          await client.auth.signOut();
+          say('');
+          void render();
+        });
+      }
+    </script>
+  </body>
+</html>

@@ -38,7 +38,7 @@
     "en": "אנגלית"
   },
   "auth": {
-    "title": "כניסה לחשבון",
+    "title": "כניסה",
     "subtitle": "נשלח אליכם קוד חד־פעמי בדוא״ל. אין צורך בסיסמה.",
     "emailLabel": "כתובת דוא״ל",
     "emailPlaceholder": "name@example.com",
@@ -51,7 +51,16 @@
     "or": "או",
     "continueWithApple": "המשך עם Apple",
     "continueWithGoogle": "המשך עם Google",
-    "signOut": "התנתקות"
+    "signOut": "יציאה",
+    "lead": "מזינים אימייל ומקבלים קישור כניסה. בלי סיסמאה.",
+    "email": "אימייל",
+    "send": "שלחו לי קישור",
+    "sending": "שולחים…",
+    "sent": "שלחנו קישור למייל. הוא תקף לשעה.",
+    "signedInAs": "מחוברים כ־",
+    "failed": "לא הצלחנו לשלוח. בדקו את הכתובת ונסו שוב.",
+    "unconfigured": "הכניסה לא מוגדרת בסביבה הזו.",
+    "myListings": "המודעות שלי"
   },
   "paywall": {
     "title": "שדרוג לגרסה המלאה",

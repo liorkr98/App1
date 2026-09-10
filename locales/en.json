@@ -51,7 +51,16 @@
     "or": "",
     "continueWithApple": "",
     "continueWithGoogle": "",
-    "signOut": ""
+    "signOut": "",
+    "lead": "",
+    "email": "",
+    "send": "",
+    "sending": "",
+    "sent": "",
+    "signedInAs": "",
+    "failed": "",
+    "unconfigured": "",
+    "myListings": ""
   },
   "paywall": {
     "title": "",
