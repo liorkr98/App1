@@ -54,6 +54,7 @@ const agency = listing.seller.agencyName;
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FBFAF7">
 <title>{listing.title.replace(/\n/g, ' ')}</title>
 <meta name="description" content={description}>
 
@@ -83,7 +84,15 @@ const agency = listing.seller.agencyName;
 /* הסקאלה הפלואידית וה-gutter נמצאים ב-styles/tokens.css, כי גם העורך
    ב-/new משתמש בהם. הגדרה אחת לשני המשטחים. */
 
-html{background:var(--stone);direction:rtl;scroll-behavior:smooth}
+html{
+  background:var(--stone);direction:rtl;scroll-behavior:smooth;
+  /* Light-only. Without it a browser in dark mode inverts native controls
+     and scrollbars against a page that has no dark palette. */
+  color-scheme:light;
+  /* Removes the 300ms double-tap delay. This is a page read on a phone. */
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:rgba(74,93,58,.18);
+}
 
 /* Smooth scrolling is motion too. The reference sets it unconditionally; a
    reader who has asked for less movement did not exclude this one. */
@@ -160,6 +169,7 @@ body{
   font-family:'Frank Ruhl Libre',serif;
   font-weight:700;font-size:var(--t-price);
   line-height:1;letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;
 }
 .price-note{text-align:end;padding-block-end:.2rem}
 
@@ -175,6 +185,7 @@ body{
 .fact-val{
   font-family:'Frank Ruhl Libre',serif;font-weight:500;
   font-size:var(--t-num);line-height:1.1;letter-spacing:-.01em;
+  font-variant-numeric:tabular-nums;
 }
 .fact-lbl{font-size:var(--t-label);color:var(--muted);margin-top:.2rem}
 .fact.off{background:var(--stone-warm)}
@@ -198,6 +209,7 @@ h2{
   font-family:'Frank Ruhl Libre',serif;
   font-weight:500;font-size:var(--t-h2);
   line-height:1.2;margin-bottom:.85rem;
+  text-wrap:balance;
 }
 h2 .h2-num{color:var(--olive);font-weight:700}
 p{max-width:62ch}
@@ -240,6 +252,8 @@ p + p{margin-top:.9rem}
   font-family:'Frank Ruhl Libre',serif;font-weight:500;
   font-size:1.45rem;line-height:1;color:var(--olive-lift);
   flex:0 0 3.6rem;text-align:start;
+  /* A column of walk times is read down, not across. */
+  font-variant-numeric:tabular-nums;
 }
 .erow .mins small{font-size:.62rem;color:#9C9D93;font-family:'Assistant',sans-serif;display:block;margin-top:.15rem}
 .erow .who{flex:1}
@@ -292,7 +306,8 @@ p + p{margin-top:.9rem}
   border:none;border-radius:6px;text-decoration:none;
   box-shadow:0 6px 22px -10px rgba(25,26,21,.55);
 }
-.cta:active{background:var(--olive-lift)}
+.cta:hover{background:var(--olive-lift)}
+.cta:active{background:var(--olive-lift);transform:translateY(1px)}
 .cta:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
 
 footer{padding:1.6rem var(--gut) .5rem;text-align:center;font-size:.8rem;color:var(--muted)}

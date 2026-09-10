@@ -170,6 +170,10 @@
   border-block-start: none;
 }
 
+.choice:hover {
+  background: var(--stone-warm);
+}
+
 .choice.chosen {
   border-inline-start-color: var(--olive);
   font-weight: 600;
@@ -492,8 +496,20 @@ textarea {
   cursor: pointer;
 }
 
+.nav button:hover:not(:disabled) {
+  background: var(--olive-lift);
+}
+
 .nav button:active:not(:disabled) {
   background: var(--olive-lift);
+  transform: translateY(1px);
+}
+
+/* The back button is an outline, so its hover has to move a different
+   property than the filled one's. */
+.nav button:first-child:hover:not(:disabled) {
+  background: var(--stone-warm);
+  border-color: var(--muted);
 }
 
 /* Back is secondary: an outline, so the forward action is the only filled
