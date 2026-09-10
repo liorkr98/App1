@@ -1,60 +1,100 @@
 ---
 import { t } from '../lib/i18n';
+import { toCells } from '../lib/facts';
+import { ils } from '../lib/format';
+import { perUnitPrice } from '../lib/price';
+import { HERO_WIDTHS, largest } from '../lib/images';
+import Prose from '../components/Prose.astro';
+import { propertyListing, vehicleListing } from '../lib/listings';
 import '../styles/tokens.css';
 
 /**
  * The homepage.
  *
- * REBUILT after seeing it on a desktop browser, where the first version was
- * plainly wrong: a 600px column stranded in the middle of a wide window with
- * a fixed bottom bar laid over the content behind it. The 600px column is the
- * LISTING page's shape — it is a document meant to be read on a phone. A
- * homepage is a different surface and needed its own.
+ * WHO IT IS TALKING TO. An Israeli estate agent, on a phone, between
+ * viewings. CLAUDE.md §1 makes agents the primary audience and this page is
+ * the one surface that had forgotten it: the previous version argued to
+ * nobody in particular and never once mentioned that the agent's own name
+ * goes on top of every page they send. See docs/PRODUCT.md.
  *
- * Grounded in the impeccable reference (pbakaus/impeccable), read directly:
+ * WHY IT WAS REBUILT, AND IT IS NOT A MATTER OF TASTE.
  *
- *   typeset    body measure 65–75ch; tracking floor -0.04em; distinguish
- *              heading, body, label, metadata and data roles at a glance;
- *              never let two weights that are too close carry different jobs.
- *   craft      more space above a heading than below it; tabular numerals for
- *              data; style the browser surfaces — selection, focus ring,
- *              underline offset. No eyebrows above headings. No gradient
- *              text, no decorative blur, no emoji as icons.
- *   animate    one authored entrance, 500–800ms, cubic-bezier(.16,1,.3,1);
- *              never animate width/height/top/left; no generic fade-and-rise
- *              scroll reveals; cap stagger; strip movement under
- *              prefers-reduced-motion but keep opacity.
+ * `.band > .shell` set `grid-template-columns:repeat(3,1fr)` for the second
+ * band's three <section>s. The FIRST band holds one child — the <ol> of
+ * steps — so that ol was laid into a single 304px column of a 1425px page,
+ * and its own `repeat(3,1fr)` then divided 304px into three columns of
+ * SEVENTY-FIVE PIXELS each, 307px tall, stacked against one edge with
+ * two-thirds of the band empty. Measured on the running page, not guessed.
+ * The three steps were the least readable text in the product.
  *
- * THE PROOF ROWS ARE GONE. Two badge rows — a מאומת figure and a לפי המוכר
- * one — sat under the provenance paragraph. In context they read as stray
- * fragments of another screen rather than as a demonstration. The distinction
- * they were illustrating is the product's whole trust proposition, so it is
- * now shown the honest way: by the real listing page, running, below.
+ * THE IFRAME PREVIEW IS GONE, AND ITS COMMENT EXPLAINS WHY BETTER THAN I CAN.
  *
- * THE PREVIEW IS NOT A MOCKUP. It is an iframe of the actual page, rendered
- * at a real phone viewport and scaled to fit. It cannot drift from the
- * product, because it IS the product. Two radio inputs switch between the
- * property and the vehicle with no JavaScript at all.
+ * It rendered the real listing page at 390px and scaled it. The intent was
+ * right — a preview that cannot drift, because it IS the product — but the
+ * listing hero is 84svh and inside an iframe svh resolves against the FRAME,
+ * so the hero always took 84% of the preview however tall the frame was made.
+ * The old comment records three attempts to scroll past it, all measured, all
+ * failed, and concludes that the preview shows "a dark agent bar, a
+ * photograph and a price" and "reads as weak here". A demonstration that
+ * needs a paragraph of small grey text explaining why it is a fragment is not
+ * a demonstration. That is a design decision, so it was made rather than
+ * apologised for.
  *
- * IT SHOWS THE TOP OF THE PAGE, AND THAT IS FORCED, NOT CHOSEN.
+ * WHAT REPLACED IT KEEPS THE PROPERTY THAT MATTERED. The two screens below
+ * are composed from `propertyListing` and `vehicleListing` — imported from
+ * the same module `/a/{slug}` renders — through the same `toCells`, `ils` and
+ * `perUnitPrice` the real pages use. Change the sample data and this page
+ * changes with it. It cannot go stale, and unlike the iframe it can show the
+ * part of the page worth showing.
  *
- * The B2 hero is 84svh, and inside an iframe svh resolves against the FRAME —
- * so the hero occupies 84% of the preview however tall the frame is made.
- * Getting past it needs the inner document scrolled, and an iframe clips its
- * document to its own box, so there is no CSS offset that reaches further
- * down.
+ * AND IT MAKES AN ARGUMENT THE IFRAME COULD NOT. One device switched by two
+ * radios says "here is a page". Two categories side by side, same skeleton,
+ * same order, same typography, says "every listing you send will look like
+ * this" — which is the agent's actual reason to use this and the thing a
+ * private seller does not care about.
  *
- * Three routes were tried and measured on the deployed page. A #enrich
- * fragment does not fire: scrollY stayed 0 with and without scrolling="no".
- * Dropping scrolling="no" to allow it costs 15px of the 390 to a scrollbar
- * and still did not scroll. A transform offset cannot work either, because
- * the taller iframe it needs grows the hero by the same proportion.
- *
- * So the preview shows a dark agent bar, a photograph and a price. That is
- * honestly what the top of the page IS. It reads as weak here only because
- * both sample listings point at a flat grey placeholder — the fix is a real
- * photograph, not another layer of scrolling tricks.
+ * THE PAGE IS NOW COMMITTED RATHER THAN PALE. docs/DESIGN.md: the scene is an
+ * agent holding a phone in Holon at 4pm with sun on the screen, and a
+ * plaster-on-plaster hierarchy collapses to one flat sheet in that light. The
+ * value rhythm is dark → light → tinted → dark → light, which is the rhythm
+ * the LISTING page already had on its own (dark agent bar, plaster body,
+ * inverted enrichment block). The homepage was the only surface hedging.
  */
+
+/**
+ * The three provenance states, taken from the sample data rather than typed.
+ *
+ * This is the product's whole trust proposition (PRD §5) and the previous
+ * page spent three paragraphs asserting it. Asserting honesty is the one
+ * thing a dishonest page also does. So the section below shows the real
+ * cells: one a register filled, one the seller declared, one the seller
+ * confirmed is absent — with the real source name and the real date.
+ *
+ * Found rather than hard-coded, so a change to the schema cannot leave this
+ * section illustrating a state that no longer exists.
+ */
+const vehicleCells = toCells('vehicle', vehicleListing.facts);
+const propertyCells = toCells('property', propertyListing.facts);
+
+const verifiedCell = vehicleCells.find((cell) => cell.verified);
+const sellerCell = vehicleCells.find((cell) => !cell.verified && !cell.absent);
+const absentCell = propertyCells.find((cell) => cell.absent);
+
+/** The two screens, each reduced to what fits above a phone's fold. */
+const screens = [
+  {
+    listing: propertyListing,
+    label: t('home.previewProperty'),
+    cells: propertyCells.slice(0, 3),
+    perUnit: perUnitPrice('property', propertyListing.facts, propertyListing.price),
+  },
+  {
+    listing: vehicleListing,
+    label: t('home.previewVehicle'),
+    cells: vehicleCells.slice(0, 3),
+    perUnit: perUnitPrice('vehicle', vehicleListing.facts, vehicleListing.price),
+  },
+];
 
 const title = `סיבוב — ${t('home.tagline')}`;
 ---
@@ -64,17 +104,18 @@ const title = `סיבוב — ${t('home.tagline')}`;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#FBFAF7" />
+    {/* The first screen is now the dark act, so the browser chrome matches it. */}
+    <meta name="theme-color" content="#111208" />
 
     <title>{title}</title>
-    <meta name="description" content={t('home.tagline')} />
+    <meta name="description" content={t('home.subTagline')} />
     <meta name="robots" content="index,follow" />
 
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="he_IL" />
     <meta property="og:site_name" content="סיבוב" />
     <meta property="og:title" content="סיבוב" />
-    <meta property="og:description" content={t('home.tagline')} />
+    <meta property="og:description" content={t('home.subTagline')} />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -85,19 +126,30 @@ const title = `סיבוב — ${t('home.tagline')}`;
 
     <style is:global>
       /*
-        A deliberate role scale, not arbitrary sizes. Five roles that are
-        distinguishable at a glance: display, heading, lead, body, meta.
-        clamp() carries them across widths without a breakpoint each.
+        Five type roles, distinguishable at a glance, carried across widths by
+        clamp() rather than by a breakpoint each.
+
+        --display's ceiling is 4.4rem against the listing page's --t-hero of
+        4.2rem. That is deliberate and it is the one number on this page worth
+        arguing about: the previous homepage capped at 3.6rem, which made the
+        advertisement quieter than the thing it advertises. A landing page in
+        a smaller key than its own product reads as the weaker product.
       */
       :root {
-        --display: clamp(2.5rem, 6vw, 3.6rem);
-        --lead: clamp(1.15rem, 2.2vw, 1.4rem);
-        --heading: clamp(1.2rem, 1.6vw, 1.4rem);
+        --display: clamp(2.7rem, 6.2vw, 4.4rem);
+        --lead: clamp(1.15rem, 2.2vw, 1.38rem);
+        --heading: clamp(1.45rem, 2.6vw, 1.9rem);
         --body: 1.0625rem;
-        --meta: 0.8rem;
+        --meta: 0.82rem;
 
         --gutter: clamp(1.25rem, 5vw, 3rem);
         --rule: 1px solid var(--stone);
+        --rule-dark: 1px solid rgba(251, 250, 247, 0.14);
+
+        /* Semantic, so nothing on this page ever writes a bare number. */
+        --z-base: 0;
+        --z-raised: 1;
+        --z-overlay: 2;
       }
 
       html {
@@ -112,11 +164,15 @@ const title = `סיבוב — ${t('home.tagline')}`;
         background: var(--plaster);
         color: var(--ink);
         font-size: var(--body);
-        line-height: 1.65;
+        /*
+          1.7, not the 1.5 a Latin page would take. Hebrew has no ascenders
+          and descenders to separate its lines, so the same leading that looks
+          generous in English reads cramped here. docs/DESIGN.md.
+        */
+        line-height: 1.7;
         -webkit-font-smoothing: antialiased;
       }
 
-      /* Browser surfaces, styled rather than left to the defaults. */
       ::selection {
         background: var(--olive);
         color: var(--plaster);
@@ -127,10 +183,53 @@ const title = `סיבוב — ${t('home.tagline')}`;
         outline-offset: 3px;
       }
 
+      /* On the dark ground olive-on-ink is invisible; the ring inverts. */
+      .dark :focus-visible {
+        outline-color: var(--plaster);
+      }
+
       .shell {
         max-inline-size: 1120px;
         margin-inline: auto;
         padding-inline: var(--gutter);
+      }
+
+      .dark {
+        background: var(--ink-deep);
+        color: var(--plaster);
+      }
+
+      h1,
+      h2,
+      h3 {
+        font-family: 'Frank Ruhl Libre', serif;
+        text-wrap: balance;
+      }
+
+      /*
+        HEBREW TRACKING, AND THE FLOOR IS NOT THE LATIN ONE.
+
+        Hebrew has no case and positive letter-spacing damages it, so the
+        usual small-tracked-caps route to hierarchy is unavailable and
+        hierarchy here comes from size, weight and colour only.
+
+        Negative tracking is capped at -.015em, matching the listing page's
+        .hero-title. The previous homepage ran -.03em on its h1 — twice the
+        project's own contract, and past the point where Hebrew counters start
+        closing up.
+      */
+      h1 {
+        font-weight: 900;
+        font-size: var(--display);
+        line-height: 1.04;
+        letter-spacing: -0.015em;
+      }
+
+      h2 {
+        font-weight: 700;
+        font-size: var(--heading);
+        line-height: 1.15;
+        letter-spacing: -0.01em;
       }
 
       /* ---------- Masthead ---------- */
@@ -140,354 +239,656 @@ const title = `סיבוב — ${t('home.tagline')}`;
         align-items: center;
         justify-content: space-between;
         gap: 1rem;
-        padding-block: 1.5rem;
-        border-block-end: var(--rule);
+        padding-block: 1.35rem;
       }
 
       .mark {
         font-family: 'Frank Ruhl Libre', serif;
         font-weight: 700;
-        font-size: 1.35rem;
-        letter-spacing: -0.02em;
+        font-size: 1.4rem;
+        letter-spacing: -0.01em;
       }
 
       .top-link {
         font-size: var(--meta);
         font-weight: 600;
-        color: var(--muted);
+        /* 6.94:1 on --ink-deep. --olive-lift would be 3.83:1 and this is not
+           large text, so it is not an option here. */
+        color: #9c9d93;
         text-decoration: none;
-        transition: color 0.15s ease;
+        padding: 0.4rem 0.9rem;
+        border: var(--rule-dark);
+        border-radius: 999px;
+        transition:
+          color var(--press) var(--ease-out),
+          border-color var(--press) var(--ease-out);
       }
 
       .top-link:hover {
-        color: var(--olive);
+        color: var(--plaster);
+        border-color: rgba(251, 250, 247, 0.4);
       }
 
-      /*
-        Two columns on a wide screen: the words on the reading side, the
-        running product on the other. In RTL the grid fills from the right, so
-        the first child lands where a Hebrew reader starts. Nothing computes
-        that — `dir="rtl"` does, and the grid follows.
-      */
+      /* ---------- Hero ----------
+         The words on the reading side, the product on the other. In RTL the
+         grid fills from the right, so the first child lands where a Hebrew
+         reader starts. Nothing computes that; dir="rtl" does. */
+
       .hero {
         display: grid;
         gap: clamp(2.5rem, 5vw, 4rem);
-        padding-block: clamp(2.25rem, 4vw, 3.5rem) clamp(2.5rem, 4vw, 3.5rem);
-        align-items: center;
+        padding-block: clamp(2.5rem, 5vw, 4rem) clamp(3rem, 6vw, 5rem);
       }
 
-      @media (min-width: 900px) {
+      @media (min-width: 1000px) {
         .hero {
-          /* auto first: the words take the width they need and no more, so
-             the column does not stretch a 46ch paragraph across 630px and
-             leave the difference as air. */
-          grid-template-columns: minmax(0, auto) auto;
-          justify-content: space-between;
+          grid-template-columns: minmax(0, 1fr) minmax(320px, 552px);
+          align-items: center;
+          gap: clamp(2rem, 4vw, 3.5rem);
         }
       }
 
       .hero-copy {
-        max-inline-size: 34rem;
+        max-inline-size: 30rem;
       }
 
-      h1 {
-        font-family: 'Frank Ruhl Libre', serif;
-        font-weight: 700;
-        font-size: var(--display);
-        line-height: 1.05;
-        /* Tracking floor is -0.04em; large display type needs some. */
-        letter-spacing: -0.03em;
-      }
-
-      .tagline {
+      .hero-sub {
         font-size: var(--lead);
-        color: var(--muted);
-        margin-block-start: 1rem;
-        max-inline-size: 26ch;
+        color: #9c9d93;
+        margin-block-start: 1.1rem;
+        max-inline-size: 24ch;
         text-wrap: balance;
       }
 
-      .lead {
-        margin-block-start: 1.75rem;
-        max-inline-size: 46ch;
+      .hero-lead {
+        margin-block-start: 1.6rem;
+        max-inline-size: 44ch;
+        color: rgba(251, 250, 247, 0.86);
       }
 
       .actions {
         display: flex;
         align-items: center;
-        gap: 1.25rem;
+        gap: 1.1rem;
         flex-wrap: wrap;
-        margin-block-start: 2rem;
+        margin-block-start: 2.1rem;
       }
 
       .cta {
         display: inline-block;
-        padding: 0.95rem 2rem;
+        padding: 0.95rem 2.1rem;
         background: var(--olive);
         color: var(--plaster);
         font-size: 1.05rem;
-        font-weight: 600;
+        font-weight: 700;
         border: none;
         border-radius: 4px;
         text-decoration: none;
-        /* Offset and a soft blur, not a hard drop. */
-        box-shadow: 0 2px 8px rgba(25, 26, 21, 0.12);
         transition:
           transform var(--press) var(--ease-out),
-          box-shadow var(--press) var(--ease-out);
+          background var(--press) var(--ease-out);
       }
 
       .cta:hover {
-        box-shadow: 0 4px 14px rgba(25, 26, 21, 0.16);
+        background: var(--olive-lift);
       }
 
-      /* 100–150ms is the band for immediate feedback. */
       .cta:active {
+        background: var(--olive-lift);
         transform: scale(0.97);
-        box-shadow: 0 1px 4px rgba(25, 26, 21, 0.14);
       }
 
       .actions-note {
         font-size: var(--meta);
-        color: var(--muted);
+        color: #9c9d93;
+        max-inline-size: 22ch;
       }
 
-      /* ---------- The live preview ----------
-         An iframe of the real page at a real phone width. Not a screenshot,
-         not a drawing: it cannot go stale, because it is the product. */
+      /* ---------- The two screens ----------
+         Composed from the real listing data, through the real formatters.
+         Side by side and vertically aligned ON PURPOSE: offsetting them would
+         look more designed and would break the only comparison the section
+         exists to invite. Same skeleton, different category. */
 
-      .preview {
+      .stage {
         display: grid;
         justify-items: center;
-        gap: 0.9rem;
+        gap: 1rem;
+        inline-size: 100%;
       }
 
-      .switch {
+      .screens {
         display: flex;
-        gap: 0.4rem;
+        gap: clamp(0.6rem, 1.6vw, 1rem);
+        align-items: flex-start;
+        justify-content: center;
+        inline-size: 100%;
       }
 
-      .preview > input {
-        position: absolute;
-        opacity: 0;
-        pointer-events: none;
-      }
+      /*
+        The two screens SPLIT whatever width they are given, rather than each
+        claiming a width computed from the viewport. A vw-based clamp was the
+        first attempt and it has a floor problem: below about 340px the two
+        minimums plus the gap exceed the shell and the row overflows the page.
+        Flexing from a zero basis cannot overflow, because the basis is the
+        space that actually exists.
 
-      .switch label {
-        padding: 0.35rem 0.9rem;
-        font-size: var(--meta);
-        font-weight: 600;
-        color: var(--muted);
-        border: var(--rule);
-        border-radius: 999px;
-        cursor: pointer;
-        transition:
-          color 0.15s ease,
-          border-color 0.15s ease;
-      }
-
-      .switch label:hover {
-        color: var(--ink);
-      }
-
-      #show-property:checked ~ .switch label[for='show-property'],
-      #show-vehicle:checked ~ .switch label[for='show-vehicle'] {
-        color: var(--olive);
-        border-color: var(--olive);
-      }
-
-      #show-property:focus-visible ~ .switch label[for='show-property'],
-      #show-vehicle:focus-visible ~ .switch label[for='show-vehicle'] {
-        outline: 2px solid var(--olive);
-        outline-offset: 3px;
-      }
-
-/*
-        Rendered at 390px — a real iPhone viewport — and SCALED to fit the
-        frame, rather than laid out at the frame's own width.
-
-        Letting it lay out at 320px was the mistake: the listing page is
-        designed at phone width but 320 is the floor, so the facts grid
-        wrapped its paired cell onto two lines, the price clipped, and the
-        document was tall enough to grow its own scrollbars inside the frame.
-        What it showed was the page under stress, not the page.
-
-        --dev is unitless so the scale can be derived from it. CSS cannot
-        divide two lengths to get a number, but it can divide two numbers.
+        The type then has to follow a width that only flex knows, which is
+        what `container-type: inline-size` is for — 6.25cqi is 1/16th of the
+        device's resolved width, so the screen scales as one object instead of
+        shrinking its box while its type stays put. Everything inside is in em
+        off that.
       */
       .device {
-        --dev: 320;
-        --viewport: 390;
-        position: relative;
-        inline-size: calc(var(--dev) * 1px);
-        max-inline-size: 100%;
-        /* 780px of page, scaled by the same factor as the width. */
-        block-size: calc(780px * var(--dev) / var(--viewport));
-        border: var(--rule);
-        border-radius: 20px;
+        flex: 1 1 0;
+        max-inline-size: 258px;
+        container-type: inline-size;
+        display: grid;
+        gap: 0.55rem;
+        justify-items: center;
+      }
+
+      .screen {
+        display: block;
+        text-decoration: none;
+        color: inherit;
+        font-size: 6.25cqi;
+        inline-size: 100%;
+        border-radius: 1em;
         overflow: hidden;
         background: var(--plaster);
-        box-shadow: 0 18px 44px rgba(25, 26, 21, 0.1);
+        color: var(--ink);
+        line-height: 1.5;
+        box-shadow:
+          0 0 0 1px rgba(251, 250, 247, 0.12),
+          0 1.4em 3em -1em rgba(0, 0, 0, 0.6);
       }
 
-      .device iframe {
+      .device-label {
+        font-size: var(--meta);
+        font-weight: 600;
+        color: #9c9d93;
+      }
+
+      /* The agent's strip — the reason an agent is reading this page. */
+      .s-agent {
+        display: flex;
+        align-items: center;
+        gap: 0.4em;
+        padding: 0.5em 0.7em;
+        background: var(--ink-deep);
+        color: var(--plaster);
+        font-size: 0.55em;
+      }
+
+      .s-agent .dot {
+        inline-size: 1.6em;
+        block-size: 1.6em;
+        border-radius: 50%;
+        background: var(--olive-lift);
+        flex: 0 0 auto;
+      }
+
+      .s-agent .who {
+        font-weight: 600;
+      }
+
+      .s-agent .brand {
+        margin-inline-start: auto;
+        color: #9c9d93;
+      }
+
+      .s-hero {
+        position: relative;
+        aspect-ratio: 4 / 5;
+        overflow: hidden;
+        background: var(--stone);
+      }
+
+      .s-hero img {
+        inline-size: 100%;
+        block-size: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .s-veil {
         position: absolute;
-        inset-block-start: 0;
-        inset-inline-start: 0;
-        inline-size: calc(var(--viewport) * 1px);
-        block-size: 780px;
-        border: 0;
-        /* Anchored at the top of the inline start — the RIGHT edge in an RTL
-           document — so the scale shrinks toward the corner it is pinned to. */
-        transform-origin: 100% 0;
-        transform: scale(calc(var(--dev) / var(--viewport)));
-        /* The page inside is a document to look at, not to operate. Tapping
-           anywhere opens the real one. */
-        pointer-events: none;
+        inset-inline: 0;
+        inset-block-end: 0;
+        padding: 2.4em 0.75em 0.7em;
+        background: linear-gradient(
+          to top,
+          rgba(17, 18, 8, 0.9) 12%,
+          rgba(17, 18, 8, 0.55) 48%,
+          transparent
+        );
+        color: var(--plaster);
       }
 
-      /* On a narrow phone the frame gives up width; the scale follows it. */
-      @media (max-width: 420px) {
-        .device {
-          --dev: 260;
+      .s-place {
+        font-size: 0.5em;
+        opacity: 0.88;
+      }
+
+      .s-title {
+        font-family: 'Frank Ruhl Libre', serif;
+        font-weight: 900;
+        font-size: 0.95em;
+        line-height: 1.05;
+        letter-spacing: -0.015em;
+        margin-block-start: 0.15em;
+      }
+
+      .s-price-bar {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 0.5em;
+        padding: 0.8em 0.75em 0.7em;
+      }
+
+      .s-price {
+        font-family: 'Frank Ruhl Libre', serif;
+        font-weight: 700;
+        font-size: 1.15em;
+        line-height: 1;
+        letter-spacing: -0.02em;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .s-price-note {
+        font-size: 0.48em;
+        color: var(--muted);
+        text-align: end;
+        padding-block-end: 0.2em;
+      }
+
+      .s-facts {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1px;
+        background: var(--stone);
+        border-block-start: 1px solid var(--stone);
+      }
+
+      .s-fact {
+        background: var(--plaster);
+        padding: 0.6em 0.3em 0.7em;
+        text-align: center;
+        /*
+          Space for the מאומת chip is RESERVED in every cell, not just the
+          cells that earn one. A vehicle's facts come back from the Ministry
+          of Transport and a property's do not, so without this the two
+          screens end at different heights — and the whole point of standing
+          them side by side is that the skeleton is identical. The chip is
+          still only drawn where a register actually filled the field.
+        */
+        min-block-size: 4.4em;
+      }
+
+      .s-fact.off {
+        background: var(--stone-warm);
+      }
+
+      .s-fact-val {
+        font-family: 'Frank Ruhl Libre', serif;
+        font-weight: 500;
+        font-size: 0.8em;
+        line-height: 1.1;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .s-fact-lbl {
+        font-size: 0.44em;
+        color: var(--muted);
+        margin-block-start: 0.2em;
+      }
+
+      .s-chip {
+        display: inline-block;
+        font-size: 0.4em;
+        font-weight: 600;
+        color: var(--olive);
+        border: 1px solid var(--olive);
+        border-radius: 2px;
+        padding: 0 0.35em;
+        margin-block-start: 0.4em;
+      }
+
+      .stage-note {
+        font-size: var(--meta);
+        color: #9c9d93;
+        text-align: center;
+        max-inline-size: 46ch;
+        line-height: 1.6;
+      }
+
+      /* ---------- Section furniture ----------
+         More space above a heading than below it: the heading belongs to what
+         follows, and even spacing leaves it floating between two blocks. */
+
+      section > .shell {
+        padding-block: clamp(3.25rem, 6vw, 5rem);
+      }
+
+      .section-head {
+        max-inline-size: 34rem;
+        margin-block-end: clamp(2rem, 3.5vw, 2.75rem);
+      }
+
+      .section-head p {
+        margin-block-start: 0.85rem;
+        color: var(--muted);
+        max-inline-size: 62ch;
+        text-wrap: pretty;
+      }
+
+      .dark .section-head p {
+        color: rgba(251, 250, 247, 0.82);
+      }
+
+      /* ---------- Provenance ----------
+         The moat, shown rather than claimed. Three real cells in the three
+         real states, at the size they are on the page. */
+
+      .proof {
+        display: grid;
+        gap: 1px;
+        background: var(--stone);
+        border: var(--rule);
+      }
+
+      @media (min-width: 720px) {
+        .proof {
+          grid-template-columns: repeat(3, 1fr);
         }
       }
 
-      /* Only the checked frame is shown. Two radios, no JavaScript. */
-      .device iframe {
-        transition: opacity 0.2s ease;
+      .proof-cell {
+        background: var(--plaster);
+        padding: clamp(1.4rem, 3vw, 2rem);
+        display: grid;
+        align-content: start;
+        gap: 0.55rem;
       }
 
-      #show-property:checked ~ .device .frame-vehicle,
-      #show-vehicle:checked ~ .device .frame-property {
-        opacity: 0;
-        visibility: hidden;
+      .proof-cell.off {
+        background: var(--stone-warm);
+        /* Same correction as .steps-band, same reason. */
+        --muted: #67685f;
       }
 
-      @media (prefers-reduced-motion: reduce) {
-        .device iframe {
-          transition: none;
-        }
+      .proof-val {
+        font-family: 'Frank Ruhl Libre', serif;
+        font-weight: 500;
+        font-size: clamp(1.5rem, 4vw, 1.9rem);
+        line-height: 1.1;
+        letter-spacing: -0.01em;
+        font-variant-numeric: tabular-nums;
       }
 
-      .device-open {
-        position: absolute;
-        inset: 0;
-        z-index: 1;
-      }
+      /*
+        THE LISTING PAGE'S .42 DE-EMPHASIS IS NOT COPIED HERE, DELIBERATELY.
 
-      .preview-note {
+        On /a/{slug} an absent fact is greyed because it is a minor cell the
+        reader skims past. In THIS section that same cell is the worked
+        example the paragraph beneath it is explaining, so it has to be
+        readable. It is also arithmetically impossible to keep: at .42 on
+        --stone-warm the label lands near 1.6:1, and even at .8 it only
+        reaches 3.29:1 against a 4.5:1 requirement for 13px text.
+
+        The tinted ground and the word אין carry the distinction instead.
+      */
+
+      .proof-lbl {
         font-size: var(--meta);
         color: var(--muted);
-        text-align: center;
-        max-inline-size: 34ch;
       }
 
-      /* ---------- Body sections ----------
-         Space above a heading, less below it: the heading belongs to what
-         follows, and even spacing makes it float between two blocks. */
+      .proof-mark {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        min-block-size: 1.6rem;
+      }
 
-      .band {
+      /* Olive rule and a word, never a tick: a tick reads as "good", and this
+         is a statement about who recorded a number. DESIGN-CONTRACT. */
+      .verified {
+        font-size: 0.68rem;
+        font-weight: 600;
+        color: var(--olive);
+        border: 1px solid var(--olive);
+        border-radius: 2px;
+        padding: 0.02rem 0.34rem;
+        line-height: 1.5;
+      }
+
+      .proof-cite,
+      .proof-said {
+        font-size: 0.72rem;
+        color: var(--muted);
+      }
+
+      .proof-note {
+        font-size: var(--meta);
+        color: var(--muted);
         border-block-start: var(--rule);
+        padding-block-start: 0.75rem;
+        margin-block-start: 0.35rem;
+        line-height: 1.6;
+        text-wrap: pretty;
       }
 
       /* ---------- Steps ----------
-         Numbered because they are a sequence, and the numeral is set in the
-         serif at display weight so it reads as a marker rather than as data. */
+         A real sequence, so the numerals carry information rather than
+         decorating a section. Note what this is NOT: three equal columns of
+         75px each, which is what the previous grid produced. */
+
+      .steps-band {
+        background: var(--stone-warm);
+        border-block: var(--rule);
+        /*
+          --muted is 4.87:1 on --plaster and only 4.35:1 on --stone-warm, so
+          the same token that passes AA on the reading ground FAILS it on the
+          tinted one. Measured on the rendered page, not assumed.
+
+          Overriding the custom property in scope fixes every descendant that
+          reads it, rather than repainting each selector and missing one. Same
+          hue, carried down until it clears 4.5:1 (it lands at 4.83:1).
+        */
+        --muted: #67685f;
+      }
 
       .steps {
         display: grid;
-        gap: clamp(1.75rem, 3vw, 2.5rem);
-        padding-block: clamp(2.5rem, 4vw, 3.5rem);
+        gap: clamp(1.6rem, 3vw, 2.5rem);
         list-style: none;
         counter-reset: step;
       }
 
       @media (min-width: 760px) {
         .steps {
-          grid-template-columns: repeat(3, 1fr);
+          grid-template-columns: repeat(3, minmax(0, 1fr));
         }
       }
 
       .steps li {
         counter-increment: step;
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 0 0.9rem;
+        align-items: baseline;
         padding-block-start: 1rem;
         border-block-start: 2px solid var(--olive);
       }
 
       .steps li::before {
         content: counter(step);
-        display: block;
+        grid-row: span 2;
         font-family: 'Frank Ruhl Libre', serif;
         font-weight: 700;
-        font-size: 1.5rem;
+        font-size: 1.9rem;
         line-height: 1;
         color: var(--olive);
         font-variant-numeric: tabular-nums;
-        margin-block-end: 0.5rem;
       }
 
       .steps h3 {
-        font-size: 1.05rem;
-        font-weight: 600;
-        margin-block-end: 0.35rem;
+        font-size: 1.1rem;
+        font-weight: 700;
+        line-height: 1.3;
       }
 
       .steps p {
+        grid-column: 2;
         color: var(--muted);
-        max-inline-size: 34ch;
+        margin-block-start: 0.3rem;
+        text-wrap: pretty;
       }
 
-      /* ---------- Audience ----------
-         The one claim on the page aimed at a specific reader, so it gets the
-         page's only tinted band — the .flaws colour from the vehicle
-         reference, already the product's shade for "worth knowing". */
+      /* ---------- For agents ----------
+         Two artefacts the agent gets, side by side: their strip on top of the
+         page, and the message the buyer actually receives. */
 
-      .audience {
-        background: #f5f2ea;
-        border-block-start: var(--rule);
-      }
-
-      .audience .shell {
-        padding-block: clamp(2.5rem, 4vw, 3.5rem);
-      }
-
-      .audience h2 {
-        max-inline-size: 20ch;
-      }
-
-      .audience p {
-        color: var(--muted);
-        max-inline-size: 60ch;
-        margin-block-start: 0.65rem;
-      }
-
-      .band > .shell {
+      .agent-grid {
         display: grid;
-        gap: clamp(2rem, 4vw, 3.5rem);
-        padding-block: clamp(2.75rem, 5vw, 4rem);
+        gap: clamp(2.25rem, 4vw, 3.25rem);
       }
 
-      @media (min-width: 760px) {
-        .band > .shell {
-          grid-template-columns: repeat(3, 1fr);
+      @media (min-width: 860px) {
+        .agent-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: clamp(2rem, 4vw, 4rem);
         }
       }
 
-      h2 {
-        font-family: 'Frank Ruhl Libre', serif;
-        font-weight: 500;
-        font-size: var(--heading);
-        line-height: 1.3;
-        margin-block-end: 0.65rem;
+      .agent-grid h3 {
+        font-size: 1.15rem;
+        font-weight: 700;
+        margin-block-end: 0.5rem;
       }
 
-      .band p {
+      .agent-grid p {
+        color: rgba(251, 250, 247, 0.82);
+        max-inline-size: 46ch;
+        text-wrap: pretty;
+      }
+
+      .demo {
+        margin-block-end: 1.4rem;
+      }
+
+      /* The strip, at the size it renders on a phone. */
+      .demo-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        padding: 0.7rem 1rem;
+        background: var(--plaster);
+        color: var(--ink);
+        border-radius: 4px;
+        font-size: 0.9rem;
+      }
+
+      .demo-bar .dot {
+        inline-size: 26px;
+        block-size: 26px;
+        border-radius: 50%;
+        background: var(--olive);
+        flex: 0 0 auto;
+      }
+
+      .demo-bar .slot {
+        font-weight: 700;
+        border-block-end: 1px dashed var(--muted);
+      }
+
+      .demo-bar .brand {
+        margin-inline-start: auto;
+        font-size: 0.8rem;
         color: var(--muted);
-        max-inline-size: 68ch;
       }
 
-      /* ---------- Footer ---------- */
+      /*
+        A message with a link preview in it. Deliberately NOT dressed as
+        WhatsApp — no green bubble, no tick glyphs. Borrowing another
+        product's chrome to imply a partnership that does not exist is a
+        claim, and this page does not make claims it cannot back.
+      */
+      .demo-msg {
+        background: var(--plaster);
+        color: var(--ink);
+        border-radius: 4px;
+        border-end-start-radius: 12px;
+        padding: 0.55rem;
+        max-inline-size: 21rem;
+      }
+
+      .demo-card {
+        /* Sits on --stone-warm; see .steps-band. */
+        --muted: #67685f;
+        display: flex;
+        gap: 0.7rem;
+        align-items: stretch;
+        background: var(--stone-warm);
+        border-radius: 3px;
+        overflow: hidden;
+      }
+
+      .demo-card img {
+        inline-size: 78px;
+        block-size: 78px;
+        object-fit: cover;
+        flex: 0 0 auto;
+        display: block;
+      }
+
+      .demo-card-text {
+        padding-block: 0.5rem;
+        padding-inline: 0 0.6rem;
+        min-inline-size: 0;
+        display: grid;
+        align-content: center;
+        gap: 0.1rem;
+      }
+
+      .demo-card-title {
+        font-size: 0.82rem;
+        font-weight: 700;
+        line-height: 1.3;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+      }
+
+      .demo-card-host {
+        font-size: 0.68rem;
+        color: var(--muted);
+      }
+
+      .demo-msg-text {
+        font-size: 0.85rem;
+        line-height: 1.5;
+        padding: 0.5rem 0.25rem 0.15rem;
+      }
+
+      /* ---------- Closing ---------- */
+
+      .closing .shell {
+        display: grid;
+        gap: 1.25rem;
+        justify-items: center;
+        text-align: center;
+        padding-block: clamp(3.5rem, 7vw, 5.5rem);
+      }
+
+      .closing h2 {
+        max-inline-size: 18ch;
+      }
 
       footer {
         border-block-start: var(--rule);
@@ -499,7 +900,7 @@ const title = `סיבוב — ${t('home.tagline')}`;
         justify-content: space-between;
         gap: 1rem;
         flex-wrap: wrap;
-        padding-block: 2rem;
+        padding-block: 1.75rem;
         font-size: var(--meta);
         color: var(--muted);
       }
@@ -514,31 +915,42 @@ const title = `סיבוב — ${t('home.tagline')}`;
       }
 
       /* ---------- Motion ----------
-         ONE authored entrance. 600ms sits in the 500–800ms band for a focal
-         arrival, on the exponential ease-out the reference recommends. The
-         preview follows at 120ms — a capped two-step, not a scroll-reveal
-         cascade, and nothing below the fold animates at all. */
+         ONE authored entrance, capped at three steps, and nothing below the
+         fold animates at all. A uniform fade-and-rise on every section is the
+         reflex; it is also the thing that ships a blank page when a
+         transition never fires in a headless renderer.
+
+         The content here is visible by default — `animation` only ever moves
+         something that would already be on screen without it. */
 
       @media (prefers-reduced-motion: no-preference) {
-        .hero > * {
-          animation: arrive 0.6s both cubic-bezier(0.16, 1, 0.3, 1);
+        .hero-copy,
+        .stage .screens,
+        .stage .stage-note {
+          animation: arrive 0.62s both cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .hero > .preview {
-          animation-delay: 0.12s;
+        .stage .screens {
+          animation-delay: 0.1s;
+        }
+
+        .stage .stage-note {
+          animation-delay: 0.2s;
         }
 
         @keyframes arrive {
           from {
             opacity: 0;
-            transform: translateY(12px);
+            transform: translateY(14px);
           }
         }
       }
 
-      /* Movement removed, the arrival kept: opacity still carries the meaning. */
+      /* Movement removed, the arrival kept. */
       @media (prefers-reduced-motion: reduce) {
-        .hero > * {
+        .hero-copy,
+        .stage .screens,
+        .stage .stage-note {
           animation: fade 0.4s both;
         }
 
@@ -552,66 +964,170 @@ const title = `סיבוב — ${t('home.tagline')}`;
   </head>
 
   <body>
-    <div class="shell">
-      <div class="top">
-        <span class="mark">סיבוב</span>
-        <a class="top-link" href="/new/">{t('home.cta')}</a>
-      </div>
-    </div>
-
-    <div class="shell">
-      <div class="hero">
-        <div class="hero-copy">
-          <h1>{t('home.tagline')}</h1>
-          <p class="tagline">{t('home.subTagline')}</p>
-          <p class="lead">{t('home.lead')}</p>
-
-          <div class="actions">
-            <a class="cta" href="/new/">{t('home.cta')}</a>
-            <span class="actions-note">{t('home.ctaNote')}</span>
-          </div>
-        </div>
-
-        <div class="preview">
-          {/*
-            The radios are siblings of BOTH .switch and .device, not children
-            of .switch. A CSS-only tab is driven by ~ , which only reaches
-            later siblings — nested inputs matched nothing, so both frames
-            rendered and the second painted over the first.
-          */}
-          <input type="radio" name="preview" id="show-property" checked />
-          <input type="radio" name="preview" id="show-vehicle" />
-
-          <div class="switch">
-            <label for="show-property">{t('home.previewProperty')}</label>
-            <label for="show-vehicle">{t('home.previewVehicle')}</label>
-          </div>
-
-          <div class="device">
-            <iframe
-              class="frame-property"
-              src="/a/A7K2M/"
-              title={t('home.previewProperty')}
-              loading="lazy"
-              scrolling="no"
-              tabindex="-1"></iframe>
-            <iframe
-              class="frame-vehicle"
-              src="/a/V3M9Q/"
-              title={t('home.previewVehicle')}
-              loading="lazy"
-              scrolling="no"
-              tabindex="-1"></iframe>
-            <a class="device-open" href="/a/A7K2M/" aria-label={t('home.previewOpen')}></a>
-          </div>
-
-          <p class="preview-note">{t('home.previewNote')}</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="band">
+    <div class="dark">
       <div class="shell">
+        <header class="top">
+          <span class="mark">סיבוב</span>
+          <a class="top-link" href="/new/">{t('home.cta')}</a>
+        </header>
+      </div>
+
+      <div class="shell">
+        <div class="hero">
+          <div class="hero-copy">
+            <h1>{t('home.tagline')}</h1>
+            <p class="hero-sub">{t('home.subTagline')}</p>
+            <p class="hero-lead">{t('home.lead')}</p>
+
+            <div class="actions">
+              <a class="cta" href="/new/">{t('home.cta')}</a>
+              <span class="actions-note">{t('home.ctaNote')}</span>
+            </div>
+          </div>
+
+          <div class="stage">
+            <div class="screens">
+              {
+                screens.map(({ listing, label, cells, perUnit }) => (
+                  <div class="device">
+                    <a class="screen" href={`/a/${listing.slug}/`} aria-label={t('home.previewOpen')}>
+                      <div class="s-agent">
+                        <span class="dot" />
+                        <span class="who">{listing.seller.name}</span>
+                        <span class="brand">סיבוב</span>
+                      </div>
+
+                      <div class="s-hero">
+                        {/*
+                          Above the fold and the largest thing in the hero, so
+                          never lazy. A lazy LCP image is a guaranteed delay,
+                          and it renders as an empty box anywhere intersection
+                          never fires — a background tab, a headless render.
+                        */}
+                        <img
+                          src={largest(listing.media.cover, HERO_WIDTHS)}
+                          alt={listing.media.cover.alt}
+                          width={listing.media.cover.width}
+                          height={listing.media.cover.height}
+                          loading="eager"
+                          decoding="async"
+                        />
+                        <div class="s-veil">
+                          <div class="s-place">
+                            <Prose
+                              text={
+                                listing.location?.street
+                                  ? `${listing.location.street}, ${listing.location.city}`
+                                  : (listing.location?.city ?? '')
+                              }
+                            />
+                          </div>
+                          {/* The reference titles carry their own line break. */}
+                          <div class="s-title">
+                            <Prose text={listing.title.split('\n')[0] ?? ''} />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="s-price-bar">
+                        <div class="s-price">
+                          <bdi>{ils(listing.price)}</bdi>
+                        </div>
+                        {perUnit && (
+                          <div class="s-price-note">
+                            <bdi>{perUnit.amount}</bdi> {perUnit.per}
+                          </div>
+                        )}
+                      </div>
+
+                      <div class="s-facts">
+                        {cells.map((cell) => (
+                          <div class={cell.absent ? 's-fact off' : 's-fact'}>
+                            <div class="s-fact-val">
+                              {cell.bdi ? <bdi>{cell.value}</bdi> : cell.value}
+                            </div>
+                            <div class="s-fact-lbl">{cell.label}</div>
+                            {cell.verified && <span class="s-chip">מאומת</span>}
+                          </div>
+                        ))}
+                      </div>
+                    </a>
+                    <span class="device-label">{label}</span>
+                  </div>
+                ))
+              }
+            </div>
+
+            <p class="stage-note">{t('home.devicesNote')}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* The moat, demonstrated. Three real cells in the three real states. */}
+    <section>
+      <div class="shell">
+        <div class="section-head">
+          <h2>{t('home.sourcesTitle')}</h2>
+          <p>{t('home.proofCaption')}</p>
+        </div>
+
+        <div class="proof">
+          {
+            verifiedCell && (
+              <div class="proof-cell">
+                <div class="proof-val">
+                  {verifiedCell.bdi ? <bdi>{verifiedCell.value}</bdi> : verifiedCell.value}
+                </div>
+                <div class="proof-lbl">{verifiedCell.label}</div>
+                <div class="proof-mark">
+                  <span class="verified">מאומת</span>
+                  <span class="proof-cite">
+                    {verifiedCell.sourceName} · נכון ל־<bdi>{verifiedCell.sourceDate}</bdi>
+                  </span>
+                </div>
+                <p class="proof-note">{t('home.proofVerifiedNote')}</p>
+              </div>
+            )
+          }
+
+          {
+            sellerCell && (
+              <div class="proof-cell">
+                <div class="proof-val">
+                  {sellerCell.bdi ? <bdi>{sellerCell.value}</bdi> : sellerCell.value}
+                </div>
+                <div class="proof-lbl">{sellerCell.label}</div>
+                <div class="proof-mark">
+                  <span class="proof-said">לפי המוכר</span>
+                </div>
+                <p class="proof-note">{t('home.proofSellerNote')}</p>
+              </div>
+            )
+          }
+
+          {
+            absentCell && (
+              <div class="proof-cell off">
+                <div class="proof-val">{absentCell.value}</div>
+                <div class="proof-lbl">{absentCell.label}</div>
+                <div class="proof-mark">
+                  <span class="proof-said">לפי המוכר</span>
+                </div>
+                <p class="proof-note">{t('home.proofAbsentNote')}</p>
+              </div>
+            )
+          }
+        </div>
+      </div>
+    </section>
+
+    <section class="steps-band">
+      <div class="shell">
+        <div class="section-head">
+          <h2>{t('home.howTitle')}</h2>
+        </div>
+
         <ol class="steps">
           <li>
             <h3>{t('home.step1')}</h3>
@@ -627,33 +1143,67 @@ const title = `סיבוב — ${t('home.tagline')}`;
           </li>
         </ol>
       </div>
-    </div>
+    </section>
 
-    <div class="audience">
+    {/* CLAUDE.md §1: agents are the primary audience. This is their section. */}
+    <section class="dark">
       <div class="shell">
-        <h2>{t('home.forWhoTitle')}</h2>
-        <p>{t('home.forWhoBody')}</p>
-      </div>
-    </div>
+        <div class="section-head">
+          <h2>{t('home.forWhoTitle')}</h2>
+          <p>{t('home.forWhoBody')}</p>
+        </div>
 
-    <div class="band">
+        <div class="agent-grid">
+          <div>
+            <div class="demo">
+              <div class="demo-bar">
+                <span class="dot"></span>
+                <span class="slot">שם המשרד שלך</span>
+                <span class="brand">סיבוב</span>
+              </div>
+            </div>
+            <h3>{t('home.agentTitle')}</h3>
+            <p>{t('home.agentBody')}</p>
+          </div>
+
+          <div>
+            <div class="demo">
+              <div class="demo-msg">
+                <div class="demo-card">
+                  <img
+                    src={largest(propertyListing.media.cover, HERO_WIDTHS)}
+                    alt={propertyListing.media.cover.alt}
+                    width={propertyListing.media.cover.width}
+                    height={propertyListing.media.cover.height}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <div class="demo-card-text">
+                    <span class="demo-card-title">
+                      <Prose text={propertyListing.title.replace('\n', ' ')} />
+                    </span>
+                    <span class="demo-card-host">hasivuv.com</span>
+                  </div>
+                </div>
+                <div class="demo-msg-text">
+                  <bdi>{ils(propertyListing.price)}</bdi> · {propertyListing.location?.city}
+                </div>
+              </div>
+            </div>
+            <h3>{t('home.linkTitle')}</h3>
+            <p>{t('home.linkBody')}</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="closing">
       <div class="shell">
-        <section>
-          <h2>{t('home.sourcesTitle')}</h2>
-          <p>{t('home.sourcesBody')}</p>
-        </section>
-
-        <section>
-          <h2>{t('home.gapsTitle')}</h2>
-          <p>{t('home.gapsBody')}</p>
-        </section>
-
-        <section>
-          <h2>{t('home.linkTitle')}</h2>
-          <p>{t('home.linkBody')}</p>
-        </section>
+        <h2>{t('home.closingTitle')}</h2>
+        <a class="cta" href="/new/">{t('home.cta')}</a>
+        <span class="actions-note" style="color:var(--muted)">{t('home.ctaNote')}</span>
       </div>
-    </div>
+    </section>
 
     <footer>
       <div class="shell">

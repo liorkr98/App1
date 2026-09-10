@@ -69,3 +69,19 @@ test-build/
 
 # Cloudflare
 .wrangler/
+
+# Impeccable, installed per machine by `npx impeccable install`.
+# 16MB including a platform-specific binary under scripts/bin/<platform>, so
+# the Mac's copy is dead weight on the Windows machine and vice versa. Each
+# machine runs the installer itself.
+.github/skills/impeccable/
+.github/agents/
+.github/hooks/
+
+# No lockfiles, deliberately: web/package.json pins exact versions rather than
+# ranges (astro 7.3.1, react 19.2.8, not ^), and CI runs `npm install` rather
+# than `npm ci`. A lockfile here would be a second source of truth for the
+# same pins. If that strategy ever changes, commit the lockfiles and delete
+# this block — do not do one without the other.
+package-lock.json
+web/package-lock.json

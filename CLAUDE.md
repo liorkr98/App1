@@ -53,9 +53,33 @@ sellers are secondary. When a design decision trades one against the other,
 | PDF | **Puppeteer**, in its own Fly process group |
 | Payments | **Undecided.** Build behind a provider interface (PRD §6) |
 
-**Verification runs in CI, because it cannot run here.** npm is blocked on the
-primary dev machine by endpoint protection, so nothing installs, typechecks,
-lints or tests locally. `.github/workflows/verify.yml` is the gate.
+**Whether verification can run locally depends on which machine you are on.**
+This project is developed from two.
+
+| Machine | npm | What to do |
+|---|---|---|
+| **macOS** | works | Verify locally first. CI confirms. |
+| **Windows** | blocked by endpoint protection | Nothing installs, typechecks, lints or tests. CI is the only gate. |
+
+`.github/workflows/verify.yml` remains the authority on both — a green local
+run is evidence, not a substitute, because CI is the environment the deploy
+builds from.
+
+**On macOS, verify before claiming done.** At the root: `npm run typecheck`,
+`npm run lint`, `npm run test` (142 tests). In `web/`: `npx astro check` and
+`npm run build`. Then the gates in `scripts/` — `verify-web-logical-props`,
+`verify-bdi`, `verify-motion-fallbacks`, `verify-template-divergences`, and
+`report-page-weight`. Confirmed working 10 September 2026.
+
+Two macOS setup traps, both of which look like something else:
+
+- `npm install` in `web/` leaves esbuild's postinstall unapproved and `astro`
+  then fails at build time. Run `npm approve-scripts esbuild` once.
+- macOS has **no `timeout` command**. A backgrounded `timeout … npm install`
+  exits 0 having installed nothing, which reads as a successful install.
+
+**On Windows, do not claim a number you did not measure.** That is the failure
+this section exists to prevent, and it is unchanged.
 
 `expo` is still a root dependency and `app.config.ts` with it. They anchor the
 EAS project in `.eas/workflows/`, which was the original gate until the free
@@ -366,9 +390,11 @@ leave it out.
 4. **Verify before claiming done.** `npm run typecheck` and `npm run lint`, for
    every workspace you touched.
 5. **Say plainly what you could not verify.** Never report a number you did not
-   measure. npm is blocked on the primary dev machine and there is no Docker,
-   no Postgres and no PostGIS — a great deal cannot be run locally, and
-   pretending otherwise is the expensive failure.
+   measure. On the Windows machine npm is blocked, so nothing runs there at
+   all; on macOS npm works, but there is still no Docker, no Postgres and no
+   PostGIS on either — so the database, the ingestion and the worker cannot be
+   exercised locally regardless of which machine you are on (§2). Pretending
+   otherwise is the expensive failure.
 6. **Never** touch `.env`, commit a credential, or deploy to production.
 7. If a requirement is ambiguous, ask one question. Do not guess and build.
 

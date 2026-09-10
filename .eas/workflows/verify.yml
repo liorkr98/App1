@@ -1,8 +1,11 @@
 name: Verify
 
-# Stage verification runs in Expo's cloud because registry.npmjs.org is
-# blocked on the primary dev machine. This is the CLAUDE.md §10 step 4 gate:
-# typecheck and lint must pass before a stage is considered done.
+# Stage verification runs in the cloud because registry.npmjs.org is blocked on
+# the Windows dev machine — one of the two this project is developed from. It
+# reaches npm fine on the macOS one (CLAUDE.md §2), which is where local
+# verification is possible; the cloud run is the gate both machines share.
+# This is the CLAUDE.md §10 step 4 gate: typecheck and lint must pass before a
+# stage is considered done.
 #
 # EAS runs this even though the product is no longer a React Native app: the
 # `expo` root dependency and app.config.ts exist to anchor this project, and
