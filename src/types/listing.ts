@@ -181,6 +181,17 @@ export interface CategorySchema {
    */
   label: string;
 
+  /**
+   * The default role line under a seller's name — בעל הדירה, בעל הרכב.
+   *
+   * Here for the same reason `label` is: a category IS its schema, and the
+   * fallback wording for its owner is a property of the category rather than
+   * a translation. An agent who sets their own role (מתווך מורשה) overrides
+   * it; a private seller who never opens the profile page still gets a line
+   * that reads like a person instead of a blank.
+   */
+  ownerRole: string;
+
   facts: readonly FactDefinition[];
 
   /**

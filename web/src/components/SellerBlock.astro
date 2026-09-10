@@ -18,7 +18,20 @@ const { seller } = Astro.props;
     <div class="avatar" aria-hidden="true"></div>
     <div>
       <div class="seller-name">{seller.name}</div>
-      {seller.role && <div class="seller-role">{seller.role}</div>}
+      {/*
+        Role and agency on one line, separated by a middot, rather than two
+        stacked lines. They are one answer to one question — who is this
+        person — and stacking them gives the agency its own line of weight it
+        has not earned this far down the page. The agent bar at the top is
+        where the agency is the headline.
+      */}
+      {(seller.role || seller.agencyName) && (
+        <div class="seller-role">
+          {seller.role}
+          {seller.role && seller.agencyName && ' · '}
+          {seller.agencyName}
+        </div>
+      )}
     </div>
   </div>
 </section>

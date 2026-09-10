@@ -17,6 +17,7 @@ import type { CategorySchema } from '@/types/listing.js';
 export const propertySchema: CategorySchema = {
   category: 'property',
   label: 'דירה',
+  ownerRole: 'בעל הדירה',
 
   /*
    * Area first, because price per m² is the number an investor compares
