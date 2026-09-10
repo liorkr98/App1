@@ -1,0 +1,487 @@
+---
+import { shareMessage, whatsappShareUrl } from '@/features/listings/share-message';
+import { toCells } from '../../../lib/facts';
+import { ils } from '../../../lib/format';
+import { listings } from '../../../lib/listings';
+import '../../../styles/tokens.css';
+
+/**
+ * The share kit. AN AGENT TOOL, not a buyer page.
+ *
+ * It exists because of one sentence from a working agent: to send a listing to
+ * a new buyer, they have to find the message they sent someone else and copy
+ * it. The job is RETRIEVAL, not creation — the same property goes to buyers
+ * over weeks, and every send today means scrolling WhatsApp for something they
+ * typed once.
+ *
+ * So this page is three things, each one tap: the message, the image, the
+ * link. Nothing to compose, nothing to remember, and identical every time.
+ *
+ * JavaScript is the point here rather than something to justify. The listing
+ * page ships none and the design contract forbids reaching for it there; this
+ * is a tool, and a tool that cannot copy to the clipboard is a poster.
+ */
+export function getStaticPaths() {
+  return listings.map((listing) => ({ params: { slug: listing.slug }, props: { listing } }));
+}
+
+const { listing } = Astro.props;
+
+const site = Astro.site?.origin ?? '';
+const url = `${site}/a/${listing.slug}/`;
+
+/**
+ * Facts for the teaser, in schema order.
+ *
+ * Absences are dropped. "אין מחסן" is honest information on the page, where a
+ * buyer is weighing the whole property, and it is a strange thing to lead with
+ * in a message whose only job is to earn a tap.
+ */
+const cells = toCells(listing.category, listing.facts);
+const teaser = cells
+  .filter((cell) => !cell.absent && cell.value !== 'אין')
+  .slice(0, 4)
+  .map((cell) => {
+    if (cell.value === 'יש') return cell.label;
+    if (cell.pairedValue !== undefined) return `${cell.label} ${cell.value} / ${cell.pairedValue}`;
+    return `${cell.value} ${cell.label}`;
+  });
+
+const place = listing.location?.street
+  ? `${listing.location.street}, ${listing.location.city}`
+  : listing.location?.city;
+
+const message = shareMessage({
+  title: listing.title,
+  price: ils(listing.price),
+  facts: teaser,
+  ...(place ? { place } : {}),
+  url,
+});
+
+const waHref = whatsappShareUrl(message);
+
+/**
+ * The message, split so every number can sit in its own <bdi> (§4.2).
+ *
+ * The block is shown exactly as it will arrive, which means it is Hebrew
+ * prose full of digits — the case the rule exists for. Copying is unaffected:
+ * the clipboard is written from the JavaScript string, never from the DOM, so
+ * the markup here changes what is READ and not what is SENT.
+ *
+ * A run must begin and end on a digit, so the comma after a house number
+ * stays in the prose where it belongs. A URL line is one isolate rather than
+ * a number split — otherwise a slug like A7K2M shatters into five pieces.
+ */
+const NUMBER = /(₪?\d(?:[\d,./:-]*\d)?)/g;
+
+const isolate = (line: string): { text?: string; bdi?: string }[] => {
+  if (/^https?:\/\//.test(line.trim())) return [{ bdi: line }];
+
+  const out: { text?: string; bdi?: string }[] = [];
+  let last = 0;
+  for (const match of line.matchAll(NUMBER)) {
+    if (match.index > last) out.push({ text: line.slice(last, match.index) });
+    out.push({ bdi: match[0] });
+    last = match.index + match[0].length;
+  }
+  if (last < line.length) out.push({ text: line.slice(last) });
+  return out;
+};
+
+const messageLines = message.split('\n').map(isolate);
+
+// Everything the canvas needs, handed over as data rather than scraped back
+// out of the DOM.
+const card = {
+  cover: listing.media.cover.url,
+  price: ils(listing.price),
+  title: listing.title.replace(/\s*\n\s*/g, ' '),
+  place: place ?? '',
+  facts: teaser.slice(0, 3),
+  agent: listing.seller.name,
+  agency: listing.seller.agencyName ?? '',
+  url: url.replace(/^https?:\/\//, '').replace(/\/$/, ''),
+};
+---
+
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#FBFAF7" />
+    <title>שיתוף · {card.title}</title>
+
+    {/* An agent's workspace. Never indexed, never previewed. */}
+    <meta name="robots" content="noindex,nofollow" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Assistant:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style is:global>
+      html {
+        background: var(--stone);
+        color-scheme: light;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: rgba(74, 93, 58, 0.18);
+      }
+
+      body {
+        font-family: 'Assistant', system-ui, sans-serif;
+        background: var(--plaster);
+        color: var(--ink);
+        font-size: var(--t-body);
+        line-height: 1.62;
+        max-width: 620px;
+        margin-inline: auto;
+        padding-block-end: 3rem;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .head {
+        padding: 1.75rem var(--gut) 1.25rem;
+        border-block-end: 1px solid var(--stone);
+      }
+
+      h1 {
+        font-family: 'Frank Ruhl Libre', serif;
+        font-weight: 700;
+        font-size: var(--t-h2);
+        line-height: 1.2;
+        letter-spacing: -0.015em;
+      }
+
+      .head p {
+        font-size: var(--t-label);
+        font-weight: 600;
+        color: var(--muted);
+        margin-block-end: 0.2rem;
+      }
+
+      section {
+        padding: 1.6rem var(--gut);
+        border-block-end: 1px solid var(--stone);
+      }
+
+      h2 {
+        font-family: 'Frank Ruhl Libre', serif;
+        font-weight: 500;
+        font-size: 1.1rem;
+        margin-block-end: 0.2rem;
+      }
+
+      .why {
+        font-size: var(--t-label);
+        color: var(--muted);
+        margin-block-end: 0.9rem;
+      }
+
+      /* The message, shown exactly as it will arrive. */
+      .message {
+        white-space: pre-wrap;
+        font-size: 0.95rem;
+        line-height: 1.7;
+        padding: 0.9rem 1rem;
+        background: var(--stone-warm);
+        border-radius: 6px;
+        border-inline-start: 3px solid var(--olive);
+      }
+
+      .row {
+        display: flex;
+        gap: 0.6rem;
+        margin-block-start: 0.9rem;
+        flex-wrap: wrap;
+      }
+
+      button,
+      .action {
+        flex: 1 1 auto;
+        /* 44px is the platform touch-target floor. An agent uses this with a
+           thumb, one-handed, while talking to somebody. */
+        min-block-size: 44px;
+        padding: 0.8rem 1.1rem;
+        font: inherit;
+        font-weight: 700;
+        color: var(--plaster);
+        background: var(--olive);
+        border: none;
+        border-radius: 6px;
+        text-align: center;
+        text-decoration: none;
+        cursor: pointer;
+        transition:
+          transform var(--press) var(--ease-out),
+          background var(--press) var(--ease-out);
+      }
+
+      button:hover,
+      .action:hover {
+        background: var(--olive-lift);
+      }
+
+      button:active,
+      .action:active {
+        transform: scale(0.97);
+      }
+
+      button.quiet {
+        color: var(--ink);
+        background: none;
+        border: 1px solid var(--stone);
+      }
+
+      button.quiet:hover {
+        background: var(--stone-warm);
+      }
+
+      :focus-visible {
+        outline: 2px solid var(--olive);
+        outline-offset: 3px;
+      }
+
+      /* The Status image, shown at a size a thumb can judge. */
+      .preview {
+        display: block;
+        inline-size: min(260px, 100%);
+        aspect-ratio: 9 / 16;
+        margin-block-start: 0.9rem;
+        border: 1px solid var(--stone);
+        border-radius: 6px;
+        background: var(--stone);
+      }
+
+      .note {
+        font-size: var(--t-label);
+        color: var(--muted);
+        margin-block-start: 0.75rem;
+      }
+
+      /* aria-live region: it must occupy space before it speaks, or the page
+         jumps every time a copy succeeds. */
+      .said {
+        min-block-size: 1.4em;
+        font-size: var(--t-label);
+        font-weight: 600;
+        color: var(--olive);
+        margin-block-start: 0.6rem;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="head">
+      <p>שיתוף מודעה</p>
+      <h1>{card.title}</h1>
+    </div>
+
+    <section>
+      <h2>ההודעה</h2>
+      <p class="why">מוכנה לשליחה. אותו נוסח בכל פעם, בלי לחפש אותו בשיחה קודמת.</p>
+
+      <div class="message" id="message" dir="rtl">{
+        messageLines.map((parts, index) => (
+          <Fragment>
+            {index > 0 && '\n'}
+            {parts.map((part) => (part.bdi ? <bdi>{part.bdi}</bdi> : part.text))}
+          </Fragment>
+        ))
+      }</div>
+
+      <div class="row">
+        <a class="action" href={waHref} target="_blank" rel="noopener">שליחה בוואטסאפ</a>
+        <button type="button" class="quiet" data-copy="message">העתקת ההודעה</button>
+      </div>
+
+      <p class="said" role="status" aria-live="polite" id="said"></p>
+    </section>
+
+    <section>
+      <h2>תמונה לסטטוס</h2>
+      <p class="why">
+        סטטוס נצפה כתמונה ולא כקישור, ולכן הכתובת מודפסת עליה בגודל שאפשר להקליד.
+      </p>
+
+      <canvas class="preview" id="card" width="1080" height="1920" role="img" aria-label="תצוגה מקדימה של תמונת הסטטוס"></canvas>
+
+      <div class="row">
+        <button type="button" id="download">הורדת התמונה</button>
+      </div>
+      <p class="note" id="canvas-note"></p>
+    </section>
+
+    <section>
+      <h2>הקישור</h2>
+      <div class="row">
+        <button type="button" class="quiet" data-copy="url">העתקת הקישור</button>
+        <a class="action quiet" href={`/a/${listing.slug}/`}>פתיחת העמוד</a>
+      </div>
+      <p class="note"><bdi>{url}</bdi></p>
+    </section>
+
+    <script is:inline define:vars={{ card, message, url }}>
+      // ---------- copy ----------
+      const said = document.getElementById('said');
+      const values = { message, url };
+
+      const say = (text) => {
+        if (said) said.textContent = text;
+        window.setTimeout(() => {
+          if (said && said.textContent === text) said.textContent = '';
+        }, 2600);
+      };
+
+      for (const button of document.querySelectorAll('[data-copy]')) {
+        button.addEventListener('click', async () => {
+          const value = values[button.dataset.copy];
+          try {
+            await navigator.clipboard.writeText(value);
+            say('הועתק');
+          } catch {
+            // Clipboard access can be refused — an insecure origin, a browser
+            // that wants a user gesture it did not see, or a permission
+            // policy. Selecting the text is the fallback that always works.
+            const node = document.getElementById('message');
+            if (node && button.dataset.copy === 'message') {
+              const range = document.createRange();
+              range.selectNodeContents(node);
+              const selection = window.getSelection();
+              selection?.removeAllRanges();
+              selection?.addRange(range);
+              say('סומן — אפשר להעתיק');
+            } else {
+              say('לא הצלחנו להעתיק');
+            }
+          }
+        });
+      }
+
+      // ---------- the Status image ----------
+      const canvas = document.getElementById('card');
+      const note = document.getElementById('canvas-note');
+      const W = 1080;
+      const H = 1920;
+
+      const drawCard = async () => {
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return false;
+
+        // The faces must be RESIDENT before anything is painted. A canvas does
+        // not wait for a webfont: it silently falls back, and the export is
+        // wrong in a way that only shows up after it has been posted.
+        if (document.fonts && document.fonts.load) {
+          await Promise.all([
+            document.fonts.load('700 120px "Frank Ruhl Libre"'),
+            document.fonts.load('900 64px "Frank Ruhl Libre"'),
+            document.fonts.load('600 40px "Assistant"'),
+          ]);
+          await document.fonts.ready;
+        }
+
+        ctx.fillStyle = '#FBFAF7';
+        ctx.fillRect(0, 0, W, H);
+
+        // --- photograph, cover-fitted into the top two thirds ---
+        const photoH = Math.round(H * 0.62);
+        try {
+          const image = await new Promise((resolve, reject) => {
+            const element = new Image();
+            element.onload = () => resolve(element);
+            element.onerror = reject;
+            element.src = card.cover;
+          });
+
+          const scale = Math.max(W / image.width, photoH / image.height);
+          const drawW = image.width * scale;
+          const drawH = image.height * scale;
+          ctx.drawImage(image, (W - drawW) / 2, (photoH - drawH) / 2, drawW, drawH);
+        } catch {
+          ctx.fillStyle = '#E4E0D6';
+          ctx.fillRect(0, 0, W, photoH);
+        }
+
+        // Gradient into the ink block, so the type below has a ground.
+        const veil = ctx.createLinearGradient(0, photoH - 320, 0, photoH);
+        veil.addColorStop(0, 'rgba(17,18,8,0)');
+        veil.addColorStop(1, 'rgba(17,18,8,1)');
+        ctx.fillStyle = veil;
+        ctx.fillRect(0, photoH - 320, W, 320);
+
+        ctx.fillStyle = '#111208';
+        ctx.fillRect(0, photoH, W, H - photoH);
+
+        // --- type, right-aligned because the whole thing is Hebrew ---
+        ctx.direction = 'rtl';
+        ctx.textAlign = 'right';
+        const right = W - 88;
+        let y = photoH - 150;
+
+        ctx.fillStyle = '#FBFAF7';
+        ctx.font = '900 68px "Frank Ruhl Libre", serif';
+        ctx.fillText(card.title, right, y, W - 176);
+
+        if (card.place) {
+          y += 62;
+          ctx.font = '400 38px "Assistant", sans-serif';
+          ctx.fillStyle = 'rgba(251,250,247,.85)';
+          ctx.fillText(card.place, right, y, W - 176);
+        }
+
+        y = photoH + 150;
+        ctx.fillStyle = '#FBFAF7';
+        ctx.font = '700 128px "Frank Ruhl Libre", serif';
+        ctx.fillText(card.price, right, y, W - 176);
+
+        if (card.facts.length > 0) {
+          y += 82;
+          ctx.font = '400 42px "Assistant", sans-serif';
+          ctx.fillStyle = '#9C9D93';
+          ctx.fillText(card.facts.join(' · '), right, y, W - 176);
+        }
+
+        // Olive rule, then the two things that make it actionable: who is
+        // selling, and an address somebody can type.
+        ctx.fillStyle = '#5F7749';
+        ctx.fillRect(right - 180, H - 300, 180, 6);
+
+        ctx.font = '600 44px "Assistant", sans-serif';
+        ctx.fillStyle = '#FBFAF7';
+        ctx.fillText(card.agency ? `${card.agent} · ${card.agency}` : card.agent, right, H - 210, W - 176);
+
+        // The URL is Latin inside a right-to-left canvas: draw it as its own
+        // left-to-right run or the slashes migrate.
+        ctx.direction = 'ltr';
+        ctx.textAlign = 'right';
+        ctx.font = '600 40px "Assistant", sans-serif';
+        ctx.fillStyle = '#9C9D93';
+        ctx.fillText(card.url, right, H - 130, W - 176);
+
+        return true;
+      };
+
+      drawCard().then((ok) => {
+        if (!ok && note) note.textContent = 'לא הצלחנו לצייר את התמונה בדפדפן הזה.';
+      });
+
+      document.getElementById('download')?.addEventListener('click', () => {
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            if (note) note.textContent = 'לא הצלחנו לייצא את התמונה.';
+            return;
+          }
+          const href = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = href;
+          link.download = `${card.url.split('/').pop() || 'listing'}.png`;
+          link.click();
+          URL.revokeObjectURL(href);
+        }, 'image/png');
+      });
+    </script>
+  </body>
+</html>
