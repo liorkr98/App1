@@ -178,3 +178,107 @@ structurally close to what exists, that is a finding, not a failure to try.
 Where it clearly argues for change: the agent bar's position (§5), the missing
 image artefact (§2), and the fact that a placeholder photograph undermines the
 element the research says matters most (§3).
+
+---
+
+# Answers, and what they decide
+
+Answered 10 September 2026. The brief above is research; this section is
+decisions, and it is now the thing to build against.
+
+## 1. Status — yes, and the image is a real output
+
+**Decision: generate a portrait share image, and keep the link card.**
+
+Both surfaces are real. A link pasted into a chat gets the 1200×630 card §6
+already describes. A Status post gets an image, and we had none.
+
+The Status frame is portrait, full-screen, and read in about three seconds, so
+it carries: the cover photograph, the price, two or three numbers, the agent's
+name, and **the URL rendered legibly enough to type**. A Status viewer cannot
+reliably tap through, so the image has to survive being looked at rather than
+clicked.
+
+It can be produced client-side on a canvas from data already on the page. No
+server, no sharp, no credentials — which means it can be built now.
+
+## 2. The complaint that reorders everything
+
+> They can't edit. And to send a listing to a new buyer they have to look up
+> the message they sent someone else and copy it.
+
+Two problems, and the second is the more valuable one.
+
+**Retrieval, not creation, is the job.** An agent sends the same property to
+buyers over weeks. Every send means searching WhatsApp for a message they
+wrote earlier and copying it out. The work is not making the listing — it is
+finding it again.
+
+So the product is not "a tool that builds a nice page". It is **"your
+listings, ready to send"**: a place where an agent's properties live, each one
+one tap from the message, the image and the link.
+
+That outranks further polish on the listing page. The page is the artefact;
+the share kit is the product.
+
+**Editing must not break the link.** A listing is editable after publishing
+and the slug never changes. The OG image already carries its hash in the
+filename (§6), so an edited listing gets a fresh card instead of a stale one —
+that mechanism was built for exactly this and is now load-bearing.
+
+## 3. Agent branding stays above the fold
+
+Confirmed. The agent bar keeps its position above the hero.
+
+Noted as a real cost rather than settled comfortably: it spends the top strip
+of the buyer's first screen on the person the buyer did not open the page for.
+It is justified by who pays, and §1 already says agents win.
+
+## 4. Both buyer types — the seller chooses
+
+**Decision: a per-listing choice that reorders the first screen.**
+
+A private buyer scans rooms, floor and neighbourhood. An investor scans price
+per m². Rather than guess or average them into something that serves neither,
+the editor asks once and the facts grid leads with what that answer implies.
+
+This makes `priceDenominator` — already in the schema for `₪ per m²` — the
+first cell rather than a footnote when the answer is "investor".
+
+## 5. Pre-portal — yes, lean into it
+
+**Recommendation, accepted as the direction.**
+
+It is where agents already work: broadcast lists and Status carry off-market
+listings before they reach the portals. Three reasons it is the right wedge.
+
+**There is no incumbent at that moment.** Before a property is on Yad2 there
+is nothing to displace — the alternative is a paragraph of text typed into
+WhatsApp.
+
+**It gives the send a reason to be now.** "Before it goes up" is urgency the
+product gets for free and a portal listing can never have.
+
+**It avoids competing on inventory.** We do not need more listings than the
+portals; we need to be the first place each one appears.
+
+Implication for the page: a listing that is not yet on the portals should be
+able to say so. That state does not exist today.
+
+---
+
+# What this changes about what gets built next
+
+Ordered by the answers above, not by the previous stage plan.
+
+1. **The share kit** — per listing: the ready-to-send WhatsApp message, the
+   Status image, the link. One tap each. This is the answer to complaint 2 and
+   the highest-value thing in the document.
+2. **The listing library** — the agent's properties in one place, so there is
+   somewhere to share *from*. Needs auth and persistence, so it follows.
+3. **Editing that keeps the link** — the other half of complaint 2.
+4. **Buyer-type ordering** in the facts grid, from a question the editor asks.
+5. **The pre-portal state** on the page.
+
+Further visual work on the listing page ranks below all five. The research in
+§3 validated its structure, and the complaint in §2 is not about how it looks.
