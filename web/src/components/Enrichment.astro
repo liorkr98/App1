@@ -93,9 +93,11 @@ const sources = isProperty
     ]);
 ---
 {/*
-  The id is not decoration. The homepage preview embeds this page in a frame
-  and opens it at #enrich — see web/src/pages/index.astro for why the top of
-  the page cannot be used.
+  A deep link to the block, so a seller can point someone straight at it.
+
+  It was briefly used by the homepage preview to open the frame here; that
+  does not work — an iframe fragment does not scroll the embedded document,
+  measured both ways. index.astro records the attempt so nobody repeats it.
 */}
 <section class="enrich reveal" id="enrich">
   <h2>{isProperty ? <Fragment>מה יש <span class="h2-num">מסביב</span></Fragment> : <Fragment>מה <span class="h2-num">מאומת</span></Fragment>}</h2>

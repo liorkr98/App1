@@ -36,15 +36,24 @@ import '../styles/tokens.css';
  * product, because it IS the product. Two radio inputs switch between the
  * property and the vehicle with no JavaScript at all.
  *
- * IT OPENS AT #enrich, AND THAT IS NOT A TRICK. The B2 hero is 84svh, and
- * inside an iframe svh resolves against the FRAME — so the hero is 84% of the
- * preview no matter how tall the frame is made. Showing the top of the page
- * therefore shows a dark bar, a photograph and a price, and with no real
- * photographs in the samples that is a grey rectangle arguing for nothing.
+ * IT SHOWS THE TOP OF THE PAGE, AND THAT IS FORCED, NOT CHOSEN.
  *
- * The enrichment block is what the paragraphs beside this are about, so the
- * preview opens there. A fragment, not an offset: an offset would be a pixel
- * number tied to one listing's length and wrong for the next one.
+ * The B2 hero is 84svh, and inside an iframe svh resolves against the FRAME —
+ * so the hero occupies 84% of the preview however tall the frame is made.
+ * Getting past it needs the inner document scrolled, and an iframe clips its
+ * document to its own box, so there is no CSS offset that reaches further
+ * down.
+ *
+ * Three routes were tried and measured on the deployed page. A #enrich
+ * fragment does not fire: scrollY stayed 0 with and without scrolling="no".
+ * Dropping scrolling="no" to allow it costs 15px of the 390 to a scrollbar
+ * and still did not scroll. A transform offset cannot work either, because
+ * the taller iframe it needs grows the hero by the same proportion.
+ *
+ * So the preview shows a dark agent bar, a photograph and a price. That is
+ * honestly what the top of the page IS. It reads as weak here only because
+ * both sample listings point at a flat grey placeholder — the fix is a real
+ * photograph, not another layer of scrolling tricks.
  */
 
 const title = `סיבוב — ${t('home.tagline')}`;
@@ -577,14 +586,14 @@ const title = `סיבוב — ${t('home.tagline')}`;
           <div class="device">
             <iframe
               class="frame-property"
-              src="/a/A7K2M/#enrich"
+              src="/a/A7K2M/"
               title={t('home.previewProperty')}
               loading="lazy"
               scrolling="no"
               tabindex="-1"></iframe>
             <iframe
               class="frame-vehicle"
-              src="/a/V3M9Q/#enrich"
+              src="/a/V3M9Q/"
               title={t('home.previewVehicle')}
               loading="lazy"
               scrolling="no"
