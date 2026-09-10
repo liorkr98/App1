@@ -107,7 +107,7 @@
   background: var(--olive);
   transform-origin: 100% 50%;
   transform: scaleX(var(--progress, 0));
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.3s var(--ease-out);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -170,8 +170,19 @@
   border-block-start: none;
 }
 
+.choice {
+  transition:
+    transform var(--press) var(--ease-out),
+    background var(--press) var(--ease-out),
+    border-color var(--press) var(--ease-out);
+}
+
 .choice:hover {
   background: var(--stone-warm);
+}
+
+.choice:active {
+  transform: scale(0.99);
 }
 
 .choice.chosen {
@@ -301,6 +312,17 @@ textarea {
   cursor: pointer;
 }
 
+.fact-toggle button {
+  transition:
+    transform var(--press) var(--ease-out),
+    border-color var(--press) var(--ease-out),
+    color var(--press) var(--ease-out);
+}
+
+.fact-toggle button:active {
+  transform: scale(0.97);
+}
+
 .fact-toggle button[aria-pressed='true'] {
   border-color: var(--olive);
   color: var(--olive);
@@ -413,6 +435,14 @@ textarea {
   pointer-events: none;
 }
 
+.picker:active {
+  transform: scale(0.99);
+}
+
+.picker {
+  transition: transform var(--press) var(--ease-out);
+}
+
 .picker:focus-within {
   outline: 2px solid var(--olive);
   outline-offset: 2px;
@@ -484,6 +514,10 @@ textarea {
 
 .nav button {
   flex: 1;
+  transition:
+    transform var(--press) var(--ease-out),
+    background var(--press) var(--ease-out),
+    border-color var(--press) var(--ease-out);
   padding: 1.02rem;
   font: inherit;
   font-size: 1.06rem;
@@ -501,8 +535,7 @@ textarea {
 }
 
 .nav button:active:not(:disabled) {
-  background: var(--olive-lift);
-  transform: translateY(1px);
+  transform: scale(0.97);
 }
 
 /* The back button is an outline, so its hover has to move a different

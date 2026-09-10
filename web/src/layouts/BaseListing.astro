@@ -306,8 +306,12 @@ p + p{margin-top:.9rem}
   border:none;border-radius:6px;text-decoration:none;
   box-shadow:0 6px 22px -10px rgba(25,26,21,.55);
 }
+/* Press feedback is a SCALE, not a nudge. Nothing in the physical world
+   moves down by one pixel when pressed; things compress. 0.97 is inside the
+   0.95–0.98 band the standards give — enough to feel, too little to notice. */
+.cta{transition:transform var(--press) var(--ease-out),background var(--press) var(--ease-out)}
 .cta:hover{background:var(--olive-lift)}
-.cta:active{background:var(--olive-lift);transform:translateY(1px)}
+.cta:active{background:var(--olive-lift);transform:scale(.97)}
 .cta:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
 
 footer{padding:1.6rem var(--gut) .5rem;text-align:center;font-size:.8rem;color:var(--muted)}

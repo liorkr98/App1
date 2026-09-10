@@ -233,8 +233,8 @@ const title = `סיבוב — ${t('home.tagline')}`;
         /* Offset and a soft blur, not a hard drop. */
         box-shadow: 0 2px 8px rgba(25, 26, 21, 0.12);
         transition:
-          transform 0.12s ease,
-          box-shadow 0.12s ease;
+          transform var(--press) var(--ease-out),
+          box-shadow var(--press) var(--ease-out);
       }
 
       .cta:hover {
@@ -243,7 +243,7 @@ const title = `סיבוב — ${t('home.tagline')}`;
 
       /* 100–150ms is the band for immediate feedback. */
       .cta:active {
-        transform: translateY(1px);
+        transform: scale(0.97);
         box-shadow: 0 1px 4px rgba(25, 26, 21, 0.14);
       }
 
