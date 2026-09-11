@@ -38,14 +38,18 @@ past drafts drifted into arguing to buyers.
 
 ## Product Purpose
 
-A seller uploads photos of an apartment or a car and gets back a short,
-professional Hebrew page, enriched with verified public data, shareable by one
+A seller uploads photos of an apartment or a car, picks one of three
+templates, and gets back a short, professional Hebrew page, shareable by one
 link.
 
-**The moat is the data, not the page.** A pretty page is a one-week build for
-anyone who wants to copy it. What compounds is the enrichment layer: proximity
-from OSM/GTFS/Ministry of Education for property, and register verification
-against the Ministry of Transport for vehicles.
+**The product is speed to a page an agent is proud to send, and a choice of how
+it looks.** Photos in, a few fields, one of three templates, a link — four
+minutes.
+
+**Superseded 11 September 2026:** this file previously said "the moat is the
+data, not the page". Agents do not want validated data; they want a fast,
+professional, shareable page. The enrichment layer is still built and still
+running, demoted rather than deleted. See CLAUDE.md §1.
 
 The homepage's single job: **convince an agent to build their first listing.**
 Success is a click through to `/new`, not a signup — there is no account until
@@ -59,10 +63,14 @@ The voice is declarative and short. It states what the product does and what
 it refuses to do, and it never sells. The existing Hebrew copy is the
 reference and it is already right:
 
-- מודעה שאפשר לבדוק
-- מה שמאומת — כתוב מאין
-- מה שלא יודעים — לא כותבים
-- בלי הרשמה. התשלום רק לפני הפרסום.
+- המודעה שלך, מוכנה לשליחה
+- שלוש תבניות. אותו נכס.
+- התבנית קובעת איך העמוד נראה, לא מה כתוב בו.
+- בלי הרשמה עד הפרסום.
+
+The provenance lines this list used to quote — מה שמאומת — כתוב מאין, מה שלא
+יודעים — לא כותבים — were removed from the homepage with the pivot. The shape
+is the thing to keep: a claim, an em-dash, the limit.
 
 Note the shape: a claim, an em-dash, the limit. **Do not write copy that
 promises.** The emotional goal is relief that someone finally did not
@@ -79,9 +87,10 @@ Hebrew is the design baseline, never a translation of an English layout.
 - **The SaaS landing template.** Hero metric row, three identical icon-and-
   heading cards, gradient accents, logo wall, "trusted by". This product has
   no logos to wall and no metrics to boast.
-- **Canva-grade prettiness with no data.** PRD §1: shipping a beautiful page
-  without the enrichment layer is shipping Canva. The homepage must not imply
-  the page is the product.
+- **Prettiness with nothing behind it.** No longer "Canva" — since the pivot
+  the page IS most of the product, so the anti-reference is narrower: a
+  template that looks good in a screenshot and falls apart on a real listing
+  with a long Hebrew title, eleven photos and no address.
 - **Apologetic demos.** A preview that shows a fragment and then explains in
   small grey text why it is a fragment. If a demonstration needs an excuse,
   build a different demonstration.
@@ -89,16 +98,16 @@ Hebrew is the design baseline, never a translation of an English layout.
 ## Design Principles
 
 1. **Demonstrate, never claim.** Every argument on this page should be made by
-   showing the real artefact. The provenance distinction is the product's
-   whole trust proposition — show a real verified chip next to a real
-   seller-declared one, do not write a paragraph about honesty.
+   showing the real artefact. Since the pivot that means the templates: one
+   listing rendered three ways says "a few options, all professional" faster
+   than a sentence about it can be read.
 2. **The homepage must not be quieter than the thing it advertises.** The
    listing page commits: a 6× type scale, a 900-weight Hebrew serif, a
    full-bleed photograph, an inverted enrichment section. A landing page in
    a smaller, softer key reads as the weaker product.
-3. **Consistency across listings is the agent's pitch, not beauty.** One
-   device mockup cannot say "all of your listings will look like this." Two
-   categories shown side by side can.
+3. **Consistency across listings is the agent's pitch.** One device mockup
+   cannot say "all of your listings will look like this." Several shown side
+   by side can — which is also how the template choice is presented.
 4. **Nothing on this page may drift from the product.** Sample content is
    imported from `web/src/lib/listings.ts`, the same module the real pages
    render. If the data changes, the homepage changes with it.
