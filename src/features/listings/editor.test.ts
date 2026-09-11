@@ -35,7 +35,7 @@ const ready = (): EditorState => ({
     fact('parking', 'חניה', null),
   ],
   description: 'הדירה משופצת ופונה לדרום.',
-  template: 'clean',
+  template: 'editorial',
   // The agent has a name and a dialable phone on their profile. Without this
   // the page's only button goes nowhere, so it blocks publishing.
   sellerReady: true,

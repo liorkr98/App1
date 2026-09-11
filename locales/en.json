@@ -172,12 +172,12 @@
     },
     "templates": {
       "hint": "",
-      "clean": "",
-      "cleanNote": "",
-      "gallery": "",
-      "galleryNote": "",
-      "luxury": "",
-      "luxuryNote": ""
+      "agency": "",
+      "agencyNote": "",
+      "editorial": "",
+      "editorialNote": "",
+      "dark": "",
+      "darkNote": ""
     },
     "photosHint": "",
     "earlier": "",

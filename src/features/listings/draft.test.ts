@@ -10,7 +10,7 @@ const state = (): EditorState => ({
   photoCount: 6,
   facts: answer(blankFacts('property'), 'rooms', 4),
   description: 'הדירה משופצת ופונה לדרום.',
-  template: 'clean',
+  template: 'editorial',
   entitlement: 'paid',
 });
 
@@ -23,7 +23,7 @@ describe('a draft survives a refresh', () => {
     assert.ok(restored);
     assert.equal(restored.category, 'property');
     assert.equal(restored.description, 'הדירה משופצת ופונה לדרום.');
-    assert.equal(restored.template, 'clean');
+    assert.equal(restored.template, 'editorial');
     assert.equal(restored.facts.find((fact) => fact.key === 'rooms')?.value, 4);
   });
 
