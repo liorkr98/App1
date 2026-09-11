@@ -22,9 +22,29 @@ disagree, RESEARCH.md wins.
 **Primary market:** Israel. **Primary language:** Hebrew. **Primary layout:**
 RTL. English is a secondary locale, never the design baseline.
 
-**The moat is the data, not the page.** A pretty page is a one-week build for
-anyone who wants to copy it. Treat the enrichment layer as the product and the
-page as its presentation.
+**The product is speed to a page an agent is proud to send.** Photos in, a few
+fields, a template, a link — four minutes, and it looks like an agency paid for
+it. That is what is being sold.
+
+> **PIVOT, 11 September 2026.** This section used to read "the moat is the
+> data, not the page", and PRD §1 called a page without the enrichment layer
+> "shipping Canva". Both are superseded, and the reason is worth keeping:
+> asked directly, the person selling this said agents **do not want validated
+> data**. They want a fast, professional, shareable page. The doctrine lost to
+> the market, which is the correct outcome — but it means the enrichment layer
+> is no longer the headline, and copy selling it has been removed from the
+> homepage.
+>
+> **The enrichment layer was NOT deleted, on purpose.** PostGIS, the proximity
+> queries, the schools/transit/OSM ingest and the provenance model all still
+> work and still run. They are off the critical path rather than gone, because
+> reversing a deletion costs months and reversing a demotion costs an
+> afternoon. If an agent ever asks for it, it is there.
+>
+> The one piece of that layer that stays prominent is the **vehicle plate
+> lookup**, reframed: it fills eight of twelve fields from one plate number, so
+> it belongs to the speed promise, not the trust one. It is sold as "type the
+> plate, the rest fills itself", never as "verified against the register".
 
 **Product:** סיבוב. **Domain:** hasivuv.com.
 

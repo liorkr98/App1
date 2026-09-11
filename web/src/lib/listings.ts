@@ -169,7 +169,7 @@ export const propertyListing: Listing = {
   // Street present, so the map section renders.
   location: { city: 'חולון', street: 'סוקולוב 42' },
   seller: { name: 'ליאור', phone: '972500000000', role: 'בעל הדירה' },
-  template: 'clean',
+  template: 'editorial',
   status: 'published',
   publishedAt: '2026-09-07T00:00:00.000Z',
   indexable: false,
@@ -255,7 +255,7 @@ export const vehicleListing: Listing = {
   // area. No street means no map section (DESIGN-CONTRACT §5.4).
   location: { city: 'ראשון לציון' },
   seller: { name: 'ליאור', phone: '972500000000', role: 'בעל הרכב' },
-  template: 'clean',
+  template: 'editorial',
   status: 'published',
   publishedAt: '2026-09-07T00:00:00.000Z',
   indexable: false,

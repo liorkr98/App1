@@ -35,13 +35,30 @@ Secondary consequences, all favourable:
 
 ### The differentiator
 
-A pretty page with photos is a one-week build for anyone who wants to copy it.
-**The moat is the data.** A page that knows what sold in this building over the
-last two years, or that the car's ownership history is verified against the
-Ministry of Transport, is months of assembly work and it compounds.
+> **SUPERSEDED 11 September 2026.** What follows was this document's central
+> claim and it is no longer the product's. Kept rather than deleted, because
+> the argument is still good and the reason it lost is the useful part.
+>
+> The claim: a pretty page is a one-week build for anyone who wants to copy it,
+> so **the moat is the data** — what sold in this building, the ownership
+> history against the Ministry of Transport. Months of assembly work, and it
+> compounds. "Shipping a beautiful page without the data layer is shipping
+> Canva."
+>
+> **Why it was overturned.** Asked directly, agents do not want validated data.
+> They want a page that looks professional and a link they can send before the
+> viewing ends. A moat nobody is asking to cross is not a moat; it is a cost.
+> Whether that answer survives contact with more than one agent is question 2
+> in `docs/OPPORTUNITIES.md`, and it is the one worth spending twenty minutes
+> on before building anything else.
 
-**This is not an enhancement to be added later. It is the product.** Shipping a
-beautiful page without the data layer is shipping Canva.
+**The differentiator is speed to a page an agent is proud to send**, and the
+choice of how it looks. Photos in, a few fields, a template, a link — four
+minutes, and it does not look like Yad2.
+
+The enrichment layer is still built, still running, and no longer the headline.
+It is off the critical path rather than deleted: reversing a deletion costs
+months and reversing a demotion costs an afternoon (CLAUDE.md §1).
 
 **In v1 the property half of that is PROXIMITY, not transactions** — what is
 around this address rather than what sold in this building. RESEARCH.md §1

@@ -50,7 +50,7 @@ const agency = listing.seller.agencyName;
   is BYTE-IDENTICAL for both categories, so CI can assert exact CSS equality
   and a fifth divergence cannot slip in as a style override.
 */}
-<html lang="he" dir="rtl" style={`--heroH:${heroHeight}`}>
+<html lang="he" dir="rtl" data-template={listing.template} style={`--heroH:${heroHeight}`}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -128,7 +128,7 @@ body{
 .agent-bar{
   display:flex;align-items:center;gap:.65rem;
   padding:.7rem var(--gut);
-  background:var(--ink-deep);color:var(--plaster);
+  background:var(--ink-deep);color:var(--on-dark);
   font-size:.86rem;
 }
 .agent-bar .dot{width:26px;height:26px;border-radius:50%;background:var(--olive-lift);flex:0 0 auto}
@@ -146,7 +146,7 @@ body{
   position:absolute;inset-inline:0;bottom:0;
   padding:7rem var(--gut) 1.6rem;
   background:linear-gradient(to top,rgba(17,18,8,.9) 12%,rgba(17,18,8,.55) 48%,transparent);
-  color:var(--plaster);
+  color:var(--on-dark);
 }
 .hero-place{font-size:.92rem;opacity:.88;margin-bottom:.35rem}
 .hero-title{
@@ -211,7 +211,7 @@ h2{
   line-height:1.2;margin-bottom:.85rem;
   text-wrap:balance;
 }
-h2 .h2-num{color:var(--olive);font-weight:700}
+h2 .h2-num{color:var(--olive-lift);font-weight:700}
 p{max-width:62ch}
 p + p{margin-top:.9rem}
 
@@ -232,8 +232,8 @@ p + p{margin-top:.9rem}
 /* ============================================================
    העשרה — הלב של המוצר. מספר הדקות הוא העוגן הוויזואלי.
    ============================================================ */
-.enrich{background:var(--ink-deep);color:var(--plaster);padding-block:2.8rem}
-.enrich h2{color:var(--plaster)}
+.enrich{background:var(--ink-deep);color:var(--on-dark);padding-block:2.8rem}
+.enrich h2{color:var(--on-dark)}
 .enrich-sub{color:#9C9D93;font-size:.88rem;margin-bottom:1.9rem}
 
 .egroup{margin-block-end:2.1rem}
@@ -287,7 +287,7 @@ p + p{margin-top:.9rem}
 .seller-row{display:flex;align-items:center;gap:1rem}
 .avatar{width:58px;height:58px;border-radius:50%;background:var(--stone);flex:0 0 auto}
 .seller-name{font-family:'Frank Ruhl Libre',serif;font-size:1.25rem;font-weight:500}
-.seller-role{font-size:.87rem;color:var(--muted)}
+.seller-role{font-size:.87rem;color:var(--muted-warm)}
 
 /* ============================================================
    CTA — עגינה תחתונה
@@ -317,7 +317,7 @@ p + p{margin-top:.9rem}
 footer{padding:1.6rem var(--gut) .5rem;text-align:center;font-size:.8rem;color:var(--muted)}
 footer a{color:var(--muted)}
 .odbl{font-size:.7rem;color:#96978E;margin-top:.5rem;line-height:1.6}
-.attribution{font-size:.7rem;color:#96978E;line-height:1.6}
+.attribution{font-size:.7rem;color:var(--muted);line-height:1.6}
 
 /* ============================================================
    תנועה — scroll-driven נטיבי. אפס JS.
@@ -359,6 +359,144 @@ footer a{color:var(--muted)}
   }
 
   .hero-veil{animation:rise .55s .08s both cubic-bezier(.2,.7,.3,1)}
+}
+
+/* ============================================================
+   התבניות — שלוש, ואותם נתונים בדיוק בכל אחת
+   ============================================================
+
+   HOW A TEMPLATE WORKS, AND WHY IT IS A PALETTE AND NOT A LAYOUT.
+
+   `listings.template` used to be written by the editor, stored in Postgres,
+   and READ BY NOTHING. All three names produced one identical page. This is
+   what makes them real.
+
+   Each template REDEFINES THE BASE TOKENS rather than adding a parallel set of
+   rules. Every selector below already reads --plaster, --ink, --olive and the
+   rest, so swapping those swaps the whole page and no rule has to know a
+   template exists. The consequence worth stating plainly: inside a template
+   the token names are ROLES, not colours. --plaster means "the page ground",
+   and under [data-template='dark'] that ground is nearly black.
+
+   The alternative — three parallel stylesheets, or a second token layer with
+   names like --page-bg — was rejected for one concrete reason. CI asserts the
+   two built listing pages carry BYTE-IDENTICAL CSS (verify-template-
+   divergences.mjs), which is what stops a fifth divergence appearing between
+   property and vehicle. One stylesheet carrying all three templates keeps that
+   guarantee exactly as it was. Three stylesheets would not.
+
+   Both sample listings are therefore on the SAME template. If one were moved
+   to another, that check would stop comparing like with like and would start
+   reporting a difference that is not a bug.
+
+   CONTRAST WAS MEASURED FOR EACH, not eyeballed. See docs/DESIGN.md. */
+
+/* ---------- משרדי — בהיר, מסודר, כתום ----------
+   The Quarter reference: the busiest of the three, closest to an agency's own
+   site. Orange rather than olive, and still not blue — CLAUDE.md §2's
+   exclusion is of blue specifically, because every Israeli property brand is
+   blue, and orange breaks from both. */
+/*
+  TYPE ON A DARK SURFACE, IN EVERY TEMPLATE.
+
+  The agent bar, the hero veil and the enrichment block sit on a dark ground
+  in all three templates — that is what those elements ARE. They used
+  var(--plaster), which reads correctly right up until a template redefines
+  --plaster as the page ground and that ground is nearly black: the hero title
+  then renders near-black over the photograph and the agent's name disappears
+  out of the bar. Caught on the running page, not in review.
+
+  So the three of them take a token that is a ROLE and not a palette entry. It
+  is deliberately not overridden below.
+*/
+html {
+  --on-dark: #fbfaf7;
+
+  /*
+    --muted on --stone-warm measures 4.35:1 — the same failure the homepage
+    hit, and it fails for the same reason: a token that clears AA on the
+    reading ground does not clear it on the tinted one. Carried down until it
+    does (4.83:1). Overridden by the dark template, where --stone-warm is a
+    dark surface and this would be dark-on-dark.
+  */
+  --muted-warm: #67685f;
+}
+
+html[data-template='agency'] {
+  --olive: #c2410c;
+  --olive-lift: #ea580c;
+  --ink-deep: #1c1917;
+  --stone: #e7e2da;
+  --stone-warm: #faf6f0;
+  --plaster: #ffffff;
+  --muted: #6b6259;
+}
+
+/* Softer corners and a carded facts grid: the structural half of the
+   difference, and the only place a template changes more than colour. */
+html[data-template='agency'] .facts {
+  gap: .5rem;
+  background: transparent;
+  border-block: 0;
+  padding-inline: var(--gut);
+}
+html[data-template='agency'] .fact {
+  border: 1px solid var(--stone);
+  border-radius: 8px;
+}
+html[data-template='agency'] .cta {
+  border-radius: 999px;
+}
+html[data-template='agency'] .hero-title {
+  font-weight: 700;
+}
+
+/* ---------- כהה — התמונות נושאות את העמוד ----------
+   Inverted. The enrichment block, which is --ink-deep on the other two, has to
+   become the LIGHT band here or it disappears into the page: a section that
+   exists to stand out cannot be the same value as its surroundings. */
+html[data-template='dark'] {
+  --plaster: #14150f;
+  --ink: #f3f1ea;
+  --ink-deep: #0a0b06;
+  --stone: #2c2e24;
+  --stone-warm: #1d1f16;
+  --muted: #a3a498;
+  --olive: #93ab73;
+  --olive-lift: #aac28c;
+}
+
+html[data-template='dark'] {
+  --muted-warm: #a3a498;
+}
+
+html[data-template='dark'] .enrich {
+  background: var(--stone-warm);
+}
+
+/* #83847B is a literal in the base, chosen against --ink-deep. Against this
+   template's lighter dark surface it falls to 4.41:1, just under the bar. */
+html[data-template='dark'] .source {
+  color: var(--muted);
+}
+
+/* --olive is the ACCENT on a dark ground and the CTA fill on a light one.
+   Filling a button with it here would put pale-on-pale; the button inverts
+   instead, which is also the only element on the page that should. */
+html[data-template='dark'] .cta {
+  background: var(--ink);
+  color: var(--plaster);
+}
+html[data-template='dark'] .cta:hover,
+html[data-template='dark'] .cta:active {
+  background: var(--olive-lift);
+  color: var(--ink-deep);
+}
+
+/* A photograph on a near-black page needs no veil to carry white type, and
+   the heavy gradient the light templates use reads as dirt here. */
+html[data-template='dark'] .hero-veil {
+  background: linear-gradient(to top, rgba(10, 11, 6, .92) 10%, rgba(10, 11, 6, .45) 45%, transparent);
 }
 </style>
 </head>

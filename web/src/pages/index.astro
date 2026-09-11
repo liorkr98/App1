@@ -5,96 +5,49 @@ import { ils } from '../lib/format';
 import { perUnitPrice } from '../lib/price';
 import { HERO_WIDTHS, largest } from '../lib/images';
 import Prose from '../components/Prose.astro';
+import { TEMPLATE_IDS } from '@/types/listing';
 import { propertyListing, vehicleListing } from '../lib/listings';
 import '../styles/tokens.css';
 
 /**
  * The homepage.
  *
- * WHO IT IS TALKING TO. An Israeli estate agent, on a phone, between
- * viewings. CLAUDE.md §1 makes agents the primary audience and this page is
- * the one surface that had forgotten it: the previous version argued to
- * nobody in particular and never once mentioned that the agent's own name
- * goes on top of every page they send. See docs/PRODUCT.md.
+ * REWRITTEN 11 September 2026 for the pivot. The previous version sold the
+ * enrichment layer: three provenance states shown as worked examples, copy
+ * about what is verified and what the seller declared, a section arguing that
+ * what we do not know we do not write.
  *
- * WHY IT WAS REBUILT, AND IT IS NOT A MATTER OF TASTE.
+ * That was a faithful rendering of CLAUDE.md §1 — "the moat is the data, not
+ * the page" — and the market said otherwise. An agent does not want validated
+ * data. They want a page that looks professional and a link they can send
+ * before the viewing ends. The doctrine has been updated to match rather than
+ * left to contradict the product; see CLAUDE.md §1 and docs/PRODUCT.md.
  *
- * `.band > .shell` set `grid-template-columns:repeat(3,1fr)` for the second
- * band's three <section>s. The FIRST band holds one child — the <ol> of
- * steps — so that ol was laid into a single 304px column of a 1425px page,
- * and its own `repeat(3,1fr)` then divided 304px into three columns of
- * SEVENTY-FIVE PIXELS each, 307px tall, stacked against one edge with
- * two-thirds of the band empty. Measured on the running page, not guessed.
- * The three steps were the least readable text in the product.
+ * WHAT THAT CHANGES HERE. The provenance section is gone. The centrepiece is
+ * now the thing an agent is actually choosing between: the SAME listing
+ * rendered in all three templates, side by side. "A few options, all of them
+ * professional" is the offer, and three screens make it in less time than a
+ * sentence about it would take to read.
  *
- * THE IFRAME PREVIEW IS GONE, AND ITS COMMENT EXPLAINS WHY BETTER THAN I CAN.
+ * THE SCREENS ARE STILL COMPOSED FROM REAL DATA. `propertyListing` comes from
+ * the module `/a/{slug}` renders, through the same `toCells`, `ils` and
+ * `perUnitPrice` the real pages use. The palettes below mirror the template
+ * layer in BaseListing.astro. Those are two copies of the same eight colours
+ * and they can drift — the reason it is a copy rather than an import is that
+ * BaseListing's tokens are scoped to a whole document, and this page needs
+ * three of them side by side inside one. If a fourth template is added, both
+ * places need it.
  *
- * It rendered the real listing page at 390px and scaled it. The intent was
- * right — a preview that cannot drift, because it IS the product — but the
- * listing hero is 84svh and inside an iframe svh resolves against the FRAME,
- * so the hero always took 84% of the preview however tall the frame was made.
- * The old comment records three attempts to scroll past it, all measured, all
- * failed, and concludes that the preview shows "a dark agent bar, a
- * photograph and a price" and "reads as weak here". A demonstration that
- * needs a paragraph of small grey text explaining why it is a fragment is not
- * a demonstration. That is a design decision, so it was made rather than
- * apologised for.
- *
- * WHAT REPLACED IT KEEPS THE PROPERTY THAT MATTERED. The two screens below
- * are composed from `propertyListing` and `vehicleListing` — imported from
- * the same module `/a/{slug}` renders — through the same `toCells`, `ils` and
- * `perUnitPrice` the real pages use. Change the sample data and this page
- * changes with it. It cannot go stale, and unlike the iframe it can show the
- * part of the page worth showing.
- *
- * AND IT MAKES AN ARGUMENT THE IFRAME COULD NOT. One device switched by two
- * radios says "here is a page". Two categories side by side, same skeleton,
- * same order, same typography, says "every listing you send will look like
- * this" — which is the agent's actual reason to use this and the thing a
- * private seller does not care about.
- *
- * THE PAGE IS NOW COMMITTED RATHER THAN PALE. docs/DESIGN.md: the scene is an
- * agent holding a phone in Holon at 4pm with sun on the screen, and a
- * plaster-on-plaster hierarchy collapses to one flat sheet in that light. The
- * value rhythm is dark → light → tinted → dark → light, which is the rhythm
- * the LISTING page already had on its own (dark agent bar, plaster body,
- * inverted enrichment block). The homepage was the only surface hedging.
+ * THE VALUE RHYTHM stays dark → light → tinted → dark, which is what the
+ * listing page does on its own. The scene has not changed: an agent on a
+ * phone, between viewings, in sunlight, where a plaster-on-plaster hierarchy
+ * collapses to one flat sheet.
  */
 
-/**
- * The three provenance states, taken from the sample data rather than typed.
- *
- * This is the product's whole trust proposition (PRD §5) and the previous
- * page spent three paragraphs asserting it. Asserting honesty is the one
- * thing a dishonest page also does. So the section below shows the real
- * cells: one a register filled, one the seller declared, one the seller
- * confirmed is absent — with the real source name and the real date.
- *
- * Found rather than hard-coded, so a change to the schema cannot leave this
- * section illustrating a state that no longer exists.
- */
-const vehicleCells = toCells('vehicle', vehicleListing.facts);
-const propertyCells = toCells('property', propertyListing.facts);
-
-const verifiedCell = vehicleCells.find((cell) => cell.verified);
-const sellerCell = vehicleCells.find((cell) => !cell.verified && !cell.absent);
-const absentCell = propertyCells.find((cell) => cell.absent);
-
-/** The two screens, each reduced to what fits above a phone's fold. */
-const screens = [
-  {
-    listing: propertyListing,
-    label: t('home.previewProperty'),
-    cells: propertyCells.slice(0, 3),
-    perUnit: perUnitPrice('property', propertyListing.facts, propertyListing.price),
-  },
-  {
-    listing: vehicleListing,
-    label: t('home.previewVehicle'),
-    cells: vehicleCells.slice(0, 3),
-    perUnit: perUnitPrice('vehicle', vehicleListing.facts, vehicleListing.price),
-  },
-];
+const cells = toCells('property', propertyListing.facts).slice(0, 3);
+const perUnit = perUnitPrice('property', propertyListing.facts, propertyListing.price);
+const vehicleCells = toCells('vehicle', vehicleListing.facts).slice(0, 3);
+const vehiclePerUnit = perUnitPrice('vehicle', vehicleListing.facts, vehicleListing.price);
 
 const title = `סיבוב — ${t('home.tagline')}`;
 ---
@@ -104,7 +57,6 @@ const title = `סיבוב — ${t('home.tagline')}`;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    {/* The first screen is now the dark act, so the browser chrome matches it. */}
     <meta name="theme-color" content="#111208" />
 
     <title>{title}</title>
@@ -125,19 +77,9 @@ const title = `סיבוב — ${t('home.tagline')}`;
     />
 
     <style is:global>
-      /*
-        Five type roles, distinguishable at a glance, carried across widths by
-        clamp() rather than by a breakpoint each.
-
-        --display's ceiling is 4.4rem against the listing page's --t-hero of
-        4.2rem. That is deliberate and it is the one number on this page worth
-        arguing about: the previous homepage capped at 3.6rem, which made the
-        advertisement quieter than the thing it advertises. A landing page in
-        a smaller key than its own product reads as the weaker product.
-      */
       :root {
-        --display: clamp(2.7rem, 6.2vw, 4.4rem);
-        --lead: clamp(1.15rem, 2.2vw, 1.38rem);
+        --display: clamp(2.5rem, 5.8vw, 4.2rem);
+        --lead: clamp(1.12rem, 2.1vw, 1.34rem);
         --heading: clamp(1.45rem, 2.6vw, 1.9rem);
         --body: 1.0625rem;
         --meta: 0.82rem;
@@ -145,11 +87,8 @@ const title = `סיבוב — ${t('home.tagline')}`;
         --gutter: clamp(1.25rem, 5vw, 3rem);
         --rule: 1px solid var(--stone);
         --rule-dark: 1px solid rgba(251, 250, 247, 0.14);
-
-        /* Semantic, so nothing on this page ever writes a bare number. */
-        --z-base: 0;
-        --z-raised: 1;
-        --z-overlay: 2;
+        --on-dark: #fbfaf7;
+        --dim: #9c9d93;
       }
 
       html {
@@ -164,11 +103,7 @@ const title = `סיבוב — ${t('home.tagline')}`;
         background: var(--plaster);
         color: var(--ink);
         font-size: var(--body);
-        /*
-          1.7, not the 1.5 a Latin page would take. Hebrew has no ascenders
-          and descenders to separate its lines, so the same leading that looks
-          generous in English reads cramped here. docs/DESIGN.md.
-        */
+        /* Hebrew has no ascenders or descenders to separate its lines. */
         line-height: 1.7;
         -webkit-font-smoothing: antialiased;
       }
@@ -183,9 +118,8 @@ const title = `סיבוב — ${t('home.tagline')}`;
         outline-offset: 3px;
       }
 
-      /* On the dark ground olive-on-ink is invisible; the ring inverts. */
       .dark :focus-visible {
-        outline-color: var(--plaster);
+        outline-color: var(--on-dark);
       }
 
       .shell {
@@ -196,7 +130,7 @@ const title = `סיבוב — ${t('home.tagline')}`;
 
       .dark {
         background: var(--ink-deep);
-        color: var(--plaster);
+        color: var(--on-dark);
       }
 
       h1,
@@ -206,18 +140,8 @@ const title = `סיבוב — ${t('home.tagline')}`;
         text-wrap: balance;
       }
 
-      /*
-        HEBREW TRACKING, AND THE FLOOR IS NOT THE LATIN ONE.
-
-        Hebrew has no case and positive letter-spacing damages it, so the
-        usual small-tracked-caps route to hierarchy is unavailable and
-        hierarchy here comes from size, weight and colour only.
-
-        Negative tracking is capped at -.015em, matching the listing page's
-        .hero-title. The previous homepage ran -.03em on its h1 — twice the
-        project's own contract, and past the point where Hebrew counters start
-        closing up.
-      */
+      /* Hebrew takes no positive tracking and its counters close up past
+         -.015em. That is the floor, not a preference. */
       h1 {
         font-weight: 900;
         font-size: var(--display);
@@ -249,60 +173,57 @@ const title = `סיבוב — ${t('home.tagline')}`;
         letter-spacing: -0.01em;
       }
 
+      .top nav {
+        display: flex;
+        align-items: center;
+        gap: 1.1rem;
+      }
+
       .top-link {
         font-size: var(--meta);
         font-weight: 600;
-        /* 6.94:1 on --ink-deep. --olive-lift would be 3.83:1 and this is not
-           large text, so it is not an option here. */
-        color: #9c9d93;
+        /* 6.94:1 on --ink-deep. --olive-lift is 3.83:1 and fails here. */
+        color: var(--dim);
         text-decoration: none;
-        padding: 0.4rem 0.9rem;
-        border: var(--rule-dark);
-        border-radius: 999px;
-        transition:
-          color var(--press) var(--ease-out),
-          border-color var(--press) var(--ease-out);
       }
 
       .top-link:hover {
-        color: var(--plaster);
-        border-color: rgba(251, 250, 247, 0.4);
+        color: var(--on-dark);
       }
 
       /* ---------- Hero ----------
-         The words on the reading side, the product on the other. In RTL the
-         grid fills from the right, so the first child lands where a Hebrew
-         reader starts. Nothing computes that; dir="rtl" does. */
+         In RTL the grid fills from the right, so the first child lands where a
+         Hebrew reader starts. Nothing computes that; dir="rtl" does. */
 
       .hero {
         display: grid;
         gap: clamp(2.5rem, 5vw, 4rem);
-        padding-block: clamp(2.5rem, 5vw, 4rem) clamp(3rem, 6vw, 5rem);
+        padding-block: clamp(2.5rem, 5vw, 3.75rem) clamp(3rem, 6vw, 4.5rem);
       }
 
       @media (min-width: 1000px) {
         .hero {
-          grid-template-columns: minmax(0, 1fr) minmax(320px, 552px);
+          grid-template-columns: minmax(0, 1fr) minmax(260px, 330px);
           align-items: center;
           gap: clamp(2rem, 4vw, 3.5rem);
         }
       }
 
       .hero-copy {
-        max-inline-size: 30rem;
+        max-inline-size: 32rem;
       }
 
       .hero-sub {
         font-size: var(--lead);
-        color: #9c9d93;
+        color: var(--dim);
         margin-block-start: 1.1rem;
-        max-inline-size: 24ch;
+        max-inline-size: 26ch;
         text-wrap: balance;
       }
 
       .hero-lead {
-        margin-block-start: 1.6rem;
-        max-inline-size: 44ch;
+        margin-block-start: 1.5rem;
+        max-inline-size: 46ch;
         color: rgba(251, 250, 247, 0.86);
       }
 
@@ -311,7 +232,7 @@ const title = `סיבוב — ${t('home.tagline')}`;
         align-items: center;
         gap: 1.1rem;
         flex-wrap: wrap;
-        margin-block-start: 2.1rem;
+        margin-block-start: 2rem;
       }
 
       .cta {
@@ -322,7 +243,7 @@ const title = `סיבוב — ${t('home.tagline')}`;
         font-size: 1.05rem;
         font-weight: 700;
         border: none;
-        border-radius: 4px;
+        border-radius: 5px;
         text-decoration: none;
         transition:
           transform var(--press) var(--ease-out),
@@ -334,28 +255,18 @@ const title = `סיבוב — ${t('home.tagline')}`;
       }
 
       .cta:active {
-        background: var(--olive-lift);
         transform: scale(0.97);
       }
 
       .actions-note {
         font-size: var(--meta);
-        color: #9c9d93;
+        color: var(--dim);
         max-inline-size: 22ch;
       }
 
-      /* ---------- The two screens ----------
-         Composed from the real listing data, through the real formatters.
-         Side by side and vertically aligned ON PURPOSE: offsetting them would
-         look more designed and would break the only comparison the section
-         exists to invite. Same skeleton, different category. */
-
-      .stage {
-        display: grid;
-        justify-items: center;
-        gap: 1rem;
-        inline-size: 100%;
-      }
+      /* ---------- Device screens ----------
+         Composed from the real listing data through the real formatters, so
+         they cannot drift from the product. */
 
       .screens {
         display: flex;
@@ -366,58 +277,93 @@ const title = `סיבוב — ${t('home.tagline')}`;
       }
 
       /*
-        The two screens SPLIT whatever width they are given, rather than each
-        claiming a width computed from the viewport. A vw-based clamp was the
-        first attempt and it has a floor problem: below about 340px the two
-        minimums plus the gap exceed the shell and the row overflows the page.
-        Flexing from a zero basis cannot overflow, because the basis is the
-        space that actually exists.
+        The two screens SPLIT whatever width they are given rather than each
+        claiming a width from the viewport. Flexing from a zero basis cannot
+        overflow, because the basis is the space that actually exists — and a
+        vw-based clamp has a floor problem below about 340px where the two
+        minimums plus the gap exceed the shell.
 
-        The type then has to follow a width that only flex knows, which is
-        what `container-type: inline-size` is for — 6.25cqi is 1/16th of the
-        device's resolved width, so the screen scales as one object instead of
-        shrinking its box while its type stays put. Everything inside is in em
-        off that.
+        The type then follows a width only flex knows, which is what
+        container-type is for: 6.25cqi is a sixteenth of the device's resolved
+        width, so the screen scales as one object instead of shrinking its box
+        while its type stays put.
       */
       .device {
         flex: 1 1 0;
-        max-inline-size: 258px;
+        max-inline-size: 300px;
         container-type: inline-size;
         display: grid;
-        gap: 0.55rem;
+        gap: 0.6rem;
         justify-items: center;
       }
 
       .screen {
         display: block;
         text-decoration: none;
-        color: inherit;
+        color: var(--s-ink);
         font-size: 6.25cqi;
         inline-size: 100%;
         border-radius: 1em;
         overflow: hidden;
-        background: var(--plaster);
-        color: var(--ink);
+        background: var(--s-ground);
         line-height: 1.5;
         box-shadow:
           0 0 0 1px rgba(251, 250, 247, 0.12),
-          0 1.4em 3em -1em rgba(0, 0, 0, 0.6);
+          0 1.4em 3em -1em rgba(0, 0, 0, 0.55);
       }
 
-      .device-label {
-        font-size: var(--meta);
-        font-weight: 600;
-        color: #9c9d93;
+      /*
+        THE THREE PALETTES, mirroring the template layer in BaseListing.astro.
+        Prefixed --s- because they style a miniature inside another document
+        and must not collide with the page's own tokens.
+
+        This IS a second copy of those colours. BaseListing's version is scoped
+        to a whole document via [data-template] on <html>, and this page needs
+        three of them side by side inside one document, so the values are
+        repeated rather than imported. A fourth template needs both.
+      */
+      .device[data-tpl='editorial'] {
+        --s-ground: #fbfaf7;
+        --s-ink: #191a15;
+        --s-deep: #111208;
+        --s-line: #e4e0d6;
+        --s-warm: #f1ede3;
+        --s-muted: #67685f;
+        --s-accent: #4a5d3a;
+        --s-lift: #5f7749;
       }
 
-      /* The agent's strip — the reason an agent is reading this page. */
+      .device[data-tpl='agency'] {
+        --s-ground: #ffffff;
+        --s-ink: #191a15;
+        --s-deep: #1c1917;
+        --s-line: #e7e2da;
+        --s-warm: #faf6f0;
+        --s-muted: #6b6259;
+        --s-accent: #c2410c;
+        --s-lift: #ea580c;
+      }
+
+      .device[data-tpl='dark'] {
+        --s-ground: #14150f;
+        --s-ink: #f3f1ea;
+        --s-deep: #0a0b06;
+        --s-line: #2c2e24;
+        --s-warm: #1d1f16;
+        --s-muted: #a3a498;
+        --s-accent: #93ab73;
+        --s-lift: #aac28c;
+      }
+
       .s-agent {
         display: flex;
         align-items: center;
         gap: 0.4em;
         padding: 0.5em 0.7em;
-        background: var(--ink-deep);
-        color: var(--plaster);
+        background: var(--s-deep);
+        /* Never --s-ink: on the dark template that is the light ground, and
+           this strip is dark in all three. The same trap BaseListing hit. */
+        color: #fbfaf7;
         font-size: 0.55em;
       }
 
@@ -425,7 +371,7 @@ const title = `סיבוב — ${t('home.tagline')}`;
         inline-size: 1.6em;
         block-size: 1.6em;
         border-radius: 50%;
-        background: var(--olive-lift);
+        background: var(--s-lift);
         flex: 0 0 auto;
       }
 
@@ -438,11 +384,31 @@ const title = `סיבוב — ${t('home.tagline')}`;
         color: #9c9d93;
       }
 
+      /*
+        The miniature is built from <span>s, not <div>s: the hero device wraps
+        the whole screen in one element and nesting flow content inside it was
+        not worth the argument. The cost is that every structural piece has to
+        be told it is a block — an inline element ignores aspect-ratio, which
+        clipped the price, the facts and the button off the bottom of all four
+        screens. Caught on the running page.
+      */
+      .s-veil,
+      .s-place,
+      .s-title,
+      .s-fact-val,
+      .s-fact-lbl,
+      .s-price,
+      .s-price-note,
+      .s-cta {
+        display: block;
+      }
+
       .s-hero {
+        display: block;
         position: relative;
         aspect-ratio: 4 / 5;
         overflow: hidden;
-        background: var(--stone);
+        background: var(--s-line);
       }
 
       .s-hero img {
@@ -463,7 +429,7 @@ const title = `סיבוב — ${t('home.tagline')}`;
           rgba(17, 18, 8, 0.55) 48%,
           transparent
         );
-        color: var(--plaster);
+        color: #fbfaf7;
       }
 
       .s-place {
@@ -499,7 +465,7 @@ const title = `סיבוב — ${t('home.tagline')}`;
 
       .s-price-note {
         font-size: 0.48em;
-        color: var(--muted);
+        color: var(--s-muted);
         text-align: end;
         padding-block-end: 0.2em;
       }
@@ -508,27 +474,38 @@ const title = `סיבוב — ${t('home.tagline')}`;
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: 1px;
-        background: var(--stone);
-        border-block-start: 1px solid var(--stone);
+        background: var(--s-line);
+        border-block-start: 1px solid var(--s-line);
       }
 
       .s-fact {
-        background: var(--plaster);
+        background: var(--s-ground);
         padding: 0.6em 0.3em 0.7em;
         text-align: center;
-        /*
-          Space for the מאומת chip is RESERVED in every cell, not just the
-          cells that earn one. A vehicle's facts come back from the Ministry
-          of Transport and a property's do not, so without this the two
-          screens end at different heights — and the whole point of standing
-          them side by side is that the skeleton is identical. The chip is
-          still only drawn where a register actually filled the field.
-        */
-        min-block-size: 4.4em;
+        /* The agency template cards its cells; mirrored so the miniature
+           shows the structural difference and not only the colour one. */
+        min-block-size: 3.6em;
+      }
+
+      .device[data-tpl='agency'] .s-facts {
+        gap: 0.35em;
+        background: transparent;
+        border-block-start: 0;
+        padding: 0.35em;
+      }
+
+      .device[data-tpl='agency'] .s-fact {
+        border: 1px solid var(--s-line);
+        border-radius: 0.45em;
+        /* The carded grid adds .35em of padding on each side, which made this
+           screen 12px taller than the other two and dropped its label off the
+           line the three share. Give the cell back exactly what the padding
+           took. */
+        min-block-size: 2.9em;
       }
 
       .s-fact.off {
-        background: var(--stone-warm);
+        background: var(--s-warm);
       }
 
       .s-fact-val {
@@ -541,27 +518,36 @@ const title = `סיבוב — ${t('home.tagline')}`;
 
       .s-fact-lbl {
         font-size: 0.44em;
-        color: var(--muted);
+        color: var(--s-muted);
         margin-block-start: 0.2em;
       }
 
-      .s-chip {
-        display: inline-block;
-        font-size: 0.4em;
-        font-weight: 600;
-        color: var(--olive);
-        border: 1px solid var(--olive);
-        border-radius: 2px;
-        padding: 0 0.35em;
-        margin-block-start: 0.4em;
+      .s-cta {
+        margin: 0.55em 0.7em 0.8em;
+        padding: 0.55em;
+        text-align: center;
+        font-size: 0.52em;
+        font-weight: 700;
+        border-radius: 0.4em;
+        background: var(--s-accent);
+        color: #fbfaf7;
       }
 
-      .stage-note {
+      /* On the dark template the accent is pale, so a pale fill with pale type
+         would vanish. The button inverts — the only element that does. */
+      .device[data-tpl='dark'] .s-cta {
+        background: var(--s-ink);
+        color: var(--s-ground);
+      }
+
+      .device-label {
         font-size: var(--meta);
-        color: #9c9d93;
-        text-align: center;
-        max-inline-size: 46ch;
-        line-height: 1.6;
+        font-weight: 600;
+        color: var(--muted);
+      }
+
+      .dark .device-label {
+        color: var(--dim);
       }
 
       /* ---------- Section furniture ----------
@@ -573,132 +559,40 @@ const title = `סיבוב — ${t('home.tagline')}`;
       }
 
       .section-head {
-        max-inline-size: 34rem;
+        max-inline-size: 36rem;
         margin-block-end: clamp(2rem, 3.5vw, 2.75rem);
       }
 
       .section-head p {
         margin-block-start: 0.85rem;
         color: var(--muted);
-        max-inline-size: 62ch;
+        max-inline-size: 60ch;
         text-wrap: pretty;
       }
 
       .dark .section-head p {
-        color: rgba(251, 250, 247, 0.82);
+        color: rgba(251, 250, 247, 0.84);
       }
 
-      /* ---------- Provenance ----------
-         The moat, shown rather than claimed. Three real cells in the three
-         real states, at the size they are on the page. */
+      /* ---------- Templates ---------- */
 
-      .proof {
-        display: grid;
-        gap: 1px;
-        background: var(--stone);
-        border: var(--rule);
-      }
-
-      @media (min-width: 720px) {
-        .proof {
-          grid-template-columns: repeat(3, 1fr);
-        }
-      }
-
-      .proof-cell {
-        background: var(--plaster);
-        padding: clamp(1.4rem, 3vw, 2rem);
-        display: grid;
-        align-content: start;
-        gap: 0.55rem;
-      }
-
-      .proof-cell.off {
-        background: var(--stone-warm);
-        /* Same correction as .steps-band, same reason. */
-        --muted: #67685f;
-      }
-
-      .proof-val {
-        font-family: 'Frank Ruhl Libre', serif;
-        font-weight: 500;
-        font-size: clamp(1.5rem, 4vw, 1.9rem);
-        line-height: 1.1;
-        letter-spacing: -0.01em;
-        font-variant-numeric: tabular-nums;
-      }
-
-      /*
-        THE LISTING PAGE'S .42 DE-EMPHASIS IS NOT COPIED HERE, DELIBERATELY.
-
-        On /a/{slug} an absent fact is greyed because it is a minor cell the
-        reader skims past. In THIS section that same cell is the worked
-        example the paragraph beneath it is explaining, so it has to be
-        readable. It is also arithmetically impossible to keep: at .42 on
-        --stone-warm the label lands near 1.6:1, and even at .8 it only
-        reaches 3.29:1 against a 4.5:1 requirement for 13px text.
-
-        The tinted ground and the word אין carry the distinction instead.
-      */
-
-      .proof-lbl {
-        font-size: var(--meta);
-        color: var(--muted);
-      }
-
-      .proof-mark {
+      .tpl-row {
         display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-        min-block-size: 1.6rem;
-      }
-
-      /* Olive rule and a word, never a tick: a tick reads as "good", and this
-         is a statement about who recorded a number. DESIGN-CONTRACT. */
-      .verified {
-        font-size: 0.68rem;
-        font-weight: 600;
-        color: var(--olive);
-        border: 1px solid var(--olive);
-        border-radius: 2px;
-        padding: 0.02rem 0.34rem;
-        line-height: 1.5;
-      }
-
-      .proof-cite,
-      .proof-said {
-        font-size: 0.72rem;
-        color: var(--muted);
-      }
-
-      .proof-note {
-        font-size: var(--meta);
-        color: var(--muted);
-        border-block-start: var(--rule);
-        padding-block-start: 0.75rem;
-        margin-block-start: 0.35rem;
-        line-height: 1.6;
-        text-wrap: pretty;
+        gap: clamp(0.75rem, 2vw, 1.5rem);
+        align-items: flex-start;
+        justify-content: center;
+        inline-size: 100%;
       }
 
       /* ---------- Steps ----------
          A real sequence, so the numerals carry information rather than
-         decorating a section. Note what this is NOT: three equal columns of
-         75px each, which is what the previous grid produced. */
+         decorating a heading. */
 
       .steps-band {
         background: var(--stone-warm);
         border-block: var(--rule);
-        /*
-          --muted is 4.87:1 on --plaster and only 4.35:1 on --stone-warm, so
-          the same token that passes AA on the reading ground FAILS it on the
-          tinted one. Measured on the rendered page, not assumed.
-
-          Overriding the custom property in scope fixes every descendant that
-          reads it, rather than repainting each selector and missing one. Same
-          hue, carried down until it clears 4.5:1 (it lands at 4.83:1).
-        */
+        /* --muted is 4.87:1 on plaster and 4.35:1 on this tinted ground.
+           Carried down until it clears AA. */
         --muted: #67685f;
       }
 
@@ -707,6 +601,8 @@ const title = `סיבוב — ${t('home.tagline')}`;
         gap: clamp(1.6rem, 3vw, 2.5rem);
         list-style: none;
         counter-reset: step;
+        padding: 0;
+        margin: 0;
       }
 
       @media (min-width: 760px) {
@@ -749,131 +645,82 @@ const title = `סיבוב — ${t('home.tagline')}`;
         text-wrap: pretty;
       }
 
-      /* ---------- For agents ----------
-         Two artefacts the agent gets, side by side: their strip on top of the
-         page, and the message the buyer actually receives. */
+      /* ---------- Dashboard ---------- */
 
-      .agent-grid {
+      .dash-grid {
         display: grid;
-        gap: clamp(2.25rem, 4vw, 3.25rem);
+        gap: clamp(2rem, 4vw, 3.25rem);
+        align-items: center;
       }
 
-      @media (min-width: 860px) {
-        .agent-grid {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: clamp(2rem, 4vw, 4rem);
+      @media (min-width: 900px) {
+        .dash-grid {
+          grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
         }
       }
 
-      .agent-grid h3 {
-        font-size: 1.15rem;
-        font-weight: 700;
-        margin-block-end: 0.5rem;
-      }
-
-      .agent-grid p {
-        color: rgba(251, 250, 247, 0.82);
-        max-inline-size: 46ch;
-        text-wrap: pretty;
-      }
-
-      .demo {
-        margin-block-end: 1.4rem;
-      }
-
-      /* The strip, at the size it renders on a phone. */
-      .demo-bar {
-        display: flex;
-        align-items: center;
-        gap: 0.55rem;
-        padding: 0.7rem 1rem;
-        background: var(--plaster);
-        color: var(--ink);
-        border-radius: 4px;
-        font-size: 0.9rem;
-      }
-
-      .demo-bar .dot {
-        inline-size: 26px;
-        block-size: 26px;
-        border-radius: 50%;
-        background: var(--olive);
-        flex: 0 0 auto;
-      }
-
-      .demo-bar .slot {
-        font-weight: 700;
-        border-block-end: 1px dashed var(--muted);
-      }
-
-      .demo-bar .brand {
-        margin-inline-start: auto;
-        font-size: 0.8rem;
-        color: var(--muted);
-      }
-
-      /*
-        A message with a link preview in it. Deliberately NOT dressed as
-        WhatsApp — no green bubble, no tick glyphs. Borrowing another
-        product's chrome to imply a partnership that does not exist is a
-        claim, and this page does not make claims it cannot back.
-      */
-      .demo-msg {
-        background: var(--plaster);
-        color: var(--ink);
-        border-radius: 4px;
-        border-end-start-radius: 12px;
-        padding: 0.55rem;
-        max-inline-size: 21rem;
-      }
-
-      .demo-card {
-        /* Sits on --stone-warm; see .steps-band. */
-        --muted: #67685f;
-        display: flex;
-        gap: 0.7rem;
-        align-items: stretch;
-        background: var(--stone-warm);
-        border-radius: 3px;
+      .dash-shot {
+        border: var(--rule-dark);
+        border-radius: 8px;
         overflow: hidden;
+        background: var(--plaster);
+        box-shadow: 0 1.2rem 3rem -1.2rem rgba(0, 0, 0, 0.7);
       }
 
-      .demo-card img {
-        inline-size: 78px;
-        block-size: 78px;
+      .dash-shot-bar {
+        background: var(--ink-deep);
+        padding: 0.5rem 0.7rem;
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--on-dark);
+        font-family: 'Frank Ruhl Libre', serif;
+      }
+
+      .dash-cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.4rem;
+        padding: 0.55rem;
+      }
+
+      .dash-card {
+        border: 1px solid var(--stone);
+        border-radius: 4px;
+        overflow: hidden;
+        background: var(--plaster);
+      }
+
+      .dash-card img {
+        inline-size: 100%;
+        aspect-ratio: 16 / 10;
         object-fit: cover;
-        flex: 0 0 auto;
         display: block;
       }
 
-      .demo-card-text {
-        padding-block: 0.5rem;
-        padding-inline: 0 0.6rem;
-        min-inline-size: 0;
-        display: grid;
-        align-content: center;
-        gap: 0.1rem;
+      .dash-card .none {
+        aspect-ratio: 16 / 10;
+        background: var(--stone-warm);
       }
 
-      .demo-card-title {
-        font-size: 0.82rem;
+      .dash-card span {
+        display: block;
+        padding: 0.3rem 0.4rem 0.45rem;
+        font-size: 0.58rem;
         font-weight: 700;
-        line-height: 1.3;
-        overflow: hidden;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
+        color: var(--ink);
       }
 
-      .demo-card-host {
-        font-size: 0.68rem;
-        color: var(--muted);
-      }
-
-      .demo-msg-text {
-        font-size: 0.85rem;
-        line-height: 1.5;
-        padding: 0.5rem 0.25rem 0.15rem;
+      .dash-card em {
+        display: block;
+        font-style: normal;
+        font-size: 0.52rem;
+        font-weight: 600;
+        color: var(--plaster);
+        background: var(--olive);
+        padding: 0.04rem 0.3rem;
+        border-radius: 2px;
+        inline-size: fit-content;
+        margin: 0 0.4rem 0.4rem;
       }
 
       /* ---------- Closing ---------- */
@@ -916,26 +763,18 @@ const title = `סיבוב — ${t('home.tagline')}`;
 
       /* ---------- Motion ----------
          ONE authored entrance, capped at three steps, and nothing below the
-         fold animates at all. A uniform fade-and-rise on every section is the
-         reflex; it is also the thing that ships a blank page when a
-         transition never fires in a headless renderer.
-
-         The content here is visible by default — `animation` only ever moves
-         something that would already be on screen without it. */
+         fold animates. The content is visible by default — animation only ever
+         moves something that would already be on screen without it, because a
+         reveal gated on a transition ships blank in a headless renderer. */
 
       @media (prefers-reduced-motion: no-preference) {
         .hero-copy,
-        .stage .screens,
-        .stage .stage-note {
+        .hero .screens {
           animation: arrive 0.62s both cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .stage .screens {
+        .hero .screens {
           animation-delay: 0.1s;
-        }
-
-        .stage .stage-note {
-          animation-delay: 0.2s;
         }
 
         @keyframes arrive {
@@ -946,11 +785,9 @@ const title = `סיבוב — ${t('home.tagline')}`;
         }
       }
 
-      /* Movement removed, the arrival kept. */
       @media (prefers-reduced-motion: reduce) {
         .hero-copy,
-        .stage .screens,
-        .stage .stage-note {
+        .hero .screens {
           animation: fade 0.4s both;
         }
 
@@ -958,6 +795,10 @@ const title = `סיבוב — ${t('home.tagline')}`;
           from {
             opacity: 0;
           }
+        }
+
+        .cta {
+          transition: none;
         }
       }
     </style>
@@ -968,7 +809,10 @@ const title = `סיבוב — ${t('home.tagline')}`;
       <div class="shell">
         <header class="top">
           <span class="mark">סיבוב</span>
-          <a class="top-link" href="/new/">{t('home.cta')}</a>
+          <nav>
+            <a class="top-link" href="/enter/">{t('home.ctaSecond')}</a>
+            <a class="top-link" href="/mine/">{t('dash.title')}</a>
+          </nav>
         </header>
       </div>
 
@@ -985,138 +829,128 @@ const title = `סיבוב — ${t('home.tagline')}`;
             </div>
           </div>
 
-          <div class="stage">
-            <div class="screens">
-              {
-                screens.map(({ listing, label, cells, perUnit }) => (
-                  <div class="device">
-                    <a class="screen" href={`/a/${listing.slug}/`} aria-label={t('home.previewOpen')}>
-                      <div class="s-agent">
-                        <span class="dot" />
-                        <span class="who">{listing.seller.name}</span>
-                        <span class="brand">סיבוב</span>
-                      </div>
+          <div class="screens">
+            <div class="device" data-tpl="editorial">
+              <span class="screen">
+                <span class="s-agent">
+                  <span class="dot"></span>
+                  <span class="who">{propertyListing.seller.name}</span>
+                  <span class="brand">סיבוב</span>
+                </span>
 
-                      <div class="s-hero">
-                        {/*
-                          Above the fold and the largest thing in the hero, so
-                          never lazy. A lazy LCP image is a guaranteed delay,
-                          and it renders as an empty box anywhere intersection
-                          never fires — a background tab, a headless render.
-                        */}
-                        <img
-                          src={largest(listing.media.cover, HERO_WIDTHS)}
-                          alt={listing.media.cover.alt}
-                          width={listing.media.cover.width}
-                          height={listing.media.cover.height}
-                          loading="eager"
-                          decoding="async"
-                        />
-                        <div class="s-veil">
-                          <div class="s-place">
-                            <Prose
-                              text={
-                                listing.location?.street
-                                  ? `${listing.location.street}, ${listing.location.city}`
-                                  : (listing.location?.city ?? '')
-                              }
-                            />
-                          </div>
-                          {/* The reference titles carry their own line break. */}
-                          <div class="s-title">
-                            <Prose text={listing.title.split('\n')[0] ?? ''} />
-                          </div>
-                        </div>
-                      </div>
+                <span class="s-hero">
+                  <img
+                    src={largest(propertyListing.media.cover, HERO_WIDTHS)}
+                    alt={propertyListing.media.cover.alt}
+                    width={propertyListing.media.cover.width}
+                    height={propertyListing.media.cover.height}
+                    loading="eager"
+                    decoding="async"
+                  />
+                  <span class="s-veil">
+                    <span class="s-place">
+                      <Prose
+                        text={`${propertyListing.location?.street}, ${propertyListing.location?.city}`}
+                      />
+                    </span>
+                    <span class="s-title">
+                      <Prose text={propertyListing.title.split('\n')[0] ?? ''} />
+                    </span>
+                  </span>
+                </span>
 
-                      <div class="s-price-bar">
-                        <div class="s-price">
-                          <bdi>{ils(listing.price)}</bdi>
-                        </div>
-                        {perUnit && (
-                          <div class="s-price-note">
-                            <bdi>{perUnit.amount}</bdi> {perUnit.per}
-                          </div>
-                        )}
-                      </div>
+                <span class="s-price-bar">
+                  <span class="s-price"><bdi>{ils(propertyListing.price)}</bdi></span>
+                  {perUnit && (
+                    <span class="s-price-note">
+                      <bdi>{perUnit.amount}</bdi> {perUnit.per}
+                    </span>
+                  )}
+                </span>
 
-                      <div class="s-facts">
-                        {cells.map((cell) => (
-                          <div class={cell.absent ? 's-fact off' : 's-fact'}>
-                            <div class="s-fact-val">
-                              {cell.bdi ? <bdi>{cell.value}</bdi> : cell.value}
-                            </div>
-                            <div class="s-fact-lbl">{cell.label}</div>
-                            {cell.verified && <span class="s-chip">מאומת</span>}
-                          </div>
-                        ))}
-                      </div>
-                    </a>
-                    <span class="device-label">{label}</span>
-                  </div>
-                ))
-              }
+                <span class="s-facts">
+                  {cells.map((cell) => (
+                    <span class={cell.absent ? 's-fact off' : 's-fact'}>
+                      <span class="s-fact-val">
+                        {cell.bdi ? <bdi>{cell.value}</bdi> : cell.value}
+                      </span>
+                      <span class="s-fact-lbl">{cell.label}</span>
+                    </span>
+                  ))}
+                </span>
+
+                <span class="s-cta">שליחת הודעה בוואטסאפ</span>
+              </span>
             </div>
-
-            <p class="stage-note">{t('home.devicesNote')}</p>
           </div>
         </div>
       </div>
     </div>
 
-    {/* The moat, demonstrated. Three real cells in the three real states. */}
+    {/*
+      The centrepiece. One listing, three templates — the offer made in less
+      time than a sentence about it would take to read.
+    */}
     <section>
       <div class="shell">
         <div class="section-head">
-          <h2>{t('home.sourcesTitle')}</h2>
-          <p>{t('home.proofCaption')}</p>
+          <h2>{t('home.templatesTitle')}</h2>
+          <p>{t('home.templatesBody')}</p>
         </div>
 
-        <div class="proof">
+        <div class="tpl-row">
           {
-            verifiedCell && (
-              <div class="proof-cell">
-                <div class="proof-val">
-                  {verifiedCell.bdi ? <bdi>{verifiedCell.value}</bdi> : verifiedCell.value}
-                </div>
-                <div class="proof-lbl">{verifiedCell.label}</div>
-                <div class="proof-mark">
-                  <span class="verified">מאומת</span>
-                  <span class="proof-cite">
-                    {verifiedCell.sourceName} · נכון ל־<bdi>{verifiedCell.sourceDate}</bdi>
+            TEMPLATE_IDS.map((tpl) => (
+              <div class="device" data-tpl={tpl}>
+                <span class="screen">
+                  <span class="s-agent">
+                    <span class="dot" />
+                    <span class="who">{vehicleListing.seller.name}</span>
+                    <span class="brand">סיבוב</span>
                   </span>
-                </div>
-                <p class="proof-note">{t('home.proofVerifiedNote')}</p>
-              </div>
-            )
-          }
 
-          {
-            sellerCell && (
-              <div class="proof-cell">
-                <div class="proof-val">
-                  {sellerCell.bdi ? <bdi>{sellerCell.value}</bdi> : sellerCell.value}
-                </div>
-                <div class="proof-lbl">{sellerCell.label}</div>
-                <div class="proof-mark">
-                  <span class="proof-said">לפי המוכר</span>
-                </div>
-                <p class="proof-note">{t('home.proofSellerNote')}</p>
-              </div>
-            )
-          }
+                  <span class="s-hero">
+                    <img
+                      src={largest(vehicleListing.media.cover, HERO_WIDTHS)}
+                      alt={vehicleListing.media.cover.alt}
+                      width={vehicleListing.media.cover.width}
+                      height={vehicleListing.media.cover.height}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                    <span class="s-veil">
+                      <span class="s-place">{vehicleListing.location?.city}</span>
+                      <span class="s-title">
+                        <Prose text={vehicleListing.title.split('\n')[0] ?? ''} />
+                      </span>
+                    </span>
+                  </span>
 
-          {
-            absentCell && (
-              <div class="proof-cell off">
-                <div class="proof-val">{absentCell.value}</div>
-                <div class="proof-lbl">{absentCell.label}</div>
-                <div class="proof-mark">
-                  <span class="proof-said">לפי המוכר</span>
-                </div>
-                <p class="proof-note">{t('home.proofAbsentNote')}</p>
+                  <span class="s-price-bar">
+                    <span class="s-price"><bdi>{ils(vehicleListing.price)}</bdi></span>
+                    {vehiclePerUnit && (
+                      <span class="s-price-note">
+                        <bdi>{vehiclePerUnit.amount}</bdi> {vehiclePerUnit.per}
+                      </span>
+                    )}
+                  </span>
+
+                  <span class="s-facts">
+                    {vehicleCells.map((cell) => (
+                      <span class={cell.absent ? 's-fact off' : 's-fact'}>
+                        <span class="s-fact-val">
+                          {cell.bdi ? <bdi>{cell.value}</bdi> : cell.value}
+                        </span>
+                        <span class="s-fact-lbl">{cell.label}</span>
+                      </span>
+                    ))}
+                  </span>
+
+                  <span class="s-cta">שליחת הודעה בוואטסאפ</span>
+                </span>
+                <span class="device-label">{t(`editor.templates.${tpl}`)}</span>
               </div>
-            )
+            ))
           }
         </div>
       </div>
@@ -1145,53 +979,44 @@ const title = `סיבוב — ${t('home.tagline')}`;
       </div>
     </section>
 
-    {/* CLAUDE.md §1: agents are the primary audience. This is their section. */}
+    {/* Sign in, and the library that is the reason to. */}
     <section class="dark">
       <div class="shell">
-        <div class="section-head">
-          <h2>{t('home.forWhoTitle')}</h2>
-          <p>{t('home.forWhoBody')}</p>
-        </div>
-
-        <div class="agent-grid">
+        <div class="dash-grid">
           <div>
-            <div class="demo">
-              <div class="demo-bar">
-                <span class="dot"></span>
-                <span class="slot">שם המשרד שלך</span>
-                <span class="brand">סיבוב</span>
-              </div>
+            <div class="section-head">
+              <h2>{t('home.dashTitle')}</h2>
+              <p>{t('home.dashBody')}</p>
             </div>
-            <h3>{t('home.agentTitle')}</h3>
-            <p>{t('home.agentBody')}</p>
+            <a class="cta" href="/mine/">{t('home.dashCta')}</a>
           </div>
 
-          <div>
-            <div class="demo">
-              <div class="demo-msg">
-                <div class="demo-card">
-                  <img
-                    src={largest(propertyListing.media.cover, HERO_WIDTHS)}
-                    alt={propertyListing.media.cover.alt}
-                    width={propertyListing.media.cover.width}
-                    height={propertyListing.media.cover.height}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                  <div class="demo-card-text">
-                    <span class="demo-card-title">
-                      <Prose text={propertyListing.title.replace('\n', ' ')} />
-                    </span>
-                    <span class="demo-card-host">hasivuv.com</span>
-                  </div>
-                </div>
-                <div class="demo-msg-text">
-                  <bdi>{ils(propertyListing.price)}</bdi> · {propertyListing.location?.city}
-                </div>
+          <div class="dash-shot" aria-hidden="true">
+            <div class="dash-shot-bar">סיבוב</div>
+            <div class="dash-cards">
+              <div class="dash-card">
+                <img
+                  src={largest(propertyListing.media.cover, HERO_WIDTHS)}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                />
+                <em>פורסם</em>
+              </div>
+              <div class="dash-card">
+                <img
+                  src={largest(vehicleListing.media.cover, HERO_WIDTHS)}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                />
+                <em>פורסם</em>
+              </div>
+              <div class="dash-card">
+                <div class="none"></div>
+                <em>טיוטה</em>
               </div>
             </div>
-            <h3>{t('home.linkTitle')}</h3>
-            <p>{t('home.linkBody')}</p>
           </div>
         </div>
       </div>

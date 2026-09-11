@@ -3,19 +3,31 @@ import { t } from '../lib/i18n';
 import '../styles/tokens.css';
 
 /**
- * The agent's listings.
+ * The agent's dashboard.
  *
- * THE POINT OF THE WHOLE PRODUCT, per the complaint that reordered the
- * roadmap: to send a property to a new buyer, an agent currently searches
- * WhatsApp for a message they typed weeks ago. This is the place they look
- * instead — every listing they own, each one a tap from its share kit.
+ * THIS IS THE PRODUCT SURFACE NOW, not a list. The pivot of 11 September 2026
+ * made the product a fast way for an agent to produce a professional,
+ * shareable page — so the place they live is here: every property and vehicle
+ * they own, each one a tap from the link they are about to paste into
+ * WhatsApp. See docs/PRODUCT.md.
  *
- * Rendered in the BROWSER, not at build time. These rows belong to whoever is
- * signed in, and a statically built page cannot know that. Row Level Security
- * decides what comes back: the query below says `select *` and the database
- * returns only this agent's rows, because the policy in 0002 says so. The
- * filter is not in this file, and that is deliberate — a filter in the client
- * is a suggestion.
+ * It replaces a flat <ul> of rows whose only action was "share". An agent with
+ * nine listings could not tell at a glance which were published, could not
+ * copy a link without opening a second page, and could not mark a sold
+ * property as sold at all — there was no UI for `status` anywhere in the
+ * product, though the column has supported 'sold' since 0002.
+ *
+ * RENDERED IN THE BROWSER, not at build time. These rows belong to whoever is
+ * signed in and a statically built page cannot know that. Row Level Security
+ * decides what comes back: the query says `select` with no owner filter, and
+ * the database returns only this agent's rows because the policy in 0002 says
+ * so. The filter is not in this file, deliberately — a filter in the client
+ * is a suggestion, and one that looks like security is worse than none.
+ *
+ * EVERY STATE IS IN THE MARKUP and hidden by script, never created by it.
+ * /me shipped the other way round and rendered a blank page the first time a
+ * stale dependency made the module fail. A dashboard that can go blank is a
+ * dashboard an agent cannot trust in front of a client.
  */
 ---
 
@@ -24,8 +36,11 @@ import '../styles/tokens.css';
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#FBFAF7" />
-    <title>{t('auth.myListings')} · סיבוב</title>
+    <meta name="theme-color" content="#111208" />
+    <title>{t('dash.title')} · סיבוב</title>
+
+    {/* A private workspace holding unpublished drafts. There is no version of
+        it that belongs in a search result. */}
     <meta name="robots" content="noindex,nofollow" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -36,8 +51,14 @@ import '../styles/tokens.css';
     />
 
     <style is:global>
+      :root {
+        --rule: 1px solid var(--stone);
+        --shell: 1180px;
+        --pad: clamp(1.1rem, 4vw, 2.5rem);
+      }
+
       html {
-        background: var(--stone);
+        background: var(--plaster);
         color-scheme: light;
         touch-action: manipulation;
         -webkit-tap-highlight-color: rgba(74, 93, 58, 0.18);
@@ -48,117 +69,381 @@ import '../styles/tokens.css';
         background: var(--plaster);
         color: var(--ink);
         font-size: var(--t-body);
-        line-height: 1.62;
-        max-width: 620px;
-        margin-inline: auto;
+        /* Hebrew carries no ascenders or descenders to separate its lines. */
+        line-height: 1.7;
         min-height: 100dvh;
-        padding-block-end: 6rem;
         -webkit-font-smoothing: antialiased;
       }
 
-      .top {
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        gap: 1rem;
-        padding: 1.75rem var(--gut) 1.25rem;
-        border-block-end: 1px solid var(--stone);
+      .shell {
+        max-inline-size: var(--shell);
+        margin-inline: auto;
+        padding-inline: var(--pad);
       }
 
-      h1 {
+      /* ---------- Masthead ----------
+         Dark, matching the agent bar that sits on top of every page this
+         dashboard produces. The workspace and the artefact are the same
+         product and should not look like two. */
+
+      .bar {
+        background: var(--ink-deep);
+        color: var(--plaster);
+      }
+
+      .bar .shell {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding-block: 1rem;
+      }
+
+      .mark {
         font-family: 'Frank Ruhl Libre', serif;
         font-weight: 700;
-        font-size: var(--t-h2);
+        font-size: 1.3rem;
         letter-spacing: -0.015em;
-      }
-
-      .top a {
-        font-size: var(--t-label);
-        font-weight: 600;
-        color: var(--muted);
+        color: var(--plaster);
         text-decoration: none;
       }
 
-      .top a:hover {
-        color: var(--olive);
-      }
-
-      ul {
-        list-style: none;
-      }
-
-      /* One row per listing: the thing itself on the right, the two actions on
-         the left. No card — the hairline is the boundary, as everywhere. */
-      .row {
+      .bar nav {
+        margin-inline-start: auto;
         display: flex;
         align-items: center;
-        gap: 0.9rem;
-        padding: 1rem var(--gut);
-        border-block-end: 1px solid var(--stone);
+        gap: 1.25rem;
       }
 
-      .thumb {
-        inline-size: 56px;
-        block-size: 56px;
-        flex: 0 0 auto;
-        object-fit: cover;
-        border-radius: 3px;
-        background: var(--stone);
-      }
-
-      .about {
-        flex: 1;
-        min-inline-size: 0;
-      }
-
-      .about b {
-        display: block;
-        font-weight: 600;
-        /* A long Hebrew title must not push the actions off the row. */
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      .about span {
+      .bar nav a {
+        /* 6.94:1 on --ink-deep. --olive-lift is 3.83:1 and would fail here. */
+        color: #9c9d93;
         font-size: var(--t-label);
-        color: var(--muted);
-        font-variant-numeric: tabular-nums;
+        font-weight: 600;
+        text-decoration: none;
       }
 
-      .go {
-        flex: 0 0 auto;
-        min-block-size: 44px;
-        display: inline-flex;
-        align-items: center;
-        padding-inline: 0.9rem;
-        font-size: 0.9rem;
-        font-weight: 700;
+      .bar nav a:hover {
         color: var(--plaster);
+      }
+
+      .cta {
+        display: inline-block;
+        padding: 0.6rem 1.2rem;
         background: var(--olive);
-        border-radius: 6px;
+        color: var(--plaster);
+        font-size: 0.92rem;
+        font-weight: 700;
+        border: none;
+        border-radius: 5px;
         text-decoration: none;
+        cursor: pointer;
+        font-family: inherit;
         transition:
           transform var(--press) var(--ease-out),
           background var(--press) var(--ease-out);
       }
 
-      .go:hover {
+      .cta:hover {
         background: var(--olive-lift);
       }
 
-      .go:active {
+      .cta:active {
         transform: scale(0.97);
       }
 
-      .state {
-        padding: 2.5rem var(--gut);
+      /* ---------- Head ---------- */
+
+      .head {
+        padding-block: clamp(1.75rem, 4vw, 2.75rem) 1.25rem;
+      }
+
+      h1 {
+        font-family: 'Frank Ruhl Libre', serif;
+        font-weight: 700;
+        font-size: clamp(1.7rem, 4vw, 2.3rem);
+        line-height: 1.15;
+        letter-spacing: -0.015em;
+      }
+
+      .lead {
         color: var(--muted);
+        margin-block-start: 0.3rem;
+        max-inline-size: 48ch;
+      }
+
+      /* ---------- Filters ----------
+         Radios, not buttons: the filter is one choice out of four and a radio
+         group is what that is. It also means the whole thing works with no
+         JavaScript beyond the one line that reads which is checked. */
+
+      .filters {
+        display: flex;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+        padding-block-end: 1.5rem;
+        border-block-end: var(--rule);
+      }
+
+      .filters input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .filters label {
+        padding: 0.4rem 0.95rem;
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: var(--muted);
+        border: var(--rule);
+        border-radius: 999px;
+        cursor: pointer;
+        transition:
+          color var(--press) var(--ease-out),
+          border-color var(--press) var(--ease-out),
+          background var(--press) var(--ease-out);
+      }
+
+      .filters label:hover {
+        color: var(--ink);
+      }
+
+      .filters input:checked + label {
+        color: var(--plaster);
+        background: var(--ink-deep);
+        border-color: var(--ink-deep);
+      }
+
+      .filters input:focus-visible + label {
+        outline: 2px solid var(--olive);
+        outline-offset: 2px;
+      }
+
+      .count {
+        margin-inline-start: auto;
+        align-self: center;
+        font-size: var(--t-label);
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* ---------- The grid ----------
+         auto-fit with a floor, so the column count follows the width without
+         a breakpoint per size. */
+
+      .grid {
+        list-style: none;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: clamp(1rem, 2vw, 1.5rem);
+        padding: 0;
+        margin: 0;
+        padding-block: 1.75rem 3rem;
+      }
+
+      .card {
+        display: flex;
+        flex-direction: column;
+        border: var(--rule);
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--plaster);
+        transition: box-shadow var(--press) var(--ease-out);
+      }
+
+      .card:hover {
+        box-shadow: 0 8px 26px -14px rgba(25, 26, 21, 0.5);
+      }
+
+      /* A card the agent cannot send yet reads as unfinished at a glance. */
+      .card[data-status='draft'] {
+        border-style: dashed;
+      }
+
+      .shot {
+        position: relative;
+        display: block;
+        aspect-ratio: 16 / 10;
+        background: var(--stone-warm);
+        overflow: hidden;
+        /* It is an <a> when the listing is sendable, so the placeholder text
+           inside it would otherwise render underlined and link-coloured. */
+        text-decoration: none;
+        color: inherit;
+      }
+
+      .shot img {
+        inline-size: 100%;
+        block-size: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .shot .none {
+        display: grid;
+        place-items: center;
+        block-size: 100%;
+        font-size: var(--t-label);
+        color: var(--muted);
+      }
+
+      .pill {
+        position: absolute;
+        inset-block-start: 0.6rem;
+        inset-inline-start: 0.6rem;
+        padding: 0.12rem 0.55rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        border-radius: 3px;
+        background: var(--plaster);
+        color: var(--ink);
+        border: 1px solid var(--stone);
+      }
+
+      .card[data-status='published'] .pill {
+        background: var(--olive);
+        color: var(--plaster);
+        border-color: var(--olive);
+      }
+
+      .card[data-status='sold'] .pill {
+        background: var(--ink-deep);
+        color: var(--plaster);
+        border-color: var(--ink-deep);
+      }
+
+      .body {
+        padding: 0.9rem 1rem 0.4rem;
+        flex: 1 1 auto;
+      }
+
+      .body b {
+        display: block;
+        font-family: 'Frank Ruhl Libre', serif;
+        font-weight: 500;
+        font-size: 1.1rem;
+        line-height: 1.25;
+        /* Two lines, then ellipsis: a title the agent typed can be long and
+           ragged card heights make a grid look broken. */
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+      }
+
+      .price {
+        font-family: 'Frank Ruhl Libre', serif;
+        font-weight: 700;
+        font-size: 1.25rem;
+        letter-spacing: -0.015em;
+        font-variant-numeric: tabular-nums;
+        margin-block-start: 0.35rem;
+      }
+
+      .where {
+        font-size: var(--t-label);
+        color: var(--muted);
+      }
+
+      .hint {
+        font-size: 0.76rem;
+        color: var(--muted);
+        padding: 0 1rem 0.5rem;
+      }
+
+      /* ---------- Card actions ----------
+         Icon-free on purpose. Hebrew labels are short, an icon set is another
+         thing to get right in RTL (CLAUDE.md §4.3), and a row of four glyphs
+         an agent has to decode is slower than four words they can read. */
+
+      .acts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        padding: 0.5rem 0.75rem 0.85rem;
+        border-block-start: var(--rule);
+        margin-block-start: 0.6rem;
+      }
+
+      .act {
+        padding: 0.4rem 0.7rem;
+        font: inherit;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--ink);
+        background: none;
+        border: var(--rule);
+        border-radius: 4px;
+        cursor: pointer;
+        text-decoration: none;
+        transition:
+          background var(--press) var(--ease-out),
+          border-color var(--press) var(--ease-out);
+      }
+
+      .act:hover {
+        background: var(--stone-warm);
+        border-color: var(--muted);
+      }
+
+      .act.primary {
+        background: var(--olive);
+        color: var(--plaster);
+        border-color: var(--olive);
+      }
+
+      .act.primary:hover {
+        background: var(--olive-lift);
+        border-color: var(--olive-lift);
+      }
+
+      .act:disabled {
+        opacity: 0.45;
+        cursor: default;
+      }
+
+      /* ---------- States ---------- */
+
+      .state {
+        padding-block: 3.5rem;
+        text-align: center;
+        color: var(--muted);
+      }
+
+      .state b {
+        display: block;
+        font-family: 'Frank Ruhl Libre', serif;
+        font-weight: 700;
+        font-size: 1.4rem;
+        color: var(--ink);
+        margin-block-end: 0.4rem;
       }
 
       .state a {
         color: var(--olive);
+        font-weight: 700;
+      }
+
+      /* Announces without moving the page: it is positioned, not in flow. */
+      .say {
+        position: fixed;
+        inset-block-end: 1.25rem;
+        inset-inline: 0;
+        margin-inline: auto;
+        inline-size: fit-content;
+        max-inline-size: 90vw;
+        padding: 0.7rem 1.2rem;
+        background: var(--ink-deep);
+        color: var(--plaster);
+        font-size: 0.9rem;
         font-weight: 600;
+        border-radius: 6px;
+        box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6);
+        z-index: 50;
+      }
+
+      .say[data-tone='bad'] {
+        background: #8c2f1e;
       }
 
       :focus-visible {
@@ -166,70 +451,108 @@ import '../styles/tokens.css';
         outline-offset: 3px;
       }
 
+      .bar :focus-visible {
+        outline-color: var(--plaster);
+      }
+
       [hidden] {
         display: none !important;
       }
 
-      .top-links {
-        display: flex;
-        align-items: baseline;
-        gap: 1.1rem;
-      }
-
-      /* The settings link. Present, findable, and not competing with the
-         primary action beside it. */
-      .top-links .quiet {
-        font-size: var(--t-label);
-        font-weight: 600;
-        color: var(--muted);
-        text-underline-offset: 3px;
-      }
-
-      .top-links .quiet:hover {
-        color: var(--olive);
+      @media (prefers-reduced-motion: reduce) {
+        .card,
+        .act,
+        .cta,
+        .filters label {
+          transition: none;
+        }
       }
     </style>
   </head>
 
   <body>
-    <div class="top">
-      <h1>{t('auth.myListings')}</h1>
+    <header class="bar">
+      <div class="shell">
+        <a class="mark" href="/">סיבוב</a>
+        <nav>
+          <a href="/me/">{t('agent.editDetails')}</a>
+          <a class="cta" href="/new/">{t('dash.new')}</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="shell">
+      <div class="head">
+        <h1>{t('dash.title')}</h1>
+        <p class="lead">{t('dash.lead')}</p>
+      </div>
+
       {/*
-        Two links, and the profile one is deliberately the quieter of the
-        pair. An agent comes here to find a listing they already made; the
-        details page is a thing they do once. It needs to be FINDABLE, not
-        prominent — a settings link competing with the primary action is how
-        the primary action gets missed.
+        Present from the start, hidden by script. The filter is a radio group
+        so the browser owns the "one of four" behaviour; the script only reads
+        which one is checked and sets a data attribute on the grid.
       */}
-      <span class="top-links">
-        <a class="quiet" href="/me/">{t('agent.editDetails')}</a>
-        <a href="/new/">{t('listing.create')}</a>
-      </span>
-    </div>
+      <div class="filters" id="filters" hidden>
+        <input type="radio" name="filter" id="f-all" value="all" checked />
+        <label for="f-all">{t('dash.filterAll')}</label>
 
-    {/* Every state this page can be in, present from the start and revealed by
-        the script. Rendering them from JavaScript would mean a blank page for
-        anyone whose script fails. */}
-    <p class="state" id="loading">{t('common.loading')}</p>
+        <input type="radio" name="filter" id="f-draft" value="draft" />
+        <label for="f-draft">{t('dash.filterDraft')}</label>
 
-    <p class="state" id="anon" hidden>
-      <a href="/enter/">{t('auth.title')}</a>
-    </p>
+        <input type="radio" name="filter" id="f-published" value="published" />
+        <label for="f-published">{t('dash.filterPublished')}</label>
 
-    <p class="state" id="empty" hidden>
-      {t('listing.empty')} <a href="/new/">{t('listing.create')}</a>
-    </p>
+        <input type="radio" name="filter" id="f-sold" value="sold" />
+        <label for="f-sold">{t('dash.filterSold')}</label>
 
-    <p class="state" id="failed" hidden>{t('errors.generic')}</p>
+        <span class="count" id="count"></span>
+      </div>
 
-    <ul id="rows" hidden></ul>
+      <p class="state" id="loading">{t('common.loading')}</p>
+
+      <div class="state" id="anon" hidden>
+        <b>{t('dash.signedOut')}</b>
+        <a href="/enter/">{t('dash.signIn')}</a>
+      </div>
+
+      <div class="state" id="empty" hidden>
+        <b>{t('dash.emptyTitle')}</b>
+        {t('dash.emptyBody')} <a href="/new/">{t('dash.new')}</a>
+      </div>
+
+      <p class="state" id="none" hidden>{t('dash.emptyFiltered')}</p>
+
+      <p class="state" id="failed" hidden>{t('dash.failed')}</p>
+
+      <ul class="grid" id="grid" hidden></ul>
+    </main>
+
+    <p class="say" id="say" role="status" aria-live="polite" hidden></p>
 
     <script>
       import { t } from '../lib/i18n';
       import { supabase, supabaseConfigured } from '../lib/supabase';
 
+      type Row = {
+        slug: string;
+        title: string | null;
+        price: number | null;
+        status: string;
+        category: string;
+        media: { cover?: { url?: string; alt?: string } } | null;
+        location: { city?: string; street?: string } | null;
+      };
+
+      const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+
+      const grid = $<HTMLUListElement>('grid');
+      const filters = $('filters');
+      const count = $('count');
+      const say = $('say');
+
+      const PANELS = ['loading', 'anon', 'empty', 'none', 'failed', 'grid'];
       const show = (id: string) => {
-        for (const name of ['loading', 'anon', 'empty', 'failed', 'rows']) {
+        for (const name of PANELS) {
           const node = document.getElementById(name);
           if (node) node.hidden = name !== id;
         }
@@ -241,6 +564,208 @@ import '../styles/tokens.css';
         maximumFractionDigits: 0,
       });
 
+      let sayTimer = 0;
+      const tell = (text: string, tone: 'good' | 'bad' = 'good') => {
+        say.textContent = text;
+        say.dataset.tone = tone;
+        say.hidden = false;
+        window.clearTimeout(sayTimer);
+        sayTimer = window.setTimeout(() => {
+          say.hidden = true;
+        }, 3200);
+      };
+
+      /** Every row we loaded, so filtering never needs a second request. */
+      let rows: Row[] = [];
+
+      const statusLabel = (status: string) =>
+        t(`dash.status${status.charAt(0).toUpperCase()}${status.slice(1)}`);
+
+      /**
+       * The public URL of a listing.
+       *
+       * Built from the page's own origin rather than from a configured host.
+       * On the deployed site that is the real origin; in dev it is localhost,
+       * which is correct — a link copied while testing should point at the
+       * thing being tested, not at production.
+       */
+      const publicUrl = (slug: string) => `${window.location.origin}/a/${slug}/`;
+
+      /**
+       * Copy, with a fallback for the browsers and contexts that refuse.
+       *
+       * navigator.clipboard needs a secure context and throws when a
+       * permission is denied. An agent standing in front of a client does not
+       * care why; they need the link. So on failure we say where to get it
+       * rather than failing silently.
+       */
+      const copy = async (text: string) => {
+        try {
+          await navigator.clipboard.writeText(text);
+          tell(t('dash.copied'));
+        } catch {
+          tell(t('dash.copyFailed'), 'bad');
+        }
+      };
+
+      const markSold = async (slug: string, button: HTMLButtonElement) => {
+        if (!window.confirm(t('dash.confirmSold'))) return;
+
+        button.disabled = true;
+
+        // No owner filter, for the same reason the select has none: the
+        // update policy in 0002 is what restricts this to the agent's own row.
+        const { error } = await supabase()
+          .from('listings')
+          .update({ status: 'sold' })
+          .eq('slug', slug);
+
+        button.disabled = false;
+
+        if (error) return tell(t('dash.soldFailed'), 'bad');
+
+        const row = rows.find((candidate) => candidate.slug === slug);
+        if (row) row.status = 'sold';
+        tell(t('dash.soldDone'));
+        paint();
+      };
+
+      const card = (row: Row) => {
+        const item = document.createElement('li');
+        item.className = 'card';
+        item.dataset.status = row.status;
+
+        const href = publicUrl(row.slug);
+        const sendable = row.status !== 'draft';
+
+        // --- Cover -------------------------------------------------------
+        const shot = document.createElement(sendable ? 'a' : 'div');
+        shot.className = 'shot';
+        if (sendable) (shot as HTMLAnchorElement).href = href;
+
+        const cover = row.media?.cover?.url;
+        if (cover) {
+          const image = document.createElement('img');
+          image.src = cover;
+          // The alt the agent wrote, never the title: a decorative duplicate
+          // of text already beside it is noise to a screen reader.
+          image.alt = row.media?.cover?.alt ?? '';
+          image.loading = 'lazy';
+          image.decoding = 'async';
+          shot.append(image);
+        } else {
+          const none = document.createElement('div');
+          none.className = 'none';
+          none.textContent = t('dash.noPhoto');
+          shot.append(none);
+        }
+
+        const pill = document.createElement('span');
+        pill.className = 'pill';
+        pill.textContent = statusLabel(row.status);
+        shot.append(pill);
+
+        // --- Body --------------------------------------------------------
+        const body = document.createElement('div');
+        body.className = 'body';
+
+        const title = document.createElement('b');
+        // textContent, never innerHTML: the agent typed this.
+        title.textContent = String(row.title ?? '').replace(/\s*\n\s*/g, ' ').trim() || '—';
+
+        const price = document.createElement('div');
+        price.className = 'price';
+        // Wrapped, because a number in a Hebrew line reorders without it
+        // (CLAUDE.md §4.2). The element IS the isolate.
+        const priceBdi = document.createElement('bdi');
+        priceBdi.textContent = money.format(Number(row.price ?? 0));
+        price.append(priceBdi);
+
+        body.append(title, price);
+
+        const place = [row.location?.street, row.location?.city].filter(Boolean).join(', ');
+        if (place) {
+          const where = document.createElement('div');
+          where.className = 'where';
+          where.textContent = place;
+          body.append(where);
+        }
+
+        item.append(shot, body);
+
+        if (!sendable) {
+          const hint = document.createElement('p');
+          hint.className = 'hint';
+          hint.textContent = t('dash.draftHint');
+          item.append(hint);
+        }
+
+        // --- Actions -----------------------------------------------------
+        const acts = document.createElement('div');
+        acts.className = 'acts';
+
+        const edit = document.createElement('a');
+        edit.className = 'act';
+        edit.href = '/new/';
+        edit.textContent = t('dash.edit');
+        acts.append(edit);
+
+        if (sendable) {
+          const share = document.createElement('a');
+          share.className = 'act primary';
+          share.href = `/a/${row.slug}/share/`;
+          share.textContent = t('dash.share');
+
+          const link = document.createElement('button');
+          link.type = 'button';
+          link.className = 'act';
+          link.textContent = t('dash.copyLink');
+          link.addEventListener('click', () => void copy(href));
+
+          /*
+           * No "view" button, deliberately. The cover photograph above is
+           * already a link to the same page, and a fifth equal-weight action
+           * wrapped the row onto two lines — which made every card in the
+           * grid a different height and buried שיתוף, the one action the
+           * whole dashboard exists for.
+           */
+          acts.append(share, link);
+
+          if (row.status === 'published') {
+            const sold = document.createElement('button');
+            sold.type = 'button';
+            sold.className = 'act';
+            sold.textContent = t('dash.markSold');
+            sold.addEventListener('click', () => void markSold(row.slug, sold));
+            acts.append(sold);
+          }
+        }
+
+        item.append(acts);
+        return item;
+      };
+
+      /** Renders whatever the current filter selects. */
+      const paint = () => {
+        const chosen =
+          (document.querySelector('input[name="filter"]:checked') as HTMLInputElement | null)
+            ?.value ?? 'all';
+
+        const shown = chosen === 'all' ? rows : rows.filter((row) => row.status === chosen);
+
+        count.textContent = `${shown.length} ${t('dash.countSuffix')}`;
+
+        if (shown.length === 0) {
+          filters.hidden = false;
+          show('none');
+          return;
+        }
+
+        grid.replaceChildren(...shown.map(card));
+        filters.hidden = false;
+        show('grid');
+      };
+
       const load = async () => {
         if (!supabaseConfigured) return show('failed');
 
@@ -249,68 +774,33 @@ import '../styles/tokens.css';
         if (!session.session) return show('anon');
 
         /*
-         * No `.eq('owner_id', …)` here on purpose.
+         * No `.eq('owner_id', …)`, on purpose.
          *
          * The policy in 0002 restricts this to the signed-in agent's own rows.
-         * Adding the filter in the client would look like the security and
-         * quietly become the security the day somebody edits the policy.
+         * Adding the filter here would LOOK like the security and quietly
+         * become the security the day somebody edits the policy.
          */
         const { data, error } = await client
           .from('listings')
-          .select('slug, title, price, status, media')
+          .select('slug, title, price, status, category, media, location')
           .order('created_at', { ascending: false });
 
         if (error) return show('failed');
-        if (!data || data.length === 0) return show('empty');
 
-        const list = document.getElementById('rows') as HTMLUListElement;
-        list.replaceChildren();
+        rows = (data ?? []) as Row[];
 
-        for (const listing of data) {
-          const item = document.createElement('li');
-          item.className = 'row';
+        if (rows.length === 0) return show('empty');
 
-          const cover = (listing.media as { cover?: { url?: string } } | null)?.cover?.url;
-          if (cover) {
-            const image = document.createElement('img');
-            image.className = 'thumb';
-            image.src = cover;
-            image.alt = '';
-            image.width = 56;
-            image.height = 56;
-            image.loading = 'lazy';
-            item.append(image);
-          } else {
-            const blank = document.createElement('div');
-            blank.className = 'thumb';
-            item.append(blank);
-          }
-
-          const about = document.createElement('div');
-          about.className = 'about';
-
-          const title = document.createElement('b');
-          // textContent, never innerHTML: this is a title the agent typed.
-          title.textContent = String(listing.title ?? '').replace(/\s*\n\s*/g, ' ');
-
-          const meta = document.createElement('span');
-          meta.textContent = money.format(Number(listing.price ?? 0));
-
-          about.append(title, meta);
-
-          const go = document.createElement('a');
-          go.className = 'go';
-          go.href = `/a/${listing.slug}/share/`;
-          go.textContent = t('common.share');
-
-          item.append(about, go);
-          list.append(item);
-        }
-
-        show('rows');
+        paint();
       };
 
-      void load();
+      for (const input of document.querySelectorAll('input[name="filter"]')) {
+        input.addEventListener('change', paint);
+      }
+
+      // A rejection must not leave the spinner up forever. The agent gets a
+      // state they can act on instead of a page that never resolves.
+      void load().catch(() => show('failed'));
     </script>
   </body>
 </html>
