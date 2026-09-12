@@ -38,6 +38,13 @@ export interface AgentProfile {
   role?: string | null;
   /** Self-declared. NOT checked against the register. */
   licenceNumber?: string | null;
+  /**
+   * The accent every listing this agent creates is stamped with.
+   *
+   * Not a blocker: absent means olive, which is the brand, so an agent who
+   * never opens the picker still gets a coherent page. See accents.ts.
+   */
+  accent?: string | null;
 }
 
 /**

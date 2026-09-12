@@ -1,4 +1,5 @@
 ---
+import { ACCENTS } from '@/features/agents/accents';
 import { t } from '../lib/i18n';
 import '../styles/tokens.css';
 
@@ -162,6 +163,71 @@ import '../styles/tokens.css';
         color: #9c9d93;
         font-weight: 400;
         border-block-end: 1px dashed #6f7066;
+      }
+
+      /* ---------- The palette ----------
+         Radios, because it is one choice out of six and the browser already
+         knows how to do that with a keyboard. The swatch IS the label: a
+         colour needs no name to be chosen, and the Hebrew name is there for a
+         screen reader and for anyone who wants to say which one they picked. */
+
+      .swatches {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+      }
+
+      .swatches input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .swatches label {
+        display: grid;
+        gap: 0.35rem;
+        justify-items: center;
+        margin: 0;
+        cursor: pointer;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: var(--muted);
+      }
+
+      .swatches .chip {
+        inline-size: 40px;
+        block-size: 40px;
+        border-radius: 50%;
+        background: var(--chip);
+        /* The ring is drawn OUTSIDE the circle, so selecting one does not
+           change its size and shift the whole row sideways. */
+        box-shadow: 0 0 0 1px rgba(25, 26, 21, 0.14);
+        transition: box-shadow var(--press) var(--ease-out);
+      }
+
+      .swatches label:hover .chip {
+        box-shadow: 0 0 0 2px rgba(25, 26, 21, 0.3);
+      }
+
+      .swatches input:checked + label .chip {
+        box-shadow:
+          0 0 0 2px var(--plaster),
+          0 0 0 4px var(--ink);
+      }
+
+      .swatches input:checked + label {
+        color: var(--ink);
+      }
+
+      .swatches input:focus-visible + label .chip {
+        outline: 2px solid var(--ink);
+        outline-offset: 4px;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .swatches .chip {
+          transition: none;
+        }
       }
 
       /* ---------- Form ---------- */
@@ -334,6 +400,30 @@ import '../styles/tokens.css';
 
         <form id="form" novalidate>
           <fieldset id="fields">
+            <div class="field" id="f-accent">
+              <label for="accent-olive">{t('agent.accent')}</label>
+              <div class="swatches">
+                {
+                  ACCENTS.map((accent) => (
+                    <Fragment>
+                      <input
+                        type="radio"
+                        name="accent"
+                        id={`accent-${accent.id}`}
+                        value={accent.id}
+                        checked={accent.id === 'olive'}
+                      />
+                      <label for={`accent-${accent.id}`}>
+                        <span class="chip" style={`--chip:${accent.base}`} />
+                        {t(`agent.accents.${accent.id}`)}
+                      </label>
+                    </Fragment>
+                  ))
+                }
+              </div>
+              <p class="hint">{t('agent.accentHint')}</p>
+            </div>
+
             <div class="field" id="f-name">
               <label for="name">{t('agent.name')}</label>
               <input id="name" name="name" type="text" autocomplete="name" required />
@@ -390,12 +480,19 @@ import '../styles/tokens.css';
     </main>
 
     <script>
+      import { ACCENTS } from '@/features/agents/accents';
       import { profileBlockers, type ProfileBlockerCode } from '@/features/agents/profile';
       import { t } from '../lib/i18n';
       import { loadProfile, saveProfile } from '../lib/profile';
       import { supabaseConfigured } from '../lib/supabase';
 
       const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+
+      // Keyed by plain string: the value comes off a radio input, which the
+      // DOM types as string and not as the literal union.
+      const ACCENT_MAP = new Map<string, { base: string; lift: string }>(
+        ACCENTS.map((accent) => [accent.id as string, accent]),
+      );
 
       const gate = $('gate');
       const panel = $('panel');
@@ -410,6 +507,7 @@ import '../styles/tokens.css';
       const licence = $<HTMLInputElement>('licence');
 
       const pvName = $('pv-name');
+      const pvDot = document.querySelector('.agent-bar .dot') as HTMLElement | null;
       const pvBrand = $('pv-brand');
 
       const say = (text: string, tone: 'good' | 'bad' = 'good') => {
@@ -418,12 +516,17 @@ import '../styles/tokens.css';
       };
 
       /** The form's fields, as the domain sees them. */
+      const chosenAccent = () =>
+        (document.querySelector('input[name="accent"]:checked') as HTMLInputElement | null)
+          ?.value ?? 'olive';
+
       const read = () => ({
         displayName: name.value,
         phone: phone.value,
         agencyName: agency.value,
         role: role.value,
         licenceNumber: licence.value,
+        accent: chosenAccent(),
       });
 
       /**
@@ -441,6 +544,13 @@ import '../styles/tokens.css';
 
         const office = agency.value.trim();
         pvBrand.textContent = office || t('agent.previewFallback');
+
+        // The dot is the one place the accent shows in this preview, so it is
+        // the one place that has to update. It uses the LIFT stop, because the
+        // listing page does: on --ink-deep the base is too close in value to
+        // read as a colour at all.
+        const accent = ACCENT_MAP.get(chosenAccent());
+        if (accent && pvDot) pvDot.style.background = accent.lift;
       };
 
       /**
@@ -471,6 +581,10 @@ import '../styles/tokens.css';
 
         return found.length === 0;
       };
+
+      for (const swatch of document.querySelectorAll('input[name="accent"]')) {
+        swatch.addEventListener('change', paint);
+      }
 
       for (const input of [name, phone, agency, role, licence]) {
         input.addEventListener('input', () => {
@@ -514,6 +628,13 @@ import '../styles/tokens.css';
         agency.value = profile.agencyName ?? '';
         role.value = profile.role ?? '';
         licence.value = profile.licenceNumber ?? '';
+
+        const saved = document.querySelector(
+          `input[name="accent"][value="${CSS.escape(profile.accent ?? 'olive')}"]`,
+        ) as HTMLInputElement | null;
+        // Falls back to the olive already checked in the markup, so an accent
+        // we no longer offer leaves the agent on the brand colour, not on none.
+        if (saved) saved.checked = true;
 
         paint();
       };

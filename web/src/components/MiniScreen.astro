@@ -1,0 +1,90 @@
+---
+import type { FactCell } from '../lib/facts';
+import type { PerUnitPrice } from '../lib/price';
+import type { Listing } from '@/types/listing';
+import { HERO_WIDTHS, largest } from '../lib/images';
+import { ils } from '../lib/format';
+import Prose from './Prose.astro';
+
+interface Props {
+  listing: Listing;
+  /** Already sliced to what fits above a phone's fold. */
+  cells: FactCell[];
+  perUnit?: PerUnitPrice | undefined;
+  /** Eager for anything in the hero; lazy below the fold. */
+  eager?: boolean;
+}
+
+// No `tpl` prop: the template is a data attribute on the WRAPPER, and the
+// palette reaches this markup through inherited custom properties. Taking it
+// here as well would be a second source of truth for the same fact.
+const { listing, cells, perUnit, eager = false } = Astro.props;
+
+const place = listing.location?.street
+  ? `${listing.location.street}, ${listing.location.city}`
+  : (listing.location?.city ?? '');
+---
+
+{/*
+  A listing page, miniature.
+
+  EXTRACTED because it was written out twice — once in the hero and once in the
+  templates row — and the cycling hero needs three more. Six copies of forty
+  lines of markup is six places for them to drift apart, and the whole claim
+  the homepage makes is that these are the real thing.
+
+  IT IS NOT AN IFRAME, and the long comment in index.astro says why: the real
+  page's hero is 84svh, and inside a frame that resolves against the frame, so
+  a preview could never show anything but the top. This is composed from the
+  same `listings.ts` the real pages render, through the same `toCells`, `ils`
+  and `perUnitPrice`, so it cannot go stale either.
+
+  BUILT FROM <span>s, not <div>s, because the hero wraps a whole screen in one
+  element. Every structural piece is told it is a block in index.astro's
+  stylesheet — an inline element ignores aspect-ratio, which once clipped the
+  price, the facts and the button off the bottom of every screen on the page.
+*/}
+<span class="screen">
+  <span class="s-agent">
+    <span class="dot" />
+    <span class="who">{listing.seller.name}</span>
+    <span class="brand">סיבוב</span>
+  </span>
+
+  <span class="s-hero">
+    <img
+      src={largest(listing.media.cover, HERO_WIDTHS)}
+      alt={listing.media.cover.alt}
+      width={listing.media.cover.width}
+      height={listing.media.cover.height}
+      loading={eager ? 'eager' : 'lazy'}
+      decoding="async"
+    />
+    <span class="s-veil">
+      <span class="s-place"><Prose text={place} /></span>
+      {/* The reference titles carry their own line break; the first line is
+          what fits at this size. */}
+      <span class="s-title"><Prose text={listing.title.split('\n')[0] ?? ''} /></span>
+    </span>
+  </span>
+
+  <span class="s-price-bar">
+    <span class="s-price"><bdi>{ils(listing.price)}</bdi></span>
+    {perUnit && (
+      <span class="s-price-note">
+        <bdi>{perUnit.amount}</bdi> {perUnit.per}
+      </span>
+    )}
+  </span>
+
+  <span class="s-facts">
+    {cells.map((cell) => (
+      <span class={cell.absent ? 's-fact off' : 's-fact'}>
+        <span class="s-fact-val">{cell.bdi ? <bdi>{cell.value}</bdi> : cell.value}</span>
+        <span class="s-fact-lbl">{cell.label}</span>
+      </span>
+    ))}
+  </span>
+
+  <span class="s-cta">שליחת הודעה בוואטסאפ</span>
+</span>

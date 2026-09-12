@@ -1,4 +1,5 @@
 ---
+import { accentFor } from '@/features/agents/accents';
 import type { Listing } from '@/types/listing';
 import { ogDescription, ogImageUrl, ogTitle } from '../lib/og';
 import '../styles/tokens.css';
@@ -20,6 +21,21 @@ interface Props {
 }
 
 const { listing, ogFactKeys, heroHeight } = Astro.props;
+
+/**
+ * The agent's accent, resolved to two stops and set as inline custom
+ * properties — the same mechanism the hero divergence already uses.
+ *
+ * Inline rather than a class per colour, because six accents times three
+ * templates is eighteen rules that all say the same thing. It also keeps the
+ * stylesheet BYTE-IDENTICAL between the property and vehicle pages, which is
+ * what verify-template-divergences.mjs asserts: the colour rides on the
+ * attribute, not on the CSS.
+ *
+ * A listing with no accent resolves to olive, so every page made before 0011
+ * looks exactly as it did.
+ */
+const accent = accentFor(listing.accent);
 
 const title = ogTitle(listing);
 const description = ogDescription(listing, ogFactKeys);
@@ -50,7 +66,12 @@ const agency = listing.seller.agencyName;
   is BYTE-IDENTICAL for both categories, so CI can assert exact CSS equality
   and a fifth divergence cannot slip in as a style override.
 */}
-<html lang="he" dir="rtl" data-template={listing.template} style={`--heroH:${heroHeight}`}>
+<html
+  lang="he"
+  dir="rtl"
+  data-template={listing.template}
+  style={`--heroH:${heroHeight};--accent:${accent.base};--accent-lift:${accent.lift}`}
+>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -409,6 +430,25 @@ footer a{color:var(--muted)}
   So the three of them take a token that is a ROLE and not a palette entry. It
   is deliberately not overridden below.
 */
+/*
+  THE ACCENT, MAPPED ONTO THE TOKENS EVERY RULE ALREADY READS.
+
+  --accent and --accent-lift arrive inline from the agent's profile. Rather
+  than rewriting every selector that says var(--olive), the two tokens are
+  redefined in terms of them — so an accent change repaints the whole page and
+  no rule has to know the feature exists.
+
+  The fallbacks are olive, so a page rendered without the inline properties
+  (an older listing, a test fixture) is the brand colour rather than nothing.
+
+  [data-template] rather than :root, deliberately: it has to outrank the
+  :root declarations in tokens.css whichever order the bundler emits them in.
+*/
+html[data-template] {
+  --olive: var(--accent, #4a5d3a);
+  --olive-lift: var(--accent-lift, #7e9a62);
+}
+
 html {
   --on-dark: #fbfaf7;
 
@@ -423,8 +463,10 @@ html {
 }
 
 html[data-template='agency'] {
-  --olive: #c2410c;
-  --olive-lift: #ea580c;
+  /* Orange lived here and has gone. It gave the product two brand colours
+     depending on which template a listing used, which is an inconsistency
+     rather than a palette. The accent is the AGENT's choice now (0011), set
+     as an inline custom property on <html>, and every template uses it. */
   --ink-deep: #1c1917;
   --stone: #e7e2da;
   --stone-warm: #faf6f0;
@@ -432,38 +474,106 @@ html[data-template='agency'] {
   --muted: #6b6259;
 }
 
-/* Softer corners and a carded facts grid: the structural half of the
-   difference, and the only place a template changes more than colour. */
+/*
+  AGENCY IS A DIFFERENT SHAPE, NOT A DIFFERENT COLOUR.
+
+  The first version of these templates changed only the palette, and the
+  verdict on seeing them side by side was that they looked the same. They did.
+  A colour swap is not a template.
+
+  So agency is the information-dense one: a shorter hero because the
+  photograph is not the argument here, facts as a LABELLED TWO-COLUMN LIST
+  rather than three centred cells, a price band that fills rather than sits on
+  a hairline, and a rounded carded surface throughout. It reads like an
+  agency's own site, which is the reference it was drawn from.
+*/
+html[data-template='agency'] {
+  /* The photograph shares the first screen rather than owning it. */
+  --heroH: 54svh;
+}
+
+html[data-template='agency'] .hero {
+  min-height: 320px;
+}
+
+html[data-template='agency'] .hero-title {
+  font-weight: 700;
+  font-size: calc(var(--t-hero) * .72);
+}
+
+/* A filled band, so the number is the loudest thing above the fold. */
+html[data-template='agency'] .price-bar {
+  background: var(--stone-warm);
+  border-block-end: 1px solid var(--stone);
+  align-items: center;
+}
+
+html[data-template='agency'] .price {
+  font-size: calc(var(--t-price) * .82);
+}
+
+/* Two columns, label beside value, left as a list rather than three cells of
+   centred display type. Density is the point of this template. */
 html[data-template='agency'] .facts {
+  grid-template-columns: repeat(2, 1fr);
   gap: .5rem;
   background: transparent;
   border-block: 0;
-  padding-inline: var(--gut);
+  padding: var(--gut) var(--gut) .4rem;
 }
+
 html[data-template='agency'] .fact {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .6rem;
+  text-align: start;
+  padding: .7rem .85rem;
   border: 1px solid var(--stone);
-  border-radius: 8px;
+  border-radius: 10px;
 }
+
+html[data-template='agency'] .fact-val {
+  font-size: calc(var(--t-num) * .78);
+  order: 2;
+}
+
+html[data-template='agency'] .fact-lbl {
+  margin-top: 0;
+  order: 1;
+}
+
+/* The provenance chip has nowhere to sit in a single-line cell. */
+html[data-template='agency'] .fact-src {
+  display: none;
+}
+
+html[data-template='agency'] .gallery {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+html[data-template='agency'] .gallery figure:first-child {
+  grid-column: 1 / -1;
+}
+
 html[data-template='agency'] .cta {
   border-radius: 999px;
-}
-html[data-template='agency'] .hero-title {
-  font-weight: 700;
 }
 
 /* ---------- כהה — התמונות נושאות את העמוד ----------
    Inverted. The enrichment block, which is --ink-deep on the other two, has to
    become the LIGHT band here or it disappears into the page: a section that
    exists to stand out cannot be the same value as its surroundings. */
+/* On this ground the base stop is too close in value to read as accent, so
+   the lift becomes the accent and the base is not used at all. */
 html[data-template='dark'] {
+  --olive: var(--accent-lift, #7e9a62);
   --plaster: #14150f;
   --ink: #f3f1ea;
   --ink-deep: #0a0b06;
   --stone: #2c2e24;
   --stone-warm: #1d1f16;
   --muted: #a3a498;
-  --olive: #93ab73;
-  --olive-lift: #aac28c;
 }
 
 html[data-template='dark'] {
@@ -497,6 +607,55 @@ html[data-template='dark'] .cta:active {
    the heavy gradient the light templates use reads as dirt here. */
 html[data-template='dark'] .hero-veil {
   background: linear-gradient(to top, rgba(10, 11, 6, .92) 10%, rgba(10, 11, 6, .45) 45%, transparent);
+}
+
+/*
+  DARK IS THE PHOTOGRAPH-LED SHAPE. The hero takes the whole first screen, the
+  facts lose their boxes and become a row of bare numbers, and the gallery runs
+  edge to edge. Nothing competes with the pictures, which is the only reason to
+  choose this template — and why its own copy in the picker says it is worth it
+  only if the photographs are good.
+*/
+html[data-template='dark'] {
+  --heroH: 94svh;
+}
+
+html[data-template='dark'] .hero-title {
+  font-size: calc(var(--t-hero) * 1.08);
+}
+
+html[data-template='dark'] .price {
+  font-size: calc(var(--t-price) * 1.12);
+}
+
+/* No cells, no hairlines: three numbers on the page itself. */
+html[data-template='dark'] .facts {
+  gap: 0;
+  background: transparent;
+  border-block: 1px solid var(--stone);
+}
+
+html[data-template='dark'] .fact {
+  background: transparent;
+  padding-block: 1.4rem;
+}
+
+html[data-template='dark'] .fact + .fact {
+  border-inline-start: 1px solid var(--stone);
+}
+
+html[data-template='dark'] .fact.off {
+  background: transparent;
+}
+
+/* Full bleed. The 620px column is the editorial shape, not this one. */
+html[data-template='dark'] .gallery {
+  padding-inline: 0;
+  gap: .25rem;
+}
+
+html[data-template='dark'] .gallery img {
+  border-radius: 0;
 }
 </style>
 </head>

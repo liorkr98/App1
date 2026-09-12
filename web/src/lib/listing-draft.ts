@@ -1,3 +1,4 @@
+import { DEFAULT_ACCENT, isAccentId } from '@/features/agents/accents';
 import { toSeller } from '@/features/agents/profile';
 import { generateSlug } from '@/features/listings/slug';
 import { schemaFor, type ListingCategory } from '@/features/listings/schemas';
@@ -69,7 +70,7 @@ export async function createDraft(category: ListingCategory): Promise<DraftRow> 
    * phone number after starting a draft should not have to start over, and
    * this row was written before that correction.
    */
-  const stamped = await sellerForDraft(category);
+  const stamped = await stampFromProfile(category);
 
   let lastError: unknown;
 
@@ -87,7 +88,8 @@ export async function createDraft(category: ListingCategory): Promise<DraftRow> 
         // database only needs a row it can hang photos off.
         title: '',
         price: 0,
-        ...(stamped ? { seller: stamped } : {}),
+        ...(stamped.seller ? { seller: stamped.seller } : {}),
+        accent: stamped.accent,
       })
       .select('id, slug')
       .single();
@@ -104,7 +106,7 @@ export async function createDraft(category: ListingCategory): Promise<DraftRow> 
 }
 
 /**
- * The signed-in agent's details as a `Seller`, or undefined.
+ * The signed-in agent's details as a `Seller`, plus their accent.
  *
  * Undefined covers three different situations on purpose — not signed in, no
  * profile row, a profile too incomplete to dial — because the caller does the
@@ -113,16 +115,23 @@ export async function createDraft(category: ListingCategory): Promise<DraftRow> 
  * fixed. Distinguishing them here would only let a draft fail for a reason
  * the seller cannot act on while holding a phone full of photographs.
  */
-async function sellerForDraft(category: ListingCategory) {
+async function stampFromProfile(category: ListingCategory) {
   try {
     const result = await loadProfile();
-    if (!('profile' in result)) return undefined;
+    if (!('profile' in result)) return { seller: undefined, accent: DEFAULT_ACCENT };
 
-    return toSeller(result.profile, schemaFor(category).ownerRole);
+    const { profile } = result;
+
+    return {
+      seller: toSeller(profile, schemaFor(category).ownerRole),
+      // The accent is stamped even when the seller is not. A half-filled
+      // profile still has a colour, and the listing should carry it.
+      accent: isAccentId(profile.accent) ? profile.accent : DEFAULT_ACCENT,
+    };
   } catch {
     // A profile read that throws must not take the draft with it. The
     // photographs are the thing the seller came to save.
-    return undefined;
+    return { seller: undefined, accent: DEFAULT_ACCENT };
   }
 }
 

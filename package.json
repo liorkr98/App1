@@ -8,6 +8,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "tsc -p tsconfig.test.json && node --test \"test-build/**/*.test.js\"",
+    "build": "npm install --prefix web --no-audit --no-fund && npm run build --prefix web",
     "web": "npm run dev --prefix web",
     "web:build": "npm run build --prefix web",
     "worker:test": "npm run test --prefix worker"

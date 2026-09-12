@@ -147,11 +147,69 @@ The build command is a dashboard setting and cannot be committed. Set it to:
 npm install --prefix web --no-audit --no-fund && npm run build --prefix web
 ```
 
+`npm run build` at the ROOT now does the same thing, so either works. That
+script exists for this reason alone: the root package.json had no `build`
+script at all, so the most obvious thing anyone would type into that field —
+and a common Cloudflare default — failed with "missing script: build" and sent
+the reader looking for a problem in the web workspace.
+
+**IT HAS TO BE SET, AND AN EMPTY FIELD FAILS IN A CONFUSING WAY.** The build of
+12 September 2026 went:
+
+```
+Detected the following tools from environment: bun@1.2.15, nodejs@24.18.0
+Installing project dependencies: bun install
+...
+Executing user deploy command: npx wrangler versions upload
+✘ [ERROR] The directory specified by the "assets.directory" field in your
+  configuration file does not exist:
+    /opt/buildhome/repo/web/dist
+```
+
+Read it twice: there is no build step between the install and the deploy. With
+the field empty Cloudflare runs its own dependency install — `bun install`, at
+the REPOSITORY ROOT, because that is where the package.json it found lives —
+and then goes straight to deploying. A root install does not fetch Astro
+(CLAUDE.md §3: `web/` is deliberately not an npm workspace), nothing ever runs
+`astro build`, and `web/dist` is never created.
+
+The error names `assets.directory`, which points the reader at
+`wrangler.jsonc` — a file that is correct. **The missing thing is the build
+command, not the asset path.**
+
 The `--prefix web` on the install matters. `web/` has its own package.json and
 is deliberately NOT an npm workspace (CLAUDE.md §3), so a root install does not
 fetch Astro. Without it the build command fails on a missing `astro`.
 
-Leave the deploy command as `npx wrangler deploy`.
+### The deploy command, and the thing it gets wrong
+
+**Do NOT leave the deploy command as a bare `npx wrangler deploy`.** That is
+what it was set to, and it is why the "Workers Builds: besivov" check has
+failed on every pull request this repository has ever opened.
+
+`wrangler deploy` targets **production**. Cloudflare runs the deploy command on
+non-production branches too when non-production branch builds are enabled, and
+its own default there is `wrangler versions upload` — a preview version with
+its own URL, which does not touch what the public is looking at. Overriding
+that with `wrangler deploy` means every branch build either fails or, worse,
+publishes an unmerged branch to the live site.
+
+Two ways to fix it. Pick one:
+
+**A. Turn non-production branch builds off.** Settings → Build → Branch
+control. Simplest, and GitHub Actions already verifies pull requests. You lose
+preview URLs.
+
+**B. Make the command branch-aware.** Keep the previews and stop the failures:
+
+```
+if [ "$WORKERS_CI_BRANCH" = "main" ]; then npx wrangler deploy; else npx wrangler versions upload; fi
+```
+
+`WORKERS_CI_BRANCH` is set by Workers Builds on every run. **B is the better
+answer** — a preview URL per pull request is the only way to look at a change
+on a real device before it is merged, and this is a product whose whole output
+is a page viewed on a phone.
 
 ### Why not just delete the Expo remnant
 

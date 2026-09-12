@@ -4,7 +4,7 @@ import { toCells } from '../lib/facts';
 import { ils } from '../lib/format';
 import { perUnitPrice } from '../lib/price';
 import { HERO_WIDTHS, largest } from '../lib/images';
-import Prose from '../components/Prose.astro';
+import MiniScreen from '../components/MiniScreen.astro';
 import { TEMPLATE_IDS } from '@/types/listing';
 import { propertyListing, vehicleListing } from '../lib/listings';
 import '../styles/tokens.css';
@@ -72,7 +72,7 @@ const title = `סיבוב — ${t('home.tagline')}`;
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Assistant:wght@400;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Assistant:wght@400;600;700;800&display=swap"
       rel="stylesheet"
     />
 
@@ -128,9 +128,49 @@ const title = `סיבוב — ${t('home.tagline')}`;
         padding-inline: var(--gutter);
       }
 
+      /*
+        THE DARK SECTIONS HAVE A GROUND, not a flat fill.
+        The verdict on the first version was "empty, no background", and it was
+        right: #111208 edge to edge is a void, and in the sunlight this page is
+        read in it flattens completely. Two soft radials off-centre give it a
+        light source, and a hairline grid gives the eye something to measure
+        the depth against. Both are cheap — no image, no blur filter, no
+        element. They are painted by the background property itself.
+      */
       .dark {
-        background: var(--ink-deep);
+        position: relative;
+        background:
+          radial-gradient(120% 90% at 82% 8%, rgba(126, 154, 98, 0.16), transparent 60%),
+          radial-gradient(90% 70% at 10% 95%, rgba(126, 154, 98, 0.09), transparent 62%),
+          var(--ink-deep);
         color: var(--on-dark);
+      }
+
+      /* The grid sits under the content and over the wash. `mask` fades it out
+         before it reaches an edge, so it reads as texture rather than as a
+         table someone left on. */
+      .dark::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(251, 250, 247, 0.045) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(251, 250, 247, 0.045) 1px, transparent 1px);
+        background-size: 68px 68px;
+        mask-image: radial-gradient(115% 85% at 50% 25%, #000 35%, transparent 78%);
+        pointer-events: none;
+      }
+
+      .dark > * {
+        position: relative;
+      }
+
+      /* The light band gets the quieter half of the same idea, so the page does
+         not go from textured to blank at the fold. */
+      .lit {
+        background:
+          radial-gradient(95% 70% at 78% 0%, rgba(74, 93, 58, 0.06), transparent 58%),
+          var(--plaster);
       }
 
       h1,
@@ -235,27 +275,44 @@ const title = `סיבוב — ${t('home.tagline')}`;
         margin-block-start: 2rem;
       }
 
+      /*
+        BOLDER, because they were not bold enough and that was the note.
+        Three changes, and the weight is the one that mattered: Assistant goes
+        to 800 and the page was only loading 700, so the button was asking for
+        a weight the browser had to fake by not faking it.
+
+        Then size — 1.15rem and a taller box — and a shadow tinted with the
+        accent rather than with black, so the button reads as sitting on the
+        page rather than cut out of it.
+      */
       .cta {
         display: inline-block;
-        padding: 0.95rem 2.1rem;
+        padding: 1.1rem 2.6rem;
         background: var(--olive);
         color: var(--plaster);
-        font-size: 1.05rem;
-        font-weight: 700;
+        font-size: 1.15rem;
+        font-weight: 800;
+        letter-spacing: -0.01em;
         border: none;
-        border-radius: 5px;
+        border-radius: 6px;
         text-decoration: none;
+        box-shadow: 0 10px 24px -12px rgba(74, 93, 58, 0.9);
         transition:
           transform var(--press) var(--ease-out),
+          box-shadow var(--press) var(--ease-out),
           background var(--press) var(--ease-out);
       }
 
       .cta:hover {
         background: var(--olive-lift);
+        transform: translateY(-1px);
+        box-shadow: 0 14px 30px -12px rgba(74, 93, 58, 1);
       }
 
+      /* 100–160ms is the band where a press reads as physical. */
       .cta:active {
         transform: scale(0.97);
+        box-shadow: 0 4px 12px -8px rgba(74, 93, 58, 0.9);
       }
 
       .actions-note {
@@ -268,11 +325,28 @@ const title = `סיבוב — ${t('home.tagline')}`;
          Composed from the real listing data through the real formatters, so
          they cannot drift from the product. */
 
-      .screens {
-        display: flex;
-        gap: clamp(0.6rem, 1.6vw, 1rem);
-        align-items: flex-start;
-        justify-content: center;
+      /*
+        One grid cell, three screens stacked in it. Grid rather than absolute
+        positioning so the container still sizes to the tallest — nothing has
+        to be measured and there is no fixed height to get wrong.
+      */
+      .stage {
+        display: grid;
+        justify-items: center;
+        inline-size: 100%;
+      }
+
+      .stage > .device {
+        grid-area: 1 / 1;
+        /* The cell is as tall as the TALLEST of the three, and without this
+           the shorter screens stretch to fill it — which painted a block of
+           empty white below the agency one. Each keeps its own height and
+           hangs from the top of the cell. */
+        align-content: start;
+        /* A grid item under justify-items:center sizes to its CONTENT, and the
+           content is a screen at inline-size:100% — which resolves against the
+           item, which has no width yet. That circularity collapsed all three
+           screens to zero. An explicit width breaks it. */
         inline-size: 100%;
       }
 
@@ -340,8 +414,12 @@ const title = `סיבוב — ${t('home.tagline')}`;
         --s-line: #e7e2da;
         --s-warm: #faf6f0;
         --s-muted: #6b6259;
-        --s-accent: #c2410c;
-        --s-lift: #ea580c;
+        /* Olive, like the other two. Orange lived here and gave the product a
+           second brand colour depending on which template a listing used. The
+           accent is the AGENT's choice now (migration 0011) and it is the same
+           across all three, so these miniatures differ by SHAPE only. */
+        --s-accent: #4a5d3a;
+        --s-lift: #7e9a62;
       }
 
       .device[data-tpl='dark'] {
@@ -487,21 +565,68 @@ const title = `סיבוב — ${t('home.tagline')}`;
         min-block-size: 3.6em;
       }
 
+      /* Agency: a shorter photograph, a filled price band, and facts as a
+         labelled two-column list. The same three moves the real template
+         makes — see BaseListing. Without them these read as one design in
+         three colours, which was the verdict on the first version. */
+      .device[data-tpl='agency'] .s-hero {
+        aspect-ratio: 4 / 3;
+      }
+
+      .device[data-tpl='agency'] .s-price-bar {
+        background: var(--s-warm);
+        border-block-end: 1px solid var(--s-line);
+        align-items: center;
+      }
+
       .device[data-tpl='agency'] .s-facts {
-        gap: 0.35em;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.3em;
         background: transparent;
         border-block-start: 0;
         padding: 0.35em;
       }
 
       .device[data-tpl='agency'] .s-fact {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 0.3em;
+        text-align: start;
+        padding: 0.4em 0.5em;
         border: 1px solid var(--s-line);
         border-radius: 0.45em;
-        /* The carded grid adds .35em of padding on each side, which made this
-           screen 12px taller than the other two and dropped its label off the
-           line the three share. Give the cell back exactly what the padding
-           took. */
-        min-block-size: 2.9em;
+        min-block-size: 0;
+      }
+
+      .device[data-tpl='agency'] .s-fact-val {
+        font-size: 0.62em;
+        order: 2;
+      }
+
+      .device[data-tpl='agency'] .s-fact-lbl {
+        margin-block-start: 0;
+        order: 1;
+      }
+
+      /* Dark: the photograph takes more of the screen and the facts lose their
+         cells entirely — three bare numbers with a hairline between. */
+      .device[data-tpl='dark'] .s-hero {
+        aspect-ratio: 3 / 5;
+      }
+
+      .device[data-tpl='dark'] .s-facts {
+        gap: 0;
+        background: transparent;
+        border-block-start: 1px solid var(--s-line);
+      }
+
+      .device[data-tpl='dark'] .s-fact {
+        background: transparent;
+      }
+
+      .device[data-tpl='dark'] .s-fact + .s-fact {
+        border-inline-start: 1px solid var(--s-line);
       }
 
       .s-fact.off {
@@ -576,12 +701,28 @@ const title = `סיבוב — ${t('home.tagline')}`;
 
       /* ---------- Templates ---------- */
 
+      /*
+        Stretch, not flex-start. The three templates are now genuinely
+        different heights — that is the point of them — but their LABELS were
+        floating at three different heights, which read as broken rather than
+        as deliberate. Stretching the wrapper and pushing the label to the
+        bottom keeps the screens honest and the captions on one line.
+      */
       .tpl-row {
         display: flex;
         gap: clamp(0.75rem, 2vw, 1.5rem);
-        align-items: flex-start;
+        align-items: stretch;
         justify-content: center;
         inline-size: 100%;
+      }
+
+      .tpl-row .device {
+        grid-template-rows: auto 1fr;
+        align-content: start;
+      }
+
+      .tpl-row .device-label {
+        align-self: end;
       }
 
       /* ---------- Steps ----------
@@ -767,13 +908,27 @@ const title = `סיבוב — ${t('home.tagline')}`;
          moves something that would already be on screen without it, because a
          reveal gated on a transition ships blank in a headless renderer. */
 
+      /*
+        THE DEFAULT STATE IS VISIBLE. Every rule below only ever moves
+        something that is already on the page — nothing here can leave the
+        homepage blank in a headless renderer, a background tab, or a browser
+        that drops the feature.
+
+        Only the first cycling screen shows without motion, which is correct:
+        the other two are the same listing in another palette, so no content is
+        lost, and a reader who asked for less movement gets one still page.
+      */
+      .stage > .device + .device {
+        opacity: 0;
+      }
+
       @media (prefers-reduced-motion: no-preference) {
         .hero-copy,
-        .hero .screens {
+        .hero .stage {
           animation: arrive 0.62s both cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .hero .screens {
+        .hero .stage {
           animation-delay: 0.1s;
         }
 
@@ -783,11 +938,87 @@ const title = `סיבוב — ${t('home.tagline')}`;
             transform: translateY(14px);
           }
         }
+
+        /*
+          The cycle. 13.5s for three screens is 4.5s each — long enough to read
+          a price and short enough that a reader who arrived for the headline
+          sees a second one before they scroll.
+
+          The fade is 4% of the loop on each side, which is about 540ms: slower
+          than a UI transition because this is a scene change, not a response
+          to a press.
+        */
+        .stage > .device {
+          animation: cycle 13.5s calc(var(--i) * 4.5s) infinite both;
+        }
+
+        @keyframes cycle {
+          0% {
+            opacity: 0;
+            transform: translateY(10px) scale(0.985);
+          }
+          4%,
+          29% {
+            opacity: 1;
+            transform: none;
+          }
+          33%,
+          100% {
+            opacity: 0;
+            transform: translateY(-10px) scale(0.985);
+          }
+        }
+
+        /* A card lifts toward the reader on hover. Transform only — animating
+           a layout property here would reflow the whole row. */
+        .tpl-row .device {
+          transition: transform 0.35s var(--ease-out);
+        }
+
+        .tpl-row .device:hover {
+          transform: translateY(-6px);
+        }
+      }
+
+      /*
+        SCROLL-DRIVEN REVEALS, and every rule is inside BOTH wrappers.
+
+        @supports is the feature detection: outside it the declaration is
+        dropped and whatever opacity it was driving is left applied, which is
+        how a third of a page goes invisible in a browser that cannot animate
+        it back. The reduced-motion query is the other half.
+        scripts/verify-motion-fallbacks.mjs asserts both against the BUILT
+        stylesheet, because the nesting is the whole difference and it looks
+        correct either way in review.
+      */
+      @media (prefers-reduced-motion: no-preference) {
+        @supports (animation-timeline: view()) {
+          .reveal {
+            animation: rise linear both;
+            animation-timeline: view();
+            animation-range: entry 5% cover 26%;
+          }
+
+          .reveal:nth-child(2) {
+            animation-range: entry 2% cover 28%;
+          }
+
+          .reveal:nth-child(3) {
+            animation-range: entry 0% cover 30%;
+          }
+
+          @keyframes rise {
+            from {
+              opacity: 0;
+              transform: translateY(26px);
+            }
+          }
+        }
       }
 
       @media (prefers-reduced-motion: reduce) {
         .hero-copy,
-        .hero .screens {
+        .hero .stage {
           animation: fade 0.4s both;
         }
 
@@ -797,7 +1028,8 @@ const title = `סיבוב — ${t('home.tagline')}`;
           }
         }
 
-        .cta {
+        .cta,
+        .tpl-row .device {
           transition: none;
         }
       }
@@ -829,59 +1061,36 @@ const title = `סיבוב — ${t('home.tagline')}`;
             </div>
           </div>
 
-          <div class="screens">
-            <div class="device" data-tpl="editorial">
-              <span class="screen">
-                <span class="s-agent">
-                  <span class="dot"></span>
-                  <span class="who">{propertyListing.seller.name}</span>
-                  <span class="brand">סיבוב</span>
-                </span>
+          <div class="stage">
+            {/*
+              THE HERO CYCLES THROUGH THE THREE TEMPLATES.
 
-                <span class="s-hero">
-                  <img
-                    src={largest(propertyListing.media.cover, HERO_WIDTHS)}
-                    alt={propertyListing.media.cover.alt}
-                    width={propertyListing.media.cover.width}
-                    height={propertyListing.media.cover.height}
-                    loading="eager"
-                    decoding="async"
-                  />
-                  <span class="s-veil">
-                    <span class="s-place">
-                      <Prose
-                        text={`${propertyListing.location?.street}, ${propertyListing.location?.city}`}
-                      />
-                    </span>
-                    <span class="s-title">
-                      <Prose text={propertyListing.title.split('\n')[0] ?? ''} />
-                    </span>
-                  </span>
-                </span>
+              This is the page's one piece of real motion and it is not
+              decoration: the offer is "a few options, all professional", and a
+              hero that shows the same listing becoming each of them in turn
+              makes that argument while the reader is still reading the
+              headline. It is also the honest demo — these are the real
+              templates, not three drawings of them.
 
-                <span class="s-price-bar">
-                  <span class="s-price"><bdi>{ils(propertyListing.price)}</bdi></span>
-                  {perUnit && (
-                    <span class="s-price-note">
-                      <bdi>{perUnit.amount}</bdi> {perUnit.per}
-                    </span>
-                  )}
-                </span>
+              CSS only, on a 13.5s loop. Stacked in one grid cell rather than
+              absolutely positioned, so the container still sizes itself to the
+              tallest screen and nothing has to be measured.
 
-                <span class="s-facts">
-                  {cells.map((cell) => (
-                    <span class={cell.absent ? 's-fact off' : 's-fact'}>
-                      <span class="s-fact-val">
-                        {cell.bdi ? <bdi>{cell.value}</bdi> : cell.value}
-                      </span>
-                      <span class="s-fact-lbl">{cell.label}</span>
-                    </span>
-                  ))}
-                </span>
-
-                <span class="s-cta">שליחת הודעה בוואטסאפ</span>
-              </span>
-            </div>
+              Under prefers-reduced-motion the animation is simply never
+              applied and the first screen stays visible — the content is in
+              the markup and on screen by default, so nothing here can leave
+              the hero blank.
+            */}
+            {TEMPLATE_IDS.map((tpl, index) => (
+              <div class="device cycling" data-tpl={tpl} style={`--i:${index}`}>
+                <MiniScreen
+                  listing={propertyListing}
+                  cells={cells}
+                  perUnit={perUnit}
+                  eager={index === 0}
+                />
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -901,53 +1110,12 @@ const title = `סיבוב — ${t('home.tagline')}`;
         <div class="tpl-row">
           {
             TEMPLATE_IDS.map((tpl) => (
-              <div class="device" data-tpl={tpl}>
-                <span class="screen">
-                  <span class="s-agent">
-                    <span class="dot" />
-                    <span class="who">{vehicleListing.seller.name}</span>
-                    <span class="brand">סיבוב</span>
-                  </span>
-
-                  <span class="s-hero">
-                    <img
-                      src={largest(vehicleListing.media.cover, HERO_WIDTHS)}
-                      alt={vehicleListing.media.cover.alt}
-                      width={vehicleListing.media.cover.width}
-                      height={vehicleListing.media.cover.height}
-                      loading="lazy"
-                      decoding="async"
-                    />
-                    <span class="s-veil">
-                      <span class="s-place">{vehicleListing.location?.city}</span>
-                      <span class="s-title">
-                        <Prose text={vehicleListing.title.split('\n')[0] ?? ''} />
-                      </span>
-                    </span>
-                  </span>
-
-                  <span class="s-price-bar">
-                    <span class="s-price"><bdi>{ils(vehicleListing.price)}</bdi></span>
-                    {vehiclePerUnit && (
-                      <span class="s-price-note">
-                        <bdi>{vehiclePerUnit.amount}</bdi> {vehiclePerUnit.per}
-                      </span>
-                    )}
-                  </span>
-
-                  <span class="s-facts">
-                    {vehicleCells.map((cell) => (
-                      <span class={cell.absent ? 's-fact off' : 's-fact'}>
-                        <span class="s-fact-val">
-                          {cell.bdi ? <bdi>{cell.value}</bdi> : cell.value}
-                        </span>
-                        <span class="s-fact-lbl">{cell.label}</span>
-                      </span>
-                    ))}
-                  </span>
-
-                  <span class="s-cta">שליחת הודעה בוואטסאפ</span>
-                </span>
+              <div class="device reveal" data-tpl={tpl}>
+                <MiniScreen
+                  listing={vehicleListing}
+                  cells={vehicleCells}
+                  perUnit={vehiclePerUnit}
+                />
                 <span class="device-label">{t(`editor.templates.${tpl}`)}</span>
               </div>
             ))
