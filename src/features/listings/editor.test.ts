@@ -39,6 +39,9 @@ const ready = (): EditorState => ({
   // The agent has a name and a dialable phone on their profile. Without this
   // the page's only button goes nowhere, so it blocks publishing.
   sellerReady: true,
+  // Property only (see the field's own doc comment) — this fixture's
+  // category is 'property', so it needs one to be blocker-free.
+  ownerConsentDeclaredAt: '2026-09-12T10:00:00.000Z',
   entitlement: 'paid',
 });
 
@@ -83,16 +86,75 @@ describe('stepsFor', () => {
     assert.ok(!stepsFor('property').includes('plate'));
   });
 
+  it('gives the property flow a consent step', () => {
+    assert.ok(stepsFor('property').includes('consent'));
+  });
+
+  it('does not show a vehicle seller a consent step', () => {
+    // The vehicle question is narrower and already asked in the plate step —
+    // see the doc comment on EditorState.ownerConsentDeclaredAt.
+    assert.ok(!stepsFor('vehicle').includes('consent'));
+  });
+
   it('keeps the flow in order', () => {
     assert.deepEqual(stepsFor('property'), [
       'category',
       'photos',
+      'consent',
       'facts',
+      'disclosures',
       'description',
       'template',
       'preview',
       'publish',
     ]);
+
+    assert.deepEqual(stepsFor('vehicle'), [
+      'category',
+      'photos',
+      'plate',
+      'facts',
+      'disclosures',
+      'description',
+      'template',
+      'preview',
+      'publish',
+    ]);
+  });
+
+  it('gives BOTH categories a disclosures step', () => {
+    // Disclosures.astro renders any non-empty list regardless of category —
+    // DESIGN-CONTRACT's "vehicle only" describes the sample data, not a rule
+    // the template enforces (docs/OPPORTUNITIES.md §1c).
+    assert.ok(stepsFor('property').includes('disclosures'));
+    assert.ok(stepsFor('vehicle').includes('disclosures'));
+  });
+});
+
+describe('the owner consent gate', () => {
+  it('blocks publishing a property listing nobody declared', () => {
+    const { ownerConsentDeclaredAt: _omitted, ...withoutIt } = ready();
+
+    assert.equal(canPublish(withoutIt), false);
+    assert.ok(blockers(withoutIt).some((blocker) => blocker.code === 'consentMissing'));
+  });
+
+  it('does not apply to a vehicle', () => {
+    // The vehicle's own, narrower declaration lives in plate.ts.
+    const vehicle: EditorState = { ...ready(), category: 'vehicle' };
+    const { ownerConsentDeclaredAt: _omitted, ...withoutIt } = vehicle;
+
+    assert.ok(!blockers(withoutIt).some((blocker) => blocker.code === 'consentMissing'));
+  });
+
+  it('surfaces at its own step, not at publish', () => {
+    // Unlike sellerMissing — fixed on a different page, so publish is the
+    // only place left to surface it — this question has a step of its own
+    // in this very flow, and that is where it should stop a seller.
+    const { ownerConsentDeclaredAt: _omitted, ...withoutIt } = ready();
+    const found = blockers(withoutIt).find((blocker) => blocker.code === 'consentMissing');
+
+    assert.equal(found?.step, 'consent');
   });
 });
 

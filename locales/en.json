@@ -133,7 +133,9 @@
       "category": "",
       "photos": "",
       "plate": "",
+      "consent": "",
       "facts": "",
+      "disclosures": "",
       "description": "",
       "template": "",
       "preview": "",
@@ -149,7 +151,8 @@
       "templateMissing": "",
       "paymentRequired": "",
       "paymentUnverified": "",
-      "sellerMissing": ""
+      "sellerMissing": "",
+      "consentMissing": ""
     },
     "fixLater": "",
     "stepOf": "",
@@ -201,7 +204,15 @@
     "plateDeclare": "",
     "plateDeclareWhy": "",
     "plateLookupSoon": "",
-    "plateSkip": ""
+    "plateSkip": "",
+    "consentHint": "",
+    "consentDeclare": "",
+    "consentDeclareWhy": "",
+    "disclosuresHint": "",
+    "disclosuresLabel": "",
+    "disclosuresPlaceholder": "",
+    "disclosuresAdd": "",
+    "disclosuresRemove": ""
   },
   "home": {
     "tagline": "",

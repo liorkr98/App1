@@ -32,6 +32,17 @@ const { seller } = Astro.props;
           {seller.agencyName}
         </div>
       )}
+      {/*
+        Plain text, deliberately no class of its own beyond the muted role
+        line's styling. This is the agent's own legal declaration under the
+        Real Estate Brokers Regulations (2024), not a fact this product
+        checked — so it must never pick up the .verified chip's border or
+        colour (docs/OPPORTUNITIES.md §1a). The number goes in <bdi>: it is a
+        run of digits inside a Hebrew line (CLAUDE.md §4.2).
+      */}
+      {seller.licenceNumber && (
+        <div class="seller-role">רישיון מס׳ <bdi>{seller.licenceNumber}</bdi></div>
+      )}
     </div>
   </div>
 </section>

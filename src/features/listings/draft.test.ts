@@ -52,6 +52,41 @@ describe('a draft survives a refresh', () => {
     assert.equal(restored.facts.find((fact) => fact.key === 'elevator')?.value, false);
     assert.equal(restored.facts.find((fact) => fact.key === 'balcony_sqm')?.value, 0);
   });
+
+  it('carries the owner consent timestamp back', () => {
+    // Without this, a property seller who declared consent and then had the
+    // tab evicted would have to re-declare it — not incorrect, since
+    // publishing is still gated either way, but the point of a draft is that
+    // work already done is not lost.
+    const restored = roundTrip({ ...state(), ownerConsentDeclaredAt: '2026-09-12T10:00:00.000Z' });
+
+    assert.ok(restored);
+    assert.equal(restored.ownerConsentDeclaredAt, '2026-09-12T10:00:00.000Z');
+  });
+
+  it('leaves the consent timestamp absent rather than inventing one', () => {
+    const restored = roundTrip(state());
+
+    assert.ok(restored);
+    assert.equal('ownerConsentDeclaredAt' in restored, false);
+  });
+
+  it('carries disclosures back, in order', () => {
+    const items = ['שריטה בדלת הנהג', 'צריך להחליף בלמים בקרוב'];
+    const restored = roundTrip({ ...state(), disclosures: items });
+
+    assert.ok(restored);
+    assert.deepEqual(restored.disclosures, items);
+  });
+
+  it('leaves disclosures absent rather than an empty array', () => {
+    // Most listings have none. Storing `[]` for every one of them is a
+    // difference from "absent" that nothing downstream needs.
+    const restored = roundTrip(state());
+
+    assert.ok(restored);
+    assert.equal('disclosures' in restored, false);
+  });
 });
 
 describe('entitlement never comes back from storage', () => {
@@ -114,6 +149,18 @@ describe('anything unrecognised starts clean', () => {
   it('rejects a template that is not one of ours', () => {
     const bad = JSON.stringify({ ...toDraft(state()), template: 'custom' });
     assert.equal(fromDraft(bad), null);
+  });
+
+  it('rejects a consent timestamp that is not a string', () => {
+    const bad = JSON.stringify({ ...toDraft(state()), ownerConsentDeclaredAt: 12345 });
+    assert.equal(fromDraft(bad), null);
+  });
+
+  it('rejects disclosures that are not a list of strings', () => {
+    for (const bad of ['a single string', 42, { 0: 'not an array' }, ['fine', 5]]) {
+      const stored = JSON.stringify({ ...toDraft(state()), disclosures: bad });
+      assert.equal(fromDraft(stored), null, JSON.stringify(bad));
+    }
   });
 
   it('never writes a photo count', () => {

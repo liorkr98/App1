@@ -18,7 +18,9 @@ import { t } from '../../lib/i18n';
 import { createDraft, uploadOriginal } from '../../lib/listing-draft';
 import { loadProfile } from '../../lib/profile';
 import { supabase, supabaseConfigured } from '../../lib/supabase';
+import { ConsentStep } from './ConsentStep';
 import { DescriptionStep } from './DescriptionStep';
+import { DisclosuresStep } from './DisclosuresStep';
 import { FactsStep } from './FactsStep';
 import { Message } from './Message';
 import { PhotosStep, type EditorPhoto } from './PhotosStep';
@@ -297,6 +299,15 @@ export default function Editor() {
           />
         ) : null}
 
+        {step === 'consent' ? (
+          <ConsentStep
+            declaredAt={state.ownerConsentDeclaredAt}
+            onDeclare={(ownerConsentDeclaredAt) =>
+              setState((current) => ({ ...current, ownerConsentDeclaredAt }))
+            }
+          />
+        ) : null}
+
         {step === 'facts' && state.category ? (
           <FactsStep
             category={state.category}
@@ -304,6 +315,13 @@ export default function Editor() {
             onChange={(facts) => setState((current) => ({ ...current, facts }))}
             audience={state.audience}
             onAudience={(audience) => setState((current) => ({ ...current, audience }))}
+          />
+        ) : null}
+
+        {step === 'disclosures' ? (
+          <DisclosuresStep
+            items={state.disclosures ?? []}
+            onChange={(disclosures) => setState((current) => ({ ...current, disclosures }))}
           />
         ) : null}
 
