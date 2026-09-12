@@ -147,6 +147,30 @@ The build command is a dashboard setting and cannot be committed. Set it to:
 npm install --prefix web --no-audit --no-fund && npm run build --prefix web
 ```
 
+**IT HAS TO BE SET, AND AN EMPTY FIELD FAILS IN A CONFUSING WAY.** The build of
+12 September 2026 went:
+
+```
+Detected the following tools from environment: bun@1.2.15, nodejs@24.18.0
+Installing project dependencies: bun install
+...
+Executing user deploy command: npx wrangler versions upload
+✘ [ERROR] The directory specified by the "assets.directory" field in your
+  configuration file does not exist:
+    /opt/buildhome/repo/web/dist
+```
+
+Read it twice: there is no build step between the install and the deploy. With
+the field empty Cloudflare runs its own dependency install — `bun install`, at
+the REPOSITORY ROOT, because that is where the package.json it found lives —
+and then goes straight to deploying. A root install does not fetch Astro
+(CLAUDE.md §3: `web/` is deliberately not an npm workspace), nothing ever runs
+`astro build`, and `web/dist` is never created.
+
+The error names `assets.directory`, which points the reader at
+`wrangler.jsonc` — a file that is correct. **The missing thing is the build
+command, not the asset path.**
+
 The `--prefix web` on the install matters. `web/` has its own package.json and
 is deliberately NOT an npm workspace (CLAUDE.md §3), so a root install does not
 fetch Astro. Without it the build command fails on a missing `astro`.
