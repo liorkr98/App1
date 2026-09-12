@@ -147,6 +147,12 @@ The build command is a dashboard setting and cannot be committed. Set it to:
 npm install --prefix web --no-audit --no-fund && npm run build --prefix web
 ```
 
+`npm run build` at the ROOT now does the same thing, so either works. That
+script exists for this reason alone: the root package.json had no `build`
+script at all, so the most obvious thing anyone would type into that field —
+and a common Cloudflare default — failed with "missing script: build" and sent
+the reader looking for a problem in the web workspace.
+
 **IT HAS TO BE SET, AND AN EMPTY FIELD FAILS IN A CONFUSING WAY.** The build of
 12 September 2026 went:
 
