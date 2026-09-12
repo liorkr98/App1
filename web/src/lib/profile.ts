@@ -1,3 +1,4 @@
+import { DEFAULT_ACCENT, isAccentId } from '@/features/agents/accents';
 import type { AgentProfile } from '@/features/agents/profile';
 
 import { supabase } from './supabase';
@@ -31,6 +32,7 @@ interface ProfileRow {
   agency_name: string | null;
   role: string | null;
   licence_number: string | null;
+  accent: string | null;
 }
 
 function toDomain(row: ProfileRow): AgentProfile {
@@ -40,6 +42,7 @@ function toDomain(row: ProfileRow): AgentProfile {
     agencyName: row.agency_name,
     role: row.role,
     licenceNumber: row.licence_number,
+    accent: row.accent,
   };
 }
 
@@ -59,7 +62,7 @@ export async function loadProfile(): Promise<
 
   const { data, error } = await client
     .from('profiles')
-    .select('display_name, phone, agency_name, role, licence_number')
+    .select('display_name, phone, agency_name, role, licence_number, accent')
     .maybeSingle();
 
   if (error) return { error: error.message };
@@ -108,6 +111,9 @@ export async function saveProfile(
       agency_name: trimmed(profile.agencyName),
       role: trimmed(profile.role),
       licence_number: trimmed(profile.licenceNumber),
+      // Validated rather than trimmed: this one reaches a CHECK constraint,
+      // and a typo should become olive rather than a failed save.
+      accent: isAccentId(profile.accent) ? profile.accent : DEFAULT_ACCENT,
     },
     { onConflict: 'id' },
   );

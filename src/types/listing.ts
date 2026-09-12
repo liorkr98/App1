@@ -500,6 +500,18 @@ export const TEMPLATE_IDS = ['agency', 'editorial', 'dark'] as const;
 
 export type TemplateId = (typeof TEMPLATE_IDS)[number];
 
+/**
+ * The accent this listing was published with.
+ *
+ * A COPY of the agent's choice at the time, not a live read of their profile
+ * — same rule as `seller`. An agent who changes colour next year must not
+ * silently repaint the pages they already sent.
+ *
+ * Optional, and absent means olive. Every listing made before 0011 has no
+ * value and must keep looking exactly as it did.
+ */
+export type ListingAccent = string;
+
 export interface Listing {
   id: string;
   /** 5 characters, base32 Crockford, generated server-side. */
@@ -553,6 +565,8 @@ export interface Listing {
   location?: ListingLocation;
   seller: Seller;
   template: TemplateId;
+  /** Absent means olive. See ListingAccent. */
+  accent?: ListingAccent;
 
   status: ListingStatus;
   /** Absent while status is 'draft'. */

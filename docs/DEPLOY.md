@@ -151,7 +151,35 @@ The `--prefix web` on the install matters. `web/` has its own package.json and
 is deliberately NOT an npm workspace (CLAUDE.md §3), so a root install does not
 fetch Astro. Without it the build command fails on a missing `astro`.
 
-Leave the deploy command as `npx wrangler deploy`.
+### The deploy command, and the thing it gets wrong
+
+**Do NOT leave the deploy command as a bare `npx wrangler deploy`.** That is
+what it was set to, and it is why the "Workers Builds: besivov" check has
+failed on every pull request this repository has ever opened.
+
+`wrangler deploy` targets **production**. Cloudflare runs the deploy command on
+non-production branches too when non-production branch builds are enabled, and
+its own default there is `wrangler versions upload` — a preview version with
+its own URL, which does not touch what the public is looking at. Overriding
+that with `wrangler deploy` means every branch build either fails or, worse,
+publishes an unmerged branch to the live site.
+
+Two ways to fix it. Pick one:
+
+**A. Turn non-production branch builds off.** Settings → Build → Branch
+control. Simplest, and GitHub Actions already verifies pull requests. You lose
+preview URLs.
+
+**B. Make the command branch-aware.** Keep the previews and stop the failures:
+
+```
+if [ "$WORKERS_CI_BRANCH" = "main" ]; then npx wrangler deploy; else npx wrangler versions upload; fi
+```
+
+`WORKERS_CI_BRANCH` is set by Workers Builds on every run. **B is the better
+answer** — a preview URL per pull request is the only way to look at a change
+on a real device before it is merged, and this is a product whose whole output
+is a page viewed on a phone.
 
 ### Why not just delete the Expo remnant
 

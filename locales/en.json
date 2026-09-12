@@ -256,7 +256,17 @@
     "nameMissing": "",
     "phoneMissing": "",
     "phoneInvalid": "",
-    "editDetails": ""
+    "editDetails": "",
+    "accent": "",
+    "accentHint": "",
+    "accents": {
+      "olive": "",
+      "forest": "",
+      "clay": "",
+      "wine": "",
+      "ochre": "",
+      "charcoal": ""
+    }
   },
   "dash": {
     "title": "",
