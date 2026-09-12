@@ -28,6 +28,28 @@ const INK_DEEP = '#111208';
 /** The dark template's ground, which is lighter than --ink-deep. */
 const DARK_GROUND = '#14150f';
 
+/**
+ * Every LIGHT ground a template redefines --plaster to.
+ *
+ * THIS LIST HAS TO GROW WITH THE TEMPLATES, and that is the point of it. An
+ * accent is chosen once by the agent and then carried onto whichever template
+ * each listing uses, so "this accent is readable" is a claim about all of them
+ * and not about the default ground. A template whose ground is missing here is
+ * a palette no test is checking.
+ *
+ * Both directions are covered by one ratio: `base` is the accent printed on
+ * the ground, and `.cta` fills with `base` and sets its label in `--plaster`,
+ * which on these templates IS the ground. Contrast is symmetric, so the same
+ * number answers both questions.
+ */
+const LIGHT_GROUNDS = [
+  ['editorial / default', PLASTER],
+  ['agency', '#ffffff'],
+  ['sheet', '#ffffff'],
+  ['ledger', '#fdfcf9'],
+  ['warm', '#faf6ee'],
+] as const;
+
 describe('the accent palette', () => {
   it('defaults to olive, because that is the brand', () => {
     // An agent who never opens the picker gets the product's own colour.
@@ -55,12 +77,22 @@ describe('the accent palette', () => {
     }
   });
 
-  it('every base carries plaster type at AA', () => {
+  it('every base carries plaster type at AA, on every template ground', () => {
     // `base` fills a button with --plaster on it. 4.5:1 is the bar for the
-    // button label, which is body-sized.
+    // button label, which is body-sized — and the same ratio covers the accent
+    // printed on the ground, since contrast is symmetric.
+    //
+    // Checked against every light template rather than only the default: an
+    // accent the agent picked once has to hold on whichever template each of
+    // their listings uses.
     for (const accent of ACCENTS) {
-      const ratio = contrast(accent.base, PLASTER);
-      assert.ok(ratio >= 4.5, `${accent.id} base is ${ratio.toFixed(2)}:1 on plaster`);
+      for (const [template, ground] of LIGHT_GROUNDS) {
+        const ratio = contrast(accent.base, ground);
+        assert.ok(
+          ratio >= 4.5,
+          `${accent.id} base is ${ratio.toFixed(2)}:1 on the ${template} ground (${ground})`,
+        );
+      }
     }
   });
 

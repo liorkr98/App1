@@ -43,7 +43,7 @@ templates, and gets back a short, professional Hebrew page, shareable by one
 link.
 
 **The product is speed to a page an agent is proud to send, and a choice of how
-it looks.** Photos in, a few fields, one of three templates, a link — four
+it looks.** Photos in, a few fields, one of seven templates, a link — four
 minutes.
 
 **Superseded 11 September 2026:** this file previously said "the moat is the
@@ -64,7 +64,7 @@ it refuses to do, and it never sells. The existing Hebrew copy is the
 reference and it is already right:
 
 - המודעה שלך, מוכנה לשליחה
-- שלוש תבניות. אותו נכס.
+- שבע תבניות. אותו נכס.
 - התבנית קובעת איך העמוד נראה, לא מה כתוב בו.
 - בלי הרשמה עד הפרסום.
 

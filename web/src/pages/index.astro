@@ -5,7 +5,7 @@ import { ils } from '../lib/format';
 import { perUnitPrice } from '../lib/price';
 import { HERO_WIDTHS, largest } from '../lib/images';
 import MiniScreen from '../components/MiniScreen.astro';
-import { TEMPLATE_IDS } from '@/types/listing';
+import { TEMPLATE_IDS, type TemplateId } from '@/types/listing';
 import { propertyListing, vehicleListing } from '../lib/listings';
 import '../styles/tokens.css';
 
@@ -48,6 +48,20 @@ const cells = toCells('property', propertyListing.facts).slice(0, 3);
 const perUnit = perUnitPrice('property', propertyListing.facts, propertyListing.price);
 const vehicleCells = toCells('vehicle', vehicleListing.facts).slice(0, 3);
 const vehiclePerUnit = perUnitPrice('vehicle', vehicleListing.facts, vehicleListing.price);
+
+/**
+ * The three templates the HERO cycles through — not all seven.
+ *
+ * The cycle is a 13.5s CSS loop whose keyframes divide it into three, so each
+ * screen holds for 4.5s. Seven would be 1.9s each, which is less time than it
+ * takes to look at one, and the argument the hero makes is "a few options, all
+ * of them professional" rather than an inventory. The row further down shows
+ * the full set, which is where someone deciding actually looks.
+ *
+ * `satisfies` rather than a bare array: these have to be real template ids, and
+ * a typo here would render a screen with no palette at all.
+ */
+const HERO_CYCLE = ['editorial', 'agency', 'dark'] as const satisfies readonly TemplateId[];
 
 const title = `סיבוב — ${t('home.tagline')}`;
 ---
@@ -433,6 +447,56 @@ const title = `סיבוב — ${t('home.tagline')}`;
         --s-lift: #aac28c;
       }
 
+      /* דף נכס — printed stock, a rule dark enough to read as a printed rule. */
+      .device[data-tpl='sheet'] {
+        --s-ground: #ffffff;
+        --s-ink: #191a15;
+        --s-deep: #111208;
+        --s-line: #cec8b8;
+        --s-warm: #f6f3ec;
+        --s-muted: #5f6058;
+        --s-accent: #4a5d3a;
+        --s-lift: #7e9a62;
+      }
+
+      /* כרזה is a SHAPE and not a palette, so it borrows editorial's values
+         exactly. What differs is where they are painted — see below. */
+      .device[data-tpl='poster'] {
+        --s-ground: #fbfaf7;
+        --s-ink: #191a15;
+        --s-deep: #111208;
+        --s-line: #e4e0d6;
+        --s-warm: #f1ede3;
+        --s-muted: #67685f;
+        --s-accent: #4a5d3a;
+        --s-lift: #5f7749;
+      }
+
+      .device[data-tpl='ledger'] {
+        --s-ground: #fdfcf9;
+        --s-ink: #14150f;
+        --s-deep: #111208;
+        --s-line: #b9b3a4;
+        --s-warm: #f2efe6;
+        --s-muted: #5c5d55;
+        --s-accent: #4a5d3a;
+        --s-lift: #7e9a62;
+      }
+
+      /* ביתי — note --s-warm is LIGHTER than the ground, as it is in the real
+         template, so a confirmed absence lifts off the page instead of sinking
+         into it. That inversion is most of what shows at this size. */
+      .device[data-tpl='warm'] {
+        --s-ground: #faf6ee;
+        --s-ink: #191a15;
+        --s-deep: #111208;
+        --s-line: #e6ddcc;
+        --s-warm: #fffdf8;
+        --s-muted: #64655c;
+        --s-accent: #4a5d3a;
+        --s-lift: #7e9a62;
+      }
+
       .s-agent {
         display: flex;
         align-items: center;
@@ -629,6 +693,89 @@ const title = `סיבוב — ${t('home.tagline')}`;
         border-inline-start: 1px solid var(--s-line);
       }
 
+      /* Sheet: ruled rows, label leading and value trailing, nothing rounded —
+         the three moves the real template makes. */
+      .device[data-tpl='sheet'] .s-hero {
+        aspect-ratio: 4 / 3;
+      }
+
+      .device[data-tpl='sheet'] .s-facts {
+        grid-template-columns: 1fr;
+        gap: 0;
+        background: transparent;
+        border-block-start: 1px solid var(--s-line);
+      }
+
+      .device[data-tpl='sheet'] .s-fact {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 0.4em;
+        text-align: start;
+        padding: 0.35em 0.6em;
+        border-block-end: 1px dotted var(--s-line);
+        min-block-size: 0;
+      }
+
+      .device[data-tpl='sheet'] .s-fact-val {
+        font-size: 0.62em;
+        order: 2;
+      }
+
+      .device[data-tpl='sheet'] .s-fact-lbl {
+        margin-block-start: 0;
+        order: 1;
+      }
+
+      .device[data-tpl='sheet'] .s-cta {
+        border-radius: 0;
+      }
+
+      /* Poster: the photograph takes the screen and the price and facts become
+         one inverted caption band under it. Colour is set as well as
+         background — .s-fact inherits --s-ink, which is near-black here. */
+      .device[data-tpl='poster'] .s-hero {
+        aspect-ratio: 9 / 16;
+      }
+
+      .device[data-tpl='poster'] .s-price-bar,
+      .device[data-tpl='poster'] .s-fact {
+        background: var(--s-deep);
+        color: #fbfaf7;
+      }
+
+      .device[data-tpl='poster'] .s-facts {
+        background: rgba(251, 250, 247, 0.16);
+        border-block-start: 0;
+      }
+
+      .device[data-tpl='poster'] .s-fact-lbl,
+      .device[data-tpl='poster'] .s-price-note {
+        /* 6.87:1 on --s-deep. --s-muted is 3.71:1 there and fails AA. */
+        color: #9c9d93;
+      }
+
+      /* Ledger: a band of photograph, then a table whose rules are ink. */
+      .device[data-tpl='ledger'] .s-hero {
+        aspect-ratio: 16 / 9;
+      }
+
+      .device[data-tpl='ledger'] .s-facts {
+        background: var(--s-ink);
+        border-block-start: 1px solid var(--s-ink);
+      }
+
+      .device[data-tpl='ledger'] .s-cta {
+        border-radius: 0;
+      }
+
+      /* Warm: a shorter, quieter opener. The rest of what makes this template
+         — one column of large rounded photographs, more leading — lives below
+         the fold the miniature shows, so the palette carries it here. */
+      .device[data-tpl='warm'] .s-hero {
+        aspect-ratio: 4 / 3;
+      }
+
       .s-fact.off {
         background: var(--s-warm);
       }
@@ -708,15 +855,29 @@ const title = `סיבוב — ${t('home.tagline')}`;
         as deliberate. Stretching the wrapper and pushing the label to the
         bottom keeps the screens honest and the captions on one line.
       */
+      /*
+        WRAPS, because there are seven of these now and not three. A row that
+        only ever held three could divide the shell between them; seven at that
+        width would each be a thumbnail of a phone, which shows nothing. They
+        keep their own size and take as many lines as they need.
+      */
       .tpl-row {
         display: flex;
+        flex-wrap: wrap;
         gap: clamp(0.75rem, 2vw, 1.5rem);
         align-items: stretch;
         justify-content: center;
         inline-size: 100%;
       }
 
+      /*
+        A real basis, because `flex: 1 1 0` would squeeze all seven onto one
+        line at any width — seven 90px phones show nothing. The min() keeps at
+        most two per line on a narrow screen and lets them reach their full
+        210px on a wide one.
+      */
       .tpl-row .device {
+        flex: 0 1 min(210px, calc(50% - 0.75rem));
         grid-template-rows: auto 1fr;
         align-content: start;
       }
@@ -1063,7 +1224,8 @@ const title = `סיבוב — ${t('home.tagline')}`;
 
           <div class="stage">
             {/*
-              THE HERO CYCLES THROUGH THE THREE TEMPLATES.
+              THE HERO CYCLES THROUGH THREE OF THE TEMPLATES — see HERO_CYCLE
+              above for why it is a curated three and not all seven.
 
               This is the page's one piece of real motion and it is not
               decoration: the offer is "a few options, all professional", and a
@@ -1081,7 +1243,7 @@ const title = `סיבוב — ${t('home.tagline')}`;
               the markup and on screen by default, so nothing here can leave
               the hero blank.
             */}
-            {TEMPLATE_IDS.map((tpl, index) => (
+            {HERO_CYCLE.map((tpl, index) => (
               <div class="device cycling" data-tpl={tpl} style={`--i:${index}`}>
                 <MiniScreen
                   listing={propertyListing}
@@ -1097,8 +1259,11 @@ const title = `סיבוב — ${t('home.tagline')}`;
     </div>
 
     {/*
-      The centrepiece. One listing, three templates — the offer made in less
+      The centrepiece. One listing, every template — the offer made in less
       time than a sentence about it would take to read.
+
+      Driven from TEMPLATE_IDS rather than a list here, so an eighth template
+      appears in this row by existing. The hero above is deliberately NOT.
     */}
     <section>
       <div class="shell">

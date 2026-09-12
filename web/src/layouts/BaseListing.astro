@@ -487,12 +487,26 @@ html[data-template='agency'] {
   a hairline, and a rounded carded surface throughout. It reads like an
   agency's own site, which is the reference it was drawn from.
 */
-html[data-template='agency'] {
-  /* The photograph shares the first screen rather than owning it. */
-  --heroH: 54svh;
-}
+/*
+  THE HERO HEIGHT IS SET ON .hero, NOT ON --heroH, AND THAT IS NOT A STYLE
+  PREFERENCE.
 
+  BaseListing writes --heroH into the style ATTRIBUTE on <html>, because the
+  category divergence rides on it. A style attribute outranks every author
+  stylesheet rule, so `html[data-template='agency'] { --heroH: 54svh }` — which
+  is what this block used to say — never applied: the property page kept the
+  category's 84svh and the vehicle page its 64svh, in all three templates.
+  Silent, and invisible in review, because the declaration is right there in
+  the file looking like it works.
+
+  Overriding the height on .hero instead wins, because nothing is inline on
+  .hero. The custom property keeps carrying the CATEGORY divergence, which is
+  what DESIGN-CONTRACT §5.1 describes and what CI checks.
+
+  The photograph shares the first screen here rather than owning it.
+*/
 html[data-template='agency'] .hero {
+  height: 54svh;
   min-height: 320px;
 }
 
@@ -616,8 +630,8 @@ html[data-template='dark'] .hero-veil {
   choose this template — and why its own copy in the picker says it is worth it
   only if the photographs are good.
 */
-html[data-template='dark'] {
-  --heroH: 94svh;
+html[data-template='dark'] .hero {
+  height: 94svh;
 }
 
 html[data-template='dark'] .hero-title {
@@ -656,6 +670,314 @@ html[data-template='dark'] .gallery {
 
 html[data-template='dark'] .gallery img {
   border-radius: 0;
+}
+
+/* ---------- דף נכס — the page as a printed property sheet ----------
+
+   The one template that does not get worse when the photographs are ordinary,
+   which describes most listings. It is also where the page and the PDF finally
+   describe the same object: the worker already renders a PDF from this very
+   page, and until now that PDF was a screenshot of a web design.
+
+   Everything here is a print move — a true white stock, a rule dark enough to
+   read as a printed rule, ruled rows instead of cells, and no radius anywhere.
+   The trap it invites is stated in docs/DESIGN-CONTRACT: a page that looks
+   official invites the reader to assume the numbers were checked, so the
+   מאומת discipline has to stay exactly as loud here as everywhere else. */
+html[data-template='sheet'] {
+  --plaster: #ffffff;
+  /* 1.67:1 against the stock, where the base --stone is 1.26:1. A hairline
+     that cannot be seen is not a rule, and this design is made of rules. */
+  --stone: #cec8b8;
+  --stone-warm: #f6f3ec;
+  /* 6.36:1 on white. Darker than the base --muted because a spec sheet's
+     labels are read, not glanced at. */
+  --muted: #5f6058;
+}
+
+html[data-template='sheet'] .hero {
+  height: 42svh;
+  min-height: 300px;
+}
+
+/* The veil's 7rem gradient runway is sized for a hero that owns the screen.
+   In a 300px plate it would push the title out of its own photograph. */
+html[data-template='sheet'] .hero-veil {
+  padding-block-start: 3.4rem;
+}
+
+/* Facts as ruled rows, label leading and value trailing — the way a printed
+   spec sheet sets them, and the way a reader checks one figure against
+   another without scanning a grid. */
+html[data-template='sheet'] .facts {
+  grid-template-columns: 1fr;
+  gap: 0;
+  background: transparent;
+}
+
+html[data-template='sheet'] .fact {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.8rem;
+  text-align: start;
+  padding: 0.62rem var(--gut);
+  border-block-end: 1px dotted var(--stone);
+}
+
+html[data-template='sheet'] .fact:last-child {
+  border-block-end: 0;
+}
+
+html[data-template='sheet'] .fact-val {
+  font-size: calc(var(--t-num) * 0.72);
+  order: 2;
+}
+
+html[data-template='sheet'] .fact-lbl {
+  margin-top: 0;
+  order: 1;
+}
+
+/* The provenance chip cannot sit under a value that is now beside its label,
+   so it joins the row rather than stacking below it. */
+html[data-template='sheet'] .fact-src {
+  order: 3;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin-top: 0;
+}
+
+/* Sections separated by a rule rather than by space alone — a sheet is a
+   sequence of blocks, not a scroll. */
+html[data-template='sheet'] section {
+  border-block-start: 1px solid var(--stone);
+}
+
+html[data-template='sheet'] .cta,
+html[data-template='sheet'] .gallery img {
+  border-radius: 0;
+}
+
+/* ---------- כרזה — one photograph, and a caption band ----------
+
+   A SHAPE, NOT A PALETTE. It keeps the editorial tokens exactly, for the same
+   reason the agency template gave up its orange: the accent belongs to the
+   agent, and a template that recolours the product is an inconsistency the
+   agent did not ask for.
+
+   Why it exists: DESIGN-BRIEF §2 found that Israeli agents distribute through
+   WhatsApp Status as much as through links, and Status is an IMAGE surface —
+   read full-screen, in about three seconds, with no reliable tap. Everything
+   else in this product optimises the link preview card, which is the right
+   answer for a pasted link and irrelevant to a Status post. This is the
+   template that survives being screenshotted. */
+/*
+  100svh MINUS THE AGENT BAR, not 100svh.
+
+  The hero is not the first thing on the page — the agent bar sits above it and
+  is about 3rem tall — so a hero of exactly 100svh ends 3rem BELOW the fold,
+  and the veil anchored to its bottom goes with it. Measured at 390×844: the
+  hero ran to y=892 on an 844px screen, which put the title under the dock even
+  after the veil was given room to clear it.
+
+  Subtracting the bar makes the photograph end exactly at the fold, which is
+  what "one photograph, the whole screen" was supposed to mean.
+*/
+html[data-template='poster'] .hero {
+  height: calc(100svh - 3rem);
+  min-height: 520px;
+}
+
+html[data-template='poster'] .hero-title {
+  font-size: calc(var(--t-hero) * 1.12);
+}
+
+/*
+  The caption band: price and facts read as one strip beneath the photograph
+  rather than as two sections of a document.
+
+  COLOUR IS SET AS WELL AS BACKGROUND, and that is the whole bug this rule
+  exists to avoid. `.fact` inherits its colour from body, which is --ink — so
+  painting only the background here would put near-black type on a near-black
+  band. The same trap the dark template hit, recorded above.
+*/
+html[data-template='poster'] .price-bar,
+html[data-template='poster'] .facts,
+html[data-template='poster'] .fact {
+  background: var(--ink-deep);
+  color: var(--on-dark);
+}
+
+html[data-template='poster'] .price-bar {
+  padding-block: 1.35rem 1.1rem;
+}
+
+/* The 1px gap shows this background through it, so the hairlines between the
+   cells become light-on-dark instead of disappearing. */
+html[data-template='poster'] .facts {
+  background: rgba(251, 250, 247, 0.16);
+  border-block: 0;
+}
+
+/*
+  #9C9D93, NOT --muted, and this one was measured rather than judged:
+  --muted (#6E6F66) is 3.71:1 on --ink-deep, which fails AA for text this
+  size. #9C9D93 is 6.87:1 and is the value the agent bar and the enrichment
+  block already use for exactly this job.
+*/
+html[data-template='poster'] .fact-lbl,
+html[data-template='poster'] .price-note,
+html[data-template='poster'] .fact-cite {
+  color: #9c9d93;
+}
+
+/* A confirmed absence still has to read as one on the dark band. */
+html[data-template='poster'] .fact.off {
+  background: #1a1b10;
+}
+
+/* --olive is the accent for a light ground; on the band it is the lift, the
+   same swap the dark template makes. */
+html[data-template='poster'] .verified {
+  color: var(--olive-lift);
+  border-color: var(--olive-lift);
+}
+
+/*
+  A HERO THAT REACHES THE BOTTOM OF THE VIEWPORT PUTS ITS OWN TITLE BEHIND THE
+  CTA DOCK.
+
+  .cta-dock is fixed to the bottom and stands about 5rem tall, so a hero ending
+  within that distance of the bottom edge hides the last lines of its veil
+  behind the button — the place survives, the title is sliced in half. The base
+  84svh leaves room; 94svh and 100svh do not.
+
+  BOTH of these were broken and only one is new. The dark template has asked
+  for 94svh since it was written, and never got it, because --heroH was being
+  set inline and the override above it could not win — so this collision could
+  not happen and nobody saw it. Fixing that height is what surfaced this.
+
+  Caught by screenshotting the built page at 390×844, not in review, where a
+  fixed element overlapping a full-height one looks like nothing at all.
+*/
+html[data-template='dark'] .hero-veil,
+html[data-template='poster'] .hero-veil {
+  padding-block-end: 6.4rem;
+}
+
+/* ---------- טבלה — numbers before photograph ----------
+
+   For the reader who is comparing this listing against four others, and whose
+   question is ₪ per m² rather than what the light is like in the kitchen. The
+   schema already knows that reader exists: `audience` (0009) and the
+   priceDenominator fact both describe them, and the facts grid already
+   reorders on the answer — but every template still opened with 84svh of
+   photograph first.
+
+   The hairline grid is the whole design, so --stone carries ink rather than
+   tint and the 1px gaps in .facts become real rules. */
+html[data-template='ledger'] {
+  --plaster: #fdfcf9;
+  --ink: #14150f;
+  /* 2.04:1 on the ground. This template is made of lines and they have to
+     hold at 1px on a phone in sunlight. */
+  --stone: #b9b3a4;
+  --stone-warm: #f2efe6;
+  --muted: #5c5d55;
+}
+
+html[data-template='ledger'] .hero {
+  height: 34svh;
+  min-height: 260px;
+}
+
+html[data-template='ledger'] .hero-veil {
+  padding-block-start: 2.6rem;
+}
+
+/* The title yields to the numbers below it rather than filling the frame. */
+html[data-template='ledger'] .hero-title {
+  font-size: calc(var(--t-hero) * 0.68);
+  font-weight: 700;
+}
+
+/* The gap IS the rule: 1px of ink showing between cells, which is what makes
+   this read as a table rather than as three tiles. */
+html[data-template='ledger'] .facts {
+  background: var(--ink);
+  border-block: 1px solid var(--ink);
+}
+
+html[data-template='ledger'] .fact {
+  padding-block: 1.3rem;
+}
+
+html[data-template='ledger'] .fact-val {
+  font-size: calc(var(--t-num) * 1.06);
+}
+
+html[data-template='ledger'] .price-bar {
+  border-block-end: 1px solid var(--ink);
+}
+
+html[data-template='ledger'] .cta,
+html[data-template='ledger'] .gallery img {
+  border-radius: 0;
+}
+
+/* ---------- ביתי — the private seller's template ----------
+
+   Every other template is agent-shaped: a dark agency bar on top, a portfolio
+   that should look consistent, a page built to be sent weekly. PRD §1 keeps
+   the private seller a supported case — the person selling one flat, who
+   arrived from a footer credit — and nothing here was drawn for them.
+
+   So: one column of large rounded photographs instead of an asymmetric grid,
+   more leading, and the seller block raised off the ground rather than
+   recessed into it. The photographs are the only rounded thing on the page;
+   rounding the text blocks as well is how this becomes the generic listing
+   template the product sells against. */
+html[data-template='warm'] {
+  --plaster: #faf6ee;
+  --stone: #e6ddcc;
+  /* LIGHTER than the ground, not darker. The seller block and a confirmed
+     absence lift off this page instead of sinking into it. */
+  --stone-warm: #fffdf8;
+  --muted: #64655c;
+}
+
+html[data-template='warm'] body {
+  line-height: 1.72;
+}
+
+html[data-template='warm'] .hero {
+  height: 66svh;
+  min-height: 380px;
+}
+
+/* One photograph per row, at a comfortable size. A personal album rather than
+   a contact sheet — and it is the move that keeps this template from reading
+   as the agency one in warmer paint. */
+html[data-template='warm'] .gallery {
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+html[data-template='warm'] .gallery img,
+html[data-template='warm'] .gallery figure:first-child img {
+  aspect-ratio: 4 / 3;
+  border-radius: 14px;
+}
+
+html[data-template='warm'] .seller {
+  border-block: 1px solid var(--stone);
+}
+
+html[data-template='warm'] .avatar {
+  width: 66px;
+  height: 66px;
 }
 </style>
 </head>
