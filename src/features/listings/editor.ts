@@ -13,15 +13,17 @@ import { isUnedited } from './description.js';
  * check them is to click through a form on a phone.
  *
  * Flow (E1):
- *   category → photos → (vehicle: plate) → facts → description → template
- *   → preview → publish
+ *   category → photos → (vehicle: plate | property: consent) → facts
+ *   → description → template → preview → publish
  */
 
 export const STEPS = [
   'category',
   'photos',
   'plate',
+  'consent',
   'facts',
+  'disclosures',
   'description',
   'template',
   'preview',
@@ -94,12 +96,53 @@ export interface EditorState {
    */
   sellerReady?: boolean;
 
+  /**
+   * When the seller declared they own the property, or are authorised by the
+   * owner to advertise it. An ISO timestamp, not a boolean — a checkbox is
+   * not consent, a logged, dated declaration is closer (docs/OPPORTUNITIES.md
+   * §1d), and it is the same shape `plate.ts`'s `DeclarationRecord` already
+   * uses for the equivalent vehicle question.
+   *
+   * PROPERTY ONLY. A vehicle has its own ownership declaration tied to the
+   * plate lookup (plate.ts), asking a narrower question — is this lookup
+   * yours to run — for a narrower reason. This one gates PUBLISHING a
+   * property listing at all, which nothing currently does.
+   */
+  ownerConsentDeclaredAt?: string;
+
+  /**
+   * Free-text items a buyer would want to know before viewing — a scratch,
+   * a repair that is coming, a legal or structural issue. BOTH categories,
+   * not vehicle-only: `Disclosures.astro` already renders any non-empty list
+   * regardless of category (DESIGN-CONTRACT §5.3's "vehicle only" describes
+   * what the sample data happens to use, not a rule the template enforces),
+   * and the Real Estate Brokers Regulations (2024) ask property sellers for
+   * exactly this — defects, legal proceedings, usage restrictions
+   * (docs/OPPORTUNITIES.md §1c).
+   *
+   * OPTIONAL, deliberately not a blocker. PRD §2 caps required fields at
+   * three per category because a required field the seller cannot answer is
+   * a form they abandon — a disclosure duty that exists in law does not
+   * become a product requirement, only something this makes easy and marks
+   * honestly when given.
+   */
+  disclosures?: string[];
+
   entitlement: Entitlement;
 }
 
-/** Steps that apply to this listing. Property never sees the plate step. */
+/**
+ * Steps that apply to this listing.
+ *
+ * Property never sees the plate step, and a vehicle never sees the consent
+ * step — each category gets exactly the declaration that applies to it.
+ */
 export function stepsFor(category: ListingCategory | undefined): Step[] {
-  return STEPS.filter((step) => step !== 'plate' || category === 'vehicle');
+  return STEPS.filter(
+    (step) =>
+      (step !== 'plate' || category === 'vehicle') &&
+      (step !== 'consent' || category === 'property'),
+  );
 }
 
 /**
@@ -119,6 +162,7 @@ export const BLOCKER_CODES = [
   'descriptionUnedited',
   'templateMissing',
   'sellerMissing',
+  'consentMissing',
   'paymentRequired',
   'paymentUnverified',
 ] as const;
@@ -188,6 +232,14 @@ export function blockers(state: EditorState): Blocker[] {
 
   if (!state.template) {
     found.push({ step: 'template', code: 'templateMissing' });
+  }
+
+  // Property only — see the field's own doc comment. Advertising a property
+  // that is not the seller's, or that they are not authorised to list, is
+  // exactly the harm the Real Estate Brokers Regulations (2024) target
+  // (docs/OPPORTUNITIES.md §1d), and nothing enforced it before this.
+  if (state.category === 'property' && !state.ownerConsentDeclaredAt) {
+    found.push({ step: 'consent', code: 'consentMissing' });
   }
 
   // Belongs to `publish` rather than to a step of its own: it is fixed on a

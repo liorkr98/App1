@@ -70,6 +70,10 @@ export function toDraft(state: EditorState): Stored {
       : { generatedDescription: state.generatedDescription }),
     ...(state.template === undefined ? {} : { template: state.template }),
     ...(state.audience === undefined ? {} : { audience: state.audience }),
+    ...(state.ownerConsentDeclaredAt === undefined
+      ? {}
+      : { ownerConsentDeclaredAt: state.ownerConsentDeclaredAt }),
+    ...(state.disclosures === undefined ? {} : { disclosures: state.disclosures }),
   };
 }
 
@@ -122,6 +126,14 @@ export function fromDraft(raw: unknown): Draft | null {
   const audience = parsed.audience;
   if (audience !== undefined && audience !== 'resident' && audience !== 'investor') return null;
 
+  const ownerConsentDeclaredAt = parsed.ownerConsentDeclaredAt;
+  if (ownerConsentDeclaredAt !== undefined && typeof ownerConsentDeclaredAt !== 'string') {
+    return null;
+  }
+
+  const disclosuresResult = readDisclosures(parsed.disclosures);
+  if (disclosuresResult === 'invalid') return null;
+
   return {
     ...(category === undefined ? {} : { category }),
     facts,
@@ -129,7 +141,25 @@ export function fromDraft(raw: unknown): Draft | null {
     ...(generated === undefined ? {} : { generatedDescription: generated }),
     ...(template === undefined ? {} : { template: template as TemplateId }),
     ...(audience === undefined ? {} : { audience: audience as ListingAudience }),
+    ...(ownerConsentDeclaredAt === undefined ? {} : { ownerConsentDeclaredAt }),
+    ...(disclosuresResult === undefined ? {} : { disclosures: disclosuresResult }),
   };
+}
+
+/**
+ * Validates a stored disclosures list.
+ *
+ * Three outcomes, not two: `undefined` means the field was absent (fine —
+ * most listings have none), the literal `'invalid'` is this function's own
+ * "reject the whole draft" signal, and an array is what survived. A plain
+ * `string[] | null` return could not tell "absent" from "invalid" — both
+ * would be `null` — and this is the one field in the file where that
+ * distinction matters enough to earn a dedicated helper.
+ */
+function readDisclosures(value: unknown): string[] | 'invalid' | undefined {
+  if (value === undefined) return undefined;
+  if (!Array.isArray(value)) return 'invalid';
+  return value.every((item) => typeof item === 'string') ? (value as string[]) : 'invalid';
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
