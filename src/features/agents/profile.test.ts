@@ -171,20 +171,25 @@ describe('toSeller', () => {
     assert.equal('agencyName' in seller, false);
   });
 
-  it('NEVER copies the licence number onto the page', () => {
-    // Self-declared and unchecked (0009). Putting it beside verified register
-    // data would borrow the facts grid's credibility for an unvalidated
-    // string. This is the assertion that stops that happening by accident.
+  it('carries the licence number onto the page', () => {
+    // Required by the Real Estate Brokers Regulations (2024): a broker must
+    // display their licence number on every advertisement. It is the agent's
+    // own declaration — SellerBlock renders it plainly, never with the
+    // מאומת treatment (docs/OPPORTUNITIES.md §1a).
     const seller = toSeller(
       { displayName: 'ליאור', phone: '0501234567', licenceNumber: '7778889' },
       'בעל הדירה',
     );
+    assert.equal(seller?.licenceNumber, '7778889');
+  });
+
+  it('trims the licence number and omits it rather than storing empty', () => {
+    const seller = toSeller(
+      { displayName: 'ליאור', phone: '0501234567', licenceNumber: '  ' },
+      'בעל הדירה',
+    );
     assert.ok(seller);
     assert.equal('licenceNumber' in seller, false);
-    // The value, not just the key: a future field that happened to carry it
-    // would pass the check above. The licence shares no digit run with the
-    // normalised phone, so this cannot succeed by coincidence.
-    assert.equal(JSON.stringify(seller).includes('7778889'), false);
   });
 
   it('returns undefined rather than a half-filled seller', () => {

@@ -467,6 +467,17 @@ export interface Seller {
   /** Set for agents; absent for private sellers. */
   agencyName?: string;
   agencyLogoUrl?: string;
+  /**
+   * Self-declared, unchecked against the Justice Ministry broker register.
+   *
+   * Renders as a plain, unstyled line in the seller block — never in the
+   * agent bar, and never with the `מאומת` treatment a real register check
+   * would earn. The Real Estate Brokers Regulations (2024) require a broker
+   * to display their licence number on every advertisement (docs/
+   * OPPORTUNITIES.md §1a); this is the agent's own legal declaration,
+   * rendered as exactly that, not a claim this product is vouching for.
+   */
+  licenceNumber?: string;
 }
 
 /**

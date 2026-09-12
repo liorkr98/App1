@@ -25,7 +25,8 @@ import type { Seller } from '@/types/listing.js';
  * NOTHING HERE IS VERIFIED. The licence number is self-declared; the Justice
  * Ministry register lists 22,995 brokers and checking against it is real work
  * that has not been done. A page must never imply otherwise, which is why
- * `licenceNumber` never travels into `Seller` — see `toSeller`.
+ * `toSeller` renders it plainly — no `מאומת` treatment, and never in the
+ * agent bar, only as a line in the seller block (docs/OPPORTUNITIES.md §1a).
  */
 export interface AgentProfile {
   /** The person's name, as it appears on the page. */
@@ -166,12 +167,17 @@ export function isProfileEmpty(profile: AgentProfile): boolean {
  * a private seller who never set one still gets a line that reads like a
  * person rather than a blank.
  *
- * THE LICENCE NUMBER IS NOT COPIED, and that is the point of the function
- * existing rather than the caller spreading the profile. It is self-declared
- * and unchecked (0009), so putting it on a public page next to verified
- * register data would borrow the credibility of the facts grid for a string
- * nobody validated. When it is checked against the Justice Ministry register
- * it can travel; until then it stays in the profile.
+ * THE LICENCE NUMBER TRAVELS, BUT UNSTYLED. It is self-declared and unchecked
+ * (0009) — this used to be a reason to hide it, on the grounds that showing
+ * an unverified number beside register-verified facts would borrow the facts
+ * grid's credibility. That reasoning was right about credibility and wrong
+ * about the law: the Real Estate Brokers Regulations (2024) require a broker
+ * to display their licence number on every advertisement, and it is the
+ * agent's own declaration to make, not a badge this product awards. So it
+ * renders as a plain, unstyled detail in the seller block — never in the
+ * agent bar, and never with the `מאומת` treatment (docs/OPPORTUNITIES.md
+ * §1a). `SellerBlock` is what enforces the "plain" half of that; this
+ * function only decides that the value travels at all.
  *
  * Returns undefined when the profile cannot brand a listing, rather than a
  * half-filled Seller. A caller that has not checked `profileBlockers` should
@@ -187,6 +193,7 @@ export function toSeller(
 
   const agencyName = profile.agencyName?.trim();
   const role = profile.role?.trim();
+  const licenceNumber = profile.licenceNumber?.trim();
 
   return {
     name,
@@ -196,5 +203,6 @@ export function toSeller(
     // absent is what makes the agent bar show נבנה בסיבוב, and '' is truthy
     // enough in enough places to produce an agency bar with no agency in it.
     ...(agencyName ? { agencyName } : {}),
+    ...(licenceNumber ? { licenceNumber } : {}),
   };
 }
