@@ -1,0 +1,18 @@
+{
+  // Read by @astrojs/cloudflare during `astro check` / `astro build`.
+  //
+  // `main` MUST exist before the build. Pointing it at dist/server/entry.mjs
+  // (the output) makes `astro check` fail on a clean machine — that was CI.
+  // The adapter's own entry is the file Astro 6+ documents for both dev and
+  // the Worker. Deploy from the repo root still uses ../wrangler.jsonc, which
+  // points at the built entry after `astro build`.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "besivov",
+  "compatibility_date": "2026-09-07",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "@astrojs/cloudflare/entrypoints/server",
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "./dist/client"
+  }
+}

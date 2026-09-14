@@ -54,9 +54,12 @@ export default defineConfig({
 
   adapter: cloudflare({
     imageService: 'passthrough',
-    // wrangler.jsonc lives at the repo root because Workers Builds runs from
-    // there. The Astro project is web/.
-    configPath: '../wrangler.jsonc',
+    // This file, not the repo-root wrangler.jsonc. The root file's `main` is
+    // the built Worker (web/dist/server/entry.mjs), which does not exist
+    // until after `astro build`. The Vite plugin resolves `main` when the
+    // config loads, so pointing the adapter at that path fails `astro check`
+    // on a clean checkout.
+    configPath: './wrangler.jsonc',
   }),
 
   // React exists for ONE page. /new is a multi-step form with drag-ordered

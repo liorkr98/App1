@@ -167,10 +167,15 @@ explicit.
 
 ### In the repository — done
 
-`wrangler.jsonc` is committed. It pins the Worker entry, `nodejs_compat`, and
-the asset directory to `web/dist/client`, and it stops `wrangler deploy` running its
-auto-configuration at all. `assets.binding` is `ASSETS`, which the Astro
-Cloudflare adapter expects. There is no `custom_domain` until DNS exists.
+`wrangler.jsonc` is committed at the **repo root** (so Workers Builds does
+not guess Expo) and a second copy lives in `web/` for the Astro adapter.
+
+- **Root** `wrangler.jsonc` — `main` is `web/dist/server/entry.mjs`, assets
+  are `web/dist/client`. Wrangler reads this **after** `astro build`.
+- **`web/wrangler.jsonc`** — `main` is `@astrojs/cloudflare/entrypoints/server`,
+  which exists as soon as `web/` is installed. `astro check` and `astro build`
+  read this one. Pointing the adapter at the built entry made CI fail on a
+  clean machine: the Vite plugin resolves `main` when the config loads.
 
 ### In the Cloudflare dashboard — YOU need to set this
 

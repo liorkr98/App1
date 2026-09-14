@@ -19,8 +19,10 @@
   "compatibility_date": "2026-09-07",
   "compatibility_flags": ["nodejs_compat"],
 
-  // Built output, not the adapter package. `astro build` writes this file;
-  // deploying without building will fail looking for it.
+  // After `astro build`. Workers Builds runs the web build first, then
+  // wrangler, so this file exists at deploy time. Do not point the Astro
+  // adapter at this path — `astro check` runs before dist/ exists. The
+  // adapter reads web/wrangler.jsonc instead.
   "main": "web/dist/server/entry.mjs",
 
   "observability": {
