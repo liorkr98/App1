@@ -11,6 +11,7 @@ const state = (): EditorState => ({
   price: 1850000,
   city: 'חולון',
   indexable: false,
+  prePortal: false,
   photoCount: 6,
   facts: answer(blankFacts('property'), 'rooms', 4),
   description: 'הדירה משופצת ופונה לדרום.',
@@ -79,6 +80,31 @@ describe('a draft survives a refresh', () => {
 
     assert.ok(restored);
     assert.equal('ownerConsentDeclaredAt' in restored, false);
+  });
+
+  it('carries the optional owner name back', () => {
+    const restored = roundTrip({ ...state(), ownerConsentName: 'דנה כהן' });
+
+    assert.ok(restored);
+    assert.equal(restored.ownerConsentName, 'דנה כהן');
+  });
+
+  it('carries the pre-portal flag back, and defaults it false', () => {
+    const restoredOn = roundTrip({ ...state(), prePortal: true });
+    assert.ok(restoredOn);
+    assert.equal(restoredOn.prePortal, true);
+
+    const restoredOff = roundTrip(state());
+    assert.ok(restoredOff);
+    assert.equal(restoredOff.prePortal, false);
+  });
+
+  it('treats a draft written before prePortal existed as not pre-portal', () => {
+    const stored = toDraft(state());
+    const { prePortal: _dropped, ...without } = stored;
+    const restored = fromDraft(JSON.stringify(without));
+    assert.ok(restored);
+    assert.equal(restored.prePortal, false);
   });
 
   it('carries disclosures back, in order', () => {
@@ -166,6 +192,11 @@ describe('anything unrecognised starts clean', () => {
     assert.equal(fromDraft(bad), null);
   });
 
+  it('rejects an owner name that is not a string', () => {
+    const bad = JSON.stringify({ ...toDraft(state()), ownerConsentName: 12345 });
+    assert.equal(fromDraft(bad), null);
+  });
+
   it('rejects disclosures that are not a list of strings', () => {
     for (const bad of ['a single string', 42, { 0: 'not an array' }, ['fine', 5]]) {
       const stored = JSON.stringify({ ...toDraft(state()), disclosures: bad });
@@ -213,6 +244,7 @@ describe('anything unrecognised starts clean', () => {
         title: '',
         price: 0,
         indexable: false,
+        prePortal: false,
         photoCount: 0,
         facts: [],
         description: '',

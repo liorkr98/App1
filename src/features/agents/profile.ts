@@ -46,6 +46,11 @@ export interface AgentProfile {
    * never opens the picker still gets a coherent page. See accents.ts.
    */
   accent?: string | null;
+  /**
+   * Public URL of the agency mark. Optional. A private seller has none,
+   * and the agent bar keeps the colour dot.
+   */
+  agencyLogoUrl?: string | null;
 }
 
 /**
@@ -194,6 +199,7 @@ export function toSeller(
   const agencyName = profile.agencyName?.trim();
   const role = profile.role?.trim();
   const licenceNumber = profile.licenceNumber?.trim();
+  const agencyLogoUrl = profile.agencyLogoUrl?.trim();
 
   return {
     name,
@@ -204,5 +210,6 @@ export function toSeller(
     // enough in enough places to produce an agency bar with no agency in it.
     ...(agencyName ? { agencyName } : {}),
     ...(licenceNumber ? { licenceNumber } : {}),
+    ...(agencyLogoUrl ? { agencyLogoUrl } : {}),
   };
 }

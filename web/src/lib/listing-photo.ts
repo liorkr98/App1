@@ -45,11 +45,15 @@ export interface ProcessedPhoto {
  * do it, rather than throwing — a photo that will not process must not take
  * the whole upload down with it.
  */
-export async function stripAndResize(file: File): Promise<ProcessedPhoto | undefined> {
+export async function stripAndResize(
+  file: File,
+  maxEdge: number = MAX_EDGE,
+): Promise<ProcessedPhoto | undefined> {
   try {
     const bitmap = await createImageBitmap(file);
 
-    const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
+    const edge = maxEdge > 0 ? maxEdge : MAX_EDGE;
+    const scale = Math.min(1, edge / Math.max(bitmap.width, bitmap.height));
     const width = Math.round(bitmap.width * scale);
     const height = Math.round(bitmap.height * scale);
 

@@ -1,2 +1,9 @@
 _worker.js
 _routes.json
+
+# CI prerenders /template-check/{slug} so the divergence and <bdi> gates
+# have HTML on disk. Those files must not be uploaded — noindex is not
+# enough if the path is a public URL (the product-gap plan). Wrangler
+# honours this file at upload time; the verify scripts still open the
+# built files locally.
+template-check/

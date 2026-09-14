@@ -66,6 +66,14 @@ describe('the message an agent pastes', () => {
       assert.equal(message, message.trimEnd());
     }
   });
+
+  it('puts the pre-portal line above the URL, when the seller declared it', () => {
+    const message = shareMessage({ ...base, prePortalLine: 'עדיין לא בלוחות' });
+    const lines = message.split('\n');
+    assert.equal(lines[lines.length - 1], base.url);
+    assert.ok(message.includes('עדיין לא בלוחות'));
+    assert.ok(message.indexOf('עדיין לא בלוחות') < message.indexOf(base.url));
+  });
 });
 
 describe('the wa.me link', () => {

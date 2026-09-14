@@ -157,7 +157,10 @@ export type Database = {
           location: Json | null
           media: Json
           og_image_hash: string | null
+          owner_consent_declared_at: string | null
+          owner_consent_name: string | null
           owner_id: string
+          pre_portal: boolean
           price: number
           price_note: string | null
           published_at: string | null
@@ -184,7 +187,10 @@ export type Database = {
           location?: Json | null
           media?: Json
           og_image_hash?: string | null
+          owner_consent_declared_at?: string | null
+          owner_consent_name?: string | null
           owner_id: string
+          pre_portal?: boolean
           price: number
           price_note?: string | null
           published_at?: string | null
@@ -211,7 +217,10 @@ export type Database = {
           location?: Json | null
           media?: Json
           og_image_hash?: string | null
+          owner_consent_declared_at?: string | null
+          owner_consent_name?: string | null
           owner_id?: string
+          pre_portal?: boolean
           price?: number
           price_note?: string | null
           published_at?: string | null

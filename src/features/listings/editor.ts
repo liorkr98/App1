@@ -142,6 +142,19 @@ export interface EditorState {
   ownerConsentDeclaredAt?: string;
 
   /**
+   * Optional name of the owner named in that declaration. Not a blocker —
+   * a required field they cannot answer is a form they abandon (PRD §2).
+   * Not rendered on the public page; it is a record, not a badge.
+   */
+  ownerConsentName?: string;
+
+  /**
+   * Seller declaration that the listing is not yet on commercial portals.
+   * Defaults false. Never inferred (DESIGN-BRIEF §5).
+   */
+  prePortal: boolean;
+
+  /**
    * Free-text items a buyer would want to know before viewing — a scratch,
    * a repair that is coming, a legal or structural issue. BOTH categories,
    * not vehicle-only: `Disclosures.astro` already renders any non-empty list

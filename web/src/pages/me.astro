@@ -145,6 +145,15 @@ import '../styles/tokens.css';
         border-radius: 50%;
         background: var(--olive-lift);
         flex: 0 0 auto;
+        overflow: hidden;
+      }
+
+      .agent-bar .dot img {
+        inline-size: 100%;
+        block-size: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+        display: block;
       }
 
       .agent-bar strong {
@@ -324,6 +333,28 @@ import '../styles/tokens.css';
         cursor: default;
       }
 
+      button.quiet {
+        inline-size: auto;
+        min-block-size: 44px;
+        margin-block-start: 0.5rem;
+        padding-block: 0.5rem;
+        padding-inline: 0.85rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--ink);
+        background: transparent;
+        border: 1px solid var(--stone);
+      }
+
+      button.quiet:hover:not(:disabled) {
+        background: var(--stone);
+      }
+
+      input[type='file'] {
+        padding-block: 0.45rem;
+        padding-inline: 0.45rem;
+      }
+
       :focus-visible {
         outline: 2px solid var(--olive);
         outline-offset: 3px;
@@ -392,7 +423,7 @@ import '../styles/tokens.css';
         <div class="preview">
           <p class="preview-label">{t('agent.previewTitle')}</p>
           <div class="agent-bar">
-            <span class="dot" aria-hidden="true"></span>
+            <span class="dot" aria-hidden="true"><img id="pv-logo" hidden alt="" /></span>
             <strong id="pv-name" data-empty="true">{t('agent.name')}</strong>
             <span class="brand" id="pv-brand">{t('agent.previewFallback')}</span>
           </div>
@@ -459,6 +490,15 @@ import '../styles/tokens.css';
               <p class="hint">{t('agent.agencyHint')}</p>
             </div>
 
+            <div class="field" id="f-logo">
+              <label for="logo">{t('agent.logo')}</label>
+              <input id="logo" name="logo" type="file" accept="image/jpeg,image/png,image/webp" />
+              <p class="hint">{t('agent.logoHint')}</p>
+              <button type="button" class="quiet" id="logo-remove" hidden>
+                {t('agent.logoRemove')}
+              </button>
+            </div>
+
             <div class="field" id="f-role">
               <label for="role">{t('agent.role')}</label>
               <input id="role" name="role" type="text" />
@@ -483,6 +523,7 @@ import '../styles/tokens.css';
       import { ACCENTS } from '@/features/agents/accents';
       import { profileBlockers, type ProfileBlockerCode } from '@/features/agents/profile';
       import { t } from '../lib/i18n';
+      import { removeAgencyLogo, uploadAgencyLogo } from '../lib/agency-logo';
       import { loadProfile, saveProfile } from '../lib/profile';
       import { supabaseConfigured } from '../lib/supabase';
 
@@ -505,10 +546,17 @@ import '../styles/tokens.css';
       const agency = $<HTMLInputElement>('agency');
       const role = $<HTMLInputElement>('role');
       const licence = $<HTMLInputElement>('licence');
+      const logo = $<HTMLInputElement>('logo');
+      const logoRemove = $<HTMLButtonElement>('logo-remove');
 
       const pvName = $('pv-name');
       const pvDot = document.querySelector('.agent-bar .dot') as HTMLElement | null;
+      const pvLogo = $<HTMLImageElement>('pv-logo');
       const pvBrand = $('pv-brand');
+
+      // Kept beside the form, not in an input: the file control's value is
+      // the local path, and the public URL is what the page actually stamps.
+      let logoUrl = '';
 
       const say = (text: string, tone: 'good' | 'bad' = 'good') => {
         said.textContent = text;
@@ -527,6 +575,7 @@ import '../styles/tokens.css';
         role: role.value,
         licenceNumber: licence.value,
         accent: chosenAccent(),
+        agencyLogoUrl: logoUrl || null,
       });
 
       /**
@@ -551,6 +600,15 @@ import '../styles/tokens.css';
         // read as a colour at all.
         const accent = ACCENT_MAP.get(chosenAccent());
         if (accent && pvDot) pvDot.style.background = accent.lift;
+
+        if (logoUrl) {
+          pvLogo.src = logoUrl;
+          pvLogo.hidden = false;
+        } else {
+          pvLogo.removeAttribute('src');
+          pvLogo.hidden = true;
+        }
+        logoRemove.hidden = logoUrl === '';
       };
 
       /**
@@ -597,6 +655,44 @@ import '../styles/tokens.css';
         });
       }
 
+      logo.addEventListener('change', () => {
+        const file = logo.files?.[0];
+        logo.value = '';
+        if (!file) return;
+
+        void (async () => {
+          logo.disabled = true;
+          const result = await uploadAgencyLogo(file);
+          logo.disabled = false;
+
+          if ('url' in result) {
+            logoUrl = result.url;
+            paint();
+            say(t('agent.saved'));
+            return;
+          }
+
+          say('signedOut' in result ? t('agent.signedOut') : t('agent.logoFailed'), 'bad');
+        })();
+      });
+
+      logoRemove.addEventListener('click', () => {
+        void (async () => {
+          logoRemove.disabled = true;
+          const result = await removeAgencyLogo();
+          logoRemove.disabled = false;
+
+          if ('ok' in result) {
+            logoUrl = '';
+            paint();
+            say(t('agent.saved'));
+            return;
+          }
+
+          say('signedOut' in result ? t('agent.signedOut') : t('agent.logoFailed'), 'bad');
+        })();
+      });
+
       const start = async () => {
         if (!supabaseConfigured) {
           panel.hidden = true;
@@ -628,6 +724,7 @@ import '../styles/tokens.css';
         agency.value = profile.agencyName ?? '';
         role.value = profile.role ?? '';
         licence.value = profile.licenceNumber ?? '';
+        logoUrl = profile.agencyLogoUrl?.trim() ?? '';
 
         const saved = document.querySelector(
           `input[name="accent"][value="${CSS.escape(profile.accent ?? 'olive')}"]`,

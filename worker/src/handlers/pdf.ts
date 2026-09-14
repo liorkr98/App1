@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import puppeteer, { type Browser } from 'puppeteer';
 
 import { env } from '../env.js';
+import { listingPdfUrl } from '../pdf/url.js';
 import { assertHebrewRenders, PdfMissingHebrew } from '../pdf/verify.js';
 import { attachPdf } from '../rpc.js';
 import { upload } from '../storage.js';
@@ -24,19 +25,29 @@ const NAVIGATION_TIMEOUT_MS = 45_000;
 
 interface PdfPayload {
   slug?: string;
-  /** Overrides PAGE_BASE_URL. Used to render a preview before publishing. */
+  /**
+   * Same origin as PAGE_BASE_URL only. The path is never taken from here —
+   * listingPdfUrl always navigates to `/a/{slug}/`. Any other origin is the
+   * SSRF this process must not perform (service-role key, --no-sandbox).
+   */
   baseUrl?: string;
 }
 
 export async function renderPdf({ job, progress }: JobContext): Promise<Record<string, unknown>> {
   const { slug, baseUrl } = job.payload as PdfPayload;
 
-  if (!slug) {
-    throw new JobFailure('no_slug', false);
-  }
+  // Resolved before Chrome starts. A client-supplied baseUrl is the attack;
+  // listingPdfUrl refuses any origin that is not PAGE_BASE_URL and never
+  // takes the path from the payload.
+  const url = listingPdfUrl({
+    slug,
+    pageBaseUrl: env.pageBaseUrl,
+    ...(typeof baseUrl === 'string' ? { baseUrl } : {}),
+  });
 
-  const root = (baseUrl ?? env.pageBaseUrl).replace(/\/+$/, '');
-  const url = `${root}/a/${encodeURIComponent(slug)}/`;
+  if (!url) {
+    throw new JobFailure(slug ? 'url_not_allowed' : 'no_slug', false);
+  }
 
   let browser: Browser | undefined;
 

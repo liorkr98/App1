@@ -3,7 +3,10 @@ import { t } from '../../lib/i18n';
 interface Props {
   /** ISO timestamp, or undefined when nobody has declared yet. */
   declaredAt: string | undefined;
+  /** Optional owner name stored with the declaration. Not shown on the page. */
+  ownerName: string;
   onDeclare: (declaredAt: string | undefined) => void;
+  onOwnerName: (name: string) => void;
 }
 
 /**
@@ -18,12 +21,16 @@ interface Props {
  * clears it back to undefined rather than keeping a stale timestamp around
  * for a box that is now empty.
  *
+ * The optional name is the written record OPPORTUNITIES.md asked for. It is
+ * not a blocker: a required field they cannot answer is a form they abandon
+ * (PRD §2). It is never rendered on the public page.
+ *
  * UNLIKE THE PLATE, this is not skippable: a property listing cannot publish
  * without it (editor.ts's `consentMissing` blocker), because there is no
  * narrower purpose to opt out of — this is the general declaration required
  * before advertising at all, not a precondition for one optional lookup.
  */
-export function ConsentStep({ declaredAt, onDeclare }: Props) {
+export function ConsentStep({ declaredAt, ownerName, onDeclare, onOwnerName }: Props) {
   const declared = declaredAt !== undefined;
 
   return (
@@ -47,6 +54,21 @@ export function ConsentStep({ declaredAt, onDeclare }: Props) {
           <span>{t('editor.consentDeclare')}</span>
         </label>
         <p className="plate-note">{t('editor.consentDeclareWhy')}</p>
+      </div>
+
+      <div className="field">
+        <label className="field-label" htmlFor="consent-name">
+          {t('editor.consentName')}
+        </label>
+        <input
+          id="consent-name"
+          type="text"
+          value={ownerName}
+          onChange={(event) => onOwnerName(event.target.value)}
+          maxLength={80}
+          autoComplete="name"
+        />
+        <p className="field-hint">{t('editor.consentNameWhy')}</p>
       </div>
     </>
   );

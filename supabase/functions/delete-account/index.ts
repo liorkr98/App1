@@ -13,7 +13,7 @@
 // Deployed with verify_jwt enabled, so an unauthenticated call never reaches
 // this code.
 
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -21,11 +21,73 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
+const LISTING_BUCKETS = ['originals', 'derived'] as const;
+const BRANDING_BUCKET = 'branding';
+
 function json(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), {
     status,
     headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
   });
+}
+
+/**
+ * Every object under `folder/` in one bucket. Recurses into subfolders
+ * because derived output is nested (`{listingId}/{photoId}.webp`, OG, PDF).
+ *
+ * Paths only — never log them. Original filenames can carry addresses.
+ *
+ * A list error is treated as an empty folder. The common case is a listing
+ * (or a user) that never uploaded anything — storage.list on a missing
+ * prefix must not block account deletion. A remove error still fails closed.
+ */
+async function listPaths(
+  admin: SupabaseClient,
+  bucket: string,
+  folder: string,
+): Promise<string[]> {
+  const { data, error } = await admin.storage.from(bucket).list(folder, {
+    limit: 1000,
+    offset: 0,
+  });
+  if (error || !data) return [];
+
+  const paths: string[] = [];
+  for (const item of data) {
+    const path = folder ? `${folder}/${item.name}` : item.name;
+    if (item.id) {
+      paths.push(path);
+    } else {
+      paths.push(...(await listPaths(admin, bucket, path)));
+    }
+  }
+  return paths;
+}
+
+async function emptyPrefix(
+  admin: SupabaseClient,
+  bucket: string,
+  folder: string,
+): Promise<boolean> {
+  const paths = await listPaths(admin, bucket, folder);
+
+  for (let index = 0; index < paths.length; index += 100) {
+    const chunk = paths.slice(index, index + 100);
+    const { error } = await admin.storage.from(bucket).remove(chunk);
+    if (error) {
+      console.error('delete-account storage purge failed', { bucket, count: chunk.length });
+      return false;
+    }
+  }
+  return true;
+}
+
+async function emptyListingPrefix(admin: SupabaseClient, listingId: string): Promise<boolean> {
+  for (const bucket of LISTING_BUCKETS) {
+    const emptied = await emptyPrefix(admin, bucket, listingId);
+    if (!emptied) return false;
+  }
+  return true;
 }
 
 Deno.serve(async (req: Request) => {
@@ -71,12 +133,31 @@ Deno.serve(async (req: Request) => {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  // Deleting the auth user cascades to public.profiles via
-  // `references auth.users (id) on delete cascade` in migration 0001.
-  //
-  // When a cloned app adds tables that are NOT keyed to auth.users with a
-  // cascade, delete those rows HERE, before this call. A table left behind is
-  // both a privacy failure and an App Review failure.
+  // Storage objects are NOT cascaded when the listing row goes. Purge both
+  // buckets first, keyed by listing id, then delete the user. Listings and
+  // profiles cascade from auth.users (0001, 0002).
+  const { data: listings, error: listingsError } = await adminClient
+    .from('listings')
+    .select('id')
+    .eq('owner_id', user.id);
+
+  if (listingsError) {
+    console.error('delete-account listings lookup failed', { message: listingsError.message });
+    return json({ error: 'delete_failed' }, 500);
+  }
+
+  for (const listing of listings ?? []) {
+    const listingId = typeof listing.id === 'string' ? listing.id : '';
+    if (!listingId) continue;
+    const emptied = await emptyListingPrefix(adminClient, listingId);
+    if (!emptied) return json({ error: 'delete_failed' }, 500);
+  }
+
+  // The logo lives under the user id, not a listing id. Same fail-closed
+  // rule: if the folder cannot be listed or emptied, the auth user stays.
+  const brandingEmptied = await emptyPrefix(adminClient, BRANDING_BUCKET, user.id);
+  if (!brandingEmptied) return json({ error: 'delete_failed' }, 500);
+
   const { error: deleteError } = await adminClient.auth.admin.deleteUser(user.id);
 
   if (deleteError) {

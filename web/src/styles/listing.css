@@ -73,7 +73,8 @@ body{
   background:var(--ink-deep);color:var(--on-dark);
   font-size:.86rem;
 }
-.agent-bar .dot{width:26px;height:26px;border-radius:50%;background:var(--olive-lift);flex:0 0 auto}
+.agent-bar .dot{width:26px;height:26px;border-radius:50%;background:var(--olive-lift);flex:0 0 auto;overflow:hidden}
+.agent-bar .dot img{inline-size:100%;block-size:100%;object-fit:cover;border-radius:50%;display:block}
 .agent-bar strong{font-weight:600}
 .agent-bar span{color:#9C9D93;margin-inline-start:auto;font-size:.8rem}
 .agent-bar a{color:inherit}
@@ -227,7 +228,8 @@ p + p{margin-top:.9rem}
 /* ---------- סוכן ---------- */
 .seller{background:var(--stone-warm)}
 .seller-row{display:flex;align-items:center;gap:1rem}
-.avatar{width:58px;height:58px;border-radius:50%;background:var(--stone);flex:0 0 auto}
+.avatar{width:58px;height:58px;border-radius:50%;background:var(--stone);flex:0 0 auto;overflow:hidden}
+.avatar img{inline-size:100%;block-size:100%;object-fit:cover;border-radius:50%;display:block}
 .seller-name{font-family:'Frank Ruhl Libre',serif;font-size:1.25rem;font-weight:500}
 .seller-role{font-size:.87rem;color:var(--muted-warm)}
 
@@ -274,6 +276,22 @@ footer a{color:var(--muted)}
   border-block-end:1px solid var(--stone);
 }
 body:has(.sold-banner){padding-bottom:2rem}
+
+/* Pre-portal — seller declaration, same CSS on both templates.
+   Omitted from the markup when sold or when the agent did not tick it. */
+.pre-portal{
+  margin:0;
+  padding-block:.7rem;
+  padding-inline:var(--gut);
+  font-size:.88rem;
+  line-height:1.5;
+  color:var(--muted);
+  border-block-end:1px solid var(--stone);
+}
+.pre-portal strong{
+  font-weight:700;
+  color:var(--olive);
+}
 
 /* ============================================================
    תנועה — scroll-driven נטיבי. אפס JS.
