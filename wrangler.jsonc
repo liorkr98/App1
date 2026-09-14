@@ -34,6 +34,15 @@
 
   "main": "web/dist/server/entry.mjs",
 
+  // Workers Builds' dashboard Build field is optional and has been empty,
+  // which skips astro entirely and then fails here: "entry-point file at
+  // web/dist/server/entry.mjs was not found." Wrangler itself still runs
+  // this command on deploy / versions upload. Skip when the dashboard (or
+  // a local astro build) already produced the Worker.
+  "build": {
+    "command": "test -f web/dist/server/entry.mjs || npm run build"
+  },
+
   "observability": {
     "enabled": true
   },
