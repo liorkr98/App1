@@ -48,7 +48,7 @@ const perUnit = perUnitPrice('property', propertyListing.facts, propertyListing.
 const vehicleCells = toCells('vehicle', vehicleListing.facts).slice(0, 3);
 const vehiclePerUnit = perUnitPrice('vehicle', vehicleListing.facts, vehicleListing.price);
 
-const title = `סיבוב — ${t('home.tagline')}`;
+const title = `${t('common.brand')} — ${t('home.tagline')}`;
 const canonical = new URL('/', Astro.site).href;
 const ogImage = new URL('/og-home.webp', Astro.site).href;
 ---
@@ -69,8 +69,8 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="he_IL" />
     <meta property="og:url" content={canonical} />
-    <meta property="og:site_name" content="סיבוב" />
-    <meta property="og:title" content="סיבוב" />
+    <meta property="og:site_name" content={t('common.brand')} />
+    <meta property="og:title" content={t('common.brand')} />
     <meta property="og:description" content={t('home.subTagline')} />
     <meta property="og:image" content={ogImage} />
     <meta property="og:image:width" content="1200" />
@@ -229,10 +229,16 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
 
       .top-link {
         font-size: var(--meta);
-        font-weight: 600;
+        font-weight: 800;
         /* 6.94:1 on --ink-deep. --olive-lift is 3.83:1 and fails here. */
         color: var(--dim);
         text-decoration: none;
+      }
+
+      /* Default show sign-in; the session script hides it after a login.
+         Flex would otherwise keep the hidden link in the row. */
+      .top nav [hidden] {
+        display: none !important;
       }
 
       .top-link:hover {
@@ -1048,10 +1054,13 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
     <div class="dark">
       <div class="shell">
         <header class="top">
-          <span class="mark">סיבוב</span>
+          <span class="mark">{t('common.brand')}</span>
           <nav>
-            <a class="top-link" href="/enter/">{t('home.ctaSecond')}</a>
-            <a class="top-link" href="/mine/">{t('dash.title')}</a>
+            {/* Logged out: only sign-in. Logged in: only my listings.
+                The homepage is static, so sign-in is the default paint and
+                a client script swaps after getSession. Both must never show. */}
+            <a class="top-link" id="nav-enter" href="/enter/">{t('home.ctaSecond')}</a>
+            <a class="top-link" id="nav-mine" href="/mine/" hidden>{t('dash.title')}</a>
           </nav>
         </header>
       </div>
@@ -1168,7 +1177,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
           </div>
 
           <div class="dash-shot" aria-hidden="true">
-            <div class="dash-shot-bar">סיבוב</div>
+            <div class="dash-shot-bar">{t('common.brand')}</div>
             <div class="dash-cards">
               <div class="dash-card">
                 <img
@@ -1208,7 +1217,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
 
     <footer>
       <div class="shell">
-        <span><a href="https://hasivuv.com">hasivuv.com</a></span>
+        <span><a href="/">{t('common.brand')}</a></span>
         <span>
           <a href="/legal/terms/">{t('legal.terms')}</a>
           {' · '}
@@ -1218,5 +1227,30 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         </span>
       </div>
     </footer>
+
+    <script>
+      import { supabase, supabaseConfigured } from '../lib/supabase';
+
+      /**
+       * One header link, not two. Sign-in is the static default so a logged-out
+       * first paint never flashes "המודעות שלי". After a session exists the
+       * script hides sign-in and shows the library.
+       */
+      if (supabaseConfigured) {
+        const enter = document.getElementById('nav-enter');
+        const mine = document.getElementById('nav-mine');
+        const client = supabase();
+
+        const paint = async () => {
+          const { data } = await client.auth.getSession();
+          const signedIn = Boolean(data.session);
+          if (enter) enter.hidden = signedIn;
+          if (mine) mine.hidden = !signedIn;
+        };
+
+        void paint();
+        client.auth.onAuthStateChange(() => void paint());
+      }
+    </script>
   </body>
 </html>

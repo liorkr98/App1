@@ -411,6 +411,29 @@ textarea {
   cursor: default;
 }
 
+.shot-alt {
+  display: block;
+  margin-block-start: 0.35rem;
+}
+
+.shot-alt input {
+  inline-size: 100%;
+  box-sizing: border-box;
+  padding-block: 0.3rem;
+  padding-inline: 0.4rem;
+  font: inherit;
+  font-size: 0.75rem;
+  color: var(--ink);
+  background: var(--plaster);
+  border: 1px solid var(--stone);
+  border-radius: 3px;
+}
+
+.shot-alt input:focus {
+  outline: 2px solid var(--olive);
+  outline-offset: 1px;
+}
+
 /* The file input is hidden and its label is the control: a native file input
    cannot be styled and announces itself in English on most phones. */
 .picker {

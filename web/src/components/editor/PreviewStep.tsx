@@ -76,12 +76,12 @@ export function PreviewStep({ state, photos, agency, sellerName, accent, agencyL
               {agencyLogoUrl ? <img src={agencyLogoUrl} alt="" /> : null}
             </div>
             <strong>{agency || sellerName || t('agent.previewFallback')}</strong>
-            <span>סיבוב</span>
+            <span>{t('common.brand')}</span>
           </div>
 
           <div className="prev-hero">
             {cover ? (
-              <img src={cover.publicUrl ?? cover.url} alt="" />
+              <img src={cover.publicUrl ?? cover.url} alt={cover.alt?.trim() ?? ''} />
             ) : (
               <div className="prev-hero-empty">{t('editor.preview.noPhoto')}</div>
             )}
@@ -127,7 +127,7 @@ export function PreviewStep({ state, photos, agency, sellerName, accent, agencyL
           {photos.length > 1 && (
             <div className="prev-gallery">
               {photos.slice(1, 5).map((photo) => (
-                <img key={photo.id} src={photo.publicUrl ?? photo.url} alt="" />
+                <img key={photo.id} src={photo.publicUrl ?? photo.url} alt={photo.alt?.trim() ?? ''} />
               ))}
             </div>
           )}

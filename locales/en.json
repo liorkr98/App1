@@ -15,7 +15,9 @@
     "loading": "",
     "yes": "",
     "no": "",
-    "continue": ""
+    "continue": "",
+    "brand": "",
+    "builtByPrefix": ""
   },
   "errors": {
     "network": "",
@@ -172,6 +174,8 @@
     "fixLater": "",
     "stepOf": "",
     "coverPhoto": "",
+    "photoAlt": "",
+    "photoAltHint": "",
     "dragToReorder": "",
     "addPhotos": "",
     "photoCount": "",

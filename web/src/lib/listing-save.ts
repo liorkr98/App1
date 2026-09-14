@@ -105,10 +105,9 @@ export async function saveListing(
     .map((photo, index) => ({
       id: photo.id,
       url: photo.publicUrl,
-      // The seller has not been asked for alt text yet. An empty string is
-      // the correct value for "nobody wrote one" — inventing a description
-      // from the file name would be worse than silence to a screen reader.
-      alt: '',
+      // Empty is the correct value for "nobody wrote one" — inventing a
+      // description from the file name would be worse than silence.
+      alt: photo.alt?.trim() ?? '',
       // Recorded at upload, so the page can reserve the box before the bytes
       // arrive. Zero would produce a CLS penalty on every listing.
       width: photo.width ?? 0,

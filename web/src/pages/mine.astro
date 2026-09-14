@@ -37,7 +37,7 @@ import '../styles/tokens.css';
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#111208" />
-    <title>{t('dash.title')} · סיבוב</title>
+    <title>{t('dash.title')} · {t('common.brand')}</title>
 
     {/* A private workspace holding unpublished drafts. There is no version of
         it that belongs in a search result. */}
@@ -513,7 +513,7 @@ import '../styles/tokens.css';
   <body>
     <header class="bar">
       <div class="shell">
-        <a class="mark" href="/">סיבוב</a>
+        <a class="mark" href="/">{t('common.brand')}</a>
         <nav>
           <a href="/me/">{t('agent.editDetails')}</a>
           <a class="cta" href="/new/">{t('dash.new')}</a>

@@ -172,7 +172,7 @@ describe('toSeller', () => {
 
   it('OMITS the agency rather than setting it empty', () => {
     // Seller.agencyName being absent is what makes the agent bar fall back to
-    // נבנה בסיבוב. An empty string is truthy in enough places to produce an
+    // נבנה בהיעד. An empty string is truthy in enough places to produce an
     // agency bar with no agency in it.
     const seller = toSeller(
       { displayName: 'ליאור', phone: '0501234567', agencyName: '  ' },

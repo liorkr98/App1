@@ -38,6 +38,14 @@ export interface EditorPhoto {
   status?: 'local' | 'uploading' | 'uploaded' | 'failed';
   /** Storage key inside `originals`, once it has one. */
   path?: string;
+
+  /**
+   * Optional description for screen readers and the published <img alt>.
+   *
+   * Empty is the correct value when nobody wrote one — inventing a caption
+   * from the file name would be worse than silence. Not required to publish.
+   */
+  alt?: string;
 }
 
 interface Props {
@@ -139,7 +147,15 @@ export function PhotosStep({ photos, onChange, signedIn }: Props) {
               key={photo.id}
               className={dragging === index ? 'shot dragging' : 'shot'}
               draggable
-              onDragStart={() => setDragging(index)}
+              onDragStart={(event) => {
+                // An input inside a draggable tile would otherwise start a
+                // reorder the moment the seller tries to type an alt.
+                if ((event.target as HTMLElement).closest('input')) {
+                  event.preventDefault();
+                  return;
+                }
+                setDragging(index);
+              }}
               onDragEnd={() => setDragging(null)}
               onDragOver={(event) => event.preventDefault()}
               onDrop={(event) => {
@@ -150,7 +166,7 @@ export function PhotosStep({ photos, onChange, signedIn }: Props) {
                 setDragging(null);
               }}
             >
-              <img src={photo.url} alt="" />
+              <img src={photo.url} alt={photo.alt?.trim() ?? ''} />
 
               {index === 0 ? <span className="cover">{t('editor.coverPhoto')}</span> : null}
 
@@ -198,6 +214,25 @@ export function PhotosStep({ photos, onChange, signedIn }: Props) {
                   {t('common.delete')}
                 </button>
               </div>
+
+              <label className="shot-alt">
+                <input
+                  type="text"
+                  value={photo.alt ?? ''}
+                  placeholder={t('editor.photoAlt')}
+                  aria-label={t('editor.photoAlt')}
+                  title={t('editor.photoAltHint')}
+                  autoComplete="off"
+                  draggable={false}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onChange={(event) => {
+                    const alt = event.target.value;
+                    onChange(
+                      photos.map((item, at) => (at === index ? { ...item, alt } : item)),
+                    );
+                  }}
+                />
+              </label>
             </li>
           ))}
         </ul>
