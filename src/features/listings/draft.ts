@@ -134,7 +134,14 @@ export function fromDraft(raw: unknown): Draft | null {
   }
 
   const audience = parsed.audience;
-  if (audience !== undefined && audience !== 'resident' && audience !== 'investor') return null;
+  if (
+    audience !== undefined &&
+    audience !== 'resident' &&
+    audience !== 'investor' &&
+    audience !== 'both'
+  ) {
+    return null;
+  }
 
   const ownerConsentDeclaredAt = parsed.ownerConsentDeclaredAt;
   if (ownerConsentDeclaredAt !== undefined && typeof ownerConsentDeclaredAt !== 'string') {

@@ -1,9 +1,12 @@
+import type { CSSProperties } from 'react';
+
 import { accentFor } from '@/features/agents/accents';
 import type { EditorState } from '@/features/listings/editor';
+import { groupByRoom, hasRoomLabels } from '@/features/listings/photo-rooms';
 import { schemaFor } from '@/features/listings/schemas';
 import { factsFromSchema, type Fact } from '@/types/listing';
 
-import { factValue, ils, needsBdi, num } from '../../lib/format';
+import { factValue, ils, needsBdi } from '../../lib/format';
 import { t } from '../../lib/i18n';
 import type { EditorPhoto } from './PhotosStep';
 
@@ -20,27 +23,15 @@ interface Props {
 /**
  * The finished page, before it is published.
  *
- * THIS STEP RENDERED NOTHING AT ALL until 14 September 2026 — its heading and
- * an empty box, which is what "שלב 6 מתוך 7: תצוגה מקדימה" showed an agent who
- * had just spent four minutes filling in a form. Editor.tsx said so in its own
- * comments: "STILL EMPTY".
+ * WHY IT IS NOT AN IFRAME OF THE REAL PAGE. A draft has no public URL: the
+ * read policy in 0002 exposes only 'published' and 'sold', so /a/[slug] is a
+ * 404 for a draft by design. This renders the same chrome the listing page
+ * uses — agent-bar, hero, price-bar, facts, walk, gallery — from the editor's
+ * own state, so a logo cannot sit behind a photograph and a 340px toy phone
+ * cannot invent a different layout from the one the buyer gets.
  *
- * WHY IT IS NOT AN IFRAME OF THE REAL PAGE, which would be the obvious answer
- * and was the first thing I tried. A draft has no public URL: the read policy
- * in 0002 exposes only 'published' and 'sold', and /a/[slug] reads with the
- * anon key, so a draft is a 404 there BY DESIGN. Handing the server the
- * agent's token to get around that would mean putting a credential in a URL
- * or inventing a cookie session the rest of the product does not use.
- *
- * So this renders the same page from the editor's own state. That is two
- * renderings of one page and therefore a drift risk — narrowed by having both
- * wear the SAME stylesheet: styles/listing.css, extracted from BaseListing for
- * this purpose. What can still differ is markup, which is the half a person
- * looking at the screen can see is wrong.
- *
- * SCALED, NOT RESPONSIVE. The listing page is a 620px document meant for a
- * phone. Shown at the editor's width it would be a different layout from the
- * one the buyer gets, which is the opposite of a preview.
+ * Hero height is a fitted block, not 84svh of the editor window: that is what
+ * used to swallow the agent bar.
  */
 export function PreviewStep({ state, photos, agency, sellerName, accent, agencyLogoUrl }: Props) {
   const category = state.category ?? 'property';
@@ -49,28 +40,34 @@ export function PreviewStep({ state, photos, agency, sellerName, accent, agencyL
 
   const cover = photos.find((photo) => photo.publicUrl ?? photo.url);
   const place = [state.street, state.city].filter(Boolean).join(', ');
+  const titleLines = (state.title || t('editor.preview.noTitle')).split('\n');
 
-  /*
-   * The same three rules the real facts grid follows: a fact nobody answered
-   * is OMITTED, and a fact confirmed absent renders greyed showing אין. They
-   * are different answers and the page must never collapse one into the other
-   * (CLAUDE.md §7).
-   */
   const byKey = new Map(state.facts.map((fact) => [fact.key, fact]));
   const cells = factsFromSchema(schema)
     .map((blank): Fact => byKey.get(blank.key) ?? blank)
-    .filter((fact) => fact.present === false || (fact.value !== null && fact.value !== ''))
-    .slice(0, 6);
+    .filter((fact) => fact.present === false || (fact.value !== null && fact.value !== ''));
 
   const paragraphs = state.description.split('\n\n').filter((line) => line.trim() !== '');
+  const gallery = photos.slice(1);
+  const walkGroups = hasRoomLabels(photos)
+    ? groupByRoom(photos).filter((group) => group.room)
+    : [];
 
   return (
     <>
       <p className="hint">{t('editor.preview.hint')}</p>
 
-      {/* The frame is the phone; the document inside is the page. */}
       <div className="preview-frame">
-        <div className="preview-page" style={{ ['--accent' as string]: palette.base }}>
+        <div
+          className="preview-page"
+          data-template={state.template ?? 'editorial'}
+          style={
+            {
+              ['--accent']: palette.base,
+              ['--accent-lift']: palette.lift,
+            } as CSSProperties
+          }
+        >
           <div className="agent-bar">
             <div className="dot" aria-hidden="true">
               {agencyLogoUrl ? <img src={agencyLogoUrl} alt="" /> : null}
@@ -79,36 +76,47 @@ export function PreviewStep({ state, photos, agency, sellerName, accent, agencyL
             <span>{t('common.brand')}</span>
           </div>
 
-          <div className="prev-hero">
+          <header className="hero">
             {cover ? (
-              <img src={cover.publicUrl ?? cover.url} alt={cover.alt?.trim() ?? ''} />
+              <img
+                className="hero-img"
+                src={cover.publicUrl ?? cover.url}
+                alt={cover.alt?.trim() ?? ''}
+              />
             ) : (
               <div className="prev-hero-empty">{t('editor.preview.noPhoto')}</div>
             )}
-            <div className="prev-veil">
-              {place && <div className="prev-place">{place}</div>}
-              <div className="prev-title">{state.title || t('editor.preview.noTitle')}</div>
+            <div className="hero-veil">
+              {place ? <div className="hero-place">{place}</div> : null}
+              <h1 className="hero-title">
+                {titleLines.map((line, index) => (
+                  <span key={index}>
+                    {index > 0 ? <br /> : null}
+                    {line}
+                  </span>
+                ))}
+              </h1>
             </div>
-          </div>
+          </header>
 
-          <div className="prev-price-bar">
-            <div className="prev-price">
+          <div className="price-bar">
+            <div className="price">
               <bdi>{state.price > 0 ? ils(state.price) : '—'}</bdi>
             </div>
-            {state.priceNote && <div className="prev-price-note">{state.priceNote}</div>}
+            {state.priceNote ? <div className="price-note label">{state.priceNote}</div> : null}
           </div>
 
           {cells.length > 0 && (
-            <div className="prev-facts">
+            <div className="facts">
               {cells.map((fact) => {
                 const value = fact.present === false ? 'אין' : factValue(fact.value);
                 return (
-                  <div key={fact.key} className={fact.present === false ? 'prev-fact off' : 'prev-fact'}>
-                    <div className="prev-fact-val">
+                  <div key={fact.key} className={fact.present === false ? 'fact off' : 'fact'}>
+                    <div className="fact-val">
                       {needsBdi(fact.value) ? <bdi>{value}</bdi> : value}
                       {fact.unit ? ` ${fact.unit}` : ''}
                     </div>
-                    <div className="prev-fact-lbl">{fact.label}</div>
+                    <div className="fact-lbl">{fact.label}</div>
                   </div>
                 );
               })}
@@ -116,7 +124,7 @@ export function PreviewStep({ state, photos, agency, sellerName, accent, agencyL
           )}
 
           {paragraphs.length > 0 && (
-            <section className="prev-prose">
+            <section>
               <h2>{category === 'property' ? 'על הדירה' : 'על הרכב'}</h2>
               {paragraphs.map((paragraph, index) => (
                 <p key={index}>{paragraph}</p>
@@ -124,10 +132,34 @@ export function PreviewStep({ state, photos, agency, sellerName, accent, agencyL
             </section>
           )}
 
-          {photos.length > 1 && (
-            <div className="prev-gallery">
-              {photos.slice(1, 5).map((photo) => (
-                <img key={photo.id} src={photo.publicUrl ?? photo.url} alt={photo.alt?.trim() ?? ''} />
+          {walkGroups.length > 0 && (
+            <section className="walk">
+              <h2>{t('listing.walkTitle')}</h2>
+              <nav className="walk-nav" aria-label={t('listing.walkTitle')}>
+                {walkGroups.map((group) => (
+                  <span key={group.room}>{t(`editor.rooms.${group.room}`)}</span>
+                ))}
+              </nav>
+              <div className="walk-track">
+                {walkGroups.flatMap((group) =>
+                  group.items.map((photo) => (
+                    <figure key={photo.id}>
+                      <img src={photo.publicUrl ?? photo.url} alt={photo.alt?.trim() ?? ''} />
+                      <figcaption>{t(`editor.rooms.${group.room}`)}</figcaption>
+                    </figure>
+                  )),
+                )}
+              </div>
+            </section>
+          )}
+
+          {gallery.length > 0 && (
+            <div className="gallery">
+              {gallery.map((photo) => (
+                <figure key={photo.id}>
+                  <img src={photo.publicUrl ?? photo.url} alt={photo.alt?.trim() ?? ''} />
+                  {photo.room ? <figcaption>{t(`editor.rooms.${photo.room}`)}</figcaption> : null}
+                </figure>
               ))}
             </div>
           )}
@@ -138,10 +170,6 @@ export function PreviewStep({ state, photos, agency, sellerName, accent, agencyL
           </div>
         </div>
       </div>
-
-      <p className="field-hint preview-note">
-        {t('editor.preview.note', { count: num(photos.length) })}
-      </p>
     </>
   );
 }

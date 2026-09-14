@@ -7,7 +7,7 @@ import {
   type Seller,
   type TemplateId,
 } from '@/types/listing';
-import type { ListingCategory } from '@/features/listings/schemas';
+import { isPhotoRoom } from '@/features/listings/photo-rooms';
 
 import { listingBySlug } from './listings';
 import { supabaseConfigured, supabasePublic } from './supabase';
@@ -61,30 +61,27 @@ function asSeller(value: unknown): Seller | undefined {
   };
 }
 
+function asImage(value: Record<string, unknown>, fallbackId: string) {
+  return {
+    id: String(value.id ?? fallbackId),
+    url: String(value.url),
+    alt: typeof value.alt === 'string' ? value.alt : '',
+    width: Number(value.width ?? 1),
+    height: Number(value.height ?? 1),
+    ...(typeof value.caption === 'string' ? { caption: value.caption } : {}),
+    ...(isPhotoRoom(value.room) ? { room: value.room } : {}),
+  };
+}
+
 function asMedia(value: unknown): Media | undefined {
   if (!isRecord(value) || !isRecord(value.cover) || typeof value.cover.url !== 'string') {
     return undefined;
   }
-  const cover = {
-    id: String(value.cover.id ?? 'cover'),
-    url: String(value.cover.url),
-    alt: typeof value.cover.alt === 'string' ? value.cover.alt : '',
-    width: Number(value.cover.width ?? 1),
-    height: Number(value.cover.height ?? 1),
-  };
+  const cover = asImage(value.cover, 'cover');
   const gallery = Array.isArray(value.gallery)
     ? value.gallery.flatMap((item) => {
         if (!isRecord(item) || typeof item.url !== 'string') return [];
-        return [
-          {
-            id: String(item.id ?? item.url),
-            url: String(item.url),
-            alt: typeof item.alt === 'string' ? item.alt : '',
-            width: Number(item.width ?? 1),
-            height: Number(item.height ?? 1),
-            ...(typeof item.caption === 'string' ? { caption: item.caption } : {}),
-          },
-        ];
+        return [asImage(item, String(item.id ?? item.url))];
       })
     : [];
   return {
@@ -125,7 +122,7 @@ export function listingFromRow(row: ListingRow): Listing | undefined {
   return {
     id: row.id,
     slug: row.slug,
-    category: row.category as ListingCategory,
+    category: row.category as Listing['category'],
     title: row.title,
     description: row.description ?? '',
     price: Number(row.price),
@@ -144,7 +141,7 @@ export function listingFromRow(row: ListingRow): Listing | undefined {
     indexable: row.indexable === true,
     ...(row.pre_portal === true ? { prePortal: true } : {}),
     ...(row.og_image_hash ? { ogImageHash: row.og_image_hash } : {}),
-    ...(row.audience === 'investor' || row.audience === 'resident'
+    ...(row.audience === 'investor' || row.audience === 'resident' || row.audience === 'both'
       ? { audience: row.audience }
       : {}),
   };

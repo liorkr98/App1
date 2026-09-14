@@ -1,10 +1,13 @@
 import { useState } from 'react';
 
+import type { ListingCategory } from '@/features/listings/schemas';
+
 import { t } from '../../lib/i18n';
 
 interface Props {
   items: readonly string[];
   onChange: (items: string[]) => void;
+  category?: ListingCategory;
 }
 
 /**
@@ -23,7 +26,7 @@ interface Props {
  * it is a seller volunteering something nobody can ask them for. The count
  * these actually need is whatever is true, not a number this file guesses.
  */
-export function DisclosuresStep({ items, onChange }: Props) {
+export function DisclosuresStep({ items, onChange, category }: Props) {
   const [draft, setDraft] = useState('');
 
   const add = () => {
@@ -39,7 +42,13 @@ export function DisclosuresStep({ items, onChange }: Props) {
 
   return (
     <>
-      <p className="hint">{t('editor.disclosuresHint')}</p>
+      <p className="hint">
+        {t(
+          category === 'vehicle'
+            ? 'editor.disclosuresHintVehicle'
+            : 'editor.disclosuresHintProperty',
+        )}
+      </p>
 
       {items.length > 0 && (
         <ul className="disclosures-list">
@@ -79,7 +88,11 @@ export function DisclosuresStep({ items, onChange }: Props) {
               add();
             }
           }}
-          placeholder={t('editor.disclosuresPlaceholder')}
+          placeholder={t(
+            category === 'vehicle'
+              ? 'editor.disclosuresPlaceholderVehicle'
+              : 'editor.disclosuresPlaceholderProperty',
+          )}
         />
       </div>
 

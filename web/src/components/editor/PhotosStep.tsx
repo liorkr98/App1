@@ -1,7 +1,9 @@
 import { useState } from 'react';
 
 import { MAX_IMAGES } from '@/features/listings/editor';
+import { PHOTO_ROOMS, isPhotoRoom, type PhotoRoom } from '@/features/listings/photo-rooms';
 import { moveItem } from '@/features/listings/photo-order';
+import type { ListingCategory } from '@/features/listings/schemas';
 
 import { t } from '../../lib/i18n';
 import { Message } from './Message';
@@ -46,6 +48,12 @@ export interface EditorPhoto {
    * from the file name would be worse than silence. Not required to publish.
    */
   alt?: string;
+
+  /**
+   * Which room this is, when the seller named one. Property only — a car
+   * has no rooms, and the picker is not shown for one.
+   */
+  room?: PhotoRoom;
 }
 
 interface Props {
@@ -53,6 +61,7 @@ interface Props {
   onChange: (photos: EditorPhoto[]) => void;
   /** Uploading needs a listing row, which needs a signed-in owner (0004). */
   signedIn: boolean;
+  category?: ListingCategory;
 }
 
 /**
@@ -98,7 +107,7 @@ interface Props {
  * thumb on a moving bus — and because the buttons make the order checkable
  * without a pointer at all.
  */
-export function PhotosStep({ photos, onChange, signedIn }: Props) {
+export function PhotosStep({ photos, onChange, signedIn, category }: Props) {
   const [dragging, setDragging] = useState<number | null>(null);
 
   const add = (files: FileList | null) => {
@@ -150,7 +159,7 @@ export function PhotosStep({ photos, onChange, signedIn }: Props) {
               onDragStart={(event) => {
                 // An input inside a draggable tile would otherwise start a
                 // reorder the moment the seller tries to type an alt.
-                if ((event.target as HTMLElement).closest('input')) {
+                if ((event.target as HTMLElement).closest('input, select, label')) {
                   event.preventDefault();
                   return;
                 }
@@ -233,6 +242,38 @@ export function PhotosStep({ photos, onChange, signedIn }: Props) {
                   }}
                 />
               </label>
+
+              {category === 'property' ? (
+                <label className="shot-room">
+                  <span className="shot-room-label">{t('editor.photoRoom')}</span>
+                  <select
+                    value={photo.room ?? ''}
+                    aria-label={t('editor.photoRoom')}
+                    draggable={false}
+                    onPointerDown={(event) => event.stopPropagation()}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      onChange(
+                        photos.map((item, at) => {
+                          if (at !== index) return item;
+                          if (!isPhotoRoom(value)) {
+                            const { room: _omitted, ...rest } = item;
+                            return rest;
+                          }
+                          return { ...item, room: value };
+                        }),
+                      );
+                    }}
+                  >
+                    <option value="">{t('editor.photoRoomNone')}</option>
+                    {PHOTO_ROOMS.map((room) => (
+                      <option key={room} value={room}>
+                        {t(`editor.rooms.${room}`)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
             </li>
           ))}
         </ul>
