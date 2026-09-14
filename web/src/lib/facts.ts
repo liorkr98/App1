@@ -73,7 +73,7 @@ function unitLabel(label: string, unit: string | undefined): string {
 
 export function toCells(
   category: ListingCategory,
-  facts: Fact[],
+  facts: readonly Fact[],
   audience: ListingAudience = 'resident',
 ): FactCell[] {
   const byKey = new Map(facts.map((fact) => [fact.key, fact]));

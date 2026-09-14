@@ -1,13 +1,24 @@
 import react from '@astrojs/react';
+import cloudflare from '@astrojs/cloudflare';
 import { defineConfig } from 'astro/config';
 
 /**
- * Static output only.
+ * Mostly static, with on-demand listing routes.
  *
- * These pages load over Israeli cellular and must be Google-indexable, so
- * every page is pre-rendered at build time and served from Cloudflare Pages
- * as a file. There is no runtime rendering and no server adapter — adding one
- * would put a cold start in front of the WhatsApp preview scraper.
+ * Homepage, editor, legal and the CI fixtures prerender. `/a/[slug]`,
+ * `/a/[slug]/share`, the PDF stub and the sitemap run at request time so a
+ * real agent's slug exists without a rebuild.
+ *
+ * `@astrojs/cloudflare` is the adapter this host already deploys with
+ * (Workers Builds + wrangler.jsonc). It is not a stack substitution: listing
+ * pages stay Astro HTML, and prerendered routes are still files. Size is the
+ * official adapter; it tracks Astro's own release. Without it, `prerender =
+ * false` has nowhere to run.
+ *
+ * imageService is passthrough — we do not use Astro's <Image>, and the
+ * default cloudflare-binding would provision an Images binding we do not
+ * want. session is off: no KV namespace for a product that does not use
+ * Astro sessions.
  */
 export default defineConfig({
   // Absolute OG image URLs are built from this. WhatsApp rejects relative
@@ -39,6 +50,14 @@ export default defineConfig({
 
   output: 'static',
   build: { format: 'directory' },
+  session: false,
+
+  adapter: cloudflare({
+    imageService: 'passthrough',
+    // wrangler.jsonc lives at the repo root because Workers Builds runs from
+    // there. The Astro project is web/.
+    configPath: '../wrangler.jsonc',
+  }),
 
   // React exists for ONE page. /new is a multi-step form with drag-ordered
   // photos and live validation, which is a genuine application; the listing

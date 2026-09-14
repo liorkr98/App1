@@ -12,19 +12,26 @@
   // It would have kept failing, because the detection is reading real files
   // that are staying. A committed config removes the guess entirely.
   //
-  // The site is an ASTRO static build in web/. Nothing here is React Native.
+  // The site is Astro in web/. After `astro build`, prerendered files live in
+  // web/dist/client and the Worker entry in web/dist/server/entry.mjs.
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "besivov",
   "compatibility_date": "2026-09-07",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Built output, not the adapter package. `astro build` writes this file;
+  // deploying without building will fail looking for it.
+  "main": "web/dist/server/entry.mjs",
 
   "observability": {
     "enabled": true
   },
 
   "assets": {
-    // web/dist, not dist. The auto-config wrote "dist" because it expected an
-    // Expo export at the repository root; the Astro build writes into its own
-    // workspace.
-    "directory": "web/dist"
+    "binding": "ASSETS",
+    "directory": "web/dist/client"
   }
+
+  // Do NOT add custom_domain here until hasivuv.com DNS is attached.
+  // A routes.custom_domain that does not resolve fails the deploy.
 }

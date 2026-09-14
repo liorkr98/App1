@@ -2,7 +2,7 @@
 import { shareMessage, whatsappShareUrl } from '@/features/listings/share-message';
 import { toCells } from '../../../lib/facts';
 import { ils } from '../../../lib/format';
-import { listings } from '../../../lib/listings';
+import { publishedListing } from '../../../lib/listing-from-row';
 import '../../../styles/tokens.css';
 
 /**
@@ -20,12 +20,18 @@ import '../../../styles/tokens.css';
  * JavaScript is the point here rather than something to justify. The listing
  * page ships none and the design contract forbids reaching for it there; this
  * is a tool, and a tool that cannot copy to the clipboard is a poster.
+ *
+ * On-demand, like `/a/[slug]`: dashboard שיתוף points here for real slugs,
+ * not only the two demo fixtures.
  */
-export function getStaticPaths() {
-  return listings.map((listing) => ({ params: { slug: listing.slug }, props: { listing } }));
-}
+export const prerender = false;
 
-const { listing } = Astro.props;
+const slug = Astro.params.slug ?? '';
+const listing = await publishedListing(slug);
+
+if (!listing) {
+  return Astro.rewrite('/404');
+}
 
 const site = Astro.site?.origin ?? '';
 const url = `${site}/a/${listing.slug}/`;
@@ -127,6 +133,7 @@ const card = {
 
     {/* An agent's workspace. Never indexed, never previewed. */}
     <meta name="robots" content="noindex,nofollow" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

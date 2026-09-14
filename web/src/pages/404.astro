@@ -1,0 +1,12 @@
+---
+import Plain from '../layouts/Plain.astro';
+import { t } from '../lib/i18n';
+
+Astro.response.status = 404;
+---
+
+<Plain title={t('notFound.title')} robots="noindex">
+  <h1>{t('notFound.title')}</h1>
+  <p>{t('notFound.body')}</p>
+  <p><a href="/">{t('notFound.home')}</a></p>
+</Plain>

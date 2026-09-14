@@ -113,7 +113,13 @@
     "draft": "",
     "published": "",
     "sold": "",
+    "soldBanner": "",
     "editLink": ""
+  },
+  "notFound": {
+    "title": "",
+    "body": "",
+    "home": ""
   },
   "source": {
     "verified": "",
@@ -131,6 +137,7 @@
   "editor": {
     "steps": {
       "category": "",
+      "details": "",
       "photos": "",
       "plate": "",
       "consent": "",
@@ -143,6 +150,8 @@
     },
     "blockers": {
       "categoryMissing": "",
+      "titleMissing": "",
+      "priceMissing": "",
       "photosTooFew": "",
       "photosTooMany": "",
       "factMissing": "",
@@ -212,7 +221,42 @@
     "disclosuresLabel": "",
     "disclosuresPlaceholder": "",
     "disclosuresAdd": "",
-    "disclosuresRemove": ""
+    "disclosuresRemove": "",
+    "detailsHint": "",
+    "titleLabel": "",
+    "titlePlaceholder": "",
+    "priceLabel": "",
+    "priceHint": "",
+    "priceNoteLabel": "",
+    "priceNotePlaceholder": "",
+    "cityLabel": "",
+    "streetLabel": "",
+    "streetHint": "",
+    "previewHint": "",
+    "previewCta": "",
+    "previewCtaNote": "",
+    "publish": {
+      "lead": "",
+      "payBeta": "",
+      "payWait": "",
+      "indexable": "",
+      "indexableWhy": "",
+      "action": "",
+      "publishing": "",
+      "failed": "",
+      "done": "",
+      "doneHint": "",
+      "copy": "",
+      "copied": "",
+      "open": "",
+      "share": "",
+      "dashboard": ""
+    },
+    "plateLookup": "",
+    "plateLooking": "",
+    "plateLookupFailed": "",
+    "plateLookupOk": "",
+    "plateLookupNeedDeclare": ""
   },
   "home": {
     "tagline": "",
@@ -309,5 +353,13 @@
     "failed": "",
     "draftHint": "",
     "countSuffix": ""
+  },
+  "legal": {
+    "terms": "",
+    "privacy": "",
+    "termsTitle": "",
+    "privacyTitle": "",
+    "updated": "",
+    "home": ""
   }
 }

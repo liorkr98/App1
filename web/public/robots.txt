@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Allow: /a/
+Disallow: /new
+Disallow: /mine
+Disallow: /me
+Disallow: /enter
+Disallow: /a/*/share
+Disallow: /template-check
+
+Sitemap: https://hasivuv.com/sitemap.xml

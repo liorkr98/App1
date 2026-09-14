@@ -28,6 +28,9 @@ const fact = (key: string, label: string, value: Fact['value'], required = false
 /** A listing with nothing wrong with it. */
 const ready = (): EditorState => ({
   category: 'property',
+  title: 'דירת 4 חדרים',
+  price: 1850000,
+  indexable: false,
   photoCount: 6,
   facts: [
     fact('rooms', 'חדרים', 4, true),
@@ -99,6 +102,7 @@ describe('stepsFor', () => {
   it('keeps the flow in order', () => {
     assert.deepEqual(stepsFor('property'), [
       'category',
+      'details',
       'photos',
       'consent',
       'facts',
@@ -111,6 +115,7 @@ describe('stepsFor', () => {
 
     assert.deepEqual(stepsFor('vehicle'), [
       'category',
+      'details',
       'photos',
       'plate',
       'facts',
@@ -168,6 +173,9 @@ describe('blockers', () => {
     // been made to walk the form twice, and on a phone that is where people
     // give up.
     const found = blockers({
+      title: '',
+      price: 0,
+      indexable: false,
       photoCount: 0,
       facts: [fact('rooms', 'חדרים', null, true)],
       description: '',
@@ -176,6 +184,7 @@ describe('blockers', () => {
 
     const steps = found.map((blocker) => blocker.step);
     assert.ok(steps.includes('category'));
+    assert.ok(steps.includes('details'));
     assert.ok(steps.includes('photos'));
     assert.ok(steps.includes('facts'));
     assert.ok(steps.includes('description'));
@@ -189,6 +198,13 @@ describe('blockers', () => {
     // interpolate. "חסר: חדרים" is useful; "משהו חסר" is not.
     const found = blockers({ ...ready(), facts: [fact('rooms', 'חדרים', null, true)] });
     assert.equal(found.find((blocker) => blocker.code === 'factMissing')?.factLabel, 'חדרים');
+  });
+
+  it('requires a title and a price before leaving details', () => {
+    assert.ok(blockers({ ...ready(), title: '  ' }).some((b) => b.code === 'titleMissing'));
+    assert.ok(blockers({ ...ready(), price: 0 }).some((b) => b.code === 'priceMissing'));
+    assert.equal(canAdvance('details', { ...ready(), title: '' }), false);
+    assert.equal(canAdvance('details', ready()), true);
   });
 
   it('ignores optional facts left unanswered', () => {
@@ -333,7 +349,15 @@ describe('canAdvance', () => {
 describe('nextStep — where a returning seller lands', () => {
   it('starts at the beginning for an empty listing', () => {
     assert.equal(
-      nextStep({ photoCount: 0, facts: [], description: '', entitlement: 'unknown' }),
+      nextStep({
+        title: '',
+        price: 0,
+        indexable: false,
+        photoCount: 0,
+        facts: [],
+        description: '',
+        entitlement: 'unknown',
+      }),
       'category',
     );
   });

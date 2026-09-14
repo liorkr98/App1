@@ -1,0 +1,19 @@
+---
+import ListingPage from '../../components/ListingPage.astro';
+import { listings } from '../../lib/listings';
+
+/**
+ * Prerendered copies of the two demo listings, for CI.
+ *
+ * `/a/[slug]` is on-demand and does not exist as files in dist/. The
+ * template-divergence, bdi, motion and page-weight scripts still need HTML
+ * they can open. This route is that HTML, forced noindex, and disallowed in
+ * robots.txt so it is not a second public URL for the demos.
+ */
+export function getStaticPaths() {
+  return listings.map((listing) => ({ params: { slug: listing.slug }, props: { listing } }));
+}
+
+const { listing } = Astro.props;
+---
+<ListingPage listing={listing} robots="noindex,nofollow" />

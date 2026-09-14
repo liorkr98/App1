@@ -14,7 +14,7 @@
 
 set -uo pipefail
 
-DIST="${1:-web/dist}"
+DIST="${1:-web/dist/client}"
 WORK="$(mktemp -d)"
 LOG="$(mktemp)"
 

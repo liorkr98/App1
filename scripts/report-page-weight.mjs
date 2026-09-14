@@ -36,7 +36,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const DIST = process.argv[2] ?? 'web/dist';
+const DIST = process.argv[2] ?? 'web/dist/client';
 const BUDGET_BYTES = 900 * 1024;
 
 if (!fs.existsSync(DIST)) {

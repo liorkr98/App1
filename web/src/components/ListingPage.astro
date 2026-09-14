@@ -1,0 +1,126 @@
+---
+import BaseListing from '../layouts/BaseListing.astro';
+import CtaDock from './CtaDock.astro';
+import Disclosures from './Disclosures.astro';
+import Enrichment from './Enrichment.astro';
+import FactsGrid from './FactsGrid.astro';
+import Gallery from './Gallery.astro';
+import Hero from './Hero.astro';
+import MapSection from './MapSection.astro';
+import PriceBar from './PriceBar.astro';
+import Prose from './Prose.astro';
+import SellerBlock from './SellerBlock.astro';
+import { CATEGORY_PRESENTATION } from '../lib/category-presentation';
+import { perUnitPrice } from '../lib/price';
+import type { Listing } from '@/types/listing';
+
+interface Props {
+  listing: Listing;
+  /**
+   * Forces noindex. Used by `/template-check/` so the CI fixtures cannot be
+   * crawled as a second copy of the demo listings.
+   */
+  robots?: string;
+}
+
+/**
+ * ONE template for both categories.
+ *
+ * Three of the four allowed divergences are selected by DATA, not by a
+ * category check:
+ *   price note   PriceBar branches on listPrice
+ *   disclosures  rendered when the array is non-empty
+ *   map          rendered when the location has a street
+ *
+ * The fourth — the hero block — comes from CATEGORY_PRESENTATION. That is the
+ * only category lookup on the page, which is what keeps a fifth divergence
+ * from appearing by accident.
+ */
+const { listing, robots } = Astro.props;
+const presentation = CATEGORY_PRESENTATION[listing.category];
+
+const paragraphs = listing.description.split('\n\n');
+const heading = listing.category === 'property' ? 'על הדירה' : 'על הרכב';
+
+// A vehicle has no street, so no map. See DESIGN-CONTRACT §5.4.
+const showMap = Boolean(listing.location?.street);
+const mapImageUrl = '/sample/frame.png';
+
+/**
+ * ₪ per m², derived from the price and whichever fact the schema marks as the
+ * denominator. A vehicle has no such fact and gets nothing — inventing a
+ * price per kilometre would be worse than an empty line.
+ */
+const perUnit = perUnitPrice(listing.category, listing.facts, listing.price);
+
+/**
+ * Licence attributions, carried by the data rather than the template.
+ *
+ * A page that renders no OpenStreetMap places carries no ODbL credit, and a
+ * page that gains a new attributed source cannot forget to add one. Hardcoding
+ * it in the footer would make the credit depend on a template remembering.
+ */
+const attributions =
+  listing.enrichment?.category === 'property' ? listing.enrichment.attributions : [];
+
+const sold = listing.status === 'sold';
+---
+<BaseListing
+  listing={listing}
+  ogFactKeys={presentation.ogFactKeys}
+  heroHeight={presentation.heroHeight}
+  robots={robots}
+>
+  <Hero cover={listing.media.cover} title={listing.title} location={listing.location} />
+
+  <PriceBar
+    price={listing.price}
+    listPrice={listing.listPrice}
+    priceNote={listing.priceNote}
+    perUnit={perUnit}
+  />
+
+  <FactsGrid category={listing.category} facts={listing.facts} audience={listing.audience} />
+
+  <section class="reveal">
+    <h2>{heading}</h2>
+    {paragraphs.map((paragraph, index) => (
+      <p style={index > 0 ? 'margin-top:.8rem' : undefined}><Prose text={paragraph} /></p>
+    ))}
+  </section>
+
+  {listing.disclosures && listing.disclosures.length > 0 && (
+    <Disclosures items={listing.disclosures} />
+  )}
+
+  <Gallery images={listing.media.gallery} />
+
+  {/* Below the seller's own content, deliberately: what they came to publish
+      comes first, and the enrichment is what makes the page worth forwarding
+      (RESEARCH.md §5). */}
+  {listing.enrichment && <Enrichment enrichment={listing.enrichment} />}
+
+  {showMap && listing.location && (
+    <MapSection location={listing.location} mapImageUrl={mapImageUrl} />
+  )}
+
+  <SellerBlock seller={listing.seller} />
+
+  {/* A sold listing is a record, not a live offer. The WhatsApp dock would
+      invite a message about something that is gone. */}
+  {sold ? null : (
+    <CtaDock phone={listing.seller.phone} message={presentation.whatsappMessage} />
+  )}
+
+  {/* נבנה בסיבוב is the viral loop (CLAUDE.md §8) — a listing page is
+      forwarded to 30-80 people who are by definition interested in buying
+      something. The ODbL line beside it is a LICENCE CONDITION, not a
+      courtesy (§10), and it is driven by the payload so a page with no OSM
+      places carries no OSM credit. */}
+  <footer>
+    נבנה ב<a href="https://hasivuv.com">סיבוב</a>
+    {attributions.map((attribution) => (
+      <Fragment><br /><span class="attribution"><Prose text={attribution} /></span></Fragment>
+    ))}
+  </footer>
+</BaseListing>

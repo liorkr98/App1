@@ -13,12 +13,13 @@ import { isUnedited } from './description.js';
  * check them is to click through a form on a phone.
  *
  * Flow (E1):
- *   category → photos → (vehicle: plate | property: consent) → facts
+ *   category → details → photos → (vehicle: plate | property: consent) → facts
  *   → description → template → preview → publish
  */
 
 export const STEPS = [
   'category',
+  'details',
   'photos',
   'plate',
   'consent',
@@ -61,6 +62,27 @@ export type Entitlement = 'paid' | 'unpaid' | 'unknown';
 
 export interface EditorState {
   category?: ListingCategory;
+
+  /**
+   * What the listing is, what it costs, and where it is.
+   *
+   * `listings` has NOT NULL `title` and `price` columns. 0 on price means
+   * unanswered — the column has no other way to say so. A draft may sit
+   * empty; publishing may not.
+   */
+  title: string;
+  /** Shekels. 0 means unanswered. */
+  price: number;
+  priceNote?: string;
+  city?: string;
+  street?: string;
+
+  /**
+   * Whether search engines may index the published page. Defaults false.
+   * The address of someone's home is not ours to put in Google.
+   */
+  indexable: boolean;
+
   photoCount: number;
   facts: readonly Fact[];
   description: string;
@@ -155,6 +177,8 @@ export function stepsFor(category: ListingCategory | undefined): Step[] {
  */
 export const BLOCKER_CODES = [
   'categoryMissing',
+  'titleMissing',
+  'priceMissing',
   'photosTooFew',
   'photosTooMany',
   'factMissing',
@@ -200,6 +224,13 @@ export function blockers(state: EditorState): Blocker[] {
 
   if (!state.category) {
     found.push({ step: 'category', code: 'categoryMissing' });
+  }
+
+  if (state.title.trim() === '') {
+    found.push({ step: 'details', code: 'titleMissing' });
+  }
+  if (!(state.price > 0)) {
+    found.push({ step: 'details', code: 'priceMissing' });
   }
 
   if (state.photoCount < MIN_IMAGES) {

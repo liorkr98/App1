@@ -63,6 +63,12 @@ export function toDraft(state: EditorState): Stored {
   return {
     version: DRAFT_VERSION,
     ...(state.category === undefined ? {} : { category: state.category }),
+    title: state.title,
+    price: state.price,
+    indexable: state.indexable,
+    ...(state.priceNote === undefined ? {} : { priceNote: state.priceNote }),
+    ...(state.city === undefined ? {} : { city: state.city }),
+    ...(state.street === undefined ? {} : { street: state.street }),
     facts: state.facts,
     description: state.description,
     ...(state.generatedDescription === undefined
@@ -112,6 +118,24 @@ export function fromDraft(raw: unknown): Draft | null {
   // parsed.photoCount is ignored rather than rejected: drafts written before
   // photoCount left the shape still carry one, and discarding a seller's work
   // over a field we have stopped using would be the worse failure.
+  const title = parsed.title;
+  if (title !== undefined && typeof title !== 'string') return null;
+
+  const price = parsed.price;
+  if (price !== undefined && (typeof price !== 'number' || !Number.isFinite(price))) return null;
+
+  const indexable = parsed.indexable;
+  if (indexable !== undefined && typeof indexable !== 'boolean') return null;
+
+  const priceNote = parsed.priceNote;
+  if (priceNote !== undefined && typeof priceNote !== 'string') return null;
+
+  const city = parsed.city;
+  if (city !== undefined && typeof city !== 'string') return null;
+
+  const street = parsed.street;
+  if (street !== undefined && typeof street !== 'string') return null;
+
   const description = parsed.description;
   if (typeof description !== 'string') return null;
 
@@ -136,6 +160,12 @@ export function fromDraft(raw: unknown): Draft | null {
 
   return {
     ...(category === undefined ? {} : { category }),
+    title: typeof title === 'string' ? title : '',
+    price: typeof price === 'number' ? price : 0,
+    indexable: indexable === true,
+    ...(priceNote === undefined || priceNote === '' ? {} : { priceNote }),
+    ...(city === undefined || city === '' ? {} : { city }),
+    ...(street === undefined || street === '' ? {} : { street }),
     facts,
     description,
     ...(generated === undefined ? {} : { generatedDescription: generated }),

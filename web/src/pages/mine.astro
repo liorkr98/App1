@@ -706,7 +706,7 @@ import '../styles/tokens.css';
 
         const edit = document.createElement('a');
         edit.className = 'act';
-        edit.href = '/new/';
+        edit.href = `/new/?id=${encodeURIComponent(row.slug)}`;
         edit.textContent = t('dash.edit');
         acts.append(edit);
 

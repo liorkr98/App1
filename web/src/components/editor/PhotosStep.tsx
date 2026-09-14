@@ -25,6 +25,10 @@ export interface EditorPhoto {
   status?: 'local' | 'uploading' | 'uploaded' | 'failed';
   /** Storage key inside `originals`, once it has one. */
   path?: string;
+  /** Public derived URL, EXIF already stripped. */
+  publicUrl?: string;
+  width?: number;
+  height?: number;
 }
 
 interface Props {

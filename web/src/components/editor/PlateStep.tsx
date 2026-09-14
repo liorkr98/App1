@@ -1,6 +1,10 @@
-import { formatPlateForInput, normalisePlate } from '@/features/listings/plate';
+import { useState } from 'react';
+
+import { attachLookup, formatPlateForInput, normalisePlate } from '@/features/listings/plate';
+import type { Fact } from '@/types/listing';
 
 import { t } from '../../lib/i18n';
+import { lookupPlate } from '../../lib/plate-lookup';
 
 interface Props {
   /** Digits only, no separators. Empty until the seller types something. */
@@ -8,6 +12,8 @@ interface Props {
   onPlate: (plate: string) => void;
   declared: boolean;
   onDeclare: (declared: boolean) => void;
+  facts: readonly Fact[];
+  onFacts: (facts: Fact[]) => void;
 }
 
 /**
@@ -33,10 +39,43 @@ interface Props {
  * and the other four are the seller's anyway, so a seller who does not want to
  * declare ownership can still type everything by hand.
  */
-export function PlateStep({ plate, onPlate, declared, onDeclare }: Props) {
+export function PlateStep({ plate, onPlate, declared, onDeclare, facts, onFacts }: Props) {
   const digits = plate.replace(/\D+/g, '');
   const valid = normalisePlate(digits) !== undefined;
   const showError = digits.length > 0 && !valid;
+  const [looking, setLooking] = useState(false);
+  const [note, setNote] = useState<'ok' | 'failed' | 'needDeclare' | null>(null);
+
+  const runLookup = async () => {
+    if (!declared) {
+      setNote('needDeclare');
+      return;
+    }
+    const normalised = normalisePlate(digits);
+    if (!normalised) return;
+
+    setLooking(true);
+    setNote(null);
+    const declaredAt = new Date().toISOString();
+    const result = await lookupPlate({ plate: normalised, declaredAt });
+    setLooking(false);
+
+    if ('error' in result) {
+      setNote('failed');
+      return;
+    }
+
+    try {
+      const attached = attachLookup(facts, result.values, declaredAt, {
+        sourceName: 'משרד התחבורה',
+        sourceDate: result.sourceDate || new Date().toISOString().slice(0, 7).split('-').reverse().join('/'),
+      });
+      onFacts(attached.facts);
+      setNote('ok');
+    } catch {
+      setNote('failed');
+    }
+  };
 
   return (
     <>
@@ -92,12 +131,20 @@ export function PlateStep({ plate, onPlate, declared, onDeclare }: Props) {
         <p className="plate-note">{t('editor.plateDeclareWhy')}</p>
       </div>
 
-      {/*
-        Said plainly rather than left as a button that does nothing. There is
-        no endpoint serving the vehicle registry yet, and a lookup control that
-        silently fails is worse than an absent one.
-      */}
-      <p className="note">{t('editor.plateLookupSoon')}</p>
+      <button
+        type="button"
+        className="disclosures-add"
+        disabled={!valid || looking}
+        onClick={() => void runLookup()}
+      >
+        {looking ? t('editor.plateLooking') : t('editor.plateLookup')}
+      </button>
+
+      {note === 'ok' ? <p className="plate-note">{t('editor.plateLookupOk')}</p> : null}
+      {note === 'failed' ? <p className="plate-note bad">{t('editor.plateLookupFailed')}</p> : null}
+      {note === 'needDeclare' ? (
+        <p className="plate-note bad">{t('editor.plateLookupNeedDeclare')}</p>
+      ) : null}
     </>
   );
 }

@@ -692,3 +692,179 @@ textarea {
   border-color: var(--stone);
   cursor: default;
 }
+
+/* ---------- Preview sketch ----------
+   Shares tokens with the published page so the conversion moment is honest.
+   It is not ListingPage.astro — that tree is Astro with no JS. */
+
+.preview-card {
+  overflow: hidden;
+  background: var(--plaster);
+  border: 1px solid var(--stone);
+  border-radius: 6px;
+}
+
+.preview-hero {
+  position: relative;
+  background: var(--stone);
+}
+
+.preview-cover {
+  inline-size: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  display: block;
+  background: var(--stone);
+}
+
+.preview-cover-empty {
+  min-block-size: 14rem;
+}
+
+.preview-veil {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  padding: 4.5rem 1rem 1.1rem;
+  background: linear-gradient(to top, rgba(17, 18, 8, 0.9) 12%, rgba(17, 18, 8, 0.45) 48%, transparent);
+  color: #fbfaf7;
+}
+
+.preview-place {
+  font-size: 0.9rem;
+  opacity: 0.88;
+  margin-block-end: 0.25rem;
+}
+
+.preview-title {
+  font-family: 'Frank Ruhl Libre', serif;
+  font-weight: 700;
+  font-size: 1.45rem;
+  line-height: 1.15;
+}
+
+.preview-price {
+  font-family: 'Frank Ruhl Libre', serif;
+  font-weight: 700;
+  font-size: 1.8rem;
+  line-height: 1.1;
+  padding: 1.1rem 1rem 0.4rem;
+}
+
+.preview-facts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  margin-block-start: 0.8rem;
+  list-style: none;
+  background: var(--stone);
+  border-block: 1px solid var(--stone);
+}
+
+.preview-facts li {
+  padding: 0.8rem 0.4rem;
+  text-align: center;
+  background: var(--plaster);
+}
+
+.preview-facts strong {
+  display: block;
+  font-family: 'Frank Ruhl Libre', serif;
+  font-weight: 500;
+  font-size: 1.05rem;
+}
+
+.preview-facts span {
+  display: block;
+  font-size: var(--t-label);
+  color: var(--muted);
+  margin-block-start: 0.15rem;
+}
+
+.preview-facts .off {
+  background: var(--stone-warm);
+}
+
+.preview-facts .off strong,
+.preview-facts .off span {
+  opacity: 0.35;
+}
+
+.preview-prose {
+  padding: 1rem;
+  color: var(--ink);
+}
+
+.preview-cta {
+  margin: 0.4rem 1rem 0;
+  padding: 0.95rem;
+  text-align: center;
+  font-weight: 700;
+  color: var(--plaster);
+  background: var(--olive);
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+.preview-cta-note {
+  padding: 0.55rem 1rem 1.1rem;
+  font-size: var(--t-label);
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ---------- Publish ---------- */
+
+.publish-action {
+  display: block;
+  inline-size: 100%;
+  min-block-size: 44px;
+  margin-block-start: 1.2rem;
+  padding: 1.02rem;
+  font: inherit;
+  font-size: 1.06rem;
+  font-weight: 700;
+  color: var(--plaster);
+  background: var(--olive);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.publish-action:hover:not(:disabled) {
+  background: var(--olive-lift);
+}
+
+.publish-action:disabled {
+  color: var(--muted);
+  background: var(--stone);
+  cursor: default;
+}
+
+.published-title {
+  font-family: 'Frank Ruhl Libre', serif;
+  font-weight: 700;
+  font-size: var(--t-h2);
+  margin-block-end: 0.4rem;
+}
+
+.published-link {
+  margin-block: 1rem;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.published-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.published-actions .choice,
+.published-actions button {
+  min-block-size: 44px;
+  padding: 0.8rem 1.1rem;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+}
