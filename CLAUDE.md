@@ -46,7 +46,9 @@ it. That is what is being sold.
 > it belongs to the speed promise, not the trust one. It is sold as "type the
 > plate, the rest fills itself", never as "verified against the register".
 
-**Product:** סיבוב. **Domain:** hasivuv.com.
+**Product:** סיבוב. **Domain:** theyaad.co.il, registered 14 September 2026.
+The repo said hasivuv.com until then; that domain was never bought and never
+resolved.
 
 **The primary audience is Israeli estate agents, not private sellers.** The
 Justice Ministry's public register lists 22,995 licensed brokers with contact

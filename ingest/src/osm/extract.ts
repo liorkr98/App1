@@ -84,7 +84,7 @@ export async function withPlaceFeatures<T>(
 
   try {
     const response = await fetch(ISRAEL_EXTRACT_URL, {
-      headers: { 'User-Agent': 'listing-pages-ingest/1.0 (+https://hasivuv.com)' },
+      headers: { 'User-Agent': 'listing-pages-ingest/1.0 (+https://theyaad.co.il)' },
       signal: AbortSignal.timeout(30 * 60_000),
     });
 

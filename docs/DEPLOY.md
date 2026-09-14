@@ -55,9 +55,46 @@ So it goes in **Settings → Build → Variables**, beside the build command —
 the Runtime panel. Editing it does not rebuild on its own; retry the
 deployment afterwards.
 
+### Attaching theyaad.co.il
+
+The domain was bought on **14 September 2026** through Wix (registrar Tucows),
+and its nameservers are `ns10.wixdns.net` / `ns11.wixdns.net`.
+
+**Those have to move to Cloudflare, and there is no way around it.** Cloudflare's
+own documentation is blunt about it: *"Workers does not support any domain whose
+nameservers are not managed by Cloudflare."* A Custom Domain needs an active
+Cloudflare zone. Pages allowed external nameservers; Workers does not, and this
+deploys as a Worker.
+
+The domain STAYS REGISTERED WITH WIX — nothing is transferred, and Cloudflare
+Registrar could not take it anyway, because it does not sell `.il`. Only the
+nameservers change.
+
+1. Cloudflare → **Add a site** → `theyaad.co.il` → Free plan. Cloudflare scans
+   the existing records and hands back two nameservers.
+2. Wix → **Domains** → `theyaad.co.il` → **Advanced** → **Nameservers** → switch
+   from Wix's to Cloudflare's two.
+3. Wait. Cloudflare emails when the zone is active. `.il` delegation changes are
+   usually quick but can take a few hours.
+4. Worker `besivov` → **Settings** → **Domains & Routes** → **Add** → **Custom
+   Domain** → `theyaad.co.il`. Cloudflare creates the DNS record and issues the
+   certificate itself.
+5. `www` is a SEPARATE hostname and a Custom Domain matches exactly. To make it
+   work, add a **proxied** A record for `www` pointing at `192.0.2.0` — a
+   reserved placeholder that is never reached because the record is proxied —
+   then a redirect rule from `www` to the apex.
+6. Set the `SITE_URL` build variable to `https://theyaad.co.il` **and
+   redeploy**. It is read at BUILD time and baked into every absolute
+   `og:image` URL; editing the variable alone changes nothing.
+7. Supabase → **Authentication** → **URL Configuration**: set Site URL to
+   `https://theyaad.co.il` and add it to Redirect URLs, or every magic link
+   keeps pointing at the old origin.
+
+**Anything Wix is currently serving on that domain goes offline at step 2.**
+
 Set it to the origin the site is served from:
 
-    SITE_URL = https://hasivuv.com
+    SITE_URL = https://theyaad.co.il
 
 Until the custom domain is attached the workers.dev origin is correct, and it
 is also the built-in fallback — so a build with no variables set produces

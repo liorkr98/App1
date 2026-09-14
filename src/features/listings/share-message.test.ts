@@ -8,7 +8,7 @@ const base = {
   price: '₪1,850,000',
   facts: ['95 מ״ר', 'קומה 3 מתוך 5', 'מעלית'],
   place: 'סוקולוב 42, חולון',
-  url: 'https://hasivuv.com/a/A7K2M',
+  url: 'https://theyaad.co.il/a/A7K2M',
 };
 
 describe('the message an agent pastes', () => {

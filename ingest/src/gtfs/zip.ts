@@ -84,7 +84,7 @@ export async function withFeed<T>(
 
   try {
     const response = await fetch(url, {
-      headers: { 'User-Agent': 'listing-pages-ingest/1.0 (+https://hasivuv.com)' },
+      headers: { 'User-Agent': 'listing-pages-ingest/1.0 (+https://theyaad.co.il)' },
       // Generous: the feed is large and the ministry's server is not fast.
       signal: AbortSignal.timeout(15 * 60_000),
     });

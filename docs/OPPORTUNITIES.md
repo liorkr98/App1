@@ -223,7 +223,11 @@ Source: [Israel brokerage fees 2026](https://ronkin-list.com/real-estate-agency-
   `yaaqcfcjkfdwtczespny`, but Supabase's migrations table stops at 0008, so a
   fresh environment built from the tracked migrations would match production by
   luck rather than by record.
-- **`hasivuv.com` does not resolve.** The site serves from
+- **~~`hasivuv.com` does not resolve.~~ RESOLVED 14 September 2026** — the
+  domain bought is `theyaad.co.il`, not hasivuv.com, which was never
+  registered. Its nameservers are still Wix's, and Workers refuses any domain
+  whose nameservers it does not manage, so it is not attached yet. The site
+  serves from
   `besivov.liorkr98.workers.dev`. Until the domain is attached, `SITE_URL`
   cannot be set to it and every share link carries the workers.dev host —
   which is the one URL the whole distribution model rests on (DEPLOY.md).

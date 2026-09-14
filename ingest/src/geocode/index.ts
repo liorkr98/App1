@@ -103,7 +103,7 @@ export async function geocode(
   let response: Response;
   try {
     response = await fetch(`${env.nominatimUrl}/search?${params.toString()}`, {
-      headers: { 'User-Agent': 'listing-pages-ingest/1.0 (+https://hasivuv.com)' },
+      headers: { 'User-Agent': 'listing-pages-ingest/1.0 (+https://theyaad.co.il)' },
       signal: AbortSignal.timeout(20_000),
     });
   } catch (error) {

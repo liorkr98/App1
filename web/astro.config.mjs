@@ -30,7 +30,7 @@ export default defineConfig({
   // cards pointing at a domain nobody owns, and everything still builds green.
   //
   // SITE_URL still overrides it, and must be set to the custom domain the day
-  // hasivuv.com is attached. Until then the workers.dev origin is correct, so
+  // theyaad.co.il is attached. Until then the workers.dev origin is correct, so
   // a build with no variables set produces working links instead of broken
   // ones. See docs/DEPLOY.md.
   site:
