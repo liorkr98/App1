@@ -13,6 +13,7 @@ interface Props {
   onPublish: () => void;
   onCopy: (url: string) => void;
   onIndexable: (indexable: boolean) => void;
+  onPrePortal: (prePortal: boolean) => void;
 }
 
 /**
@@ -49,6 +50,7 @@ export function PublishStep({
   onPublish,
   onCopy,
   onIndexable,
+  onPrePortal,
 }: Props) {
   // The link exists: nothing else on this step matters any more.
   if (publishedUrl) {
@@ -131,6 +133,16 @@ export function PublishStep({
           </p>
         </div>
       )}
+
+      <label className="declare">
+        <input
+          type="checkbox"
+          checked={state.prePortal === true}
+          onChange={(event) => onPrePortal(event.target.checked)}
+        />
+        <span>{t('editor.publish.prePortal')}</span>
+      </label>
+      <p className="field-hint">{t('editor.publish.prePortalWhy')}</p>
 
       <label className="declare">
         <input

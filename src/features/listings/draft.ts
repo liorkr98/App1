@@ -68,6 +68,7 @@ export function toDraft(state: EditorState): Stored {
     title: state.title,
     price: state.price,
     indexable: state.indexable,
+    prePortal: state.prePortal,
     ...(state.city === undefined ? {} : { city: state.city }),
     ...(state.street === undefined ? {} : { street: state.street }),
     ...(state.priceNote === undefined ? {} : { priceNote: state.priceNote }),
@@ -81,6 +82,7 @@ export function toDraft(state: EditorState): Stored {
     ...(state.ownerConsentDeclaredAt === undefined
       ? {}
       : { ownerConsentDeclaredAt: state.ownerConsentDeclaredAt }),
+    ...(state.ownerConsentName === undefined ? {} : { ownerConsentName: state.ownerConsentName }),
     ...(state.disclosures === undefined ? {} : { disclosures: state.disclosures }),
   };
 }
@@ -139,6 +141,11 @@ export function fromDraft(raw: unknown): Draft | null {
     return null;
   }
 
+  const ownerConsentName = parsed.ownerConsentName;
+  if (ownerConsentName !== undefined && typeof ownerConsentName !== 'string') {
+    return null;
+  }
+
   const disclosuresResult = readDisclosures(parsed.disclosures);
   if (disclosuresResult === 'invalid') return null;
 
@@ -153,12 +160,14 @@ export function fromDraft(raw: unknown): Draft | null {
   const street = text(parsed.street);
   const priceNote = text(parsed.priceNote);
   const indexable = parsed.indexable === true;
+  const prePortal = parsed.prePortal === true;
 
   return {
     ...(category === undefined ? {} : { category }),
     title,
     price,
     indexable,
+    prePortal,
     ...(city === undefined ? {} : { city }),
     ...(street === undefined ? {} : { street }),
     ...(priceNote === undefined ? {} : { priceNote }),
@@ -168,6 +177,9 @@ export function fromDraft(raw: unknown): Draft | null {
     ...(template === undefined ? {} : { template: template as TemplateId }),
     ...(audience === undefined ? {} : { audience: audience as ListingAudience }),
     ...(ownerConsentDeclaredAt === undefined ? {} : { ownerConsentDeclaredAt }),
+    ...(ownerConsentName === undefined || ownerConsentName.trim() === ''
+      ? {}
+      : { ownerConsentName }),
     ...(disclosuresResult === undefined ? {} : { disclosures: disclosuresResult }),
   };
 }

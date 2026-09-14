@@ -13,7 +13,7 @@ import { listingBySlug } from './listings';
 import { supabaseConfigured, supabasePublic } from './supabase';
 
 const LISTING_COLUMNS =
-  'id, slug, category, title, description, price, currency, list_price, price_note, facts, media, disclosures, location, seller, template, accent, status, indexable, published_at, og_image_hash, audience';
+  'id, slug, category, title, description, price, currency, list_price, price_note, facts, media, disclosures, location, seller, template, accent, status, indexable, pre_portal, published_at, og_image_hash, audience';
 
 interface ListingRow {
   id: string;
@@ -34,6 +34,7 @@ interface ListingRow {
   accent: string | null;
   status: string;
   indexable: boolean;
+  pre_portal?: boolean | null;
   published_at: string | null;
   og_image_hash: string | null;
   audience: string | null;
@@ -138,6 +139,7 @@ export function listingFromRow(row: ListingRow): Listing | undefined {
     status: row.status as ListingStatus,
     ...(row.published_at ? { publishedAt: row.published_at } : {}),
     indexable: row.indexable === true,
+    ...(row.pre_portal === true ? { prePortal: true } : {}),
     ...(row.og_image_hash ? { ogImageHash: row.og_image_hash } : {}),
     ...(row.audience === 'investor' || row.audience === 'resident'
       ? { audience: row.audience }

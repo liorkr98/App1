@@ -611,7 +611,8 @@ textarea {
 
 /* ---------- Plate ---------- */
 
-.plate-note {
+.plate-note,
+.field-hint {
   font-size: var(--t-label);
   color: var(--muted);
   margin-block-start: 0.45rem;
@@ -639,6 +640,20 @@ textarea {
   margin-block-start: 0.2rem;
   flex: 0 0 auto;
   accent-color: var(--olive);
+}
+
+.field {
+  margin-block-start: 1.25rem;
+}
+
+.field-label {
+  display: block;
+  font-weight: 600;
+  margin-block-end: 0.35rem;
+}
+
+.field-hint + .declare {
+  margin-block-start: 1rem;
 }
 
 /* ---------- Disclosures ---------- */

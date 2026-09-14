@@ -59,6 +59,31 @@ function toMedia(photos: readonly SavedPhoto[]) {
 }
 
 /**
+ * Columns the editor writes on every save, including the ones that used
+ * to die with the tab: pre-portal, and the dated owner-consent record.
+ */
+function editorColumns(state: EditorState) {
+  return {
+    title: state.title,
+    price: state.price,
+    description: state.description,
+    facts: state.facts,
+    location:
+      state.city || state.street
+        ? { city: state.city ?? '', ...(state.street ? { street: state.street } : {}) }
+        : null,
+    price_note: state.priceNote?.trim() ? state.priceNote.trim() : null,
+    ...(state.template ? { template: state.template } : {}),
+    ...(state.audience ? { audience: state.audience } : {}),
+    ...(state.disclosures ? { disclosures: state.disclosures } : {}),
+    indexable: state.indexable === true,
+    pre_portal: state.prePortal === true,
+    owner_consent_declared_at: state.ownerConsentDeclaredAt ?? null,
+    owner_consent_name: state.ownerConsentName?.trim() ? state.ownerConsentName.trim() : null,
+  };
+}
+
+/**
  * Saves everything the editor knows.
  *
  * Called on every step change rather than on a timer. A step boundary is the
@@ -94,23 +119,8 @@ export async function saveListing(
   const { error } = await supabase()
     .from('listings')
     .update({
-      title: state.title,
-      price: state.price,
-      description: state.description,
-      facts: state.facts,
+      ...editorColumns(state),
       media: toMedia(saved),
-      // Omitted keys would leave the previous value; an explicitly null
-      // location is how a seller removes a street they changed their mind
-      // about.
-      location:
-        state.city || state.street
-          ? { city: state.city ?? '', ...(state.street ? { street: state.street } : {}) }
-          : null,
-      price_note: state.priceNote?.trim() ? state.priceNote.trim() : null,
-      ...(state.template ? { template: state.template } : {}),
-      ...(state.audience ? { audience: state.audience } : {}),
-      ...(state.disclosures ? { disclosures: state.disclosures } : {}),
-      indexable: state.indexable === true,
     })
     .eq('id', listingId);
 
@@ -168,6 +178,9 @@ export async function publishListing(
       published_at: new Date().toISOString(),
       expires_at: expires.toISOString(),
       indexable: state.indexable === true,
+      pre_portal: state.prePortal === true,
+      owner_consent_declared_at: state.ownerConsentDeclaredAt ?? null,
+      owner_consent_name: state.ownerConsentName?.trim() ? state.ownerConsentName.trim() : null,
       ...(seller ? { seller, accent } : {}),
     })
     .eq('id', listingId)
@@ -189,7 +202,7 @@ export async function loadListing(
 ): Promise<{ row: Record<string, unknown> } | { error: string }> {
   const { data, error } = await supabase()
     .from('listings')
-    .select('id, slug, category, title, price, price_note, description, facts, media, location, template, audience, disclosures, indexable, status')
+    .select('id, slug, category, title, price, price_note, description, facts, media, location, template, audience, disclosures, indexable, pre_portal, owner_consent_declared_at, owner_consent_name, status')
     .eq('slug', slug)
     .maybeSingle();
 

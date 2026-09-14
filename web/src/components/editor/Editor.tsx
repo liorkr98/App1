@@ -72,6 +72,7 @@ const START: EditorState = {
   title: '',
   price: 0,
   indexable: false,
+  prePortal: false,
   photoCount: 0,
   facts: [],
   description: '',
@@ -325,21 +326,35 @@ export default function Editor() {
 
         const location = (row.location ?? {}) as { city?: string; street?: string };
 
-        setState((current) => ({
-          ...current,
-          category: row.category === 'vehicle' ? 'vehicle' : 'property',
-          title: String(row.title ?? ''),
-          price: Number(row.price ?? 0),
-          ...(location.city ? { city: location.city } : {}),
-          ...(location.street ? { street: location.street } : {}),
-          ...(row.price_note ? { priceNote: String(row.price_note) } : {}),
-          description: String(row.description ?? ''),
-          facts: Array.isArray(row.facts) ? row.facts : current.facts,
-          photoCount: stored.length,
-          indexable: row.indexable === true,
-          ...(row.template ? { template: row.template as EditorState['template'] } : {}),
-          ...(Array.isArray(row.disclosures) ? { disclosures: row.disclosures as string[] } : {}),
-        }));
+        setState((current) => {
+          const {
+            ownerConsentDeclaredAt: _declared,
+            ownerConsentName: _name,
+            ...rest
+          } = current;
+          return {
+            ...rest,
+            category: row.category === 'vehicle' ? 'vehicle' : 'property',
+            title: String(row.title ?? ''),
+            price: Number(row.price ?? 0),
+            ...(location.city ? { city: location.city } : {}),
+            ...(location.street ? { street: location.street } : {}),
+            ...(row.price_note ? { priceNote: String(row.price_note) } : {}),
+            description: String(row.description ?? ''),
+            facts: Array.isArray(row.facts) ? row.facts : current.facts,
+            photoCount: stored.length,
+            indexable: row.indexable === true,
+            prePortal: row.pre_portal === true,
+            ...(row.owner_consent_declared_at
+              ? { ownerConsentDeclaredAt: String(row.owner_consent_declared_at) }
+              : {}),
+            ...(typeof row.owner_consent_name === 'string' && row.owner_consent_name.trim() !== ''
+              ? { ownerConsentName: String(row.owner_consent_name) }
+              : {}),
+            ...(row.template ? { template: row.template as EditorState['template'] } : {}),
+            ...(Array.isArray(row.disclosures) ? { disclosures: row.disclosures as string[] } : {}),
+          };
+        });
       })
       .catch(() => undefined);
 
@@ -518,8 +533,21 @@ export default function Editor() {
         {step === 'consent' ? (
           <ConsentStep
             declaredAt={state.ownerConsentDeclaredAt}
+            ownerName={state.ownerConsentName ?? ''}
             onDeclare={(ownerConsentDeclaredAt) =>
-              setState((current) => ({ ...current, ownerConsentDeclaredAt }))
+              setState((current) => {
+                if (ownerConsentDeclaredAt === undefined) {
+                  const { ownerConsentDeclaredAt: _omitted, ...rest } = current;
+                  return rest;
+                }
+                return { ...current, ownerConsentDeclaredAt };
+              })
+            }
+            onOwnerName={(name) =>
+              setState((current) => {
+                const { ownerConsentName: _omitted, ...rest } = current;
+                return name.trim() === '' ? rest : { ...rest, ownerConsentName: name };
+              })
             }
           />
         ) : null}
@@ -561,6 +589,7 @@ export default function Editor() {
             onPublish={publish}
             onCopy={(url) => void navigator.clipboard.writeText(url).catch(() => undefined)}
             onIndexable={(indexable) => setState((current) => ({ ...current, indexable }))}
+            onPrePortal={(prePortal) => setState((current) => ({ ...current, prePortal }))}
           />
         ) : null}
 

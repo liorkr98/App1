@@ -343,6 +343,15 @@ import '../styles/tokens.css';
         border-color: var(--ink-deep);
       }
 
+      .card[data-status='archived'] {
+        opacity: 0.82;
+      }
+
+      .card[data-status='archived'] .pill {
+        background: var(--stone-warm);
+        color: var(--muted);
+      }
+
       .body {
         padding: 0.9rem 1rem 0.4rem;
         flex: 1 1 auto;
@@ -520,7 +529,7 @@ import '../styles/tokens.css';
 
       {/*
         Present from the start, hidden by script. The filter is a radio group
-        so the browser owns the "one of four" behaviour; the script only reads
+        so the browser owns the "one of five" behaviour; the script only reads
         which one is checked and sets a data attribute on the grid.
       */}
       {/*
@@ -553,6 +562,9 @@ import '../styles/tokens.css';
 
         <input type="radio" name="filter" id="f-sold" value="sold" />
         <label for="f-sold">{t('dash.filterSold')}</label>
+
+        <input type="radio" name="filter" id="f-archived" value="archived" />
+        <label for="f-archived">{t('dash.filterArchived')}</label>
 
         <span class="count" id="count"></span>
       </div>
@@ -682,13 +694,33 @@ import '../styles/tokens.css';
         paint();
       };
 
+      const archiveListing = async (slug: string, button: HTMLButtonElement) => {
+        if (!window.confirm(t('dash.confirmArchive'))) return;
+
+        button.disabled = true;
+
+        const { error } = await supabase()
+          .from('listings')
+          .update({ status: 'archived' })
+          .eq('slug', slug);
+
+        button.disabled = false;
+
+        if (error) return tell(t('dash.archivedFailed'), 'bad');
+
+        const row = rows.find((candidate) => candidate.slug === slug);
+        if (row) row.status = 'archived';
+        tell(t('dash.archivedDone'));
+        paint();
+      };
+
       const card = (row: Row) => {
         const item = document.createElement('li');
         item.className = 'card';
         item.dataset.status = row.status;
 
         const href = publicUrl(row.slug);
-        const sendable = row.status !== 'draft';
+        const sendable = row.status === 'published' || row.status === 'sold';
 
         // --- Cover -------------------------------------------------------
         const shot = document.createElement(sendable ? 'a' : 'div');
@@ -745,10 +777,15 @@ import '../styles/tokens.css';
 
         item.append(shot, body);
 
-        if (!sendable) {
+        if (row.status === 'draft') {
           const hint = document.createElement('p');
           hint.className = 'hint';
           hint.textContent = t('dash.draftHint');
+          item.append(hint);
+        } else if (row.status === 'archived') {
+          const hint = document.createElement('p');
+          hint.className = 'hint';
+          hint.textContent = t('dash.archivedHint');
           item.append(hint);
         }
 
@@ -796,6 +833,15 @@ import '../styles/tokens.css';
           }
         }
 
+        if (row.status !== 'archived') {
+          const archive = document.createElement('button');
+          archive.type = 'button';
+          archive.className = 'act';
+          archive.textContent = t('dash.archive');
+          archive.addEventListener('click', () => void archiveListing(row.slug, archive));
+          acts.append(archive);
+        }
+
         item.append(acts);
         return item;
       };
@@ -806,7 +852,10 @@ import '../styles/tokens.css';
           (document.querySelector('input[name="filter"]:checked') as HTMLInputElement | null)
             ?.value ?? 'all';
 
-        const shown = chosen === 'all' ? rows : rows.filter((row) => row.status === chosen);
+        const shown =
+          chosen === 'all'
+            ? rows.filter((row) => row.status !== 'archived')
+            : rows.filter((row) => row.status === chosen);
 
         count.textContent = `${shown.length} ${t('dash.countSuffix')}`;
 

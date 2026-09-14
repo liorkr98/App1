@@ -275,6 +275,22 @@ footer a{color:var(--muted)}
 }
 body:has(.sold-banner){padding-bottom:2rem}
 
+/* Pre-portal — seller declaration, same CSS on both templates.
+   Omitted from the markup when sold or when the agent did not tick it. */
+.pre-portal{
+  margin:0;
+  padding-block:.7rem;
+  padding-inline:var(--gut);
+  font-size:.88rem;
+  line-height:1.5;
+  color:var(--muted);
+  border-block-end:1px solid var(--stone);
+}
+.pre-portal strong{
+  font-weight:700;
+  color:var(--olive);
+}
+
 /* ============================================================
    תנועה — scroll-driven נטיבי. אפס JS.
    דפדפן שלא תומך פשוט מציג את התוכן. שיפור מדורג.

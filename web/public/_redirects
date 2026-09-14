@@ -1,0 +1,9 @@
+# CI builds /template-check/{slug} so the divergence and <bdi> gates have
+# HTML to read. Those files must exist on disk. They must not be a second
+# public URL for the demo listings — noindex is not enough if the path is
+# reachable (the product-gap plan). Cloudflare Static Assets honours this
+# file before it serves the asset, so production 404s while the verify
+# scripts still open the built files.
+/template-check /404 404
+/template-check/ /404 404
+/template-check/* /404 404

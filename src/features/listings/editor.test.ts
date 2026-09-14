@@ -32,6 +32,7 @@ const ready = (): EditorState => ({
   price: 1850000,
   city: 'חולון',
   indexable: false,
+  prePortal: false,
   photoCount: 6,
   facts: [
     fact('rooms', 'חדרים', 4, true),
@@ -224,6 +225,7 @@ describe('blockers', () => {
       title: '',
       price: 0,
       indexable: false,
+      prePortal: false,
       photoCount: 0,
       facts: [fact('rooms', 'חדרים', null, true)],
       description: '',
@@ -393,6 +395,7 @@ describe('nextStep — where a returning seller lands', () => {
         title: '',
         price: 0,
         indexable: false,
+        prePortal: false,
         photoCount: 0,
         facts: [],
         description: '',

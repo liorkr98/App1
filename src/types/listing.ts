@@ -602,4 +602,13 @@ export interface Listing {
    * for different numbers and averaging them serves neither.
    */
   audience?: ListingAudience;
+
+  /**
+   * Seller declaration that this listing is not yet on commercial portals.
+   *
+   * DESIGN-BRIEF §5: "before it goes up" is urgency a portal listing can
+   * never have. Default false — a missing tick is not a claim. Never
+   * rendered as מאומת; it is לפי המוכר.
+   */
+  prePortal?: boolean;
 }
