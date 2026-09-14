@@ -28,7 +28,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const DIST = process.argv[2] ?? 'web/dist';
+const DIST = process.argv[2] ?? 'web/dist/client';
 
 if (!fs.existsSync(DIST)) {
   console.error(`No build output at ${DIST}. Run the web build first.`);

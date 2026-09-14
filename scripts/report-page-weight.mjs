@@ -36,7 +36,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const DIST = process.argv[2] ?? 'web/dist';
+const DIST = process.argv[2] ?? 'web/dist/client';
 const BUDGET_BYTES = 900 * 1024;
 
 if (!fs.existsSync(DIST)) {
@@ -75,7 +75,7 @@ function referencesFrom(file) {
   for (const match of source.matchAll(ASSET)) {
     const reference = match[1];
     // path.resolve on both branches, so every path in the sets below is
-    // absolute. Mixing a relative "web/dist/x.js" with an absolute one makes
+    // absolute. Mixing a relative "web/dist/client/x.js" with an absolute one makes
     // the orphan check compare strings that can never match, and every asset
     // looks unreferenced.
     const resolved = path.resolve(

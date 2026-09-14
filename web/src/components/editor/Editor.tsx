@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import {
   blockers,
   canAdvance,
+  canPublish,
   MAX_IMAGES,
   nextStep,
   stepsFor,
@@ -16,17 +17,23 @@ import { isProfileComplete } from '@/features/agents/profile';
 
 import { t } from '../../lib/i18n';
 import { createDraft, uploadOriginal } from '../../lib/listing-draft';
+import { stripAndResize, uploadDerived } from '../../lib/listing-photo';
+import { loadListing, publishListing, saveListing } from '../../lib/listing-save';
 import { loadProfile } from '../../lib/profile';
+import type { AgentProfile } from '@/features/agents/profile';
 import { supabase, supabaseConfigured } from '../../lib/supabase';
 import { ConsentStep } from './ConsentStep';
 import { DescriptionStep } from './DescriptionStep';
+import { DetailsStep } from './DetailsStep';
+import { PreviewStep } from './PreviewStep';
+import { PublishStep } from './PublishStep';
 import { DisclosuresStep } from './DisclosuresStep';
 import { FactsStep } from './FactsStep';
 import { Message } from './Message';
 import { PhotosStep, type EditorPhoto } from './PhotosStep';
 import { PlateStep } from './PlateStep';
 import { TemplateStep } from './TemplateStep';
-import { useDraft } from './useDraft';
+import { clearDraft, useDraft } from './useDraft';
 
 /**
  * The editor island (Stage E).
@@ -58,6 +65,8 @@ import { useDraft } from './useDraft';
  */
 
 const START: EditorState = {
+  title: '',
+  price: 0,
   photoCount: 0,
   facts: [],
   description: '',
@@ -108,7 +117,18 @@ export default function Editor() {
    * and closing it again does not litter the table with empty rows.
    */
   const listingId = useRef<string | null>(null);
+  const slug = useRef<string | null>(null);
   const [signedIn, setSignedIn] = useState(false);
+
+  /**
+   * The agent's own details, kept because the PREVIEW needs them.
+   *
+   * The bar at the top of every listing carries the agency name and the
+   * accent, so a preview without them is a preview of somebody else's page.
+   */
+  const [profile, setProfile] = useState<AgentProfile>({});
+  const [publishedUrl, setPublishedUrl] = useState<string | undefined>(undefined);
+  const [publishing, setPublishing] = useState(false);
 
   useEffect(() => {
     if (!supabaseConfigured) return;
@@ -146,6 +166,7 @@ export default function Editor() {
       .then((result) => {
         if (!live) return;
         const ready = 'profile' in result && isProfileComplete(result.profile);
+        if ('profile' in result) setProfile(result.profile);
         setState((current) => ({ ...current, sellerReady: ready }));
       })
       .catch(() => {
@@ -180,7 +201,11 @@ export default function Editor() {
       setPhotos((all) => all.map((photo) => (photo.id === id ? { ...photo, ...patch } : photo)));
 
     try {
-      listingId.current ??= (await createDraft(category)).id;
+      if (!listingId.current) {
+        const draft = await createDraft(category);
+        listingId.current = draft.id;
+        slug.current = draft.slug;
+      }
     } catch {
       for (const photo of pending) mark(photo.id, { status: 'failed' });
       return;
@@ -191,10 +216,38 @@ export default function Editor() {
       mark(photo.id, { status: 'uploading' });
 
       const result = await uploadOriginal(listingId.current, photo.file);
-      mark(
-        photo.id,
-        'error' in result ? { status: 'failed' } : { status: 'uploaded', path: result.path },
-      );
+      if ('error' in result) {
+        mark(photo.id, { status: 'failed' });
+        continue;
+      }
+
+      /*
+       * The ORIGINAL is now safe in the private bucket. What a buyer sees is
+       * a second, re-encoded copy in `derived`.
+       *
+       * The re-encode is what makes writing to a public bucket safe at all:
+       * it decodes to pixels and rebuilds the file, so EXIF — and the GPS in
+       * a photograph of somebody's home — is never carried rather than being
+       * stripped by a step that could be skipped. See 0012 and listing-photo.
+       *
+       * A failure here is NOT a failed upload. The original is stored, the
+       * seller's work is not lost, and the real pipeline can produce the
+       * public copy later. It only means this photo has no URL yet.
+       */
+      const processed = await stripAndResize(photo.file);
+      if (!processed) {
+        mark(photo.id, { status: 'uploaded', path: result.path });
+        continue;
+      }
+
+      const published = await uploadDerived(listingId.current, photo.id, processed);
+      mark(photo.id, {
+        status: 'uploaded',
+        path: result.path,
+        ...('error' in published ? {} : { publicUrl: published.url }),
+        width: processed.width,
+        height: processed.height,
+      });
     }
   };
 
@@ -211,6 +264,76 @@ export default function Editor() {
   const here = outstanding.filter((blocker) => blocker.step === step);
 
   /**
+   * Opens an EXISTING listing when the dashboard sent us to one.
+   *
+   * The dashboard's edit button used to point at /new/ with no id, so it
+   * started a fresh listing and the agent's work looked lost. It now passes
+   * ?id={slug}, and this is the other half of that.
+   *
+   * The row wins over whatever is in localStorage. A saved draft belongs to
+   * whichever listing was open last; restoring it over a different one would
+   * paste one property's description onto another, which is worse than
+   * losing it.
+   */
+  useEffect(() => {
+    if (!supabaseConfigured || !signedIn) return;
+
+    const wanted = new URLSearchParams(window.location.search).get('id');
+    if (!wanted) return;
+
+    let live = true;
+
+    void loadListing(wanted)
+      .then((result) => {
+        if (!live || !('row' in result)) return;
+        const row = result.row;
+
+        listingId.current = String(row.id ?? '');
+        slug.current = String(row.slug ?? '');
+
+        const media = (row.media ?? {}) as {
+          cover?: { id?: string; url?: string };
+          gallery?: { id?: string; url?: string }[];
+        };
+        const stored = [media.cover, ...(media.gallery ?? [])].filter(
+          (image): image is { id?: string; url?: string } => Boolean(image?.url),
+        );
+
+        setPhotos(
+          stored.map((image, index) => ({
+            id: image.id ?? `saved-${index}`,
+            url: image.url as string,
+            publicUrl: image.url as string,
+            name: '',
+            status: 'uploaded' as const,
+          })),
+        );
+
+        const location = (row.location ?? {}) as { city?: string; street?: string };
+
+        setState((current) => ({
+          ...current,
+          category: row.category === 'vehicle' ? 'vehicle' : 'property',
+          title: String(row.title ?? ''),
+          price: Number(row.price ?? 0),
+          ...(location.city ? { city: location.city } : {}),
+          ...(location.street ? { street: location.street } : {}),
+          ...(row.price_note ? { priceNote: String(row.price_note) } : {}),
+          description: String(row.description ?? ''),
+          facts: Array.isArray(row.facts) ? row.facts : current.facts,
+          photoCount: stored.length,
+          ...(row.template ? { template: row.template as EditorState['template'] } : {}),
+          ...(Array.isArray(row.disclosures) ? { disclosures: row.disclosures as string[] } : {}),
+        }));
+      })
+      .catch(() => undefined);
+
+    return () => {
+      live = false;
+    };
+  }, [signedIn]);
+
+  /**
    * Restores a saved draft, then lands the seller on the step that needs
    * work rather than at the beginning.
    *
@@ -225,7 +348,57 @@ export default function Editor() {
     setStep(nextStep({ ...START, ...draft }));
   });
 
+  /**
+   * Writes the editor's state back to the row.
+   *
+   * At every step boundary rather than on a timer: a step boundary is the
+   * moment a seller has finished saying something, and also the moment they
+   * might close the tab. An agent between viewings does not come back to a
+   * form, they come back to a link.
+   *
+   * Failure is swallowed on purpose. The draft is still in localStorage, the
+   * seller keeps working, and the next boundary tries again — an editor that
+   * stops because a network call failed is worse than one that saves late.
+   */
+  const persist = () => {
+    const id = listingId.current;
+    if (!id || !supabaseConfigured || !signedIn) return;
+    void saveListing(id, state, photos).catch(() => undefined);
+  };
+
+  /**
+   * Publishes, and hands back the link.
+   *
+   * ======================== HUMAN REVIEW ========================
+   * CLAUDE.md §8. The gate is `canPublish`, which is false whenever ANY
+   * blocker stands — including the entitlement one, which fails closed on
+   * anything that is not 'paid'. This function does not read or decide
+   * entitlement; it refuses to act when the shared rule says no.
+   * ==============================================================
+   */
+  const publish = () => {
+    const id = listingId.current;
+    if (!id || !canPublish(state) || publishing) return;
+
+    setPublishing(true);
+
+    void (async () => {
+      // Save first. Publishing a row that is one step behind what the agent
+      // sees is how a page ships without the description they just wrote.
+      await saveListing(id, state, photos).catch(() => undefined);
+
+      const result = await publishListing(id).catch(() => ({ error: 'failed' }) as const);
+      setPublishing(false);
+
+      if ('ok' in result && slug.current) {
+        setPublishedUrl(`${window.location.origin}/a/${slug.current}/`);
+        clearDraft();
+      }
+    })();
+  };
+
   const go = (delta: number) => {
+    persist();
     const target = steps[position + delta];
     if (target) setStep(target);
   };
@@ -286,6 +459,18 @@ export default function Editor() {
           <CategoryStep chosen={state.category} onChoose={choose} />
         ) : null}
 
+        {step === 'details' && state.category ? (
+          <DetailsStep
+            category={state.category}
+            title={state.title}
+            price={state.price}
+            city={state.city ?? ''}
+            street={state.street ?? ''}
+            priceNote={state.priceNote ?? ''}
+            onChange={(patch) => setState((current) => ({ ...current, ...patch }))}
+          />
+        ) : null}
+
         {step === 'photos' ? (
           <PhotosStep photos={photos} onChange={changePhotos} signedIn={signedIn} />
         ) : null}
@@ -322,6 +507,27 @@ export default function Editor() {
           <DisclosuresStep
             items={state.disclosures ?? []}
             onChange={(disclosures) => setState((current) => ({ ...current, disclosures }))}
+          />
+        ) : null}
+
+        {step === 'preview' ? (
+          <PreviewStep
+            state={state}
+            photos={photos}
+            agency={profile.agencyName ?? undefined}
+            sellerName={profile.displayName ?? undefined}
+            accent={profile.accent ?? undefined}
+          />
+        ) : null}
+
+        {step === 'publish' ? (
+          <PublishStep
+            state={state}
+            blockers={outstanding}
+            publishedUrl={publishedUrl}
+            publishing={publishing}
+            onPublish={publish}
+            onCopy={(url) => void navigator.clipboard.writeText(url).catch(() => undefined)}
           />
         ) : null}
 

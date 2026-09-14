@@ -1,0 +1,40 @@
+---
+import ListingPage from '../../components/ListingPage.astro';
+import { listings } from '../../lib/listings';
+
+/**
+ * The two demo listings, PRERENDERED, so CI still has HTML to check.
+ *
+ * WHY THIS ROUTE EXISTS. /a/[slug] became SSR so that a real listing could
+ * have a page at all, and that removed the built files two of the strongest
+ * gates in this repo read:
+ *
+ *   verify-template-divergences.mjs  exactly four differences between the
+ *                                    property and vehicle templates
+ *   verify-bdi.mjs                   every number inside <bdi> (§4.2)
+ *
+ * Both check BUILT HTML on purpose — a missing <bdi> is invisible in review,
+ * and the divergence check is what stops a fifth one appearing by accident.
+ * Losing them to a routing change would have been a silent, permanent
+ * downgrade.
+ *
+ * IT CANNOT DRIFT FROM THE REAL PAGE. Both routes render the same
+ * ListingPage.astro with the same data; this one is a different URL and
+ * nothing else. If they could differ, the check would be worthless.
+ *
+ * NOT underscore-prefixed, and that is not a style choice: Astro excludes
+ * any path segment beginning with _ from routing entirely, so the first
+ * version of this file emitted nothing at all and the divergence check failed
+ * looking for output that was never built.
+ *
+ * These are the same two demo listings already public at /a/{slug}, so the
+ * extra URL exposes nothing new, and both carry indexable:false.
+ */
+export function getStaticPaths() {
+  return listings.map((listing) => ({ params: { slug: listing.slug }, props: { listing } }));
+}
+
+const { listing } = Astro.props;
+---
+
+<ListingPage listing={listing} />

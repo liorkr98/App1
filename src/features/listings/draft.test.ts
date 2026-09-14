@@ -7,6 +7,9 @@ import { answer, blankFacts } from './fact-entry.js';
 
 const state = (): EditorState => ({
   category: 'property',
+  title: 'דירת 4 חדרים, משופצת מהיסוד',
+  price: 1850000,
+  city: 'חולון',
   photoCount: 6,
   facts: answer(blankFacts('property'), 'rooms', 4),
   description: 'הדירה משופצת ופונה לדרום.',
@@ -199,7 +202,7 @@ describe('anything unrecognised starts clean', () => {
     // The common case, not an edge one: someone opens the editor, taps a
     // category and puts the phone down.
     const empty = JSON.stringify(
-      toDraft({ photoCount: 0, facts: [], description: '', entitlement: 'unknown' }),
+      toDraft({ title: '', price: 0, photoCount: 0, facts: [], description: '', entitlement: 'unknown' }),
     );
 
     const restored = fromDraft(empty);

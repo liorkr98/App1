@@ -62,6 +62,17 @@ const key = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || PUBLISHABLE_KEY;
  */
 export const supabaseConfigured = Boolean(url && key);
 
+/**
+ * The same two public values, for the SERVER-side reader.
+ *
+ * listing-from-row.ts builds its own client with session persistence off: the
+ * browser client below refreshes tokens and reads the URL for an auth
+ * callback, and neither belongs in a Worker rendering somebody else's page.
+ * It needs the values, not this module's client.
+ */
+export const SUPABASE_URL = url;
+export const SUPABASE_ANON_KEY = key;
+
 let client: SupabaseClient | null = null;
 
 /**

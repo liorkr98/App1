@@ -29,7 +29,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const DIST = process.argv[2] ?? 'web/dist';
+const DIST = process.argv[2] ?? 'web/dist/client';
 const ASSETS = path.join(DIST, '_astro');
 
 if (!fs.existsSync(ASSETS)) {

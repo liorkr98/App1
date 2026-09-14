@@ -63,6 +63,13 @@ export function toDraft(state: EditorState): Stored {
   return {
     version: DRAFT_VERSION,
     ...(state.category === undefined ? {} : { category: state.category }),
+    // What the listing is, costs and where it is. Stored like everything
+    // else: the seller loses a phone call's worth of typing otherwise.
+    title: state.title,
+    price: state.price,
+    ...(state.city === undefined ? {} : { city: state.city }),
+    ...(state.street === undefined ? {} : { street: state.street }),
+    ...(state.priceNote === undefined ? {} : { priceNote: state.priceNote }),
     facts: state.facts,
     description: state.description,
     ...(state.generatedDescription === undefined
@@ -134,8 +141,24 @@ export function fromDraft(raw: unknown): Draft | null {
   const disclosuresResult = readDisclosures(parsed.disclosures);
   if (disclosuresResult === 'invalid') return null;
 
+  // Restored as the empty values rather than rejected: a draft written before
+  // these fields existed is still a draft worth giving back, and the editor's
+  // own blockers will ask for what is missing.
+  const title = typeof parsed.title === 'string' ? parsed.title : '';
+  const price = typeof parsed.price === 'number' && Number.isFinite(parsed.price) ? parsed.price : 0;
+
+  const text = (value: unknown) => (typeof value === 'string' ? value : undefined);
+  const city = text(parsed.city);
+  const street = text(parsed.street);
+  const priceNote = text(parsed.priceNote);
+
   return {
     ...(category === undefined ? {} : { category }),
+    title,
+    price,
+    ...(city === undefined ? {} : { city }),
+    ...(street === undefined ? {} : { street }),
+    ...(priceNote === undefined ? {} : { priceNote }),
     facts,
     description,
     ...(generated === undefined ? {} : { generatedDescription: generated }),

@@ -20,8 +20,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const DIST_ROOT = 'web/dist';
-const DIST = 'web/dist/a';
+const DIST_ROOT = 'web/dist/client';
+const DIST = 'web/dist/client/template-check';
 const PROPERTY = path.join(DIST, 'A7K2M', 'index.html');
 const VEHICLE = path.join(DIST, 'V3M9Q', 'index.html');
 

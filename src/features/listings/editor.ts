@@ -19,6 +19,7 @@ import { isUnedited } from './description.js';
 
 export const STEPS = [
   'category',
+  'details',
   'photos',
   'plate',
   'consent',
@@ -61,6 +62,30 @@ export type Entitlement = 'paid' | 'unpaid' | 'unknown';
 
 export interface EditorState {
   category?: ListingCategory;
+
+  /**
+   * WHAT THE LISTING IS, WHAT IT COSTS, AND WHERE IT IS.
+   *
+   * None of these existed until 14 September 2026, and their absence was not
+   * a small gap: `listings` has NOT NULL `title` and `price` columns that
+   * `createDraft` fills with '' and 0, and nothing ever updated them. Every
+   * draft an agent made sat in the database titled nothing, priced nothing,
+   * and the dashboard card that showed `—` and `₪0` was reporting the truth.
+   *
+   * They are the first step now, before photographs, because they are the
+   * only fields the row cannot be published without and because an agent who
+   * knows the price knows it before they start uploading.
+   */
+  title: string;
+  /** Shekels. 0 means unanswered — the column is NOT NULL and has no other way to say so. */
+  price: number;
+  /** Hebrew city. Required for a property, absent for a vehicle (§7). */
+  city?: string;
+  /** Hebrew street. Optional even for a property — the seller may withhold it. */
+  street?: string;
+  /** Free text beside the price, e.g. פינוי גמיש. */
+  priceNote?: string;
+
   photoCount: number;
   facts: readonly Fact[];
   description: string;
@@ -155,6 +180,9 @@ export function stepsFor(category: ListingCategory | undefined): Step[] {
  */
 export const BLOCKER_CODES = [
   'categoryMissing',
+  'titleMissing',
+  'priceMissing',
+  'cityMissing',
   'photosTooFew',
   'photosTooMany',
   'factMissing',
@@ -200,6 +228,23 @@ export function blockers(state: EditorState): Blocker[] {
 
   if (!state.category) {
     found.push({ step: 'category', code: 'categoryMissing' });
+  }
+
+  if (state.title.trim() === '') {
+    found.push({ step: 'details', code: 'titleMissing' });
+  }
+
+  // 0 is the unanswered value, not a free listing. A NOT NULL column with no
+  // nullable option has to encode "nobody said" as something, and this is it.
+  if (!Number.isFinite(state.price) || state.price <= 0) {
+    found.push({ step: 'details', code: 'priceMissing' });
+  }
+
+  // A property without a city cannot be found; a vehicle deliberately carries
+  // no location at all, because pinning a car for sale to an address is the
+  // theft risk DESIGN-CONTRACT §5.4 refuses.
+  if (state.category === 'property' && (state.city ?? '').trim() === '') {
+    found.push({ step: 'details', code: 'cityMissing' });
   }
 
   if (state.photoCount < MIN_IMAGES) {

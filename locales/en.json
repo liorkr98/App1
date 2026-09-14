@@ -139,7 +139,8 @@
       "description": "",
       "template": "",
       "preview": "",
-      "publish": ""
+      "publish": "",
+      "details": ""
     },
     "blockers": {
       "categoryMissing": "",
@@ -152,7 +153,10 @@
       "paymentRequired": "",
       "paymentUnverified": "",
       "sellerMissing": "",
-      "consentMissing": ""
+      "consentMissing": "",
+      "titleMissing": "",
+      "priceMissing": "",
+      "cityMissing": ""
     },
     "fixLater": "",
     "stepOf": "",
@@ -212,7 +216,25 @@
     "disclosuresLabel": "",
     "disclosuresPlaceholder": "",
     "disclosuresAdd": "",
-    "disclosuresRemove": ""
+    "disclosuresRemove": "",
+    "details": {},
+    "preview": {
+      "hint": "",
+      "noPhoto": "",
+      "noTitle": "",
+      "note": ""
+    },
+    "publish": {
+      "hint": "",
+      "photos": "",
+      "action": "",
+      "working": "",
+      "done": "",
+      "doneHint": "",
+      "open": "",
+      "paymentPending": "",
+      "failed": ""
+    }
   },
   "home": {
     "tagline": "",
@@ -308,6 +330,9 @@
     "signIn": "",
     "failed": "",
     "draftHint": "",
-    "countSuffix": ""
+    "countSuffix": "",
+    "onboardTitle": "",
+    "onboardBody": "",
+    "onboardCta": ""
   }
 }
