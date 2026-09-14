@@ -41,6 +41,8 @@
   every phone that will actually open it.
 */
 
+@import './walk.css';
+
 .editor {
   display: flex;
   flex-direction: column;
@@ -987,51 +989,6 @@ textarea {
 }
 
 .preview-page .gallery figcaption {
-  font-size: 0.78rem;
-  color: var(--muted);
-  margin-block-start: 0.35rem;
-}
-
-.preview-page .walk-nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-block-end: 0.85rem;
-}
-
-.preview-page .walk-nav span {
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--olive);
-  padding: 0.25rem 0.55rem;
-  border: 1px solid var(--stone);
-  border-radius: 999px;
-}
-
-.preview-page .walk-track {
-  display: flex;
-  gap: 0.6rem;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  padding-block-end: 0.35rem;
-}
-
-.preview-page .walk-track figure {
-  flex: 0 0 78%;
-  scroll-snap-align: start;
-  margin: 0;
-}
-
-.preview-page .walk-track img {
-  inline-size: 100%;
-  aspect-ratio: 4/3;
-  object-fit: cover;
-  border-radius: 2px;
-  display: block;
-  background: var(--stone);
-}
-
-.preview-page .walk-track figcaption {
   font-size: 0.78rem;
   color: var(--muted);
   margin-block-start: 0.35rem;

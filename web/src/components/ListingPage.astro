@@ -106,7 +106,10 @@ const sold = listing.status === 'sold';
     <Disclosures items={listing.disclosures} />
   )}
 
-  <Walk images={[listing.media.cover, ...listing.media.gallery]} />
+  <Walk
+    images={[listing.media.cover, ...listing.media.gallery]}
+    allPhotosHref={listing.media.gallery.length > 0 ? '#listing-gallery' : undefined}
+  />
 
   <Gallery images={listing.media.gallery} />
 

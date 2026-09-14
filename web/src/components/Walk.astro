@@ -6,53 +6,93 @@ import { t } from '../lib/i18n';
 
 interface Props {
   images: Image[];
+  /** Jump target for "כל התמונות". Absent when the gallery below is empty. */
+  allPhotosHref?: string;
 }
 
-const { images } = Astro.props;
+const { images, allPhotosHref } = Astro.props;
 const groups = hasRoomLabels(images)
   ? groupByRoom(images).filter(
       (group): group is { room: PhotoRoom; items: Image[] } => group.room !== undefined,
     )
   : [];
+
+const slides = groups.flatMap((group) =>
+  group.items.map((image) => ({ image, room: group.room })),
+);
+
+const firstIndexByRoom = new Map<PhotoRoom, number>();
+slides.forEach((slide, index) => {
+  if (!firstIndexByRoom.has(slide.room)) firstIndexByRoom.set(slide.room, index);
+});
 ---
 {/*
   A walk through the apartment, from the photographs the seller already took.
 
-  Not Matterport and not a 360. Those are a different product, a different
-  capture session, and a per-listing cost. This is the labelled stills in
-  room order, snapped sideways, so a buyer on a phone flicks from the living
-  room to the kitchen the way they would walk it.
+  Not Matterport and not a 360. The listing page has no JavaScript: the large
+  photograph switches with :target, the filmstrip is ordinary links, and
+  "התמונה הבאה" is the next hash. That is the listing-detail half of the
+  AdvLife reference — the rail of thumbs, one big frame, next, show-all.
+  The Compare screens in the rest of that video are a marketplace, not this
+  page. A 3D tab waits on the second file, which did not arrive.
 
   Omitted when nobody named a room — the same omit-empty rule as disclosures
   and the map. Inventing a tour from unlabeled photos would be a caption the
   seller did not write.
 */}
-{groups.length > 0 && (
+{slides.length > 0 && (
   <section class="walk reveal">
     <h2>{t('listing.walkTitle')}</h2>
     <nav class="walk-nav" aria-label={t('listing.walkTitle')}>
       {groups.map((group) => (
-        <a href={`#walk-${group.room}`}>{t(`editor.rooms.${group.room}`)}</a>
+        <a href={`#walk-p${firstIndexByRoom.get(group.room) ?? 0}`}>{t(`editor.rooms.${group.room}`)}</a>
       ))}
     </nav>
-    <div class="walk-track">
-      {groups.flatMap((group) =>
-        group.items.map((image, index) => (
-          <figure id={index === 0 ? `walk-${group.room}` : undefined}>
+    <div class="walk-viewer">
+      <nav class="walk-film" aria-label={t('listing.filmstrip')}>
+        {slides.map((slide, index) => (
+          <a href={`#walk-p${index}`} aria-label={t(`editor.rooms.${slide.room}`)}>
             <img
-              src={largest(image, GALLERY_WIDTHS)}
-              srcset={srcset(image, GALLERY_WIDTHS) || undefined}
-              sizes="(max-width: 620px) 80vw, 480px"
-              width={image.width}
-              height={image.height}
-              alt={image.alt ?? ''}
+              src={largest(slide.image, GALLERY_WIDTHS)}
+              srcset={srcset(slide.image, GALLERY_WIDTHS) || undefined}
+              sizes="72px"
+              width="72"
+              height="72"
+              alt=""
               loading="lazy"
               decoding="async"
             >
-            <figcaption>{t(`editor.rooms.${group.room}`)}</figcaption>
-          </figure>
-        )),
-      )}
+          </a>
+        ))}
+      </nav>
+      <div class="walk-main">
+        {slides.map((slide, index) => {
+          const next = (index + 1) % slides.length;
+          return (
+            <figure id={`walk-p${index}`}>
+              <div class="walk-frame">
+                <img
+                  src={largest(slide.image, GALLERY_WIDTHS)}
+                  srcset={srcset(slide.image, GALLERY_WIDTHS) || undefined}
+                  sizes="(max-width: 620px) 80vw, 480px"
+                  width={slide.image.width}
+                  height={slide.image.height}
+                  alt={slide.image.alt ?? ''}
+                  loading={index === 0 ? undefined : 'lazy'}
+                  decoding="async"
+                >
+                {allPhotosHref && (
+                  <a class="walk-all" href={allPhotosHref}>{t('listing.showAllPhotos')}</a>
+                )}
+                {slides.length > 1 && (
+                  <a class="walk-next" href={`#walk-p${next}`}>{t('listing.nextPhoto')}</a>
+                )}
+              </div>
+              <figcaption>{t(`editor.rooms.${slide.room}`)}</figcaption>
+            </figure>
+          );
+        })}
+      </div>
     </div>
   </section>
 )}

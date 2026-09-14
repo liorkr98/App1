@@ -1,0 +1,29 @@
+---
+import type { Listing } from '@/types/listing';
+import ListingPage from '../../components/ListingPage.astro';
+import { propertyListing } from '../../lib/listings';
+
+/**
+ * The walk with rooms labelled, prerendered, so we can see the filmstrip in
+ * built HTML without putting rooms on A7K2M.
+ *
+ * verify-template-divergences.mjs compares A7K2M to V3M9Q and forbids a
+ * fifth <section> class on only one of them. A labelled walk is a <section
+ * class="walk">, so the demo fixtures stay unlabeled on purpose. This URL
+ * is the fixture for the tour itself: noindex, already disallowed under
+ * /template-check, not compared by that script.
+ */
+const gallery = propertyListing.media.gallery;
+const listing: Listing = {
+  ...propertyListing,
+  media: {
+    cover: { ...propertyListing.media.cover, room: 'living' },
+    gallery: [
+      { ...gallery[0]!, room: 'living' },
+      { ...gallery[1]!, room: 'kitchen' },
+      { ...gallery[2]!, room: 'balcony' },
+    ],
+  },
+};
+---
+<ListingPage listing={listing} robots="noindex,nofollow" />

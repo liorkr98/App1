@@ -119,7 +119,10 @@
     "prePortal": "עדיין לא בלוחות",
     "prePortalNote": "לפי המוכר. לא בדקנו מול יד2 או מדלן.",
     "editLink": "קישור לעריכה נשלח למייל שלך",
-    "walkTitle": "סיור בדירה"
+    "walkTitle": "סיור בדירה",
+    "filmstrip": "תמונות הסיור",
+    "nextPhoto": "התמונה הבאה",
+    "showAllPhotos": "כל התמונות"
   },
   "notFound": {
     "title": "העמוד לא נמצא",
