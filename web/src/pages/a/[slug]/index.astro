@@ -1,114 +1,46 @@
 ---
-import BaseListing from '../../../layouts/BaseListing.astro';
-import CtaDock from '../../../components/CtaDock.astro';
-import Disclosures from '../../../components/Disclosures.astro';
-import Enrichment from '../../../components/Enrichment.astro';
-import FactsGrid from '../../../components/FactsGrid.astro';
-import Gallery from '../../../components/Gallery.astro';
-import Hero from '../../../components/Hero.astro';
-import MapSection from '../../../components/MapSection.astro';
-import PriceBar from '../../../components/PriceBar.astro';
-import Prose from '../../../components/Prose.astro';
-import SellerBlock from '../../../components/SellerBlock.astro';
-import { CATEGORY_PRESENTATION } from '../../../lib/category-presentation';
+import ListingPage from '../../../components/ListingPage.astro';
+import { publishedListing } from '../../../lib/listing-from-row';
 import { listings } from '../../../lib/listings';
-import { perUnitPrice } from '../../../lib/price';
 
 /**
- * ONE template for both categories.
+ * RENDERED PER REQUEST, not at build time.
  *
- * Three of the four allowed divergences are selected by DATA, not by a
- * category check:
- *   price note   PriceBar branches on listPrice
- *   disclosures  rendered when the array is non-empty
- *   map          rendered when the location has a street
+ * This route used getStaticPaths() over listings.ts, which meant exactly two
+ * pages existed — A7K2M and V3M9Q — and A REAL LISTING HAD NO PAGE AT ALL. An
+ * agent could finish the whole flow and the link they shared would 404. The
+ * link is the product.
  *
- * The fourth — the hero block — comes from CATEGORY_PRESENTATION. That is the
- * only category lookup on the page, which is what keeps a fifth divergence
- * from appearing by accident.
+ * It is the ONLY route that opts out of prerendering: the homepage, the
+ * dashboard, /new and /me are still static files on the CDN. astro.config.mjs
+ * carries the reasoning, and CLAUDE.md §2's "no runtime rendering" rule is
+ * corrected there rather than quietly broken here.
+ *
+ * THE PAGE ITSELF IS ListingPage.astro. This file is routing and nothing else,
+ * so the markup CI checks and the markup a buyer sees cannot be two things —
+ * see the note in _verify/[slug].astro.
  */
-export function getStaticPaths() {
-  return listings.map((listing) => ({ params: { slug: listing.slug }, props: { listing } }));
+export const prerender = false;
+
+const { slug } = Astro.params;
+
+/*
+ * The two DEMO listings are checked first and served from the module. They are
+ * what the homepage links to, so they must not depend on a network call or on
+ * a row existing in whichever database this deploy points at.
+ */
+const demo = listings.find((candidate) => candidate.slug === slug);
+const listing = demo ?? (slug ? await publishedListing(slug) : undefined);
+
+/*
+ * A missing listing is a 404, and so is a DRAFT — publishedListing cannot see
+ * one, because the public-read policy in 0002 exposes only 'published' and
+ * 'sold'. Telling a stranger which unpublished slugs exist would be an
+ * information leak dressed as a helpful error.
+ */
+if (!listing) {
+  return new Response(null, { status: 404 });
 }
-
-const { listing } = Astro.props;
-const presentation = CATEGORY_PRESENTATION[listing.category];
-
-const paragraphs = listing.description.split('\n\n');
-const heading = listing.category === 'property' ? 'על הדירה' : 'על הרכב';
-
-// A vehicle has no street, so no map. See DESIGN-CONTRACT §5.4.
-const showMap = Boolean(listing.location?.street);
-const mapImageUrl = '/sample/frame.png';
-
-/**
- * ₪ per m², derived from the price and whichever fact the schema marks as the
- * denominator. A vehicle has no such fact and gets nothing — inventing a
- * price per kilometre would be worse than an empty line.
- */
-const perUnit = perUnitPrice(listing.category, listing.facts, listing.price);
-
-/**
- * Licence attributions, carried by the data rather than the template.
- *
- * A page that renders no OpenStreetMap places carries no ODbL credit, and a
- * page that gains a new attributed source cannot forget to add one. Hardcoding
- * it in the footer would make the credit depend on a template remembering.
- */
-const attributions =
-  listing.enrichment?.category === 'property' ? listing.enrichment.attributions : [];
 ---
-<BaseListing
-  listing={listing}
-  ogFactKeys={presentation.ogFactKeys}
-  heroHeight={presentation.heroHeight}
->
-  <Hero cover={listing.media.cover} title={listing.title} location={listing.location} />
 
-  <PriceBar
-    price={listing.price}
-    listPrice={listing.listPrice}
-    priceNote={listing.priceNote}
-    perUnit={perUnit}
-  />
-
-  <FactsGrid category={listing.category} facts={listing.facts} audience={listing.audience} />
-
-  <section class="reveal">
-    <h2>{heading}</h2>
-    {paragraphs.map((paragraph, index) => (
-      <p style={index > 0 ? 'margin-top:.8rem' : undefined}><Prose text={paragraph} /></p>
-    ))}
-  </section>
-
-  {listing.disclosures && listing.disclosures.length > 0 && (
-    <Disclosures items={listing.disclosures} />
-  )}
-
-  <Gallery images={listing.media.gallery} />
-
-  {/* Below the seller's own content, deliberately: what they came to publish
-      comes first, and the enrichment is what makes the page worth forwarding
-      (RESEARCH.md §5). */}
-  {listing.enrichment && <Enrichment enrichment={listing.enrichment} />}
-
-  {showMap && listing.location && (
-    <MapSection location={listing.location} mapImageUrl={mapImageUrl} />
-  )}
-
-  <SellerBlock seller={listing.seller} />
-
-  <CtaDock phone={listing.seller.phone} message={presentation.whatsappMessage} />
-
-  {/* נבנה בסיבוב is the viral loop (CLAUDE.md §8) — a listing page is
-      forwarded to 30-80 people who are by definition interested in buying
-      something. The ODbL line beside it is a LICENCE CONDITION, not a
-      courtesy (§10), and it is driven by the payload so a page with no OSM
-      places carries no OSM credit. */}
-  <footer>
-    נבנה ב<a href="https://hasivuv.com">סיבוב</a>
-    {attributions.map((attribution) => (
-      <Fragment><br /><span class="attribution"><Prose text={attribution} /></span></Fragment>
-    ))}
-  </footer>
-</BaseListing>
+<ListingPage listing={listing} />
