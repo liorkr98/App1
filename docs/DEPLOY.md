@@ -218,7 +218,13 @@ script at all, so the most obvious thing anyone would type into that field —
 and a common Cloudflare default — failed with "missing script: build" and sent
 the reader looking for a problem in the web workspace.
 
-**IT HAS TO BE SET, AND AN EMPTY FIELD FAILS IN A CONFUSING WAY.** The build of
+`wrangler.jsonc` now runs `npm run build` itself when `web/dist/server/entry.mjs`
+is missing, so an empty dashboard field still produces a Worker. Set the field
+anyway — it is the documented place, and it keeps the build off the deploy
+timer. The wrangler fallback is what stops an empty field from looking like a
+broken `main` path.
+
+**IT HAS TO BE SET, AND AN EMPTY FIELD USED TO FAIL IN A CONFUSING WAY.** The build of
 12 September 2026 went:
 
 ```

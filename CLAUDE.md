@@ -46,7 +46,7 @@ it. That is what is being sold.
 > it belongs to the speed promise, not the trust one. It is sold as "type the
 > plate, the rest fills itself", never as "verified against the register".
 
-**Product:** סיבוב. **Domain:** hasivuv.com.
+**Product:** היעד. **Domain:** hasivuv.com.
 
 **The primary audience is Israeli estate agents, not private sellers.** The
 Justice Ministry's public register lists 22,995 licensed brokers with contact
@@ -393,7 +393,7 @@ thinks in listings; our cost is in images; the cap is what bridges the two.
 publish their one listing and churn — cannibalising the single-listing purchase
 that is the correct product for them.
 
-**Every published page carries נבנה בסיבוב in the footer**, removable only on
+**Every published page carries נבנה בהיעד in the footer**, removable only on
 agent tiers. This is the viral loop: a listing page is forwarded to 30–80
 people who are by definition interested in buying something. Small, elegant,
 clickable. Not obnoxious and not invisible.

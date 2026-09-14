@@ -307,11 +307,11 @@ export default function Editor() {
         slug.current = String(row.slug ?? '');
 
         const media = (row.media ?? {}) as {
-          cover?: { id?: string; url?: string };
-          gallery?: { id?: string; url?: string }[];
+          cover?: { id?: string; url?: string; alt?: string };
+          gallery?: { id?: string; url?: string; alt?: string }[];
         };
         const stored = [media.cover, ...(media.gallery ?? [])].filter(
-          (image): image is { id?: string; url?: string } => Boolean(image?.url),
+          (image): image is { id?: string; url?: string; alt?: string } => Boolean(image?.url),
         );
 
         setPhotos(
@@ -321,6 +321,9 @@ export default function Editor() {
             publicUrl: image.url as string,
             name: '',
             status: 'uploaded' as const,
+            ...(typeof image.alt === 'string' && image.alt.trim() !== ''
+              ? { alt: image.alt }
+              : {}),
           })),
         );
 

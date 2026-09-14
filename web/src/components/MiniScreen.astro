@@ -4,6 +4,7 @@ import type { PerUnitPrice } from '../lib/price';
 import type { Listing } from '@/types/listing';
 import { HERO_WIDTHS, largest } from '../lib/images';
 import { ils } from '../lib/format';
+import { t } from '../lib/i18n';
 import Prose from './Prose.astro';
 
 interface Props {
@@ -48,7 +49,7 @@ const place = listing.location?.street
   <span class="s-agent">
     <span class="dot" />
     <span class="who">{listing.seller.name}</span>
-    <span class="brand">סיבוב</span>
+    <span class="brand">{t('common.brand')}</span>
   </span>
 
   <span class="s-hero">

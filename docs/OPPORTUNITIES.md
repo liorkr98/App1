@@ -206,7 +206,7 @@ change the model, only to add the provider.
 **The private seller is the awkward case.** They will not subscribe for one
 listing every seven years. A one-off price for them and a subscription for
 agents is two products; keeping the free tier genuinely useful and charging
-agents for branding, volume and the library is one. The נבנה בסיבוב fallback in
+agents for branding, volume and the library is one. The נבנה בהיעד fallback in
 the agent bar is already the free tier's shape.
 
 Source: [Israel brokerage fees 2026](https://ronkin-list.com/real-estate-agency-fees-tel-aviv/)

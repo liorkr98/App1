@@ -17,7 +17,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#FBFAF7" />
-    <title>{title} · סיבוב</title>
+    <title>{title} · {t('common.brand')}</title>
     <meta name="robots" content={robots} />
     <link rel="canonical" href={canonical} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -98,7 +98,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
   </head>
   <body>
     <header>
-      <a class="mark" href="/">סיבוב</a>
+      <a class="mark" href="/">{t('common.brand')}</a>
       <a href="/">{t('legal.home')}</a>
     </header>
     <slot />

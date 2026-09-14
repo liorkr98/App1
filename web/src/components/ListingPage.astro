@@ -124,13 +124,13 @@ const sold = listing.status === 'sold';
     <CtaDock phone={listing.seller.phone} message={presentation.whatsappMessage} />
   )}
 
-  {/* נבנה בסיבוב is the viral loop (CLAUDE.md §8) — a listing page is
+  {/* נבנה בהיעד is the viral loop (CLAUDE.md §8) — a listing page is
       forwarded to 30-80 people who are by definition interested in buying
       something. The ODbL line beside it is a LICENCE CONDITION, not a
       courtesy (§10), and it is driven by the payload so a page with no OSM
       places carries no OSM credit. */}
   <footer>
-    נבנה ב<a href="https://hasivuv.com">סיבוב</a>
+    {t('common.builtByPrefix')}<a href="/">{t('common.brand')}</a>
     {attributions.map((attribution) => (
       <Fragment><br /><span class="attribution"><Prose text={attribution} /></span></Fragment>
     ))}

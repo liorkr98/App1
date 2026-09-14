@@ -28,7 +28,7 @@ import '../styles/tokens.css';
  * into a text input has no idea what they are buying. The same agent watching
  * the strip above it fill in with their own name does. It is also the honest
  * way to show what happens when the agency is left blank — the bar falls back
- * to נבנה בסיבוב — rather than explaining that in a hint nobody reads.
+ * to נבנה בהיעד — rather than explaining that in a hint nobody reads.
  */
 ---
 
@@ -38,7 +38,7 @@ import '../styles/tokens.css';
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#FBFAF7" />
-    <title>{t('agent.title')} · סיבוב</title>
+    <title>{t('agent.title')} · {t('common.brand')}</title>
 
     {/* A private settings page. There is no version of it that belongs in a
         search result. */}
@@ -397,7 +397,7 @@ import '../styles/tokens.css';
   <body>
     <main>
       <div class="top">
-        <a class="mark" href="/">סיבוב</a>
+        <a class="mark" href="/">{t('common.brand')}</a>
         <a href="/mine/">{t('auth.myListings')}</a>
       </div>
 
@@ -581,7 +581,7 @@ import '../styles/tokens.css';
       /**
        * The preview, and the fallback that makes the agency field's point.
        *
-       * With no agency the brand slot reads נבנה בסיבוב — which is what
+       * With no agency the brand slot reads נבנה בהיעד — which is what
        * BaseListing does, and is also the viral loop (CLAUDE.md §8). Showing
        * it here is the difference between "optional" and "here is what you
        * get instead".
