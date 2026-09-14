@@ -86,6 +86,12 @@ export interface EditorState {
   /** Free text beside the price, e.g. פינוי גמיש. */
   priceNote?: string;
 
+  /**
+   * Whether search engines may index the published page. Defaults false.
+   * The address of someone's home is not ours to put in Google.
+   */
+  indexable: boolean;
+
   photoCount: number;
   facts: readonly Fact[];
   description: string;

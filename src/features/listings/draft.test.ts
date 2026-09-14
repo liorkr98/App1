@@ -10,6 +10,7 @@ const state = (): EditorState => ({
   title: 'דירת 4 חדרים, משופצת מהיסוד',
   price: 1850000,
   city: 'חולון',
+  indexable: false,
   photoCount: 6,
   facts: answer(blankFacts('property'), 'rooms', 4),
   description: 'הדירה משופצת ופונה לדרום.',
@@ -28,6 +29,12 @@ describe('a draft survives a refresh', () => {
     assert.equal(restored.description, 'הדירה משופצת ופונה לדרום.');
     assert.equal(restored.template, 'editorial');
     assert.equal(restored.facts.find((fact) => fact.key === 'rooms')?.value, 4);
+  });
+
+  it('carries the indexable flag back', () => {
+    const restored = roundTrip({ ...state(), indexable: true });
+    assert.ok(restored);
+    assert.equal(restored.indexable, true);
   });
 
   it('keeps unanswered and absent apart across the round trip', () => {
@@ -202,7 +209,15 @@ describe('anything unrecognised starts clean', () => {
     // The common case, not an edge one: someone opens the editor, taps a
     // category and puts the phone down.
     const empty = JSON.stringify(
-      toDraft({ title: '', price: 0, photoCount: 0, facts: [], description: '', entitlement: 'unknown' }),
+      toDraft({
+        title: '',
+        price: 0,
+        indexable: false,
+        photoCount: 0,
+        facts: [],
+        description: '',
+        entitlement: 'unknown',
+      }),
     );
 
     const restored = fromDraft(empty);

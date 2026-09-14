@@ -14,6 +14,15 @@ import SellerBlock from './SellerBlock.astro';
 import { CATEGORY_PRESENTATION } from '../lib/category-presentation';
 import { perUnitPrice } from '../lib/price';
 
+interface Props {
+  listing: Listing;
+  /**
+   * Forces noindex. Used by `/template-check/` so the CI fixtures cannot be
+   * crawled as a second copy of the demo listings.
+   */
+  robots?: string;
+}
+
 /**
  * ONE template for both categories.
  *
@@ -27,12 +36,7 @@ import { perUnitPrice } from '../lib/price';
  * only category lookup on the page, which is what keeps a fifth divergence
  * from appearing by accident.
  */
-interface Props {
-  listing: Listing;
-}
-
-const { listing } = Astro.props;
-
+const { listing, robots } = Astro.props;
 const presentation = CATEGORY_PRESENTATION[listing.category];
 
 const paragraphs = listing.description.split('\n\n');
@@ -58,11 +62,14 @@ const perUnit = perUnitPrice(listing.category, listing.facts, listing.price);
  */
 const attributions =
   listing.enrichment?.category === 'property' ? listing.enrichment.attributions : [];
+
+const sold = listing.status === 'sold';
 ---
 <BaseListing
   listing={listing}
   ogFactKeys={presentation.ogFactKeys}
   heroHeight={presentation.heroHeight}
+  robots={robots}
 >
   <Hero cover={listing.media.cover} title={listing.title} location={listing.location} />
 
@@ -99,7 +106,11 @@ const attributions =
 
   <SellerBlock seller={listing.seller} />
 
-  <CtaDock phone={listing.seller.phone} message={presentation.whatsappMessage} />
+  {/* A sold listing is a record, not a live offer. The WhatsApp dock would
+      invite a message about something that is gone. */}
+  {sold ? null : (
+    <CtaDock phone={listing.seller.phone} message={presentation.whatsappMessage} />
+  )}
 
   {/* נבנה בסיבוב is the viral loop (CLAUDE.md §8) — a listing page is
       forwarded to 30-80 people who are by definition interested in buying

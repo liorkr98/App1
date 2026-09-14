@@ -49,6 +49,8 @@ const vehicleCells = toCells('vehicle', vehicleListing.facts).slice(0, 3);
 const vehiclePerUnit = perUnitPrice('vehicle', vehicleListing.facts, vehicleListing.price);
 
 const title = `סיבוב — ${t('home.tagline')}`;
+const canonical = new URL('/', Astro.site).href;
+const ogImage = new URL('/sample/flat-living.webp', Astro.site).href;
 ---
 
 <!DOCTYPE html>
@@ -61,12 +63,19 @@ const title = `סיבוב — ${t('home.tagline')}`;
     <title>{title}</title>
     <meta name="description" content={t('home.subTagline')} />
     <meta name="robots" content="index,follow" />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="he_IL" />
+    <meta property="og:url" content={canonical} />
     <meta property="og:site_name" content="סיבוב" />
     <meta property="og:title" content="סיבוב" />
     <meta property="og:description" content={t('home.subTagline')} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="900" />
+    <meta property="og:image:height" content="489" />
+    <meta name="twitter:card" content="summary_large_image" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -1199,8 +1208,14 @@ const title = `סיבוב — ${t('home.tagline')}`;
 
     <footer>
       <div class="shell">
-        <span>hasivuv.com</span>
-        <a href="/new/">{t('home.cta')}</a>
+        <span><a href="https://hasivuv.com">hasivuv.com</a></span>
+        <span>
+          <a href="/legal/terms/">{t('legal.terms')}</a>
+          {' · '}
+          <a href="/legal/privacy/">{t('legal.privacy')}</a>
+          {' · '}
+          <a href="/new/">{t('home.cta')}</a>
+        </span>
       </div>
     </footer>
   </body>

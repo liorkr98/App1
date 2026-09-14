@@ -113,7 +113,13 @@
     "draft": "",
     "published": "",
     "sold": "",
+    "soldBanner": "",
     "editLink": ""
+  },
+  "notFound": {
+    "title": "",
+    "body": "",
+    "home": ""
   },
   "source": {
     "verified": "",
@@ -131,6 +137,7 @@
   "editor": {
     "steps": {
       "category": "",
+      "details": "",
       "photos": "",
       "plate": "",
       "consent": "",
@@ -144,6 +151,8 @@
     },
     "blockers": {
       "categoryMissing": "",
+      "titleMissing": "",
+      "priceMissing": "",
       "photosTooFew": "",
       "photosTooMany": "",
       "factMissing": "",
@@ -217,7 +226,18 @@
     "disclosuresPlaceholder": "",
     "disclosuresAdd": "",
     "disclosuresRemove": "",
-    "details": {},
+    "details": {
+      "title": "",
+      "titleHint": "",
+      "price": "",
+      "priceNote": "",
+      "priceNoteHint": "",
+      "city": "",
+      "street": "",
+      "streetHint": "",
+      "vehicleArea": "",
+      "vehicleAreaHint": ""
+    },
     "preview": {
       "hint": "",
       "noPhoto": "",
@@ -233,8 +253,18 @@
       "doneHint": "",
       "open": "",
       "paymentPending": "",
-      "failed": ""
-    }
+      "payBeta": "",
+      "payWait": "",
+      "indexable": "",
+      "indexableWhy": "",
+      "failed": "",
+      "share": ""
+    },
+    "plateLookup": "",
+    "plateLooking": "",
+    "plateLookupFailed": "",
+    "plateLookupOk": "",
+    "plateLookupNeedDeclare": ""
   },
   "home": {
     "tagline": "",
@@ -334,5 +364,13 @@
     "onboardTitle": "",
     "onboardBody": "",
     "onboardCta": ""
+  },
+  "legal": {
+    "terms": "",
+    "privacy": "",
+    "termsTitle": "",
+    "privacyTitle": "",
+    "updated": "",
+    "home": ""
   }
 }

@@ -1,123 +1,198 @@
-import { createClient } from '@supabase/supabase-js';
+import {
+  TEMPLATE_IDS,
+  type Fact,
+  type Listing,
+  type ListingStatus,
+  type Media,
+  type Seller,
+  type TemplateId,
+} from '@/types/listing';
+import type { ListingCategory } from '@/features/listings/schemas';
 
-import type { Fact, Listing } from '@/types/listing';
-import { SUPABASE_ANON_KEY, SUPABASE_URL } from './supabase';
+import { listingBySlug } from './listings';
+import { supabaseConfigured, supabasePublic } from './supabase';
 
-/**
- * Reading a published listing at request time.
- *
- * WHY THIS EXISTS. `/a/[slug]` used `getStaticPaths()` over the two demo
- * listings in listings.ts, so a page existed for A7K2M and V3M9Q and for
- * nothing else. An agent could complete the whole flow and the link they
- * shared would 404 — the one artefact the entire product is built to produce.
- *
- * A SEPARATE CLIENT FROM lib/supabase.ts, deliberately. That one is the
- * BROWSER's: it persists a session, refreshes tokens and reads the URL for an
- * auth callback. None of that belongs in a Worker handling a request for
- * somebody else's page, and `detectSessionInUrl` on a server would try to read
- * a session out of a visitor's URL.
- *
- * ANON KEY ONLY, AND THAT IS THE POINT. The select below has no owner filter
- * because the public-read policy in 0002 is what decides what comes back:
- *
- *   using (status in ('published', 'sold'))
- *
- * A draft is therefore invisible here even with a correct slug, and it is
- * invisible because the database says so rather than because this file
- * remembered to ask. The service-role key would bypass that and must never
- * reach this bundle (CLAUDE.md §9).
- */
-function readClient() {
-  return createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-  });
+const LISTING_COLUMNS =
+  'id, slug, category, title, description, price, currency, list_price, price_note, facts, media, disclosures, location, seller, template, accent, status, indexable, published_at, og_image_hash, audience';
+
+interface ListingRow {
+  id: string;
+  slug: string;
+  category: string;
+  title: string;
+  description: string;
+  price: number | string;
+  currency: string | null;
+  list_price: number | string | null;
+  price_note: string | null;
+  facts: unknown;
+  media: unknown;
+  disclosures: string[] | null;
+  location: unknown;
+  seller: unknown;
+  template: string;
+  accent: string | null;
+  status: string;
+  indexable: boolean;
+  published_at: string | null;
+  og_image_hash: string | null;
+  audience: string | null;
 }
 
-/** The columns the page renders. */
-const COLUMNS =
-  'id, slug, category, title, description, price, currency, list_price, price_note, facts, media, disclosures, location, seller, template, accent, status, indexable, published_at';
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
 
-type Row = Record<string, unknown>;
+function asSeller(value: unknown): Seller | undefined {
+  if (!isRecord(value)) return undefined;
+  const name = typeof value.name === 'string' ? value.name : '';
+  const phone = typeof value.phone === 'string' ? value.phone : '';
+  if (!name || !phone) return undefined;
+  return {
+    name,
+    phone,
+    ...(typeof value.role === 'string' ? { role: value.role } : {}),
+    ...(typeof value.agencyName === 'string' ? { agencyName: value.agencyName } : {}),
+    ...(typeof value.licenceNumber === 'string' ? { licenceNumber: value.licenceNumber } : {}),
+  };
+}
 
-const text = (value: unknown): string => (typeof value === 'string' ? value : '');
-const maybeText = (value: unknown): string | undefined =>
-  typeof value === 'string' && value !== '' ? value : undefined;
-const number = (value: unknown): number => {
-  const parsed = typeof value === 'string' ? Number(value) : value;
-  return typeof parsed === 'number' && Number.isFinite(parsed) ? parsed : 0;
-};
+function asMedia(value: unknown): Media | undefined {
+  if (!isRecord(value) || !isRecord(value.cover) || typeof value.cover.url !== 'string') {
+    return undefined;
+  }
+  const cover = {
+    id: String(value.cover.id ?? 'cover'),
+    url: String(value.cover.url),
+    alt: typeof value.cover.alt === 'string' ? value.cover.alt : '',
+    width: Number(value.cover.width ?? 1),
+    height: Number(value.cover.height ?? 1),
+  };
+  const gallery = Array.isArray(value.gallery)
+    ? value.gallery.flatMap((item) => {
+        if (!isRecord(item) || typeof item.url !== 'string') return [];
+        return [
+          {
+            id: String(item.id ?? item.url),
+            url: String(item.url),
+            alt: typeof item.alt === 'string' ? item.alt : '',
+            width: Number(item.width ?? 1),
+            height: Number(item.height ?? 1),
+            ...(typeof item.caption === 'string' ? { caption: item.caption } : {}),
+          },
+        ];
+      })
+    : [];
+  return {
+    cover,
+    gallery,
+    ...(typeof value.pdfUrl === 'string' ? { pdfUrl: value.pdfUrl } : {}),
+  };
+}
+
+function asTemplate(value: string): TemplateId {
+  return (TEMPLATE_IDS as readonly string[]).includes(value)
+    ? (value as TemplateId)
+    : 'editorial';
+}
 
 /**
- * Maps a database row onto the shape the components render.
+ * Maps a listings row onto the domain type the page already renders.
  *
- * Every field is coerced rather than cast. `price` is numeric(12,2), which
- * PostgREST returns as a STRING — rendering that straight into the price bar
- * would print "1850000.00" where the page promises ₪1,850,000, and a cast
- * would have hidden it behind a type that was never true.
+ * Pure, so a bad row becomes `undefined` rather than a half-built page.
  */
-export function listingFromRow(row: Row): Listing {
-  const media = (row.media ?? {}) as Listing['media'];
-  const location = (row.location ?? undefined) as Listing['location'];
-  const seller = (row.seller ?? {}) as Listing['seller'];
+export function listingFromRow(row: ListingRow): Listing | undefined {
+  if (row.category !== 'property' && row.category !== 'vehicle') return undefined;
+  if (row.status !== 'draft' && row.status !== 'published' && row.status !== 'sold' && row.status !== 'archived') {
+    return undefined;
+  }
+
+  const seller = asSeller(row.seller);
+  const media = asMedia(row.media);
+  if (!seller || !media) return undefined;
+
+  const location = isRecord(row.location) && typeof row.location.city === 'string'
+    ? {
+        city: row.location.city,
+        ...(typeof row.location.street === 'string' ? { street: row.location.street } : {}),
+      }
+    : undefined;
 
   return {
-    id: text(row.id),
-    slug: text(row.slug),
-    category: row.category === 'vehicle' ? 'vehicle' : 'property',
-
-    title: text(row.title),
-    description: text(row.description),
-    price: number(row.price),
-    currency: text(row.currency) || 'ILS',
-    ...(row.list_price === null || row.list_price === undefined
-      ? {}
-      : { listPrice: number(row.list_price) }),
-    ...(maybeText(row.price_note) ? { priceNote: text(row.price_note) } : {}),
-
+    id: row.id,
+    slug: row.slug,
+    category: row.category as ListingCategory,
+    title: row.title,
+    description: row.description ?? '',
+    price: Number(row.price),
+    currency: row.currency ?? 'ILS',
+    ...(row.list_price != null ? { listPrice: Number(row.list_price) } : {}),
+    ...(row.price_note ? { priceNote: row.price_note } : {}),
     facts: Array.isArray(row.facts) ? (row.facts as Fact[]) : [],
     media,
-    ...(Array.isArray(row.disclosures) && row.disclosures.length > 0
-      ? { disclosures: row.disclosures as string[] }
-      : {}),
+    ...(row.disclosures && row.disclosures.length > 0 ? { disclosures: row.disclosures } : {}),
     ...(location ? { location } : {}),
     seller,
-
-    template: (row.template === 'agency' || row.template === 'dark'
-      ? row.template
-      : 'editorial') as Listing['template'],
-    ...(maybeText(row.accent) ? { accent: text(row.accent) } : {}),
-
-    status: (row.status === 'sold' ? 'sold' : 'published') as Listing['status'],
-    // Default FALSE. A private seller rarely wants their home address
-    // permanently searchable, and the column decides — not this mapper
-    // (CLAUDE.md §7).
+    template: asTemplate(row.template),
+    ...(row.accent ? { accent: row.accent } : {}),
+    status: row.status as ListingStatus,
+    ...(row.published_at ? { publishedAt: row.published_at } : {}),
     indexable: row.indexable === true,
-    ...(maybeText(row.published_at) ? { publishedAt: text(row.published_at) } : {}),
+    ...(row.og_image_hash ? { ogImageHash: row.og_image_hash } : {}),
+    ...(row.audience === 'investor' || row.audience === 'resident'
+      ? { audience: row.audience }
+      : {}),
   };
 }
 
 /**
- * The published listing for a slug, or undefined.
+ * A published or sold listing, by slug.
  *
- * Undefined covers "no such slug" and "there is a row but it is a draft"
- * identically, and that is deliberate: telling a stranger which unpublished
- * slugs exist is an information leak dressed as a helpful error.
+ * Demo fixtures win so `/a/A7K2M` stays the visual contract even if someone
+ * later inserts a real row with that slug — they cannot, the check is five
+ * Crockford characters and the samples are the same alphabet, but the
+ * fixtures are what CI builds against and must not start reading a database.
  */
 export async function publishedListing(slug: string): Promise<Listing | undefined> {
+  const demo = listingBySlug(slug);
+  if (demo) return demo;
+
+  if (!supabaseConfigured) return undefined;
+
   try {
-    const { data, error } = await readClient()
+    const { data, error } = await supabasePublic()
       .from('listings')
-      .select(COLUMNS)
+      .select(LISTING_COLUMNS)
       .eq('slug', slug)
+      .in('status', ['published', 'sold'])
       .maybeSingle();
 
     if (error || !data) return undefined;
-
-    return listingFromRow(data as Row);
+    return listingFromRow(data as ListingRow);
   } catch {
-    // A page that 500s because Supabase was slow is worse than a 404 the
-    // agent can retry. Either way the buyer sees something rather than a
-    // stack trace.
     return undefined;
+  }
+}
+
+/** Indexable published/sold listings, for the sitemap. Demos are never listed. */
+export async function indexableListings(): Promise<{ slug: string; publishedAt?: string }[]> {
+  if (!supabaseConfigured) return [];
+
+  try {
+    const { data, error } = await supabasePublic()
+      .from('listings')
+      .select('slug, published_at')
+      .eq('indexable', true)
+      .in('status', ['published', 'sold']);
+
+    if (error || !data) return [];
+    return data.map((row) => ({
+      slug: String((row as { slug: string }).slug),
+      ...((row as { published_at?: string | null }).published_at
+        ? { publishedAt: String((row as { published_at: string }).published_at) }
+        : {}),
+    }));
+  } catch {
+    return [];
   }
 }

@@ -27,8 +27,8 @@ import { listings } from '../../lib/listings';
  * version of this file emitted nothing at all and the divergence check failed
  * looking for output that was never built.
  *
- * These are the same two demo listings already public at /a/{slug}, so the
- * extra URL exposes nothing new, and both carry indexable:false.
+ * Forced noindex, and disallowed in robots.txt, so it is not a second public
+ * URL for the demos.
  */
 export function getStaticPaths() {
   return listings.map((listing) => ({ params: { slug: listing.slug }, props: { listing } }));
@@ -36,5 +36,4 @@ export function getStaticPaths() {
 
 const { listing } = Astro.props;
 ---
-
-<ListingPage listing={listing} />
+<ListingPage listing={listing} robots="noindex,nofollow" />

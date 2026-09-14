@@ -1,7 +1,6 @@
 ---
 import ListingPage from '../../../components/ListingPage.astro';
 import { publishedListing } from '../../../lib/listing-from-row';
-import { listings } from '../../../lib/listings';
 
 /**
  * RENDERED PER REQUEST, not at build time.
@@ -11,26 +10,19 @@ import { listings } from '../../../lib/listings';
  * agent could finish the whole flow and the link they shared would 404. The
  * link is the product.
  *
- * It is the ONLY route that opts out of prerendering: the homepage, the
- * dashboard, /new and /me are still static files on the CDN. astro.config.mjs
- * carries the reasoning, and CLAUDE.md §2's "no runtime rendering" rule is
- * corrected there rather than quietly broken here.
+ * Demo fixtures still win inside `publishedListing()` so `/a/A7K2M` and
+ * `/a/V3M9Q` stay the visual contract even if this deploy's database is empty.
+ * CI builds the same tree at `/template-check/`.
  *
- * THE PAGE ITSELF IS ListingPage.astro. This file is routing and nothing else,
- * so the markup CI checks and the markup a buyer sees cannot be two things —
- * see the note in _verify/[slug].astro.
+ * It is the ONLY route that opts out of prerendering: the homepage, the
+ * dashboard, /new and /me are still static files on the CDN.
+ *
+ * THE PAGE ITSELF IS ListingPage.astro. This file is routing and nothing else.
  */
 export const prerender = false;
 
-const { slug } = Astro.params;
-
-/*
- * The two DEMO listings are checked first and served from the module. They are
- * what the homepage links to, so they must not depend on a network call or on
- * a row existing in whichever database this deploy points at.
- */
-const demo = listings.find((candidate) => candidate.slug === slug);
-const listing = demo ?? (slug ? await publishedListing(slug) : undefined);
+const slug = Astro.params.slug ?? '';
+const listing = slug ? await publishedListing(slug) : undefined;
 
 /*
  * A missing listing is a 404, and so is a DRAFT — publishedListing cannot see
@@ -42,5 +34,4 @@ if (!listing) {
   return new Response(null, { status: 404 });
 }
 ---
-
 <ListingPage listing={listing} />

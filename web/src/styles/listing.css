@@ -261,6 +261,20 @@ footer a{color:var(--muted)}
 .odbl{font-size:.7rem;color:#96978E;margin-top:.5rem;line-height:1.6}
 .attribution{font-size:.7rem;color:var(--muted);line-height:1.6}
 
+/* Sold — a record, not a live offer. Lives here so property and vehicle CSS
+   stay byte-identical (verify-template-divergences.mjs). */
+.sold-banner{
+  margin:0;
+  padding:.85rem var(--gut);
+  background:var(--stone-warm);
+  color:var(--muted-warm);
+  font-size:.92rem;
+  font-weight:600;
+  text-align:center;
+  border-block-end:1px solid var(--stone);
+}
+body:has(.sold-banner){padding-bottom:2rem}
+
 /* ============================================================
    תנועה — scroll-driven נטיבי. אפס JS.
    דפדפן שלא תומך פשוט מציג את התוכן. שיפור מדורג.

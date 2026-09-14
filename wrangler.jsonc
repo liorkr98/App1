@@ -20,6 +20,10 @@
   // Cloudflare serves a matching static asset BEFORE invoking the Worker, so
   // the homepage, the dashboard, /new and /me still cost nothing to serve and
   // only a listing page reaches the runtime.
+  //
+  // After `astro build`, Workers Builds runs wrangler, so `main` exists at
+  // deploy time. Do not point the Astro adapter at this path — `astro check`
+  // runs before dist/ exists. The adapter reads web/wrangler.jsonc instead.
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "besivov",
   "compatibility_date": "2026-09-11",
@@ -40,4 +44,7 @@
     // runtime looks it up to serve prerendered pages from inside the Worker.
     "binding": "ASSETS"
   }
+
+  // Do NOT add custom_domain here until hasivuv.com DNS is attached.
+  // A routes.custom_domain that does not resolve fails the deploy.
 }

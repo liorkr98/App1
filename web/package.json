@@ -12,7 +12,7 @@
     "check:divergences": "node ../scripts/verify-template-divergences.mjs"
   },
   "dependencies": {
-    "@astrojs/cloudflare": "^14.3.1",
+    "@astrojs/cloudflare": "14.3.1",
     "@astrojs/react": "6.0.5",
     "@supabase/supabase-js": "2.116.0",
     "astro": "7.3.1",

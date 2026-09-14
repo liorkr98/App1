@@ -62,16 +62,31 @@ const key = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || PUBLISHABLE_KEY;
  */
 export const supabaseConfigured = Boolean(url && key);
 
-/**
- * The same two public values, for the SERVER-side reader.
- *
- * listing-from-row.ts builds its own client with session persistence off: the
- * browser client below refreshes tokens and reads the URL for an auth
- * callback, and neither belongs in a Worker rendering somebody else's page.
- * It needs the values, not this module's client.
- */
+/** Public project values. Safe to ship; RLS is the security. */
+export const supabaseUrl = url;
+export const supabaseKey = key;
 export const SUPABASE_URL = url;
 export const SUPABASE_ANON_KEY = key;
+
+/**
+ * A client with no session, for server reads of published pages.
+ *
+ * The browser client persists a session in localStorage. That storage does
+ * not exist on a Worker, and a listing page opened from WhatsApp has no
+ * account anyway. Public rows are readable under `listings_select_public`.
+ */
+export function supabasePublic(): SupabaseClient {
+  if (!supabaseConfigured) {
+    throw new Error(
+      'Supabase is not configured. Set PUBLIC_SUPABASE_URL and ' +
+        'PUBLIC_SUPABASE_ANON_KEY as BUILD variables — see docs/DEPLOY.md.',
+    );
+  }
+
+  return createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  });
+}
 
 let client: SupabaseClient | null = null;
 

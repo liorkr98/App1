@@ -1,0 +1,13 @@
+# supabase/config.toml — function JWT flags only.
+#
+# This is not a full local-stack config. The hosted project is
+# yaaqcfcjkfdwtczespny. verify_jwt must stay on for both functions: the
+# identity comes from the caller's token, never from a body parameter.
+
+project_id = "yaaqcfcjkfdwtczespny"
+
+[functions.delete-account]
+verify_jwt = true
+
+[functions.lookup-plate]
+verify_jwt = true

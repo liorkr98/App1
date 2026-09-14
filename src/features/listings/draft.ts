@@ -67,6 +67,7 @@ export function toDraft(state: EditorState): Stored {
     // else: the seller loses a phone call's worth of typing otherwise.
     title: state.title,
     price: state.price,
+    indexable: state.indexable,
     ...(state.city === undefined ? {} : { city: state.city }),
     ...(state.street === undefined ? {} : { street: state.street }),
     ...(state.priceNote === undefined ? {} : { priceNote: state.priceNote }),
@@ -151,11 +152,13 @@ export function fromDraft(raw: unknown): Draft | null {
   const city = text(parsed.city);
   const street = text(parsed.street);
   const priceNote = text(parsed.priceNote);
+  const indexable = parsed.indexable === true;
 
   return {
     ...(category === undefined ? {} : { category }),
     title,
     price,
+    indexable,
     ...(city === undefined ? {} : { city }),
     ...(street === undefined ? {} : { street }),
     ...(priceNote === undefined ? {} : { priceNote }),

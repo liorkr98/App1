@@ -8,9 +8,11 @@ interface Props {
   blockers: readonly Blocker[];
   /** Set once the listing is live. The link is the product. */
   publishedUrl?: string | undefined;
+  publishedSlug?: string | undefined;
   publishing: boolean;
   onPublish: () => void;
   onCopy: (url: string) => void;
+  onIndexable: (indexable: boolean) => void;
 }
 
 /**
@@ -34,23 +36,23 @@ interface Props {
  * and there must never be one.
  * ======================================================================
  *
- * WHAT AN AGENT WILL ACTUALLY SEE TODAY is the paymentRequired blocker, every
- * time, because no payment provider has been chosen (PRD §6) and the editor
- * hard-codes entitlement to 'unknown'. That is the product working as
- * specified, not a bug — but it does mean publishing cannot succeed for
- * anyone until a provider exists or the flag is set deliberately. Saying so on
- * the screen is better than a button that fails silently.
+ * WHAT AN AGENT WILL ACTUALLY SEE TODAY depends on `beta_publishers`. The
+ * editor reads entitlement fail-closed; unpaid and unknown both block, with
+ * different copy. There is no branch that publishes when the check failed.
  */
 export function PublishStep({
   state,
   blockers,
   publishedUrl,
+  publishedSlug,
   publishing,
   onPublish,
   onCopy,
+  onIndexable,
 }: Props) {
   // The link exists: nothing else on this step matters any more.
   if (publishedUrl) {
+    const shareHref = publishedSlug ? `/a/${publishedSlug}/share/` : publishedUrl;
     return (
       <div className="published">
         <h2 className="published-title">{t('editor.publish.done')}</h2>
@@ -68,6 +70,9 @@ export function PublishStep({
           </button>
           <a className="secondary" href={publishedUrl}>
             {t('editor.publish.open')}
+          </a>
+          <a className="secondary" href={shareHref}>
+            {t('editor.publish.share')}
           </a>
           <a className="secondary" href="/mine/">
             {t('dash.title')}
@@ -117,9 +122,25 @@ export function PublishStep({
       {payment && (
         <div className="paywall">
           <p>{t(`editor.blockers.${payment.code}`)}</p>
-          <p className="field-hint">{t('editor.publish.paymentPending')}</p>
+          <p className="field-hint">
+            {t(
+              payment.code === 'paymentUnverified'
+                ? 'editor.publish.payWait'
+                : 'editor.publish.payBeta',
+            )}
+          </p>
         </div>
       )}
+
+      <label className="declare">
+        <input
+          type="checkbox"
+          checked={state.indexable === true}
+          onChange={(event) => onIndexable(event.target.checked)}
+        />
+        <span>{t('editor.publish.indexable')}</span>
+      </label>
+      <p className="field-hint">{t('editor.publish.indexableWhy')}</p>
 
       <button
         type="button"

@@ -1,6 +1,10 @@
 import type { EditorState } from '@/features/listings/editor';
+import { DEFAULT_ACCENT, isAccentId } from '@/features/agents/accents';
+import { toSeller } from '@/features/agents/profile';
+import { schemaFor } from '@/features/listings/schemas';
 import type { EditorPhoto } from '../components/editor/PhotosStep';
 
+import { loadProfile } from './profile';
 import { supabase } from './supabase';
 
 /**
@@ -106,6 +110,7 @@ export async function saveListing(
       ...(state.template ? { template: state.template } : {}),
       ...(state.audience ? { audience: state.audience } : {}),
       ...(state.disclosures ? { disclosures: state.disclosures } : {}),
+      indexable: state.indexable === true,
     })
     .eq('id', listingId);
 
@@ -128,13 +133,49 @@ export async function saveListing(
  */
 export async function publishListing(
   listingId: string,
-): Promise<{ ok: true } | { error: string }> {
-  const { error } = await supabase()
-    .from('listings')
-    .update({ status: 'published', published_at: new Date().toISOString() })
-    .eq('id', listingId);
+  state: EditorState,
+): Promise<{ ok: true; slug: string } | { error: string }> {
+  // ============================ HUMAN REVIEW ============================
+  // This function does not read entitlement. The editor's `canPublish` is
+  // what called it, and that already required 'paid'. A second check here
+  // would be the same decision in two places; a missed one would be a grant.
+  // ======================================================================
+  const category = state.category;
+  if (!category) return { error: 'no_category' };
 
-  return error ? { error: error.message } : { ok: true };
+  let seller: Record<string, unknown> | undefined;
+  let accent: string = DEFAULT_ACCENT;
+
+  try {
+    const profile = await loadProfile();
+    if ('profile' in profile) {
+      const stamped = toSeller(profile.profile, schemaFor(category).ownerRole);
+      if (stamped) seller = { ...stamped };
+      if (isAccentId(profile.profile.accent)) accent = profile.profile.accent;
+    }
+  } catch {
+    // Keep whatever was stamped at draft time rather than failing publish
+    // because /me could not be read at this instant.
+  }
+
+  const expires = new Date();
+  expires.setUTCFullYear(expires.getUTCFullYear() + 1);
+
+  const { data, error } = await supabase()
+    .from('listings')
+    .update({
+      status: 'published',
+      published_at: new Date().toISOString(),
+      expires_at: expires.toISOString(),
+      indexable: state.indexable === true,
+      ...(seller ? { seller, accent } : {}),
+    })
+    .eq('id', listingId)
+    .select('slug')
+    .single();
+
+  if (error || !data) return { error: error?.message ?? 'publish_failed' };
+  return { ok: true, slug: data.slug as string };
 }
 
 /**
@@ -148,7 +189,7 @@ export async function loadListing(
 ): Promise<{ row: Record<string, unknown> } | { error: string }> {
   const { data, error } = await supabase()
     .from('listings')
-    .select('id, slug, category, title, price, price_note, description, facts, media, location, template, audience, disclosures, status')
+    .select('id, slug, category, title, price, price_note, description, facts, media, location, template, audience, disclosures, indexable, status')
     .eq('slug', slug)
     .maybeSingle();
 

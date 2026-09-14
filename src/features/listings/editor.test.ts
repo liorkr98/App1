@@ -31,6 +31,7 @@ const ready = (): EditorState => ({
   title: 'דירת 4 חדרים, משופצת מהיסוד',
   price: 1850000,
   city: 'חולון',
+  indexable: false,
   photoCount: 6,
   facts: [
     fact('rooms', 'חדרים', 4, true),
@@ -222,6 +223,7 @@ describe('blockers', () => {
     const found = blockers({
       title: '',
       price: 0,
+      indexable: false,
       photoCount: 0,
       facts: [fact('rooms', 'חדרים', null, true)],
       description: '',
@@ -387,7 +389,15 @@ describe('canAdvance', () => {
 describe('nextStep — where a returning seller lands', () => {
   it('starts at the beginning for an empty listing', () => {
     assert.equal(
-      nextStep({ title: '', price: 0, photoCount: 0, facts: [], description: '', entitlement: 'unknown' }),
+      nextStep({
+        title: '',
+        price: 0,
+        indexable: false,
+        photoCount: 0,
+        facts: [],
+        description: '',
+        entitlement: 'unknown',
+      }),
       'category',
     );
   });

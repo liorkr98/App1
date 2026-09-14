@@ -3,6 +3,14 @@
 Status: **open decision.** Nothing implemented, no provider chosen.
 Date: September 2026
 
+**Current grant, until a PSP is signed:** membership of `beta_publishers`
+(migration 0013). A row is an explicit human INSERT — the table has no client
+write policy. The editor reads it through `entitlementFromAllowlist` and
+`loadEntitlement`. Fail closed: missing row is unpaid, a failed read is
+unknown, only a present row is treated as paid. This is not a PSP adapter;
+replacing it is a product change that needs the same human review (CLAUDE.md
+§8).
+
 This exists to be taken to a vendor. Israeli PSP contracts run a year with an
 exit penalty, so the list is written to be checked against a sales engineer's
 answers **before** signing, not discovered during integration.

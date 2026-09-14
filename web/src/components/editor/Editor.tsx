@@ -16,7 +16,9 @@ import { LISTING_CATEGORIES, schemaFor } from '@/features/listings/schemas';
 import { isProfileComplete } from '@/features/agents/profile';
 
 import { t } from '../../lib/i18n';
+import { loadEntitlement } from '../../lib/entitlement';
 import { createDraft, uploadOriginal } from '../../lib/listing-draft';
+import { enqueuePublishJobs } from '../../lib/listing-jobs';
 import { stripAndResize, uploadDerived } from '../../lib/listing-photo';
 import { loadListing, publishListing, saveListing } from '../../lib/listing-save';
 import { loadProfile } from '../../lib/profile';
@@ -60,13 +62,16 @@ import { clearDraft, useDraft } from './useDraft';
  * account until publish" and until the seller pays there is nowhere else to
  * put their work.
  *
- * Publish is inert, and gated on entitlement with no provider chosen.
- * Entitlement is hard-coded to 'unknown' below. See the banner there.
+ * Publish is gated on entitlement with a fail-closed read from
+ * `loadEntitlement`. A failed read stays 'unknown' and canPublish stays
+ * false (CLAUDE.md §8). The draft is kept in localStorage (useDraft);
+ * entitlement is never stored there.
  */
 
 const START: EditorState = {
   title: '',
   price: 0,
+  indexable: false,
   photoCount: 0,
   facts: [],
   description: '',
@@ -75,9 +80,9 @@ const START: EditorState = {
   // CLAUDE.md §8: I may build the paywall and may NOT decide entitlement.
   //
   // 'unknown' is the fail-closed value — it blocks publishing, which is
-  // the correct behaviour for a client that has asked nobody. When a
-  // provider exists this becomes a read from it, and the read must still
-  // produce 'unknown' on any error rather than 'paid'.
+  // the correct behaviour for a client that has asked nobody. loadEntitlement
+  // replaces this once the session exists, and that read must still produce
+  // 'unknown' on any error rather than 'paid'.
   //
   // A seller can still reach the preview with this value, which is the
   // point: seeing the finished page is the conversion moment.
@@ -118,6 +123,7 @@ export default function Editor() {
    */
   const listingId = useRef<string | null>(null);
   const slug = useRef<string | null>(null);
+  const skipDraftRestore = useRef(false);
   const [signedIn, setSignedIn] = useState(false);
 
   /**
@@ -156,7 +162,7 @@ export default function Editor() {
    */
   useEffect(() => {
     if (!supabaseConfigured || !signedIn) {
-      setState((current) => ({ ...current, sellerReady: false }));
+      setState((current) => ({ ...current, sellerReady: false, entitlement: 'unknown' }));
       return;
     }
 
@@ -172,6 +178,12 @@ export default function Editor() {
       .catch(() => {
         if (live) setState((current) => ({ ...current, sellerReady: false }));
       });
+
+    // HUMAN REVIEW: entitlement is READ, never inferred. A failed read stays
+    // 'unknown' and publishing stays blocked (CLAUDE.md §8).
+    void loadEntitlement().then((entitlement) => {
+      if (live) setState((current) => ({ ...current, entitlement }));
+    });
 
     // The guard is for the sign-out that lands mid-request: without it a
     // resolved read from the previous session sets sellerReady true after the
@@ -281,6 +293,8 @@ export default function Editor() {
     const wanted = new URLSearchParams(window.location.search).get('id');
     if (!wanted) return;
 
+    skipDraftRestore.current = true;
+
     let live = true;
 
     void loadListing(wanted)
@@ -322,6 +336,7 @@ export default function Editor() {
           description: String(row.description ?? ''),
           facts: Array.isArray(row.facts) ? row.facts : current.facts,
           photoCount: stored.length,
+          indexable: row.indexable === true,
           ...(row.template ? { template: row.template as EditorState['template'] } : {}),
           ...(Array.isArray(row.disclosures) ? { disclosures: row.disclosures as string[] } : {}),
         }));
@@ -344,6 +359,7 @@ export default function Editor() {
    * Entitlement is untouched: `Draft` has no such field. See useDraft.
    */
   useDraft(state, (draft) => {
+    if (skipDraftRestore.current) return;
     setState((current) => ({ ...current, ...draft }));
     setStep(nextStep({ ...START, ...draft }));
   });
@@ -387,11 +403,24 @@ export default function Editor() {
       // sees is how a page ships without the description they just wrote.
       await saveListing(id, state, photos).catch(() => undefined);
 
-      const result = await publishListing(id).catch(() => ({ error: 'failed' }) as const);
+      const result = await publishListing(id, state).catch(() => ({ error: 'failed' }) as const);
       setPublishing(false);
 
-      if ('ok' in result && slug.current) {
-        setPublishedUrl(`${window.location.origin}/a/${slug.current}/`);
+      if ('ok' in result) {
+        const publishedSlug = result.slug || slug.current;
+        if (publishedSlug) {
+          slug.current = publishedSlug;
+          setPublishedUrl(`${window.location.origin}/a/${publishedSlug}/`);
+        }
+        const originals = photos
+          .map((photo) => photo.path)
+          .filter((path): path is string => Boolean(path));
+        void enqueuePublishJobs({
+          listingId: id,
+          originalPaths: originals,
+          ...(photos[0]?.path ? { coverPath: photos[0].path } : {}),
+          price: state.price,
+        });
         clearDraft();
       }
     })();
@@ -481,6 +510,8 @@ export default function Editor() {
             onPlate={setPlate}
             declared={declaredOwner}
             onDeclare={setDeclaredOwner}
+            facts={state.facts}
+            onFacts={(facts) => setState((current) => ({ ...current, facts }))}
           />
         ) : null}
 
@@ -525,9 +556,11 @@ export default function Editor() {
             state={state}
             blockers={outstanding}
             publishedUrl={publishedUrl}
+            publishedSlug={slug.current ?? undefined}
             publishing={publishing}
             onPublish={publish}
             onCopy={(url) => void navigator.clipboard.writeText(url).catch(() => undefined)}
+            onIndexable={(indexable) => setState((current) => ({ ...current, indexable }))}
           />
         ) : null}
 

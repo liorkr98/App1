@@ -1,8 +1,33 @@
 # Deploying the listing pages
 
-The `web/` workspace is a static Astro site. It deploys to Cloudflare Pages
-straight from GitHub — no CLI, no API token, nothing that has to pass through
-a chat window.
+The `web/` workspace is Astro. Homepage, editor, legal and the CI fixtures
+prerender; `/a/[slug]`, `/share`, `/sitemap.xml` and `/pdf` run on the Worker
+at request time so a real listing exists without a rebuild.
+
+It deploys to Cloudflare Workers from GitHub. `wrangler.jsonc` at the repo
+root is the config — do not let the dashboard auto-detect Expo.
+
+---
+
+## Custom domain — not attached from this change
+
+`hasivuv.com` still has to be added in the Cloudflare dashboard (Workers →
+besivov → Custom domains) and the DNS at the registrar has to point at
+Cloudflare. This environment cannot attach that. Until it is:
+
+- leave `SITE_URL` unset, or set it to `https://besivov.liorkr98.workers.dev`
+- **do not** add `custom_domain` in `wrangler.jsonc` — a domain that does not
+  resolve fails the deploy
+
+The day it is attached:
+
+```
+SITE_URL = https://hasivuv.com
+```
+
+in **Settings → Build → Variables**, then retry the deployment. Absolute
+`og:image` URLs bake this host in. A 301 from workers.dev to the custom
+domain is a dashboard setting, not a repo file.
 
 ---
 
@@ -107,9 +132,15 @@ assumes someone taps.
 
 ### Before the gate means anything
 
-- **A real photograph as the cover.** The sample listings use `placehold.co`
-  grey rectangles. A card showing a grey box tests nothing.
-- **A real host**, which the Pages deploy provides.
+- **A real photograph as the cover.** The two demo listings (`/a/A7K2M`,
+  `/a/V3M9Q`) use CC0/public-domain WebP files in `web/public/sample/` — see
+  `docs/SAMPLE-IMAGES.md`. They are no longer placehold.co rectangles.
+- **A real host.** Until `hasivuv.com` resolves, send
+  `https://besivov.liorkr98.workers.dev/a/A7K2M/`. WhatsApp needs a public
+  HTTPS URL; localhost tests nothing.
+- **Three phones.** Send it to yourself and two other people, and look at
+  the card **on their phones**. This change does not perform that test —
+  there is no WhatsApp session here.
 
 ### Re-testing after a change
 
@@ -136,8 +167,15 @@ explicit.
 
 ### In the repository — done
 
-`wrangler.jsonc` is committed. It pins the asset directory to `web/dist` and
-stops `wrangler deploy` running its auto-configuration at all.
+`wrangler.jsonc` is committed at the **repo root** (so Workers Builds does
+not guess Expo) and a second copy lives in `web/` for the Astro adapter.
+
+- **Root** `wrangler.jsonc` — `main` is `web/dist/server/entry.mjs`, assets
+  are `web/dist/client`. Wrangler reads this **after** `astro build`.
+- **`web/wrangler.jsonc`** — `main` is `@astrojs/cloudflare/entrypoints/server`,
+  which exists as soon as `web/` is installed. `astro check` and `astro build`
+  read this one. Pointing the adapter at the built entry made CI fail on a
+  clean machine: the Vite plugin resolves `main` when the config loads.
 
 ### The build output moved — 14 September 2026
 
@@ -250,19 +288,17 @@ build path. The explicit config is the cheaper fix.
 
 ### The PDF route
 
-`/a/{slug}/pdf` is still a stub. The PDF itself is real — the worker renders
-it from this very page and writes the result to `listings.media.pdfUrl` — but
-this site builds with `output: static`, where an endpoint keeps its body and
-loses its status and headers. A redirect from that route would produce an empty
-file, not a redirect.
+`/a/{slug}/pdf` is on-demand. If the worker has written `listings.media.pdfUrl`
+it 302s there; otherwise it returns Hebrew text with 503. The listing page
+still does not link it: putting a download control on the page is a design
+change to a template held to a byte-identical CSS contract.
 
-A stable `/a/{slug}/pdf` link therefore needs either on-demand rendering or a
-generated redirect map, and both belong with the change that makes these pages
-read from Supabase instead of the fixtures in `web/src/lib/listings.ts`.
+### On-demand listing pages
 
-The listing page does not link to the PDF yet either. Putting a download
-control on it is a design change to a template held to a byte-identical CSS
-contract, and that is a decision to take deliberately rather than in passing.
+`/a/[slug]` and `/a/[slug]/share` load published (and sold) rows from Supabase
+via the publishable key. Demo slugs `A7K2M` and `V3M9Q` still render from
+fixtures. CI builds the same tree at `/template-check/{slug}`, which is
+noindex and disallowed in `robots.txt`.
 
 ### The worker
 
@@ -270,9 +306,12 @@ The pipeline is not part of this deploy. It runs on Fly (`docs/PIPELINE.md`),
 and it needs one value from here:
 
 ```
-PAGE_BASE_URL   the origin Cloudflare Pages serves, e.g. https://listings.example.com
+PAGE_BASE_URL   the origin the listing pages are served from, e.g. https://hasivuv.com
 ```
 
 Set it on the Fly app once the domain is fixed. Until it is set, the pdf
 process group refuses to start rather than rendering something wrong — which is
 the intended behaviour, not a bug to work around.
+
+Publish already enqueues `enhance_images` and `generate_og`. Those jobs sit in
+Postgres until the Fly app is running.

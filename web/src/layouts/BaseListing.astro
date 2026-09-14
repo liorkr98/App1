@@ -1,6 +1,8 @@
 ---
 import { accentFor } from '@/features/agents/accents';
 import type { Listing } from '@/types/listing';
+import { t } from '../lib/i18n';
+import { listingJsonLd } from '../lib/jsonld';
 import { ogDescription, ogImageUrl, ogTitle } from '../lib/og';
 import '../styles/tokens.css';
 
@@ -18,9 +20,11 @@ interface Props {
    * frame either crops it or fills the rest with asphalt.
    */
   heroHeight: string;
+  /** Override robots. `/template-check/` forces noindex. */
+  robots?: string;
 }
 
-const { listing, ogFactKeys, heroHeight } = Astro.props;
+const { listing, ogFactKeys, heroHeight, robots: robotsOverride } = Astro.props;
 
 /**
  * The agent's accent, resolved to two stops and set as inline custom
@@ -44,9 +48,20 @@ const description = ogDescription(listing, ogFactKeys);
 // real 1200x630 crop — see ogImageUrl.
 const ogImage = ogImageUrl(listing, Astro.site);
 
+const canonical = new URL(`/a/${listing.slug}/`, Astro.site).href;
+
 // noindex unless the seller opted in. A private seller usually does not want
 // their home address permanently searchable; an agent does. Not our call.
-const robots = listing.indexable ? 'index,follow' : 'noindex';
+const robots = robotsOverride ?? (listing.indexable ? 'index,follow' : 'noindex');
+
+// Structured data only when Google is invited. A noindex page with JSON-LD
+// still puts the address in a crawl report.
+const jsonLd =
+  robots.startsWith('index') && listing.indexable
+    ? listingJsonLd(listing, canonical)
+    : undefined;
+
+const sold = listing.status === 'sold';
 
 /**
  * The agent bar, and what it says when there is no agent.
@@ -80,9 +95,12 @@ const agency = listing.seller.agencyName;
 <meta name="description" content={description}>
 
 <meta name="robots" content={robots}>
+<link rel="canonical" href={canonical}>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 
 <meta property="og:type" content="website">
 <meta property="og:locale" content="he_IL">
+<meta property="og:url" content={canonical}>
 <meta property="og:site_name" content="סיבוב">
 <meta property="og:title" content={title}>
 <meta property="og:description" content={description}>
@@ -94,6 +112,10 @@ const agency = listing.seller.agencyName;
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Assistant:wght@400;600;700&display=swap" rel="stylesheet">
+
+{jsonLd && (
+  <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+)}
 
 <style is:global>
 @import '../styles/listing.css';
@@ -123,6 +145,8 @@ const agency = listing.seller.agencyName;
     </Fragment>
   )}
 </div>
+
+{sold ? <p class="sold-banner">{t('listing.soldBanner')}</p> : null}
 
 <slot />
 </body>
