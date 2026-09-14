@@ -3,6 +3,7 @@ import { DEFAULT_ACCENT, isAccentId } from '@/features/agents/accents';
 import { toSeller } from '@/features/agents/profile';
 import { schemaFor } from '@/features/listings/schemas';
 import type { EditorPhoto } from '../components/editor/PhotosStep';
+import type { PhotoRoom } from '@/features/listings/photo-rooms';
 
 import { loadProfile } from './profile';
 import { supabase } from './supabase';
@@ -33,6 +34,7 @@ export interface SavedPhoto {
   alt: string;
   width: number;
   height: number;
+  room?: PhotoRoom;
 }
 
 /**
@@ -47,13 +49,21 @@ function toMedia(photos: readonly SavedPhoto[]) {
   if (!cover) return {};
 
   return {
-    cover: { id: cover.id, url: cover.url, alt: cover.alt, width: cover.width, height: cover.height },
+    cover: {
+      id: cover.id,
+      url: cover.url,
+      alt: cover.alt,
+      width: cover.width,
+      height: cover.height,
+      ...(cover.room ? { room: cover.room } : {}),
+    },
     gallery: rest.map((photo) => ({
       id: photo.id,
       url: photo.url,
       alt: photo.alt,
       width: photo.width,
       height: photo.height,
+      ...(photo.room ? { room: photo.room } : {}),
     })),
   };
 }
@@ -112,6 +122,7 @@ export async function saveListing(
       // arrive. Zero would produce a CLS penalty on every listing.
       width: photo.width ?? 0,
       height: photo.height ?? 0,
+      ...(photo.room ? { room: photo.room } : {}),
       index,
     }));
 

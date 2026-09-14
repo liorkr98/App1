@@ -11,6 +11,7 @@ import {
   type Step,
 } from '@/features/listings/editor';
 import { blankFacts } from '@/features/listings/fact-entry';
+import { isPhotoRoom } from '@/features/listings/photo-rooms';
 import { LISTING_CATEGORIES, schemaFor } from '@/features/listings/schemas';
 
 import { isProfileComplete } from '@/features/agents/profile';
@@ -307,11 +308,12 @@ export default function Editor() {
         slug.current = String(row.slug ?? '');
 
         const media = (row.media ?? {}) as {
-          cover?: { id?: string; url?: string; alt?: string };
-          gallery?: { id?: string; url?: string; alt?: string }[];
+          cover?: { id?: string; url?: string; alt?: string; room?: string };
+          gallery?: { id?: string; url?: string; alt?: string; room?: string }[];
         };
         const stored = [media.cover, ...(media.gallery ?? [])].filter(
-          (image): image is { id?: string; url?: string; alt?: string } => Boolean(image?.url),
+          (image): image is { id?: string; url?: string; alt?: string; room?: string } =>
+            Boolean(image?.url),
         );
 
         setPhotos(
@@ -324,6 +326,7 @@ export default function Editor() {
             ...(typeof image.alt === 'string' && image.alt.trim() !== ''
               ? { alt: image.alt }
               : {}),
+            ...(isPhotoRoom(image.room) ? { room: image.room } : {}),
           })),
         );
 
@@ -355,6 +358,11 @@ export default function Editor() {
               ? { ownerConsentName: String(row.owner_consent_name) }
               : {}),
             ...(row.template ? { template: row.template as EditorState['template'] } : {}),
+            ...(row.audience === 'resident' ||
+            row.audience === 'investor' ||
+            row.audience === 'both'
+              ? { audience: row.audience }
+              : {}),
             ...(Array.isArray(row.disclosures) ? { disclosures: row.disclosures as string[] } : {}),
           };
         });
@@ -519,7 +527,12 @@ export default function Editor() {
         ) : null}
 
         {step === 'photos' ? (
-          <PhotosStep photos={photos} onChange={changePhotos} signedIn={signedIn} />
+          <PhotosStep
+            photos={photos}
+            onChange={changePhotos}
+            signedIn={signedIn}
+            category={state.category}
+          />
         ) : null}
 
         {step === 'plate' ? (
@@ -561,13 +574,22 @@ export default function Editor() {
             facts={state.facts}
             onChange={(facts) => setState((current) => ({ ...current, facts }))}
             audience={state.audience}
-            onAudience={(audience) => setState((current) => ({ ...current, audience }))}
+            onAudience={(audience) =>
+              setState((current) => {
+                if (audience === undefined) {
+                  const { audience: _omitted, ...rest } = current;
+                  return rest;
+                }
+                return { ...current, audience };
+              })
+            }
           />
         ) : null}
 
         {step === 'disclosures' ? (
           <DisclosuresStep
             items={state.disclosures ?? []}
+            category={state.category}
             onChange={(disclosures) => setState((current) => ({ ...current, disclosures }))}
           />
         ) : null}

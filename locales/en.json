@@ -118,7 +118,8 @@
     "soldBanner": "",
     "prePortal": "",
     "prePortalNote": "",
-    "editLink": ""
+    "editLink": "",
+    "walkTitle": ""
   },
   "notFound": {
     "title": "",
@@ -176,6 +177,17 @@
     "coverPhoto": "",
     "photoAlt": "",
     "photoAltHint": "",
+    "photoRoom": "",
+    "photoRoomNone": "",
+    "rooms": {
+      "living": "",
+      "kitchen": "",
+      "bedroom": "",
+      "bathroom": "",
+      "balcony": "",
+      "outdoor": "",
+      "other": ""
+    },
     "dragToReorder": "",
     "addPhotos": "",
     "photoCount": "",
@@ -212,6 +224,9 @@
     "audienceResidentNote": "",
     "audienceInvestor": "",
     "audienceInvestorNote": "",
+    "audienceBoth": "",
+    "audienceBothNote": "",
+    "audienceSkip": "",
     "uploading": "",
     "uploadFailed": "",
     "notUploaded": "",
@@ -230,8 +245,12 @@
     "consentName": "",
     "consentNameWhy": "",
     "disclosuresHint": "",
+    "disclosuresHintProperty": "",
+    "disclosuresHintVehicle": "",
     "disclosuresLabel": "",
     "disclosuresPlaceholder": "",
+    "disclosuresPlaceholderProperty": "",
+    "disclosuresPlaceholderVehicle": "",
     "disclosuresAdd": "",
     "disclosuresRemove": "",
     "details": {

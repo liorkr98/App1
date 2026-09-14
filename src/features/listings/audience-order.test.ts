@@ -76,9 +76,17 @@ describe('a category with no investor ordering', () => {
   it('is unchanged for either audience', () => {
     // The vehicle schema declares none — a car has no price per m² and
     // inventing an investor ordering for one would be noise.
-    for (const audience of ['resident', 'investor'] as const) {
+    for (const audience of ['resident', 'investor', 'both'] as const) {
       assert.deepEqual(keys(orderForAudience(grid, audience, undefined)), keys(grid));
       assert.deepEqual(keys(orderForAudience(grid, audience, [])), keys(grid));
     }
+  });
+});
+
+describe('both audiences keep the resident order', () => {
+  it('does not promote the investor lead', () => {
+    // Averaging the two orders was the thing audience-order.ts refuses to do.
+    // "Both" means do not bias the grid, which is the resident (schema) order.
+    assert.deepEqual(keys(orderForAudience(grid, 'both', LEAD)), keys(grid));
   });
 });

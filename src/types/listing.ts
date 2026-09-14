@@ -1,4 +1,5 @@
 import type { ListingCategory } from '@/features/listings/schemas/index.js';
+import type { PhotoRoom } from '@/features/listings/photo-rooms.js';
 
 /**
  * The listing domain (RESEARCH.md §6, PRD.md §2).
@@ -238,6 +239,15 @@ export interface Image {
   blurhash?: string;
   /** Hebrew figcaption. Distinct from alt: alt describes, caption names. */
   caption?: string;
+
+  /**
+   * Which room this photograph is of, when the seller named one.
+   *
+   * Property only. The listing page groups the gallery under that headline
+   * and builds the walk from the same field. Absent means unlabeled — the
+   * walk is omitted when nothing is labelled, rather than inventing rooms.
+   */
+  room?: PhotoRoom;
 
   /**
    * Whether `{base}-{width}.webp` files exist alongside this URL.
@@ -493,7 +503,7 @@ export interface Seller {
  * commoner case, and a resident reading an investor's grid is merely puzzled
  * where the reverse hides the number the reader came for.
  */
-export type ListingAudience = 'resident' | 'investor';
+export type ListingAudience = 'resident' | 'investor' | 'both';
 
 export type ListingStatus = 'draft' | 'published' | 'sold' | 'archived';
 
