@@ -52,6 +52,18 @@ export function PreviewStep({ state, photos, agency, sellerName, accent, agencyL
   const walkGroups = hasRoomLabels(photos)
     ? groupByRoom(photos).filter((group) => group.room)
     : [];
+  const walkSlides = walkGroups.flatMap((group) => {
+    if (!group.room) return [];
+    const room = group.room;
+    return group.items
+      .filter((photo) => photo.publicUrl ?? photo.url)
+      .map((photo) => ({ photo, room }));
+  });
+  const firstWalkIndex = new Map<string, number>();
+  walkSlides.forEach((slide, index) => {
+    if (!firstWalkIndex.has(slide.room)) firstWalkIndex.set(slide.room, index);
+  });
+  const showAllHref = gallery.length > 0 ? '#listing-gallery' : undefined;
 
   return (
     <>
@@ -132,29 +144,58 @@ export function PreviewStep({ state, photos, agency, sellerName, accent, agencyL
             </section>
           )}
 
-          {walkGroups.length > 0 && (
+          {walkSlides.length > 0 && (
             <section className="walk">
               <h2>{t('listing.walkTitle')}</h2>
               <nav className="walk-nav" aria-label={t('listing.walkTitle')}>
-                {walkGroups.map((group) => (
-                  <span key={group.room}>{t(`editor.rooms.${group.room}`)}</span>
-                ))}
-              </nav>
-              <div className="walk-track">
-                {walkGroups.flatMap((group) =>
-                  group.items.map((photo) => (
-                    <figure key={photo.id}>
-                      <img src={photo.publicUrl ?? photo.url} alt={photo.alt?.trim() ?? ''} />
-                      <figcaption>{t(`editor.rooms.${group.room}`)}</figcaption>
-                    </figure>
-                  )),
+                {walkGroups.map((group) =>
+                  group.room ? (
+                    <a key={group.room} href={`#walk-p${firstWalkIndex.get(group.room) ?? 0}`}>
+                      {t(`editor.rooms.${group.room}`)}
+                    </a>
+                  ) : null,
                 )}
+              </nav>
+              <div className="walk-viewer">
+                <nav className="walk-film" aria-label={t('listing.filmstrip')}>
+                  {walkSlides.map((slide, index) => (
+                    <a key={slide.photo.id} href={`#walk-p${index}`} aria-label={t(`editor.rooms.${slide.room}`)}>
+                      <img src={slide.photo.publicUrl ?? slide.photo.url} alt="" width={72} height={72} />
+                    </a>
+                  ))}
+                </nav>
+                <div className="walk-main">
+                  {walkSlides.map((slide, index) => {
+                    const next = (index + 1) % walkSlides.length;
+                    return (
+                      <figure key={slide.photo.id} id={`walk-p${index}`}>
+                        <div className="walk-frame">
+                          <img
+                            src={slide.photo.publicUrl ?? slide.photo.url}
+                            alt={slide.photo.alt?.trim() ?? ''}
+                          />
+                          {showAllHref ? (
+                            <a className="walk-all" href={showAllHref}>
+                              {t('listing.showAllPhotos')}
+                            </a>
+                          ) : null}
+                          {walkSlides.length > 1 ? (
+                            <a className="walk-next" href={`#walk-p${next}`}>
+                              {t('listing.nextPhoto')}
+                            </a>
+                          ) : null}
+                        </div>
+                        <figcaption>{t(`editor.rooms.${slide.room}`)}</figcaption>
+                      </figure>
+                    );
+                  })}
+                </div>
               </div>
             </section>
           )}
 
           {gallery.length > 0 && (
-            <div className="gallery">
+            <div id="listing-gallery" className="gallery">
               {gallery.map((photo) => (
                 <figure key={photo.id}>
                   <img src={photo.publicUrl ?? photo.url} alt={photo.alt?.trim() ?? ''} />

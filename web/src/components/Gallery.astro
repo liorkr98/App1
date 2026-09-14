@@ -28,7 +28,8 @@ const groups = grouped ? groupByRoom(images) : [{ items: images }];
 */}
 {images.length > 0 && (
   grouped ? (
-    groups.map((group) => (
+    <div id="listing-gallery">
+    {groups.map((group) => (
       <section class="gallery-room">
         {group.room ? <h2>{t(`editor.rooms.${group.room}`)}</h2> : null}
         <div class="gallery reveal">
@@ -51,9 +52,10 @@ const groups = grouped ? groupByRoom(images) : [{ items: images }];
           ))}
         </div>
       </section>
-    ))
+    ))}
+    </div>
   ) : (
-    <div class="gallery reveal">
+    <div id="listing-gallery" class="gallery reveal">
       {images.map((image) => (
         <figure>
           <img

@@ -119,7 +119,10 @@
     "prePortal": "",
     "prePortalNote": "",
     "editLink": "",
-    "walkTitle": ""
+    "walkTitle": "",
+    "filmstrip": "",
+    "nextPhoto": "",
+    "showAllPhotos": ""
   },
   "notFound": {
     "title": "",
