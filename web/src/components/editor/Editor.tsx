@@ -16,10 +16,13 @@ import { isProfileComplete } from '@/features/agents/profile';
 
 import { t } from '../../lib/i18n';
 import { createDraft, uploadOriginal } from '../../lib/listing-draft';
+import { stripAndResize, uploadDerived } from '../../lib/listing-photo';
+import { saveListing } from '../../lib/listing-save';
 import { loadProfile } from '../../lib/profile';
 import { supabase, supabaseConfigured } from '../../lib/supabase';
 import { ConsentStep } from './ConsentStep';
 import { DescriptionStep } from './DescriptionStep';
+import { DetailsStep } from './DetailsStep';
 import { DisclosuresStep } from './DisclosuresStep';
 import { FactsStep } from './FactsStep';
 import { Message } from './Message';
@@ -58,6 +61,8 @@ import { useDraft } from './useDraft';
  */
 
 const START: EditorState = {
+  title: '',
+  price: 0,
   photoCount: 0,
   facts: [],
   description: '',
@@ -191,10 +196,38 @@ export default function Editor() {
       mark(photo.id, { status: 'uploading' });
 
       const result = await uploadOriginal(listingId.current, photo.file);
-      mark(
-        photo.id,
-        'error' in result ? { status: 'failed' } : { status: 'uploaded', path: result.path },
-      );
+      if ('error' in result) {
+        mark(photo.id, { status: 'failed' });
+        continue;
+      }
+
+      /*
+       * The ORIGINAL is now safe in the private bucket. What a buyer sees is
+       * a second, re-encoded copy in `derived`.
+       *
+       * The re-encode is what makes writing to a public bucket safe at all:
+       * it decodes to pixels and rebuilds the file, so EXIF — and the GPS in
+       * a photograph of somebody's home — is never carried rather than being
+       * stripped by a step that could be skipped. See 0012 and listing-photo.
+       *
+       * A failure here is NOT a failed upload. The original is stored, the
+       * seller's work is not lost, and the real pipeline can produce the
+       * public copy later. It only means this photo has no URL yet.
+       */
+      const processed = await stripAndResize(photo.file);
+      if (!processed) {
+        mark(photo.id, { status: 'uploaded', path: result.path });
+        continue;
+      }
+
+      const published = await uploadDerived(listingId.current, photo.id, processed);
+      mark(photo.id, {
+        status: 'uploaded',
+        path: result.path,
+        ...('error' in published ? {} : { publicUrl: published.url }),
+        width: processed.width,
+        height: processed.height,
+      });
     }
   };
 
@@ -225,7 +258,26 @@ export default function Editor() {
     setStep(nextStep({ ...START, ...draft }));
   });
 
+  /**
+   * Writes the editor's state back to the row.
+   *
+   * At every step boundary rather than on a timer: a step boundary is the
+   * moment a seller has finished saying something, and also the moment they
+   * might close the tab. An agent between viewings does not come back to a
+   * form, they come back to a link.
+   *
+   * Failure is swallowed on purpose. The draft is still in localStorage, the
+   * seller keeps working, and the next boundary tries again — an editor that
+   * stops because a network call failed is worse than one that saves late.
+   */
+  const persist = () => {
+    const id = listingId.current;
+    if (!id || !supabaseConfigured || !signedIn) return;
+    void saveListing(id, state, photos).catch(() => undefined);
+  };
+
   const go = (delta: number) => {
+    persist();
     const target = steps[position + delta];
     if (target) setStep(target);
   };
@@ -284,6 +336,18 @@ export default function Editor() {
       <section className="step">
         {step === 'category' ? (
           <CategoryStep chosen={state.category} onChoose={choose} />
+        ) : null}
+
+        {step === 'details' && state.category ? (
+          <DetailsStep
+            category={state.category}
+            title={state.title}
+            price={state.price}
+            city={state.city ?? ''}
+            street={state.street ?? ''}
+            priceNote={state.priceNote ?? ''}
+            onChange={(patch) => setState((current) => ({ ...current, ...patch }))}
+          />
         ) : null}
 
         {step === 'photos' ? (

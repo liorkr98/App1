@@ -139,7 +139,8 @@
       "description": "תיאור",
       "template": "עיצוב",
       "preview": "תצוגה מקדימה",
-      "publish": "פרסום"
+      "publish": "פרסום",
+      "details": "פרטי הנכס"
     },
     "blockers": {
       "categoryMissing": "צריך לבחור סוג מודעה",
@@ -152,7 +153,10 @@
       "paymentRequired": "הפרסום דורש תשלום",
       "paymentUnverified": "לא הצלחנו לאמת את התשלום. נסו שוב בעוד רגע.",
       "sellerMissing": "צריך שם וטלפון בפרטים שלכם — משם נפתחת השיחה בוואטסאפ",
-      "consentMissing": "צריך לאשר שהנכס בבעלותכם, או שאתם מוסמכים לפרסם אותו"
+      "consentMissing": "צריך לאשר שהנכס בבעלותכם, או שאתם מוסמכים לפרסם אותו",
+      "titleMissing": "צריך כותרת",
+      "priceMissing": "צריך מחיר",
+      "cityMissing": "צריך עיר"
     },
     "fixLater": "אפשר להשלים אחר כך",
     "stepOf": "שלב {current} מתוך {total}",
@@ -212,7 +216,19 @@
     "disclosuresLabel": "פרט לציון",
     "disclosuresPlaceholder": "למשל: שריטה בדלת הנהג",
     "disclosuresAdd": "הוספה",
-    "disclosuresRemove": "הסרה"
+    "disclosuresRemove": "הסרה",
+    "details": {
+      "title": "כותרת",
+      "titleHint": "מה שיופיע בראש העמוד ובוואטסאפ. למשל: דירת 4 חדרים, משופצת מהיסוד.",
+      "price": "מחיר",
+      "priceNote": "הערה ליד המחיר",
+      "priceNoteHint": "לא חובה. למשל: פינוי גמיש.",
+      "city": "עיר",
+      "street": "רחוב ומספר",
+      "streetHint": "לא חובה. בלי רחוב העמוד לא יציג מפה.",
+      "vehicleArea": "אזור",
+      "vehicleAreaHint": "לא חובה, ובכוונה לא כתובת — לא מפרסמים מיקום מדויק של רכב."
+    }
   },
   "home": {
     "tagline": "המודעה שלך, מוכנה לשליחה",

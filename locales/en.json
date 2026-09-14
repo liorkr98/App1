@@ -139,7 +139,8 @@
       "description": "",
       "template": "",
       "preview": "",
-      "publish": ""
+      "publish": "",
+      "details": ""
     },
     "blockers": {
       "categoryMissing": "",
@@ -152,7 +153,10 @@
       "paymentRequired": "",
       "paymentUnverified": "",
       "sellerMissing": "",
-      "consentMissing": ""
+      "consentMissing": "",
+      "titleMissing": "",
+      "priceMissing": "",
+      "cityMissing": ""
     },
     "fixLater": "",
     "stepOf": "",
@@ -212,7 +216,8 @@
     "disclosuresLabel": "",
     "disclosuresPlaceholder": "",
     "disclosuresAdd": "",
-    "disclosuresRemove": ""
+    "disclosuresRemove": "",
+    "details": {}
   },
   "home": {
     "tagline": "",
