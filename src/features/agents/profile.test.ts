@@ -127,6 +127,17 @@ describe('isProfileEmpty', () => {
     assert.equal(isProfileEmpty({ agencyName: 'רוזן נדל״ן' }), false);
   });
 
+  it('does not treat a logo as a filled-in profile', () => {
+    // The logo is optional branding, not a reason to skip the first-run
+    // prompt. Name and phone still have to be asked for.
+    assert.equal(
+      isProfileEmpty({
+        agencyLogoUrl: 'https://example.supabase.co/storage/v1/object/public/branding/x/logo.webp',
+      }),
+      true,
+    );
+  });
+
   it('is not the same question as isProfileComplete', () => {
     // A half-filled profile is neither empty nor complete, and the first-run
     // prompt and the publish gate must not share one boolean.
@@ -190,6 +201,30 @@ describe('toSeller', () => {
     );
     assert.ok(seller);
     assert.equal('licenceNumber' in seller, false);
+  });
+
+  it('carries the agency logo URL when one was uploaded', () => {
+    const seller = toSeller(
+      {
+        displayName: 'ליאור',
+        phone: '0501234567',
+        agencyLogoUrl: 'https://example.supabase.co/storage/v1/object/public/branding/x/logo.webp',
+      },
+      'בעל הדירה',
+    );
+    assert.equal(
+      seller?.agencyLogoUrl,
+      'https://example.supabase.co/storage/v1/object/public/branding/x/logo.webp',
+    );
+  });
+
+  it('omits a blank logo URL rather than storing empty', () => {
+    const seller = toSeller(
+      { displayName: 'ליאור', phone: '0501234567', agencyLogoUrl: '  ' },
+      'בעל הדירה',
+    );
+    assert.ok(seller);
+    assert.equal('agencyLogoUrl' in seller, false);
   });
 
   it('returns undefined rather than a half-filled seller', () => {

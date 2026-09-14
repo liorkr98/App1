@@ -132,7 +132,11 @@ const agency = listing.seller.agencyName;
 <div class="progress" aria-hidden="true"></div>
 
 <div class="agent-bar">
-  <div class="dot" aria-hidden="true"></div>
+  <div class="dot" aria-hidden="true">
+    {listing.seller.agencyLogoUrl ? (
+      <img src={listing.seller.agencyLogoUrl} alt="" />
+    ) : null}
+  </div>
   {agency ? (
     <Fragment>
       <strong>{listing.seller.name}</strong>

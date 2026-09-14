@@ -576,6 +576,7 @@ export default function Editor() {
             agency={profile.agencyName ?? undefined}
             sellerName={profile.displayName ?? undefined}
             accent={profile.accent ?? undefined}
+            agencyLogoUrl={profile.agencyLogoUrl?.trim() || undefined}
           />
         ) : null}
 

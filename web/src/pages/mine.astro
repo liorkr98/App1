@@ -603,6 +603,7 @@ import '../styles/tokens.css';
         price: number | null;
         status: string;
         category: string;
+        published_at: string | null;
         media: { cover?: { url?: string; alt?: string } } | null;
         location: { city?: string; street?: string } | null;
       };
@@ -627,6 +628,19 @@ import '../styles/tokens.css';
         currency: 'ILS',
         maximumFractionDigits: 0,
       });
+
+      // Four weeks. A constant here, not a config system: this is the broker
+      // duty to update or remove an unavailable listing (OPPORTUNITIES.md
+      // §1b), and the copy asks whether it is still available rather than
+      // asserting that it is not.
+      const STALE_AFTER_MS = 28 * 24 * 60 * 60 * 1000;
+
+      const isStalePublished = (row: Row, now: number): boolean => {
+        if (row.status !== 'published' || !row.published_at) return false;
+        const published = Date.parse(row.published_at);
+        if (!Number.isFinite(published)) return false;
+        return now - published >= STALE_AFTER_MS;
+      };
 
       let sayTimer = 0;
       const tell = (text: string, tone: 'good' | 'bad' = 'good') => {
@@ -787,6 +801,11 @@ import '../styles/tokens.css';
           hint.className = 'hint';
           hint.textContent = t('dash.archivedHint');
           item.append(hint);
+        } else if (isStalePublished(row, Date.now())) {
+          const hint = document.createElement('p');
+          hint.className = 'hint';
+          hint.textContent = t('dash.staleHint');
+          item.append(hint);
         }
 
         // --- Actions -----------------------------------------------------
@@ -886,7 +905,7 @@ import '../styles/tokens.css';
          */
         const { data, error } = await client
           .from('listings')
-          .select('slug, title, price, status, category, media, location')
+          .select('slug, title, price, status, category, media, location, published_at')
           .order('created_at', { ascending: false });
 
         if (error) return show('failed');

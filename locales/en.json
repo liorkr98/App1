@@ -246,7 +246,9 @@
       "hint": "",
       "noPhoto": "",
       "noTitle": "",
-      "note": ""
+      "note": "",
+      "cta": "",
+      "ctaMock": ""
     },
     "publish": {
       "hint": "",
@@ -313,6 +315,10 @@
     "roleHint": "",
     "licence": "",
     "licenceHint": "",
+    "logo": "",
+    "logoHint": "",
+    "logoRemove": "",
+    "logoFailed": "",
     "save": "",
     "saving": "",
     "saved": "",
@@ -372,6 +378,7 @@
     "signIn": "",
     "failed": "",
     "draftHint": "",
+    "staleHint": "",
     "countSuffix": "",
     "onboardTitle": "",
     "onboardBody": "",

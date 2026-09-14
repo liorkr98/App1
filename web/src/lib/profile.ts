@@ -33,6 +33,7 @@ interface ProfileRow {
   role: string | null;
   licence_number: string | null;
   accent: string | null;
+  agency_logo_url: string | null;
 }
 
 function toDomain(row: ProfileRow): AgentProfile {
@@ -43,6 +44,7 @@ function toDomain(row: ProfileRow): AgentProfile {
     role: row.role,
     licenceNumber: row.licence_number,
     accent: row.accent,
+    agencyLogoUrl: row.agency_logo_url,
   };
 }
 
@@ -62,7 +64,7 @@ export async function loadProfile(): Promise<
 
   const { data, error } = await client
     .from('profiles')
-    .select('display_name, phone, agency_name, role, licence_number, accent')
+    .select('display_name, phone, agency_name, role, licence_number, accent, agency_logo_url')
     .maybeSingle();
 
   if (error) return { error: error.message };
@@ -114,6 +116,7 @@ export async function saveProfile(
       // Validated rather than trimmed: this one reaches a CHECK constraint,
       // and a typo should become olive rather than a failed save.
       accent: isAccentId(profile.accent) ? profile.accent : DEFAULT_ACCENT,
+      agency_logo_url: trimmed(profile.agencyLogoUrl),
     },
     { onConflict: 'id' },
   );

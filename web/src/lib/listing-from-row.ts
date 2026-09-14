@@ -55,6 +55,9 @@ function asSeller(value: unknown): Seller | undefined {
     ...(typeof value.role === 'string' ? { role: value.role } : {}),
     ...(typeof value.agencyName === 'string' ? { agencyName: value.agencyName } : {}),
     ...(typeof value.licenceNumber === 'string' ? { licenceNumber: value.licenceNumber } : {}),
+    ...(typeof value.agencyLogoUrl === 'string' && value.agencyLogoUrl.trim() !== ''
+      ? { agencyLogoUrl: value.agencyLogoUrl }
+      : {}),
   };
 }
 

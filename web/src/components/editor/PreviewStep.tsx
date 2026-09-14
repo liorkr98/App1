@@ -14,6 +14,7 @@ interface Props {
   agency?: string | undefined;
   sellerName?: string | undefined;
   accent?: string | undefined;
+  agencyLogoUrl?: string | undefined;
 }
 
 /**
@@ -41,7 +42,7 @@ interface Props {
  * phone. Shown at the editor's width it would be a different layout from the
  * one the buyer gets, which is the opposite of a preview.
  */
-export function PreviewStep({ state, photos, agency, sellerName, accent }: Props) {
+export function PreviewStep({ state, photos, agency, sellerName, accent, agencyLogoUrl }: Props) {
   const category = state.category ?? 'property';
   const schema = schemaFor(category);
   const palette = accentFor(accent);
@@ -71,7 +72,9 @@ export function PreviewStep({ state, photos, agency, sellerName, accent }: Props
       <div className="preview-frame">
         <div className="preview-page" style={{ ['--accent' as string]: palette.base }}>
           <div className="agent-bar">
-            <div className="dot" aria-hidden="true" />
+            <div className="dot" aria-hidden="true">
+              {agencyLogoUrl ? <img src={agencyLogoUrl} alt="" /> : null}
+            </div>
             <strong>{agency || sellerName || t('agent.previewFallback')}</strong>
             <span>סיבוב</span>
           </div>
@@ -129,7 +132,10 @@ export function PreviewStep({ state, photos, agency, sellerName, accent }: Props
             </div>
           )}
 
-          <div className="prev-cta">שליחת הודעה בוואטסאפ</div>
+          <p className="prev-cta-label">{t('editor.preview.ctaMock')}</p>
+          <div className="prev-cta" aria-hidden="true">
+            {t('editor.preview.cta')}
+          </div>
         </div>
       </div>
 

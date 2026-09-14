@@ -21,7 +21,8 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-const BUCKETS = ['originals', 'derived'] as const;
+const LISTING_BUCKETS = ['originals', 'derived'] as const;
+const BRANDING_BUCKET = 'branding';
 
 function json(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), {
@@ -35,6 +36,10 @@ function json(body: unknown, status: number): Response {
  * because derived output is nested (`{listingId}/{photoId}.webp`, OG, PDF).
  *
  * Paths only — never log them. Original filenames can carry addresses.
+ *
+ * A list error is treated as an empty folder. The common case is a listing
+ * (or a user) that never uploaded anything — storage.list on a missing
+ * prefix must not block account deletion. A remove error still fails closed.
  */
 async function listPaths(
   admin: SupabaseClient,
@@ -59,17 +64,28 @@ async function listPaths(
   return paths;
 }
 
-async function emptyListingPrefix(admin: SupabaseClient, listingId: string): Promise<boolean> {
-  for (const bucket of BUCKETS) {
-    const paths = await listPaths(admin, bucket, listingId);
-    for (let index = 0; index < paths.length; index += 100) {
-      const chunk = paths.slice(index, index + 100);
-      const { error } = await admin.storage.from(bucket).remove(chunk);
-      if (error) {
-        console.error('delete-account storage purge failed', { bucket, count: chunk.length });
-        return false;
-      }
+async function emptyPrefix(
+  admin: SupabaseClient,
+  bucket: string,
+  folder: string,
+): Promise<boolean> {
+  const paths = await listPaths(admin, bucket, folder);
+
+  for (let index = 0; index < paths.length; index += 100) {
+    const chunk = paths.slice(index, index + 100);
+    const { error } = await admin.storage.from(bucket).remove(chunk);
+    if (error) {
+      console.error('delete-account storage purge failed', { bucket, count: chunk.length });
+      return false;
     }
+  }
+  return true;
+}
+
+async function emptyListingPrefix(admin: SupabaseClient, listingId: string): Promise<boolean> {
+  for (const bucket of LISTING_BUCKETS) {
+    const emptied = await emptyPrefix(admin, bucket, listingId);
+    if (!emptied) return false;
   }
   return true;
 }
@@ -136,6 +152,11 @@ Deno.serve(async (req: Request) => {
     const emptied = await emptyListingPrefix(adminClient, listingId);
     if (!emptied) return json({ error: 'delete_failed' }, 500);
   }
+
+  // The logo lives under the user id, not a listing id. Same fail-closed
+  // rule: if the folder cannot be listed or emptied, the auth user stays.
+  const brandingEmptied = await emptyPrefix(adminClient, BRANDING_BUCKET, user.id);
+  if (!brandingEmptied) return json({ error: 'delete_failed' }, 500);
 
   const { error: deleteError } = await adminClient.auth.admin.deleteUser(user.id);
 

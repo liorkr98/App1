@@ -15,7 +15,9 @@ const { seller } = Astro.props;
 */}
 <section class="seller">
   <div class="seller-row">
-    <div class="avatar" aria-hidden="true"></div>
+    <div class="avatar" aria-hidden="true">
+      {seller.agencyLogoUrl ? <img src={seller.agencyLogoUrl} alt="" /> : null}
+    </div>
     <div>
       <div class="seller-name">{seller.name}</div>
       {/*
