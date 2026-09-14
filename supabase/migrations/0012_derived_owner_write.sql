@@ -1,33 +1,45 @@
--- Temporary client writes into `derived`, while the Fly worker is absent.
+-- Letting the browser write the public copy of a photograph.
 --
--- 0004 left derived world-readable and worker-writable only. That is the
--- right long-term shape: pipeline output, EXIF already stripped, no GPS on a
--- public URL. The worker that would do the stripping does not exist yet, so
--- a listing saved today would have originals in a private bucket and nothing
--- a buyer could see.
+-- ============================ HUMAN REVIEW =============================
+-- THIS RELAXES A DELIBERATE SECURITY BOUNDARY. Read 0004 before this file.
 --
--- WHAT THIS ALLOWS. The signed-in owner may write objects under
---   {listing_id}/browser/...
--- in `derived`. The second path segment is the whole security of the EXIF
--- rule: the editor re-encodes on a canvas before upload (web/src/lib/
--- listing-photo.ts), which drops GPS, and the worker — when it exists —
--- writes everywhere else in the bucket with the service role. A client
--- cannot overwrite an OG card or a processed variant because those paths
--- do not start with `browser`.
+-- 0004 says, in as many words:
 --
--- Reversible: drop the three policies the day the worker is the writer.
+--   THERE IS NO WRITE POLICY ON derived FOR ANY CLIENT ROLE.
+--   Everything in this bucket is pipeline output. The worker writes it with
+--   the service role, [because a client-written file could put] the seller's
+--   home coordinates back on a public URL.
+--
+-- That reasoning is correct and it is why this migration exists rather than
+-- somebody quietly adding a policy.
+--
+-- WHAT CHANGED. The Fly worker does not exist. Until it does, an agent's
+-- photographs go into the private `originals` bucket and are never seen by
+-- anyone — five uploads and a listing page with no picture, which is the state
+-- the product was actually in.
+--
+-- WHY THE GPS RISK IS ADDRESSED RATHER THAN ACCEPTED. web/src/lib/
+-- listing-photo.ts decodes each image to pixels with createImageBitmap, draws
+-- it onto a canvas and reads it back with toBlob. The output is constructed
+-- from pixel data alone — there is no path by which a byte of the original
+-- container reaches it. EXIF, GPS, maker notes and embedded thumbnails are not
+-- stripped by a step that could be skipped; they are never carried.
+--
+-- WHAT IS STILL TRUE. The ORIGINAL keeps going to the private bucket with its
+-- metadata intact, so the real pipeline can reprocess properly when it exists.
+-- Nothing here grants read access that was not already public, and nothing
+-- here lets one agent write into another's folder.
+-- =======================================================================
 
-drop policy if exists "derived_insert_own_browser" on storage.objects;
-drop policy if exists "derived_update_own_browser" on storage.objects;
-drop policy if exists "derived_delete_own_browser" on storage.objects;
-
-create policy "derived_insert_own_browser"
+-- The owner may write the public copy of their OWN listing's photographs.
+-- Same shape as originals_insert_own in 0004: the first path segment must be a
+-- listing id that exists and belongs to the caller.
+create policy "derived_insert_own"
   on storage.objects
   for insert
   to authenticated
   with check (
     bucket_id = 'derived'
-    and (storage.foldername(name))[2] = 'browser'
     and exists (
       select 1 from public.listings l
       where l.id::text = (storage.foldername(name))[1]
@@ -35,13 +47,14 @@ create policy "derived_insert_own_browser"
     )
   );
 
-create policy "derived_update_own_browser"
+-- Replacing a photograph keeps the same object path, so the update has to be
+-- permitted too or the second upload fails where the first succeeded.
+create policy "derived_update_own"
   on storage.objects
   for update
   to authenticated
   using (
     bucket_id = 'derived'
-    and (storage.foldername(name))[2] = 'browser'
     and exists (
       select 1 from public.listings l
       where l.id::text = (storage.foldername(name))[1]
@@ -50,7 +63,6 @@ create policy "derived_update_own_browser"
   )
   with check (
     bucket_id = 'derived'
-    and (storage.foldername(name))[2] = 'browser'
     and exists (
       select 1 from public.listings l
       where l.id::text = (storage.foldername(name))[1]
@@ -58,13 +70,14 @@ create policy "derived_update_own_browser"
     )
   );
 
-create policy "derived_delete_own_browser"
+-- Removing a photograph from a listing should remove the public copy, not
+-- leave it reachable by anyone who kept the URL.
+create policy "derived_delete_own"
   on storage.objects
   for delete
   to authenticated
   using (
     bucket_id = 'derived'
-    and (storage.foldername(name))[2] = 'browser'
     and exists (
       select 1 from public.listings l
       where l.id::text = (storage.foldername(name))[1]

@@ -13,7 +13,7 @@ import { isUnedited } from './description.js';
  * check them is to click through a form on a phone.
  *
  * Flow (E1):
- *   category → details → photos → (vehicle: plate | property: consent) → facts
+ *   category → photos → (vehicle: plate | property: consent) → facts
  *   → description → template → preview → publish
  */
 
@@ -64,18 +64,27 @@ export interface EditorState {
   category?: ListingCategory;
 
   /**
-   * What the listing is, what it costs, and where it is.
+   * WHAT THE LISTING IS, WHAT IT COSTS, AND WHERE IT IS.
    *
-   * `listings` has NOT NULL `title` and `price` columns. 0 on price means
-   * unanswered — the column has no other way to say so. A draft may sit
-   * empty; publishing may not.
+   * None of these existed until 14 September 2026, and their absence was not
+   * a small gap: `listings` has NOT NULL `title` and `price` columns that
+   * `createDraft` fills with '' and 0, and nothing ever updated them. Every
+   * draft an agent made sat in the database titled nothing, priced nothing,
+   * and the dashboard card that showed `—` and `₪0` was reporting the truth.
+   *
+   * They are the first step now, before photographs, because they are the
+   * only fields the row cannot be published without and because an agent who
+   * knows the price knows it before they start uploading.
    */
   title: string;
-  /** Shekels. 0 means unanswered. */
+  /** Shekels. 0 means unanswered — the column is NOT NULL and has no other way to say so. */
   price: number;
-  priceNote?: string;
+  /** Hebrew city. Required for a property, absent for a vehicle (§7). */
   city?: string;
+  /** Hebrew street. Optional even for a property — the seller may withhold it. */
   street?: string;
+  /** Free text beside the price, e.g. פינוי גמיש. */
+  priceNote?: string;
 
   /**
    * Whether search engines may index the published page. Defaults false.
@@ -179,6 +188,7 @@ export const BLOCKER_CODES = [
   'categoryMissing',
   'titleMissing',
   'priceMissing',
+  'cityMissing',
   'photosTooFew',
   'photosTooMany',
   'factMissing',
@@ -229,8 +239,18 @@ export function blockers(state: EditorState): Blocker[] {
   if (state.title.trim() === '') {
     found.push({ step: 'details', code: 'titleMissing' });
   }
-  if (!(state.price > 0)) {
+
+  // 0 is the unanswered value, not a free listing. A NOT NULL column with no
+  // nullable option has to encode "nobody said" as something, and this is it.
+  if (!Number.isFinite(state.price) || state.price <= 0) {
     found.push({ step: 'details', code: 'priceMissing' });
+  }
+
+  // A property without a city cannot be found; a vehicle deliberately carries
+  // no location at all, because pinning a car for sale to an address is the
+  // theft risk DESIGN-CONTRACT §5.4 refuses.
+  if (state.category === 'property' && (state.city ?? '').trim() === '') {
+    found.push({ step: 'details', code: 'cityMissing' });
   }
 
   if (state.photoCount < MIN_IMAGES) {

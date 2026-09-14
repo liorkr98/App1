@@ -60,7 +60,7 @@ sellers are secondary. When a design decision trades one against the other,
 
 | Layer | Choice |
 |---|---|
-| Listing pages | **Astro**, static output, no runtime rendering |
+| Listing pages | **Astro**. Static everywhere EXCEPT `/a/[slug]` — see below |
 | Hosting | **Cloudflare Pages** |
 | Editor | **React island** at `/new`, mobile-first |
 | Language | **TypeScript**, `strict: true` everywhere |
@@ -72,6 +72,34 @@ sellers are secondary. When a design decision trades one against the other,
 | Images | **sharp**/libvips, local, no external API in v1 |
 | PDF | **Puppeteer**, in its own Fly process group |
 | Payments | **Undecided.** Build behind a provider interface (PRD §6) |
+
+**`/a/[slug]` renders per request. Everything else is still a static file.**
+Corrected 14 September 2026, replacing "static output, no runtime rendering".
+
+The old rule was written when listings were build-time sample data, and its
+consequence was not a performance choice: `getStaticPaths()` returned the two
+demo slugs, so **a real listing had no page at all**. An agent could finish the
+whole flow and the link they shared would 404 — the one artefact the product
+exists to produce.
+
+The stated reason for the rule was that an adapter puts a cold start in front
+of the WhatsApp preview scraper. The alternative — rebuilding the site on every
+publish — puts one to two MINUTES between an agent pressing publish and their
+link existing, which is worse for that scraper and much worse for the agent.
+
+Only that route opts out. The homepage, the dashboard, `/new` and `/me` are
+still files on the CDN, and Cloudflare serves a matching static asset before it
+invokes the Worker.
+
+Two consequences worth knowing before touching the build:
+
+- Output is now `web/dist/client` and `web/dist/server`. Every `scripts/verify-*`
+  reads the former.
+- `/a/{slug}` is no longer a built HTML file, so the divergence and `<bdi>`
+  gates had nothing to read. `web/src/pages/template-check/[slug].astro`
+  prerenders the two demo listings for them, through the SAME
+  `ListingPage.astro` the real route renders — if the two could differ, the
+  check would be worthless.
 
 **Whether verification can run locally depends on which machine you are on.**
 This project is developed from two.

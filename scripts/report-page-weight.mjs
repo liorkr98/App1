@@ -75,7 +75,7 @@ function referencesFrom(file) {
   for (const match of source.matchAll(ASSET)) {
     const reference = match[1];
     // path.resolve on both branches, so every path in the sets below is
-    // absolute. Mixing a relative "web/dist/x.js" with an absolute one makes
+    // absolute. Mixing a relative "web/dist/client/x.js" with an absolute one makes
     // the orphan check compare strings that can never match, and every asset
     // looks unreferenced.
     const resolved = path.resolve(

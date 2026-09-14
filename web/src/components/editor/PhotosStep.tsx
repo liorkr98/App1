@@ -16,6 +16,19 @@ export interface EditorPhoto {
   file?: File;
 
   /**
+   * The PUBLIC copy's URL, once one exists.
+   *
+   * The original goes to the private `originals` bucket and can never be
+   * shown to a buyer. This is the re-encoded copy in `derived` — the only URL
+   * a listing page can carry. Absent until the upload finishes, which is why
+   * `saveListing` filters on it rather than assuming.
+   */
+  publicUrl?: string;
+  /** Of the public copy, so the page can reserve the box before the bytes. */
+  width?: number;
+  height?: number;
+
+  /**
    * Where this photo is in its journey to the private originals bucket.
    *
    * Shown per thumbnail rather than as one global spinner: an agent adding
@@ -25,10 +38,6 @@ export interface EditorPhoto {
   status?: 'local' | 'uploading' | 'uploaded' | 'failed';
   /** Storage key inside `originals`, once it has one. */
   path?: string;
-  /** Public derived URL, EXIF already stripped. */
-  publicUrl?: string;
-  width?: number;
-  height?: number;
 }
 
 interface Props {

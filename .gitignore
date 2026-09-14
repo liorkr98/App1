@@ -85,3 +85,8 @@ test-build/
 # this block — do not do one without the other.
 package-lock.json
 web/package-lock.json
+
+# Wrangler's per-build deploy config, written by @astrojs/cloudflare.
+# It points at the adapter's own generated wrangler.json and conflicts with
+# the committed root config when wrangler runs from inside web/.
+web/.wrangler/

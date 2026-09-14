@@ -177,6 +177,33 @@ not guess Expo) and a second copy lives in `web/` for the Astro adapter.
   read this one. Pointing the adapter at the built entry made CI fail on a
   clean machine: the Vite plugin resolves `main` when the config loads.
 
+### The build output moved — 14 September 2026
+
+`/a/[slug]` is rendered per request now, so a real listing has a page at all
+(astro.config.mjs explains why that beats rebuilding on every publish). The
+adapter therefore splits the output:
+
+```
+web/dist/client   every prerendered page, plus /_astro and /_headers
+web/dist/server   the Worker that renders the listing route
+```
+
+`wrangler.jsonc` points at both, and adds `nodejs_compat` — without it
+`@supabase/supabase-js` fails at import time, before any request is handled.
+
+**Run wrangler from the REPOSITORY ROOT, not from `web/`.** The adapter writes
+`web/.wrangler/deploy/config.json` pointing at its own generated config, and
+wrangler refuses to start when that and the committed root config do not share
+a base path:
+
+```
+✘ [ERROR] Found both a user configuration file at "../wrangler.jsonc"
+  and a deploy configuration file at ".wrangler/deploy/config.json".
+```
+
+Cloudflare's build already runs from the root, so this only bites when testing
+by hand. `npx wrangler deploy --dry-run` from the root is the check.
+
 ### In the Cloudflare dashboard — YOU need to set this
 
 The build command is a dashboard setting and cannot be committed. Set it to:

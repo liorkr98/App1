@@ -3,19 +3,35 @@ import ListingPage from '../../../components/ListingPage.astro';
 import { publishedListing } from '../../../lib/listing-from-row';
 
 /**
- * Public listing page.
+ * RENDERED PER REQUEST, not at build time.
  *
- * On-demand, because a real agent's slug is not known at build time. Demo
- * fixtures still win inside `publishedListing()` so `/a/A7K2M` and `/a/V3M9Q`
- * stay the visual contract. CI builds the same tree at `/template-check/`.
+ * This route used getStaticPaths() over listings.ts, which meant exactly two
+ * pages existed — A7K2M and V3M9Q — and A REAL LISTING HAD NO PAGE AT ALL. An
+ * agent could finish the whole flow and the link they shared would 404. The
+ * link is the product.
+ *
+ * Demo fixtures still win inside `publishedListing()` so `/a/A7K2M` and
+ * `/a/V3M9Q` stay the visual contract even if this deploy's database is empty.
+ * CI builds the same tree at `/template-check/`.
+ *
+ * It is the ONLY route that opts out of prerendering: the homepage, the
+ * dashboard, /new and /me are still static files on the CDN.
+ *
+ * THE PAGE ITSELF IS ListingPage.astro. This file is routing and nothing else.
  */
 export const prerender = false;
 
 const slug = Astro.params.slug ?? '';
-const listing = await publishedListing(slug);
+const listing = slug ? await publishedListing(slug) : undefined;
 
+/*
+ * A missing listing is a 404, and so is a DRAFT — publishedListing cannot see
+ * one, because the public-read policy in 0002 exposes only 'published' and
+ * 'sold'. Telling a stranger which unpublished slugs exist would be an
+ * information leak dressed as a helpful error.
+ */
 if (!listing) {
-  return Astro.rewrite('/404');
+  return new Response(null, { status: 404 });
 }
 ---
 <ListingPage listing={listing} />

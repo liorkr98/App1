@@ -65,6 +65,8 @@ export const supabaseConfigured = Boolean(url && key);
 /** Public project values. Safe to ship; RLS is the security. */
 export const supabaseUrl = url;
 export const supabaseKey = key;
+export const SUPABASE_URL = url;
+export const SUPABASE_ANON_KEY = key;
 
 /**
  * A client with no session, for server reads of published pages.

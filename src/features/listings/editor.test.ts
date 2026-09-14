@@ -28,8 +28,9 @@ const fact = (key: string, label: string, value: Fact['value'], required = false
 /** A listing with nothing wrong with it. */
 const ready = (): EditorState => ({
   category: 'property',
-  title: 'דירת 4 חדרים',
+  title: 'דירת 4 חדרים, משופצת מהיסוד',
   price: 1850000,
+  city: 'חולון',
   indexable: false,
   photoCount: 6,
   facts: [
@@ -46,6 +47,53 @@ const ready = (): EditorState => ({
   // category is 'property', so it needs one to be blocker-free.
   ownerConsentDeclaredAt: '2026-09-12T10:00:00.000Z',
   entitlement: 'paid',
+});
+
+describe('the details gate', () => {
+  it('blocks on a missing title and a missing price', () => {
+    // `listings` has NOT NULL title and price columns that createDraft fills
+    // with '' and 0. Nothing updated them, so every draft in the database was
+    // titled nothing and priced nothing — and the dashboard card showing
+    // "—" and "₪0" was reporting that correctly.
+    const found = blockers({ ...ready(), title: '  ', price: 0 });
+    const codes = found.map((blocker) => blocker.code);
+
+    assert.ok(codes.includes('titleMissing'));
+    assert.ok(codes.includes('priceMissing'));
+  });
+
+  it('treats price 0 as unanswered, not as free', () => {
+    // A NOT NULL column with no nullable option has to encode "nobody said"
+    // as something, and 0 is it. A listing priced 0 is a listing nobody
+    // priced.
+    assert.ok(blockers({ ...ready(), price: 0 }).some((b) => b.code === 'priceMissing'));
+    assert.equal(blockers({ ...ready(), price: 1 }).some((b) => b.code === 'priceMissing'), false);
+  });
+
+  it('refuses a price that is not a number', () => {
+    // An empty <input type="number"> gives NaN, which passes `> 0` never but
+    // would pass a naive truthiness check.
+    assert.ok(blockers({ ...ready(), price: Number.NaN }).some((b) => b.code === 'priceMissing'));
+  });
+
+  it('requires a city for a property and NOT for a vehicle', () => {
+    // A vehicle deliberately carries no location: pinning a car for sale to
+    // an address is the theft risk DESIGN-CONTRACT §5.4 refuses.
+    const property = { ...ready(), category: 'property' as const, city: '' };
+    assert.ok(blockers(property).some((b) => b.code === 'cityMissing'));
+
+    // The key is OMITTED, not set to undefined: exactOptionalPropertyTypes
+    // makes those two different types, and a vehicle genuinely has no city.
+    const { city: _noCity, ...vehicle } = { ...ready(), category: 'vehicle' as const };
+    assert.equal(blockers(vehicle).some((b) => b.code === 'cityMissing'), false);
+  });
+
+  it('puts all three on the details step, so one screen fixes them', () => {
+    const found = blockers({ ...ready(), title: '', price: 0, city: '' });
+    for (const code of ['titleMissing', 'priceMissing', 'cityMissing']) {
+      assert.equal(found.find((b) => b.code === code)?.step, 'details', code);
+    }
+  });
 });
 
 describe('the seller gate', () => {
@@ -184,7 +232,6 @@ describe('blockers', () => {
 
     const steps = found.map((blocker) => blocker.step);
     assert.ok(steps.includes('category'));
-    assert.ok(steps.includes('details'));
     assert.ok(steps.includes('photos'));
     assert.ok(steps.includes('facts'));
     assert.ok(steps.includes('description'));
@@ -198,13 +245,6 @@ describe('blockers', () => {
     // interpolate. "חסר: חדרים" is useful; "משהו חסר" is not.
     const found = blockers({ ...ready(), facts: [fact('rooms', 'חדרים', null, true)] });
     assert.equal(found.find((blocker) => blocker.code === 'factMissing')?.factLabel, 'חדרים');
-  });
-
-  it('requires a title and a price before leaving details', () => {
-    assert.ok(blockers({ ...ready(), title: '  ' }).some((b) => b.code === 'titleMissing'));
-    assert.ok(blockers({ ...ready(), price: 0 }).some((b) => b.code === 'priceMissing'));
-    assert.equal(canAdvance('details', { ...ready(), title: '' }), false);
-    assert.equal(canAdvance('details', ready()), true);
   });
 
   it('ignores optional facts left unanswered', () => {

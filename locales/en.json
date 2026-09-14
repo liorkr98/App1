@@ -146,7 +146,8 @@
       "description": "",
       "template": "",
       "preview": "",
-      "publish": ""
+      "publish": "",
+      "details": ""
     },
     "blockers": {
       "categoryMissing": "",
@@ -161,7 +162,10 @@
       "paymentRequired": "",
       "paymentUnverified": "",
       "sellerMissing": "",
-      "consentMissing": ""
+      "consentMissing": "",
+      "titleMissing": "",
+      "priceMissing": "",
+      "cityMissing": ""
     },
     "fixLater": "",
     "stepOf": "",
@@ -222,35 +226,39 @@
     "disclosuresPlaceholder": "",
     "disclosuresAdd": "",
     "disclosuresRemove": "",
-    "detailsHint": "",
-    "titleLabel": "",
-    "titlePlaceholder": "",
-    "priceLabel": "",
-    "priceHint": "",
-    "priceNoteLabel": "",
-    "priceNotePlaceholder": "",
-    "cityLabel": "",
-    "streetLabel": "",
-    "streetHint": "",
-    "previewHint": "",
-    "previewCta": "",
-    "previewCtaNote": "",
+    "details": {
+      "title": "",
+      "titleHint": "",
+      "price": "",
+      "priceNote": "",
+      "priceNoteHint": "",
+      "city": "",
+      "street": "",
+      "streetHint": "",
+      "vehicleArea": "",
+      "vehicleAreaHint": ""
+    },
+    "preview": {
+      "hint": "",
+      "noPhoto": "",
+      "noTitle": "",
+      "note": ""
+    },
     "publish": {
-      "lead": "",
+      "hint": "",
+      "photos": "",
+      "action": "",
+      "working": "",
+      "done": "",
+      "doneHint": "",
+      "open": "",
+      "paymentPending": "",
       "payBeta": "",
       "payWait": "",
       "indexable": "",
       "indexableWhy": "",
-      "action": "",
-      "publishing": "",
       "failed": "",
-      "done": "",
-      "doneHint": "",
-      "copy": "",
-      "copied": "",
-      "open": "",
-      "share": "",
-      "dashboard": ""
+      "share": ""
     },
     "plateLookup": "",
     "plateLooking": "",
@@ -352,7 +360,10 @@
     "signIn": "",
     "failed": "",
     "draftHint": "",
-    "countSuffix": ""
+    "countSuffix": "",
+    "onboardTitle": "",
+    "onboardBody": "",
+    "onboardCta": ""
   },
   "legal": {
     "terms": "",

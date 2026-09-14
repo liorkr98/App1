@@ -693,137 +693,262 @@ textarea {
   cursor: default;
 }
 
-/* ---------- Preview sketch ----------
-   Shares tokens with the published page so the conversion moment is honest.
-   It is not ListingPage.astro — that tree is Astro with no JS. */
+/* ============================================================
+   תצוגה מקדימה — העמוד המוגמר, בתוך העורך
+   ============================================================
+   The frame is the phone and the document inside is the page. Shown at the
+   editor's own width it would be a different layout from the one the buyer
+   gets, which is the opposite of a preview. */
 
-.preview-card {
+.preview-frame {
+  display: flex;
+  justify-content: center;
+  padding: 1rem 0 0.5rem;
+}
+
+.preview-page {
+  inline-size: 100%;
+  max-inline-size: 340px;
+  border: 1px solid var(--stone);
+  border-radius: 14px;
   overflow: hidden;
   background: var(--plaster);
-  border: 1px solid var(--stone);
-  border-radius: 6px;
+  box-shadow: 0 14px 34px -18px rgba(25, 26, 21, 0.6);
+  /* The accent arrives from the agent's profile, so the preview is THEIR
+     page rather than the brand's. */
+  --olive: var(--accent, #4a5d3a);
 }
 
-.preview-hero {
+.preview-page .agent-bar {
+  font-size: 0.78rem;
+  padding: 0.55rem 0.8rem;
+}
+
+.preview-page .agent-bar .dot {
+  inline-size: 20px;
+  block-size: 20px;
+}
+
+.preview-page .agent-bar span {
+  margin-inline-start: auto;
+  color: #9c9d93;
+}
+
+.prev-hero {
   position: relative;
-  background: var(--stone);
+  aspect-ratio: 4 / 5;
+  background: var(--stone-warm);
+  overflow: hidden;
 }
 
-.preview-cover {
+.prev-hero img {
   inline-size: 100%;
-  aspect-ratio: 4 / 5;
+  block-size: 100%;
   object-fit: cover;
   display: block;
-  background: var(--stone);
 }
 
-.preview-cover-empty {
-  min-block-size: 14rem;
+.prev-hero-empty {
+  display: grid;
+  place-items: center;
+  block-size: 100%;
+  font-size: 0.82rem;
+  color: var(--muted);
 }
 
-.preview-veil {
+.prev-veil {
   position: absolute;
   inset-inline: 0;
   inset-block-end: 0;
-  padding: 4.5rem 1rem 1.1rem;
-  background: linear-gradient(to top, rgba(17, 18, 8, 0.9) 12%, rgba(17, 18, 8, 0.45) 48%, transparent);
+  padding: 3rem 0.85rem 0.8rem;
+  background: linear-gradient(to top, rgba(17, 18, 8, 0.9) 12%, rgba(17, 18, 8, 0.5) 50%, transparent);
   color: #fbfaf7;
 }
 
-.preview-place {
-  font-size: 0.9rem;
+.prev-place {
+  font-size: 0.72rem;
   opacity: 0.88;
-  margin-block-end: 0.25rem;
 }
 
-.preview-title {
+.prev-title {
+  font-family: 'Frank Ruhl Libre', serif;
+  font-weight: 900;
+  font-size: 1.3rem;
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+}
+
+.prev-price-bar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.9rem 0.85rem 0.75rem;
+}
+
+.prev-price {
   font-family: 'Frank Ruhl Libre', serif;
   font-weight: 700;
-  font-size: 1.45rem;
-  line-height: 1.15;
+  font-size: 1.5rem;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
 }
 
-.preview-price {
-  font-family: 'Frank Ruhl Libre', serif;
-  font-weight: 700;
-  font-size: 1.8rem;
-  line-height: 1.1;
-  padding: 1.1rem 1rem 0.4rem;
+.prev-price-note {
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-align: end;
 }
 
-.preview-facts {
+.prev-facts {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1px;
-  margin-block-start: 0.8rem;
-  list-style: none;
   background: var(--stone);
   border-block: 1px solid var(--stone);
 }
 
-.preview-facts li {
-  padding: 0.8rem 0.4rem;
-  text-align: center;
+.prev-fact {
   background: var(--plaster);
+  padding: 0.6rem 0.3rem;
+  text-align: center;
 }
 
-.preview-facts strong {
-  display: block;
+/* A confirmed absence is greyed and says אין; an unanswered fact is not here
+   at all. Never collapse the two (CLAUDE.md §7). */
+.prev-fact.off {
+  background: var(--stone-warm);
+}
+
+.prev-fact.off .prev-fact-val,
+.prev-fact.off .prev-fact-lbl {
+  opacity: 0.42;
+}
+
+.prev-fact-val {
   font-family: 'Frank Ruhl Libre', serif;
   font-weight: 500;
   font-size: 1.05rem;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
 }
 
-.preview-facts span {
-  display: block;
-  font-size: var(--t-label);
+.prev-fact-lbl {
+  font-size: 0.66rem;
   color: var(--muted);
   margin-block-start: 0.15rem;
 }
 
-.preview-facts .off {
-  background: var(--stone-warm);
+.prev-prose {
+  padding: 1rem 0.85rem;
 }
 
-.preview-facts .off strong,
-.preview-facts .off span {
-  opacity: 0.35;
+.prev-prose h2 {
+  font-family: 'Frank Ruhl Libre', serif;
+  font-weight: 500;
+  font-size: 1.1rem;
+  margin-block-end: 0.4rem;
 }
 
-.preview-prose {
-  padding: 1rem;
-  color: var(--ink);
+.prev-prose p {
+  font-size: 0.86rem;
+  line-height: 1.7;
 }
 
-.preview-cta {
-  margin: 0.4rem 1rem 0;
-  padding: 0.95rem;
+.prev-prose p + p {
+  margin-block-start: 0.6rem;
+}
+
+.prev-gallery {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2px;
+  padding: 0 0.85rem 0.85rem;
+}
+
+.prev-gallery img {
+  inline-size: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  display: block;
+  border-radius: 2px;
+}
+
+.prev-cta {
+  margin: 0 0.85rem 0.9rem;
+  padding: 0.7rem;
   text-align: center;
   font-weight: 700;
+  font-size: 0.9rem;
   color: var(--plaster);
   background: var(--olive);
-  border-radius: 6px;
-  pointer-events: none;
+  border-radius: 5px;
 }
 
-.preview-cta-note {
-  padding: 0.55rem 1rem 1.1rem;
-  font-size: var(--t-label);
-  color: var(--muted);
+.preview-note {
   text-align: center;
 }
 
-/* ---------- Publish ---------- */
+/* ============================================================
+   פרסום
+   ============================================================ */
 
-.publish-action {
-  display: block;
+.summary {
+  display: grid;
+  gap: 1px;
+  background: var(--stone);
+  border: 1px solid var(--stone);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-block: 1rem;
+}
+
+.summary > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  background: var(--plaster);
+  padding: 0.7rem 0.9rem;
+}
+
+.summary dt {
+  font-size: var(--t-label);
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.summary dd {
+  font-family: 'Frank Ruhl Libre', serif;
+  font-weight: 500;
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+  text-align: end;
+}
+
+.paywall {
+  background: var(--stone-warm);
+  border-radius: 6px;
+  padding: 0.9rem 1rem;
+  margin-block: 1rem;
+  /* --muted is 4.87:1 on plaster and only 4.35:1 on this tinted ground. */
+  --muted: #67685f;
+}
+
+.paywall p {
+  font-weight: 600;
+}
+
+.publish-button {
   inline-size: 100%;
-  min-block-size: 44px;
-  margin-block-start: 1.2rem;
-  padding: 1.02rem;
+  min-block-size: 48px;
+  margin-block-start: 1.25rem;
+  padding: 1rem;
   font: inherit;
-  font-size: 1.06rem;
-  font-weight: 700;
+  font-size: 1.1rem;
+  font-weight: 800;
   color: var(--plaster);
   background: var(--olive);
   border: none;
@@ -831,40 +956,64 @@ textarea {
   cursor: pointer;
 }
 
-.publish-action:hover:not(:disabled) {
-  background: var(--olive-lift);
+.publish-button:disabled {
+  background: var(--stone);
+  color: var(--muted);
+  cursor: default;
 }
 
-.publish-action:disabled {
-  color: var(--muted);
-  background: var(--stone);
-  cursor: default;
+/* The link, which is the product. */
+.published {
+  text-align: center;
+  padding-block: 1rem;
 }
 
 .published-title {
   font-family: 'Frank Ruhl Libre', serif;
   font-weight: 700;
-  font-size: var(--t-h2);
-  margin-block-end: 0.4rem;
+  font-size: 1.6rem;
+  letter-spacing: -0.015em;
 }
 
 .published-link {
-  margin-block: 1rem;
-  font-weight: 600;
-  word-break: break-all;
+  margin-block: 1.1rem;
+  padding: 0.8rem;
+  background: var(--stone-warm);
+  border-radius: 6px;
+  overflow-wrap: anywhere;
+}
+
+.published-link code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.92rem;
 }
 
 .published-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.6rem;
+  gap: 0.5rem;
+  justify-content: center;
 }
 
-.published-actions .choice,
-.published-actions button {
-  min-block-size: 44px;
-  padding: 0.8rem 1.1rem;
+.published-actions .primary,
+.published-actions .secondary {
+  padding: 0.7rem 1.2rem;
   font: inherit;
+  font-size: 0.95rem;
   font-weight: 700;
+  border-radius: 5px;
+  cursor: pointer;
   text-decoration: none;
+  border: 1px solid var(--stone);
+}
+
+.published-actions .primary {
+  background: var(--olive);
+  color: var(--plaster);
+  border-color: var(--olive);
+}
+
+.published-actions .secondary {
+  background: none;
+  color: var(--ink);
 }

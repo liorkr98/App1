@@ -63,12 +63,14 @@ export function toDraft(state: EditorState): Stored {
   return {
     version: DRAFT_VERSION,
     ...(state.category === undefined ? {} : { category: state.category }),
+    // What the listing is, costs and where it is. Stored like everything
+    // else: the seller loses a phone call's worth of typing otherwise.
     title: state.title,
     price: state.price,
     indexable: state.indexable,
-    ...(state.priceNote === undefined ? {} : { priceNote: state.priceNote }),
     ...(state.city === undefined ? {} : { city: state.city }),
     ...(state.street === undefined ? {} : { street: state.street }),
+    ...(state.priceNote === undefined ? {} : { priceNote: state.priceNote }),
     facts: state.facts,
     description: state.description,
     ...(state.generatedDescription === undefined
@@ -118,24 +120,6 @@ export function fromDraft(raw: unknown): Draft | null {
   // parsed.photoCount is ignored rather than rejected: drafts written before
   // photoCount left the shape still carry one, and discarding a seller's work
   // over a field we have stopped using would be the worse failure.
-  const title = parsed.title;
-  if (title !== undefined && typeof title !== 'string') return null;
-
-  const price = parsed.price;
-  if (price !== undefined && (typeof price !== 'number' || !Number.isFinite(price))) return null;
-
-  const indexable = parsed.indexable;
-  if (indexable !== undefined && typeof indexable !== 'boolean') return null;
-
-  const priceNote = parsed.priceNote;
-  if (priceNote !== undefined && typeof priceNote !== 'string') return null;
-
-  const city = parsed.city;
-  if (city !== undefined && typeof city !== 'string') return null;
-
-  const street = parsed.street;
-  if (street !== undefined && typeof street !== 'string') return null;
-
   const description = parsed.description;
   if (typeof description !== 'string') return null;
 
@@ -158,14 +142,26 @@ export function fromDraft(raw: unknown): Draft | null {
   const disclosuresResult = readDisclosures(parsed.disclosures);
   if (disclosuresResult === 'invalid') return null;
 
+  // Restored as the empty values rather than rejected: a draft written before
+  // these fields existed is still a draft worth giving back, and the editor's
+  // own blockers will ask for what is missing.
+  const title = typeof parsed.title === 'string' ? parsed.title : '';
+  const price = typeof parsed.price === 'number' && Number.isFinite(parsed.price) ? parsed.price : 0;
+
+  const text = (value: unknown) => (typeof value === 'string' ? value : undefined);
+  const city = text(parsed.city);
+  const street = text(parsed.street);
+  const priceNote = text(parsed.priceNote);
+  const indexable = parsed.indexable === true;
+
   return {
     ...(category === undefined ? {} : { category }),
-    title: typeof title === 'string' ? title : '',
-    price: typeof price === 'number' ? price : 0,
-    indexable: indexable === true,
-    ...(priceNote === undefined || priceNote === '' ? {} : { priceNote }),
-    ...(city === undefined || city === '' ? {} : { city }),
-    ...(street === undefined || street === '' ? {} : { street }),
+    title,
+    price,
+    indexable,
+    ...(city === undefined ? {} : { city }),
+    ...(street === undefined ? {} : { street }),
+    ...(priceNote === undefined ? {} : { priceNote }),
     facts,
     description,
     ...(generated === undefined ? {} : { generatedDescription: generated }),

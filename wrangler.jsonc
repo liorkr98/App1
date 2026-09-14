@@ -6,23 +6,32 @@
   // Without it, `wrangler deploy` runs its auto-configuration, which inspects
   // the repository and guesses. It guessed Expo — because `expo` is still a
   // root dependency and app.config.ts is still here, both deliberately, as the
-  // anchor for the EAS project that used to run CI (CLAUDE.md §2).
+  // anchor for the EAS project that used to run CI (CLAUDE.md §2). A committed
+  // config removes the guess entirely.
   //
-  // So it ran `bunx expo export -p web` and failed asking for react-native-web.
-  // It would have kept failing, because the detection is reading real files
-  // that are staying. A committed config removes the guess entirely.
+  // THE SHAPE CHANGED ON 14 SEPTEMBER 2026. This used to be a static-assets
+  // Worker: no `main`, assets pointed at web/dist. /a/[slug] is now rendered
+  // per request so that a REAL listing has a page at all — see
+  // astro.config.mjs — and @astrojs/cloudflare therefore splits its output:
   //
-  // The site is Astro in web/. After `astro build`, prerendered files live in
-  // web/dist/client and the Worker entry in web/dist/server/entry.mjs.
+  //   web/dist/client   every prerendered page, plus /_astro and /_headers
+  //   web/dist/server   the Worker that renders the listing route
+  //
+  // Cloudflare serves a matching static asset BEFORE invoking the Worker, so
+  // the homepage, the dashboard, /new and /me still cost nothing to serve and
+  // only a listing page reaches the runtime.
+  //
+  // After `astro build`, Workers Builds runs wrangler, so `main` exists at
+  // deploy time. Do not point the Astro adapter at this path — `astro check`
+  // runs before dist/ exists. The adapter reads web/wrangler.jsonc instead.
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "besivov",
-  "compatibility_date": "2026-09-07",
+  "compatibility_date": "2026-09-11",
+
+  // @supabase/supabase-js reaches for Node built-ins. Without this the Worker
+  // fails at import time, before any request is handled.
   "compatibility_flags": ["nodejs_compat"],
 
-  // After `astro build`. Workers Builds runs the web build first, then
-  // wrangler, so this file exists at deploy time. Do not point the Astro
-  // adapter at this path — `astro check` runs before dist/ exists. The
-  // adapter reads web/wrangler.jsonc instead.
   "main": "web/dist/server/entry.mjs",
 
   "observability": {
@@ -30,8 +39,10 @@
   },
 
   "assets": {
-    "binding": "ASSETS",
-    "directory": "web/dist/client"
+    "directory": "web/dist/client",
+    // The adapter's generated config names this binding, and the Astro
+    // runtime looks it up to serve prerendered pages from inside the Worker.
+    "binding": "ASSETS"
   }
 
   // Do NOT add custom_domain here until hasivuv.com DNS is attached.

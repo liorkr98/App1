@@ -1,4 +1,5 @@
 ---
+import type { Listing } from '@/types/listing';
 import BaseListing from '../layouts/BaseListing.astro';
 import CtaDock from './CtaDock.astro';
 import Disclosures from './Disclosures.astro';
@@ -12,7 +13,6 @@ import Prose from './Prose.astro';
 import SellerBlock from './SellerBlock.astro';
 import { CATEGORY_PRESENTATION } from '../lib/category-presentation';
 import { perUnitPrice } from '../lib/price';
-import type { Listing } from '@/types/listing';
 
 interface Props {
   listing: Listing;
