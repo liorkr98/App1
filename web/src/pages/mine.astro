@@ -46,7 +46,7 @@ import '../styles/tokens.css';
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Assistant:wght@400;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Assistant:wght@400;600;700;800&display=swap"
       rel="stylesheet"
     />
 
@@ -131,8 +131,10 @@ import '../styles/tokens.css';
         padding: 0.6rem 1.2rem;
         background: var(--olive);
         color: var(--plaster);
-        font-size: 0.92rem;
-        font-weight: 700;
+        font-size: 0.95rem;
+        /* 800, matching the homepage. Assistant carries it and the page loads
+           it — the buttons were asking for a weight the browser did not have. */
+        font-weight: 800;
         border: none;
         border-radius: 5px;
         text-decoration: none;
@@ -225,6 +227,35 @@ import '../styles/tokens.css';
         font-size: var(--t-label);
         color: var(--muted);
         font-variant-numeric: tabular-nums;
+      }
+
+      /* ---------- First run ---------- */
+
+      .onboard {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1.25rem;
+        flex-wrap: wrap;
+        background: var(--stone-warm);
+        border: 1px solid var(--stone);
+        border-radius: 8px;
+        padding: 1.1rem 1.25rem;
+        margin-block-end: 1.5rem;
+        /* --muted is 4.35:1 on this tinted ground and 4.87:1 on plaster. */
+        --muted: #67685f;
+      }
+
+      .onboard b {
+        font-family: 'Frank Ruhl Libre', serif;
+        font-weight: 700;
+        font-size: 1.15rem;
+      }
+
+      .onboard p {
+        color: var(--muted);
+        font-size: 0.92rem;
+        max-inline-size: 52ch;
       }
 
       /* ---------- The grid ----------
@@ -368,8 +399,8 @@ import '../styles/tokens.css';
       .act {
         padding: 0.4rem 0.7rem;
         font: inherit;
-        font-size: 0.82rem;
-        font-weight: 600;
+        font-size: 0.84rem;
+        font-weight: 700;
         color: var(--ink);
         background: none;
         border: var(--rule);
@@ -492,6 +523,24 @@ import '../styles/tokens.css';
         so the browser owns the "one of four" behaviour; the script only reads
         which one is checked and sets a data attribute on the grid.
       */}
+      {/*
+        FIRST-RUN ONBOARDING. There was none: an agent signed in, landed here,
+        and nothing ever told them their name and phone were what every
+        listing they made would carry — or that the page's only button needs
+        that phone to go anywhere.
+
+        Shown only while the profile is genuinely untouched (isProfileEmpty),
+        not while it is merely incomplete: nagging somebody who has already
+        been to the page is how a banner gets ignored.
+      */}
+      <div class="onboard" id="onboard" hidden>
+        <div>
+          <b>{t('dash.onboardTitle')}</b>
+          <p>{t('dash.onboardBody')}</p>
+        </div>
+        <a class="cta" href="/me/">{t('dash.onboardCta')}</a>
+      </div>
+
       <div class="filters" id="filters" hidden>
         <input type="radio" name="filter" id="f-all" value="all" checked />
         <label for="f-all">{t('dash.filterAll')}</label>
@@ -530,7 +579,10 @@ import '../styles/tokens.css';
     <p class="say" id="say" role="status" aria-live="polite" hidden></p>
 
     <script>
+      import { isProfileEmpty } from '@/features/agents/profile';
+
       import { t } from '../lib/i18n';
+      import { loadProfile } from '../lib/profile';
       import { supabase, supabaseConfigured } from '../lib/supabase';
 
       type Row = {
@@ -706,7 +758,10 @@ import '../styles/tokens.css';
 
         const edit = document.createElement('a');
         edit.className = 'act';
-        edit.href = '/new/';
+        // The listing this card is for, not a blank new one. This said
+        // '/new/' with no id at all, so "edit" started a fresh listing and
+        // the agent's work looked lost.
+        edit.href = `/new/?id=${encodeURIComponent(row.slug)}`;
         edit.textContent = t('dash.edit');
         acts.append(edit);
 
@@ -788,6 +843,23 @@ import '../styles/tokens.css';
         if (error) return show('failed');
 
         rows = (data ?? []) as Row[];
+
+        /*
+         * The first-run prompt, decided by the profile rather than by the
+         * listing count. An agent with nine listings and no phone number
+         * still needs it; one who filled the page in on day one does not,
+         * however few listings they have.
+         *
+         * Failure is silent: a banner is a convenience and must never be the
+         * reason the dashboard does not appear.
+         */
+        void loadProfile()
+          .then((result) => {
+            if ('profile' in result && isProfileEmpty(result.profile)) {
+              $('onboard').hidden = false;
+            }
+          })
+          .catch(() => undefined);
 
         if (rows.length === 0) return show('empty');
 

@@ -217,7 +217,24 @@
     "disclosuresPlaceholder": "",
     "disclosuresAdd": "",
     "disclosuresRemove": "",
-    "details": {}
+    "details": {},
+    "preview": {
+      "hint": "",
+      "noPhoto": "",
+      "noTitle": "",
+      "note": ""
+    },
+    "publish": {
+      "hint": "",
+      "photos": "",
+      "action": "",
+      "working": "",
+      "done": "",
+      "doneHint": "",
+      "open": "",
+      "paymentPending": "",
+      "failed": ""
+    }
   },
   "home": {
     "tagline": "",
@@ -313,6 +330,9 @@
     "signIn": "",
     "failed": "",
     "draftHint": "",
-    "countSuffix": ""
+    "countSuffix": "",
+    "onboardTitle": "",
+    "onboardBody": "",
+    "onboardCta": ""
   }
 }
