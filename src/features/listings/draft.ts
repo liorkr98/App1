@@ -53,13 +53,20 @@ export const DRAFT_VERSION = 1;
  * This becomes storable once images have URLs on a server, which is the same
  * decision that unblocks uploading at all.
  */
-export type Draft = Omit<EditorState, 'entitlement' | 'photoCount'>;
+export type Draft = Omit<EditorState, 'entitlement' | 'photoCount'> & {
+  /** The server row, once photos have created one. Not entitlement. */
+  listingId?: string;
+  slug?: string;
+};
 
 interface Stored extends Draft {
   version: number;
 }
 
-export function toDraft(state: EditorState): Stored {
+export function toDraft(
+  state: EditorState,
+  row?: { listingId?: string | null; slug?: string | null },
+): Stored {
   return {
     version: DRAFT_VERSION,
     ...(state.category === undefined ? {} : { category: state.category }),
@@ -85,6 +92,8 @@ export function toDraft(state: EditorState): Stored {
     ...(state.ownerConsentName === undefined ? {} : { ownerConsentName: state.ownerConsentName }),
     ...(state.disclosures === undefined ? {} : { disclosures: state.disclosures }),
     ...(state.tourUrl === undefined ? {} : { tourUrl: state.tourUrl }),
+    ...(row?.listingId ? { listingId: row.listingId } : {}),
+    ...(row?.slug ? { slug: row.slug } : {}),
   };
 }
 
@@ -170,6 +179,15 @@ export function fromDraft(raw: unknown): Draft | null {
   const indexable = parsed.indexable === true;
   const prePortal = parsed.prePortal === true;
 
+  const listingId = text(parsed.listingId);
+  const listingIdOk =
+    listingId !== undefined &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(listingId)
+      ? listingId
+      : undefined;
+  const slug = text(parsed.slug);
+  const slugOk = slug !== undefined && /^[0-9A-HJKMNP-TV-Z]{5}$/.test(slug) ? slug : undefined;
+
   return {
     ...(category === undefined ? {} : { category }),
     title,
@@ -192,6 +210,8 @@ export function fromDraft(raw: unknown): Draft | null {
     ...(typeof parsed.tourUrl === 'string' && parsed.tourUrl.startsWith('https://')
       ? { tourUrl: parsed.tourUrl }
       : {}),
+    ...(listingIdOk ? { listingId: listingIdOk } : {}),
+    ...(slugOk ? { slug: slugOk } : {}),
   };
 }
 

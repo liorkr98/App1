@@ -1,0 +1,12 @@
+---
+import Plain from '../layouts/Plain.astro';
+import { t } from '../lib/i18n';
+---
+
+<Plain title={t('legal.aboutTitle')} robots="index,follow">
+  <h1>{t('legal.aboutTitle')}</h1>
+  <p class="updated">{t('legal.updated')} <bdi>2026</bdi></p>
+  <p>{t('home.tagline')}</p>
+  <p>{t('home.subTagline')}</p>
+  <p>{t('home.lead')}</p>
+</Plain>

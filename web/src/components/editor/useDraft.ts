@@ -35,6 +35,7 @@ const SAVE_AFTER_MS = 400;
 export function useDraft(
   state: EditorState,
   restore: (draft: Draft) => void,
+  row?: { listingId?: string | null; slug?: string | null },
 ): void {
   const loaded = useRef(false);
 
@@ -69,7 +70,7 @@ export function useDraft(
 
     const timer = window.setTimeout(() => {
       try {
-        window.localStorage.setItem(KEY, JSON.stringify(toDraft(state)));
+        window.localStorage.setItem(KEY, JSON.stringify(toDraft(state, row)));
       } catch {
         // Out of quota, or storage blocked. The seller keeps working; they
         // simply lose the safety net. Nothing here is worth an interruption.
@@ -77,7 +78,7 @@ export function useDraft(
     }, SAVE_AFTER_MS);
 
     return () => window.clearTimeout(timer);
-  }, [state]);
+  }, [state, row?.listingId, row?.slug]);
 }
 
 /** Removes the stored draft. For after a publish succeeds. */

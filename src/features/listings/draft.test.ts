@@ -32,6 +32,19 @@ describe('a draft survives a refresh', () => {
     assert.equal(restored.facts.find((fact) => fact.key === 'rooms')?.value, 4);
   });
 
+  it('carries the listing row id so photographs can be reloaded', () => {
+    const stored = JSON.stringify(
+      toDraft(state(), {
+        listingId: '00000000-0000-4000-8000-000000000001',
+        slug: 'A7K2M',
+      }),
+    );
+    const restored = fromDraft(stored);
+    assert.ok(restored);
+    assert.equal(restored.listingId, '00000000-0000-4000-8000-000000000001');
+    assert.equal(restored.slug, 'A7K2M');
+  });
+
   it('carries the indexable flag back', () => {
     const restored = roundTrip({ ...state(), indexable: true });
     assert.ok(restored);
