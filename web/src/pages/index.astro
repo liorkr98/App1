@@ -1246,7 +1246,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
             <p class="hero-lead">{t('home.lead')}</p>
 
             <div class="actions">
-              <a class="cta" href="/new/">{t('home.cta')}</a>
+              <a class="cta" href="/new/?fresh=1">{t('home.cta')}</a>
               <span class="actions-note">{t('home.ctaNote')}</span>
             </div>
           </div>
@@ -1384,7 +1384,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
     <section class="closing">
       <div class="shell">
         <h2>{t('home.closingTitle')}</h2>
-        <a class="cta" href="/new/">{t('home.cta')}</a>
+        <a class="cta" href="/new/?fresh=1">{t('home.cta')}</a>
         <span class="actions-note" style="color:var(--muted)">{t('home.ctaNote')}</span>
       </div>
     </section>
@@ -1394,6 +1394,10 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
       <div class="shell">
         <span><a href="/">{t('common.brand')}</a></span>
         <span>
+          <a href="/about/">{t('legal.about')}</a>
+          {' · '}
+          <a href="/contact/">{t('legal.contact')}</a>
+          {' · '}
           <a href="/legal/terms/">{t('legal.terms')}</a>
           {' · '}
           <a href="/legal/privacy/">{t('legal.privacy')}</a>
@@ -1402,7 +1406,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
           {' · '}
           <a href="/pricing/">{t('pricing.title')}</a>
           {' · '}
-          <a href="/new/">{t('home.cta')}</a>
+          <a href="/new/?fresh=1">{t('home.cta')}</a>
         </span>
       </div>
     </footer>

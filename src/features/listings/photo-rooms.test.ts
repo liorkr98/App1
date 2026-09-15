@@ -1,7 +1,14 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { groupByRoom, guessRoomFromName, hasRoomLabels, isPhotoRoom } from './photo-rooms.js';
+import {
+  groupByRoom,
+  guessRoomFromName,
+  hasRoomLabels,
+  isPhotoRoom,
+  isWalkItem,
+  labeledWalkItems,
+} from './photo-rooms.js';
 
 describe('isPhotoRoom', () => {
   it('accepts the rooms the editor offers', () => {
@@ -72,5 +79,33 @@ describe('guessRoomFromName', () => {
   it('stays silent on a camera-roll name', () => {
     assert.equal(guessRoomFromName('IMG_2048.jpg'), undefined);
     assert.equal(guessRoomFromName(''), undefined);
+  });
+});
+
+describe('labeledWalkItems', () => {
+  it('returns labelled photographs in tour order, not upload order', () => {
+    const photos = [
+      { id: 'k', url: '/k.jpg', room: 'kitchen' as const },
+      { id: 'l', url: '/l.jpg', room: 'living' as const },
+      { id: 'x', url: '/x.jpg' },
+    ];
+    assert.deepEqual(
+      labeledWalkItems(photos).map((item) => item.id),
+      ['l', 'k'],
+    );
+  });
+
+  it('is empty when nobody named a room', () => {
+    const photos: { id: string; url: string; room?: 'kitchen' }[] = [{ id: 'a', url: '/a.jpg' }];
+    assert.deepEqual(labeledWalkItems(photos), []);
+  });
+});
+
+describe('isWalkItem', () => {
+  it('matches by id or url so the gallery can drop a duplicate', () => {
+    const walk = [{ id: 'k', url: '/k.jpg' }];
+    assert.equal(isWalkItem({ id: 'k', url: '/other.jpg' }, walk), true);
+    assert.equal(isWalkItem({ id: 'other', url: '/k.jpg' }, walk), true);
+    assert.equal(isWalkItem({ id: 'x', url: '/x.jpg' }, walk), false);
   });
 });

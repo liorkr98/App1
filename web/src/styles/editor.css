@@ -48,7 +48,7 @@
   flex-direction: column;
   min-block-size: 100dvh;
   /* Clears the fixed nav dock, exactly as the listing page clears its CTA. */
-  padding-block-end: 7rem;
+  padding-block-end: 8.5rem;
 }
 
 /* ---------- Progress rail ---------- */
@@ -621,6 +621,7 @@ textarea {
   position: fixed;
   inset-inline: 0;
   bottom: 0;
+  z-index: 20;
   max-width: 620px;
   margin-inline: auto;
   display: flex;

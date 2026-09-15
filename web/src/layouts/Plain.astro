@@ -113,6 +113,10 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
     <slot />
     </main>
     <footer>
+      <a href="/about/">{t('legal.about')}</a>
+      {' · '}
+      <a href="/contact/">{t('legal.contact')}</a>
+      {' · '}
       <a href="/legal/terms/">{t('legal.terms')}</a>
       {' · '}
       <a href="/legal/privacy/">{t('legal.privacy')}</a>

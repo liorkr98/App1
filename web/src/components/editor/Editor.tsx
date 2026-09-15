@@ -1,11 +1,10 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 
 import {
   blockers,
   canAdvance,
   canPublish,
   MAX_IMAGES,
-  nextStep,
   stepsFor,
   type EditorState,
   type Step,
@@ -96,7 +95,7 @@ const START: EditorState = {
 
 export default function Editor() {
   const [state, setState] = useState<EditorState>(START);
-  const [step, setStep] = useState<Step>(() => nextStep(START));
+  const [step, setStep] = useState<Step>('category');
 
   /**
    * The photographs live HERE and not in EditorState.
@@ -128,6 +127,9 @@ export default function Editor() {
   const listingId = useRef<string | null>(null);
   const slug = useRef<string | null>(null);
   const skipDraftRestore = useRef(false);
+  const stateRef = useRef(state);
+  stateRef.current = state;
+  const [savedRow, setSavedRow] = useState<{ id: string; slug: string } | null>(null);
   const [signedIn, setSignedIn] = useState(false);
 
   /**
@@ -206,6 +208,10 @@ export default function Editor() {
    *
    * Each photo's status is updated on its own, so a single failure is
    * attributable rather than sinking the batch.
+   *
+   * After the batch, the row is saved. Photos used to live only in this
+   * component's memory: advancing a step before `publicUrl` existed wrote
+   * empty `media`, and the dashboard draft showed no photographs.
    */
   const uploadPending = async (current: EditorPhoto[], category: EditorState['category']) => {
     if (!supabaseConfigured || !signedIn || !category) return;
@@ -213,14 +219,18 @@ export default function Editor() {
     const pending = current.filter((photo) => photo.status === 'local' && photo.file);
     if (pending.length === 0) return;
 
-    const mark = (id: string, patch: Partial<EditorPhoto>) =>
-      setPhotos((all) => all.map((photo) => (photo.id === id ? { ...photo, ...patch } : photo)));
+    let latest = current;
+    const mark = (id: string, patch: Partial<EditorPhoto>) => {
+      latest = latest.map((photo) => (photo.id === id ? { ...photo, ...patch } : photo));
+      setPhotos(latest);
+    };
 
     try {
       if (!listingId.current) {
         const draft = await createDraft(category);
         listingId.current = draft.id;
         slug.current = draft.slug;
+        setSavedRow({ id: draft.id, slug: draft.slug });
       }
     } catch {
       for (const photo of pending) mark(photo.id, { status: 'failed' });
@@ -265,6 +275,11 @@ export default function Editor() {
         height: processed.height,
       });
     }
+
+    const id = listingId.current;
+    if (id) {
+      await saveListing(id, stateRef.current, latest).catch(() => undefined);
+    }
   };
 
   const changePhotos = (next: EditorPhoto[]) => {
@@ -278,6 +293,26 @@ export default function Editor() {
 
   const position = steps.indexOf(step);
   const here = outstanding.filter((blocker) => blocker.step === step);
+  const photosBusy = photos.some(
+    (photo) => photo.status === 'local' || photo.status === 'uploading',
+  );
+
+  /**
+   * "מודעה חדשה" passes ?fresh=1 so a previous session cannot skip the seller
+   * to step 3 (photos). The dashboard's edit button passes ?id= and that row
+   * wins over localStorage.
+   */
+  useLayoutEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('fresh') === '1') {
+      clearDraft();
+      skipDraftRestore.current = true;
+      params.delete('fresh');
+      const qs = params.toString();
+      window.history.replaceState({}, '', qs ? `/new/?${qs}` : '/new/');
+    }
+    if (params.get('id')) skipDraftRestore.current = true;
+  }, []);
 
   /**
    * Opens an EXISTING listing when the dashboard sent us to one.
@@ -308,6 +343,9 @@ export default function Editor() {
 
         listingId.current = String(row.id ?? '');
         slug.current = String(row.slug ?? '');
+        if (listingId.current && slug.current) {
+          setSavedRow({ id: listingId.current, slug: slug.current });
+        }
 
         const media = (row.media ?? {}) as {
           cover?: { id?: string; url?: string; alt?: string; room?: string };
@@ -340,9 +378,9 @@ export default function Editor() {
             ownerConsentName: _name,
             ...rest
           } = current;
-          return {
+          const next = {
             ...rest,
-            category: row.category === 'vehicle' ? 'vehicle' : 'property',
+            category: row.category === 'vehicle' ? ('vehicle' as const) : ('property' as const),
             title: String(row.title ?? ''),
             price: Number(row.price ?? 0),
             ...(location.city ? { city: location.city } : {}),
@@ -360,18 +398,22 @@ export default function Editor() {
               ? { ownerConsentName: String(row.owner_consent_name) }
               : {}),
             ...(row.template ? { template: row.template as EditorState['template'] } : {}),
-            ...(row.audience === 'resident' ||
-            row.audience === 'investor' ||
-            row.audience === 'both'
-              ? { audience: row.audience }
-              : {}),
+            ...(row.audience === 'resident'
+              ? { audience: 'resident' as const }
+              : row.audience === 'investor'
+                ? { audience: 'investor' as const }
+                : row.audience === 'both'
+                  ? { audience: 'both' as const }
+                  : {}),
             ...(Array.isArray(row.disclosures) ? { disclosures: row.disclosures as string[] } : {}),
             ...(typeof (row.media as { tourUrl?: unknown } | null)?.tourUrl === 'string' &&
             String((row.media as { tourUrl: string }).tourUrl).startsWith('https://')
               ? { tourUrl: String((row.media as { tourUrl: string }).tourUrl) }
               : {}),
           };
+          return next;
         });
+        setStep('category');
       })
       .catch(() => undefined);
 
@@ -381,20 +423,55 @@ export default function Editor() {
   }, [signedIn]);
 
   /**
-   * Restores a saved draft, then lands the seller on the step that needs
-   * work rather than at the beginning.
-   *
-   * That is what nextStep is for. Someone coming back to a listing missing
-   * only photos should see the photos step, not the category question they
-   * answered yesterday.
+   * Restores a saved draft, then lands on step 1. A previous session used to
+   * skip to photos (step 3) because category and details were already filled.
    *
    * Entitlement is untouched: `Draft` has no such field. See useDraft.
    */
-  useDraft(state, (draft) => {
-    if (skipDraftRestore.current) return;
-    setState((current) => ({ ...current, ...draft }));
-    setStep(nextStep({ ...START, ...draft }));
-  });
+  useDraft(
+    state,
+    (draft) => {
+      if (skipDraftRestore.current) return;
+      setState((current) => ({ ...current, ...draft }));
+      setStep('category');
+      if (!draft.slug || !supabaseConfigured) return;
+      void loadListing(draft.slug)
+        .then((result) => {
+          if (!('row' in result)) return;
+          const row = result.row;
+          listingId.current = String(row.id ?? '');
+          slug.current = String(row.slug ?? '');
+          if (listingId.current && slug.current) {
+            setSavedRow({ id: listingId.current, slug: slug.current });
+          }
+          const media = (row.media ?? {}) as {
+            cover?: { id?: string; url?: string; alt?: string; room?: string };
+            gallery?: { id?: string; url?: string; alt?: string; room?: string }[];
+          };
+          const stored = [media.cover, ...(media.gallery ?? [])].filter(
+            (image): image is { id?: string; url?: string; alt?: string; room?: string } =>
+              Boolean(image?.url),
+          );
+          if (stored.length === 0) return;
+          setPhotos(
+            stored.map((image, index) => ({
+              id: image.id ?? `saved-${index}`,
+              url: image.url as string,
+              publicUrl: image.url as string,
+              name: '',
+              status: 'uploaded' as const,
+              ...(typeof image.alt === 'string' && image.alt.trim() !== ''
+                ? { alt: image.alt }
+                : {}),
+              ...(isPhotoRoom(image.room) ? { room: image.room } : {}),
+            })),
+          );
+          setState((current) => ({ ...current, photoCount: stored.length }));
+        })
+        .catch(() => undefined);
+    },
+    { listingId: savedRow?.id ?? listingId.current, slug: savedRow?.slug ?? slug.current },
+  );
 
   /**
    * Writes the editor's state back to the row.
@@ -411,7 +488,7 @@ export default function Editor() {
   const persist = () => {
     const id = listingId.current;
     if (!id || !supabaseConfigured || !signedIn) return;
-    void saveListing(id, state, photos).catch(() => undefined);
+    void saveListing(id, stateRef.current, photos).catch(() => undefined);
   };
 
   /**
@@ -459,6 +536,7 @@ export default function Editor() {
   };
 
   const go = (delta: number) => {
+    if (delta > 0 && step === 'photos' && photosBusy) return;
     persist();
     const target = steps[position + delta];
     if (target) setStep(target);
@@ -649,6 +727,10 @@ export default function Editor() {
         ) : null}
       </section>
 
+      {step === 'photos' && photosBusy ? (
+        <p className="hint">{t('editor.photosUploading')}</p>
+      ) : null}
+
       {here.length > 0 && step !== 'details' ? (
         <section className="blockers" role="alert">
           <h2 className="blockers-title">{t('editor.blockedTitle')}</h2>
@@ -686,7 +768,9 @@ export default function Editor() {
         <button
           type="button"
           onClick={() => go(1)}
-          disabled={position >= steps.length - 1 || !canAdvance(step, state)}
+          disabled={
+            position >= steps.length - 1 || !canAdvance(step, state) || (step === 'photos' && photosBusy)
+          }
         >
           {t('common.next')}
         </button>

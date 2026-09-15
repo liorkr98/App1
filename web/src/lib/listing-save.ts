@@ -129,11 +129,30 @@ export async function saveListing(
       index,
     }));
 
+  let seller: Record<string, unknown> | undefined;
+  let accent: string | undefined;
+  const category = state.category;
+  if (category) {
+    try {
+      const profile = await loadProfile();
+      if ('profile' in profile) {
+        const stamped = toSeller(profile.profile, schemaFor(category).ownerRole);
+        if (stamped) seller = { ...stamped };
+        if (isAccentId(profile.profile.accent)) accent = profile.profile.accent;
+      }
+    } catch {
+      // Keep whatever was stamped last rather than failing a draft save
+      // because /me could not be read at this instant.
+    }
+  }
+
   const { error } = await supabase()
     .from('listings')
     .update({
       ...editorColumns(state),
       media: toMedia(saved, state.tourUrl),
+      ...(seller ? { seller } : {}),
+      ...(accent ? { accent } : {}),
     })
     .eq('id', listingId);
 

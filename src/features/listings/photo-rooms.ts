@@ -87,3 +87,29 @@ export function groupByRoom<T extends { room?: PhotoRoom }>(photos: readonly T[]
 export function hasRoomLabels<T extends { room?: PhotoRoom }>(photos: readonly T[]): boolean {
   return photos.some((photo) => photo.room !== undefined);
 }
+
+/**
+ * Photographs that belong in the walk: labelled rooms, in tour order.
+ *
+ * Unlabeled pictures stay out — they belong in the gallery below, if one
+ * remains after the walk has taken its own frames. The listing used to
+ * render the same kitchen twice, once in the walk and once in the grid.
+ */
+export function labeledWalkItems<T extends { room?: PhotoRoom }>(photos: readonly T[]): T[] {
+  if (!hasRoomLabels(photos)) return [];
+  return groupByRoom(photos)
+    .filter((group): group is { room: PhotoRoom; items: T[] } => group.room !== undefined)
+    .flatMap((group) => group.items);
+}
+
+/** True when this photograph already appears in the walk. */
+export function isWalkItem<T extends { id?: string; url?: string }>(
+  photo: T,
+  walk: readonly T[],
+): boolean {
+  return walk.some(
+    (item) =>
+      (photo.id !== undefined && item.id !== undefined && photo.id === item.id) ||
+      (photo.url !== undefined && item.url !== undefined && photo.url === item.url),
+  );
+}

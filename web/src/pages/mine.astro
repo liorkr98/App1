@@ -501,6 +501,20 @@ import '../styles/tokens.css';
         display: none !important;
       }
 
+      .dash-foot {
+        padding-block: 1.5rem 2rem;
+        font-size: 0.85rem;
+        color: var(--muted);
+        text-align: center;
+      }
+
+      .dash-foot a {
+        display: inline-flex;
+        align-items: center;
+        min-block-size: 44px;
+        color: var(--muted);
+      }
+
       @media (prefers-reduced-motion: reduce) {
         .card,
         .act,
@@ -520,7 +534,7 @@ import '../styles/tokens.css';
         <nav>
           <a href="/me/">{t('agent.editDetails')}</a>
           <a id="nav-admin" href="/admin/" hidden>{t('admin.link')}</a>
-          <a class="cta" href="/new/">{t('dash.new')}</a>
+          <a class="cta" href="/new/?fresh=1">{t('dash.new')}</a>
         </nav>
       </div>
     </header>
@@ -582,7 +596,7 @@ import '../styles/tokens.css';
 
       <div class="state" id="empty" hidden>
         <b>{t('dash.emptyTitle')}</b>
-        {t('dash.emptyBody')} <a href="/new/">{t('dash.new')}</a>
+        {t('dash.emptyBody')} <a href="/new/?fresh=1">{t('dash.new')}</a>
       </div>
 
       <p class="state" id="none" hidden>{t('dash.emptyFiltered')}</p>
@@ -591,6 +605,20 @@ import '../styles/tokens.css';
 
       <ul class="grid" id="grid" hidden></ul>
     </main>
+
+    <footer class="dash-foot">
+      <div class="shell">
+        <a href="/about/">{t('legal.about')}</a>
+        {' · '}
+        <a href="/contact/">{t('legal.contact')}</a>
+        {' · '}
+        <a href="/legal/accessibility/">{t('legal.accessibility')}</a>
+        {' · '}
+        <a href="/legal/terms/">{t('legal.terms')}</a>
+        {' · '}
+        <a href="/legal/privacy/">{t('legal.privacy')}</a>
+      </div>
+    </footer>
 
     <p class="say" id="say" role="status" aria-live="polite" hidden></p>
 

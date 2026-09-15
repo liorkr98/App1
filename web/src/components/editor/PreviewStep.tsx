@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react';
 
 import { accentFor } from '@/features/agents/accents';
 import type { EditorState } from '@/features/listings/editor';
-import { groupByRoom, hasRoomLabels } from '@/features/listings/photo-rooms';
+import { groupByRoom, hasRoomLabels, isWalkItem, labeledWalkItems, type PhotoRoom } from '@/features/listings/photo-rooms';
 import { schemaFor } from '@/features/listings/schemas';
 import { factsFromSchema, type Fact } from '@/types/listing';
 
@@ -48,17 +48,15 @@ export function PreviewStep({ state, photos, agency, sellerName, accent, agencyL
     .filter((fact) => fact.present === false || (fact.value !== null && fact.value !== ''));
 
   const paragraphs = state.description.split('\n\n').filter((line) => line.trim() !== '');
-  const gallery = photos.slice(1);
+  const gallery = photos.slice(1).filter((photo) => !isWalkItem(photo, labeledWalkItems(photos)));
   const walkGroups = hasRoomLabels(photos)
     ? groupByRoom(photos).filter((group) => group.room)
     : [];
-  const walkSlides = walkGroups.flatMap((group) => {
-    if (!group.room) return [];
-    const room = group.room;
-    return group.items
-      .filter((photo) => photo.publicUrl ?? photo.url)
-      .map((photo) => ({ photo, room }));
-  });
+  const walkSlides = labeledWalkItems(photos)
+    .filter((photo): photo is EditorPhoto & { room: PhotoRoom } =>
+      Boolean(photo.room) && Boolean(photo.publicUrl ?? photo.url),
+    )
+    .map((photo) => ({ photo, room: photo.room }));
   const firstWalkIndex = new Map<string, number>();
   walkSlides.forEach((slide, index) => {
     if (!firstWalkIndex.has(slide.room)) firstWalkIndex.set(slide.room, index);
@@ -147,42 +145,56 @@ export function PreviewStep({ state, photos, agency, sellerName, accent, agencyL
           {walkSlides.length > 0 && (
             <section className="walk">
               <h2>{t('listing.walkTitle')}</h2>
-              <nav className="walk-nav" aria-label={t('listing.walkTitle')}>
-                {walkGroups.map((group) =>
-                  group.room ? (
-                    <a key={group.room} href={`#walk-p${firstWalkIndex.get(group.room) ?? 0}`}>
-                      {t(`editor.rooms.${group.room}`)}
-                    </a>
-                  ) : null,
-                )}
-              </nav>
               <div className="walk-viewer">
                 <nav className="walk-film" aria-label={t('listing.filmstrip')}>
                   {walkSlides.map((slide, index) => (
-                    <a key={slide.photo.id} href={`#walk-p${index}`} aria-label={t(`editor.rooms.${slide.room}`)}>
+                    <label
+                      key={slide.photo.id}
+                      htmlFor={`preview-walk-p${index}`}
+                      aria-label={t(`editor.rooms.${slide.room}`)}
+                    >
+                      <input
+                        className="walk-pick"
+                        type="radio"
+                        name="preview-walk"
+                        id={`preview-walk-p${index}`}
+                        defaultChecked={index === 0}
+                      />
                       <img src={slide.photo.publicUrl ?? slide.photo.url} alt="" width={72} height={72} />
-                    </a>
+                    </label>
                   ))}
                 </nav>
                 <div className="walk-main">
                   {walkSlides.map((slide, index) => {
                     const next = (index + 1) % walkSlides.length;
                     return (
-                      <figure key={slide.photo.id} id={`walk-p${index}`}>
+                      <figure key={slide.photo.id}>
                         <div className="walk-frame">
                           <img
                             src={slide.photo.publicUrl ?? slide.photo.url}
                             alt={slide.photo.alt?.trim() ?? ''}
                           />
+                          <nav className="walk-chips" aria-label={t('listing.walkTitle')}>
+                            {walkGroups.map((group) =>
+                              group.room ? (
+                                <label
+                                  key={group.room}
+                                  htmlFor={`preview-walk-p${firstWalkIndex.get(group.room) ?? 0}`}
+                                >
+                                  {t(`editor.rooms.${group.room}`)}
+                                </label>
+                              ) : null,
+                            )}
+                          </nav>
                           {showAllHref ? (
                             <a className="walk-all" href={showAllHref}>
                               {t('listing.showAllPhotos')}
                             </a>
                           ) : null}
                           {walkSlides.length > 1 ? (
-                            <a className="walk-next" href={`#walk-p${next}`}>
+                            <label className="walk-next" htmlFor={`preview-walk-p${next}`}>
                               {t('listing.nextPhoto')}
-                            </a>
+                            </label>
                           ) : null}
                         </div>
                         <figcaption>{t(`editor.rooms.${slide.room}`)}</figcaption>

@@ -1,5 +1,6 @@
 import type { ListingCategory } from '@/features/listings/schemas';
 
+import { num } from '../../lib/format';
 import { t } from '../../lib/i18n';
 
 interface Props {
@@ -101,9 +102,9 @@ export function DetailsStep({
           type="text"
           inputMode="numeric"
           dir="ltr"
-          value={price > 0 ? String(price) : ''}
+          value={price > 0 ? num(price) : ''}
           onChange={(event) => {
-            const digits = event.target.value.replace(/\D+/g, '');
+            const digits = event.target.value.replace(/[^\d]/g, '');
             onChange({ price: digits === '' ? 0 : Number(digits) });
           }}
           aria-invalid={priceError || undefined}

@@ -228,6 +228,7 @@
       "brochureNote": ""
     },
     "photosHint": "",
+    "photosUploading": "",
     "tourUrl": "",
     "tourUrlHint": "",
     "earlier": "",
@@ -440,7 +441,12 @@
     "updated": "",
     "home": "",
     "accessibility": "",
-    "accessibilityTitle": ""
+    "accessibilityTitle": "",
+    "about": "",
+    "aboutTitle": "",
+    "contact": "",
+    "contactTitle": "",
+    "contactBody": ""
   },
   "a11y": {
     "skip": ""

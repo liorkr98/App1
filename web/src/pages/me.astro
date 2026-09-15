@@ -77,6 +77,20 @@ import '../styles/tokens.css';
         padding: 2.25rem var(--gut) 3rem;
       }
 
+      footer {
+        padding: 0 var(--gut) 2rem;
+        font-size: 0.85rem;
+        color: var(--muted);
+        text-align: center;
+      }
+
+      footer a {
+        display: inline-flex;
+        align-items: center;
+        min-block-size: 44px;
+        color: var(--muted);
+      }
+
       .top .brand-mark {
         color: var(--ink);
       }
@@ -577,6 +591,18 @@ import '../styles/tokens.css';
         <p class="said" role="status" aria-live="polite" id="said"></p>
       </div>
     </main>
+
+    <footer>
+      <a href="/about/">{t('legal.about')}</a>
+      {' · '}
+      <a href="/contact/">{t('legal.contact')}</a>
+      {' · '}
+      <a href="/legal/terms/">{t('legal.terms')}</a>
+      {' · '}
+      <a href="/legal/privacy/">{t('legal.privacy')}</a>
+      {' · '}
+      <a href="/legal/accessibility/">{t('legal.accessibility')}</a>
+    </footer>
 
     <script>
       import { ACCENTS } from '@/features/agents/accents';

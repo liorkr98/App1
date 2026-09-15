@@ -15,7 +15,7 @@ import Walk from './Walk.astro';
 import { CATEGORY_PRESENTATION } from '../lib/category-presentation';
 import { t } from '../lib/i18n';
 import { perUnitPrice } from '../lib/price';
-import { groupByRoom, hasRoomLabels } from '@/features/listings/photo-rooms';
+import { isWalkItem, labeledWalkItems } from '@/features/listings/photo-rooms';
 
 interface Props {
   listing: Listing;
@@ -68,9 +68,9 @@ const attributions =
 
 const sold = listing.status === 'sold';
 const walkImages = [listing.media.cover, ...listing.media.gallery];
-const hasWalk = hasRoomLabels(walkImages)
-  ? groupByRoom(walkImages).some((group) => group.room !== undefined)
-  : false;
+const walkItems = labeledWalkItems(walkImages);
+const galleryImages = listing.media.gallery.filter((image) => !isWalkItem(image, walkItems));
+const hasWalk = walkItems.length > 0;
 ---
 <BaseListing
   listing={listing}
@@ -121,10 +121,10 @@ const hasWalk = hasRoomLabels(walkImages)
 
   <Walk
     images={walkImages}
-    allPhotosHref={listing.media.gallery.length > 0 ? '#listing-gallery' : undefined}
+    allPhotosHref={galleryImages.length > 0 ? '#listing-gallery' : undefined}
   />
 
-  <Gallery images={listing.media.gallery} />
+  <Gallery images={galleryImages} />
 
   {/* Below the seller's own content, deliberately: what they came to publish
       comes first, and the enrichment is what makes the page worth forwarding
@@ -159,6 +159,14 @@ const hasWalk = hasRoomLabels(walkImages)
         <Fragment><br /><span class="attribution"><Prose text={attribution} /></span></Fragment>
       ))}
       <br />
+      <a href="/about/">{t('legal.about')}</a>
+      {' · '}
+      <a href="/contact/">{t('legal.contact')}</a>
+      {' · '}
+      <a href="/legal/terms/">{t('legal.terms')}</a>
+      {' · '}
+      <a href="/legal/privacy/">{t('legal.privacy')}</a>
+      {' · '}
       <a href="/legal/accessibility/">{t('legal.accessibility')}</a>
     </footer>
   </Fragment>
