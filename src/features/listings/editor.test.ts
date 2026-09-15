@@ -303,7 +303,11 @@ describe('the description gate', () => {
 });
 
 describe('entitlement — fail closed', () => {
-  it('publishes only when payment is confirmed', () => {
+  it('publishes the first listing for free, with the mark', () => {
+    assert.equal(canPublish({ ...ready(), entitlement: 'free' }), true);
+  });
+
+  it('publishes only when payment is confirmed after the free listing', () => {
     assert.equal(canPublish({ ...ready(), entitlement: 'paid' }), true);
   });
 
@@ -381,7 +385,8 @@ describe('the blocker codes and their copy', () => {
 describe('canAdvance', () => {
   it('lets an unpaid seller reach the preview', () => {
     // The preview is the conversion moment (§8): the seller sees their
-    // finished page and then pays to share it. Gating it earlier hides the
+    // finished page. The first listing publishes free with the mark; a
+    // second one waits for a grant. Gating the preview earlier hides the
     // thing that sells the product.
     const unpaid = { ...ready(), entitlement: 'unpaid' as const };
 

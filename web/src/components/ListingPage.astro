@@ -153,13 +153,13 @@ const hasWalk = walkItems.length > 0;
       />
     )}
 
-    {/* נבנה בהיעד is the viral loop (CLAUDE.md §8) — a listing page is
-        forwarded to 30-80 people who are by definition interested in buying
-        something. The ODbL line beside it is a LICENCE CONDITION, not a
-        courtesy (§10), and it is driven by the payload so a page with no OSM
-        places carries no OSM credit. */}
+    {/* נבנה בהיעד is the viral loop (CLAUDE.md §8). Free listings keep it;
+        a paid grant sets listing.hyadMark false and the mark comes off.
+        The ODbL line is a LICENCE CONDITION, not a courtesy (§10). */}
     <footer>
-      {t('common.builtByPrefix')}<a href="/">{t('common.brand')}</a>
+      {listing.hyadMark !== false && (
+        <Fragment>{t('common.builtByPrefix')}<a href="/">{t('common.brand')}</a></Fragment>
+      )}
       {attributions.map((attribution) => (
         <Fragment><br /><span class="attribution"><Prose text={attribution} /></span></Fragment>
       ))}

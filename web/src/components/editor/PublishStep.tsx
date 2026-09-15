@@ -37,10 +37,10 @@ interface Props {
  * and there must never be one.
  * ======================================================================
  *
- * WHAT AN AGENT WILL ACTUALLY SEE TODAY depends on `listing_grants`. The
- * editor reads entitlement fail-closed; unpaid and unknown both block, with
- * different copy. The database trigger is the real publish gate. There is no
- * branch that publishes when the check failed.
+ * WHAT AN AGENT WILL ACTUALLY SEE TODAY depends on `listing_grants` plus
+ * how many listings they already published. The first one is free, with
+ * נבנה בהיעד. Unpaid (second listing, no grant) and unknown both block,
+ * with different copy. The database trigger is the real publish gate.
  */
 export function PublishStep({
   state,
@@ -122,6 +122,10 @@ export function PublishStep({
         the rule and this explains the situation — and right now the
         situation is that it is nobody's fault.
       */}
+      {state.entitlement === 'free' && !payment ? (
+        <p className="field-hint">{t('editor.publish.freeHint')}</p>
+      ) : null}
+
       {payment && (
         <div className="paywall">
           <p>{t(`editor.blockers.${payment.code}`)}</p>

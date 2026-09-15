@@ -64,12 +64,15 @@ describe('the sentinel itself', () => {
    * above and proves nothing about the real PDF, so the source of truth is
    * asserted directly.
    */
-  it('is byte-identical to the CTA in the web template', async () => {
-    const cta = await readFile(new URL('../../../web/src/components/CtaDock.astro', import.meta.url), 'utf8');
+  it('is byte-identical to the CTA copy the page renders', async () => {
+    const he = JSON.parse(
+      await readFile(new URL('../../../locales/he.json', import.meta.url), 'utf8'),
+    ) as { listing: { whatsappCta: string } };
 
-    assert.ok(
-      cta.includes(HEBREW_SENTINEL),
-      'CtaDock.astro no longer contains the sentinel — update HEBREW_SENTINEL in the same commit',
+    assert.equal(
+      he.listing.whatsappCta,
+      HEBREW_SENTINEL,
+      'listing.whatsappCta no longer matches the sentinel — update HEBREW_SENTINEL in the same commit',
     );
   });
 });

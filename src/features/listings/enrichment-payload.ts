@@ -12,7 +12,7 @@ import type {
   VehicleEnrichment,
 } from '../../types/listing.js';
 
-import { acceptNeighborhoodNote } from './neighborhood-note.js';
+import { acceptNeighborhoodNote, type NeighborhoodFacts } from './neighborhood-note.js';
 
 /**
  * Turns a stored JSON payload into the domain type, or undefined.
@@ -117,9 +117,9 @@ function asCivic(value: unknown): NearbyCivic | undefined {
   };
 }
 
-function asNote(value: unknown): NeighborhoodNote | undefined {
+function asNote(value: unknown, facts: NeighborhoodFacts): NeighborhoodNote | undefined {
   if (!isRecord(value) || typeof value.text !== 'string') return undefined;
-  return acceptNeighborhoodNote(value.text);
+  return acceptNeighborhoodNote(value.text, facts);
 }
 
 function asProperty(value: Record<string, unknown>): PropertyEnrichment | undefined {
@@ -162,7 +162,7 @@ function asProperty(value: Record<string, unknown>): PropertyEnrichment | undefi
     ? value.attributions.filter((line): line is string => typeof line === 'string' && line !== '')
     : [];
 
-  const note = asNote(value.neighborhoodNote);
+  const note = asNote(value.neighborhoodNote, { transit, schools, places, civic });
 
   return {
     category: 'property',

@@ -47,31 +47,36 @@ describe('entitlementFromGrants — fail closed', () => {
     assert.equal(entitlementFromGrants([grant()], false, now), 'paid');
   });
 
-  it('is unpaid when there are no grants', () => {
-    assert.equal(entitlementFromGrants([], false, now), 'unpaid');
-    assert.equal(entitlementFromGrants(null, false, now), 'unpaid');
+  it('is free when there are no grants and nothing published yet', () => {
+    assert.equal(entitlementFromGrants([], false, now, 0), 'free');
+    assert.equal(entitlementFromGrants(null, false, now, 0), 'free');
   });
 
-  it('is unpaid when remaining is zero', () => {
-    assert.equal(entitlementFromGrants([grant({ remaining: 0 })], false, now), 'unpaid');
+  it('is unpaid when the free listing is already used and no grant is live', () => {
+    assert.equal(entitlementFromGrants([], false, now, 1), 'unpaid');
+    assert.equal(entitlementFromGrants([grant({ remaining: 0 })], false, now, 1), 'unpaid');
   });
 
   it('is unpaid when the window has not started', () => {
     assert.equal(
-      entitlementFromGrants([grant({ effective_from: '2026-12-01T00:00:00.000Z' })], false, now),
+      entitlementFromGrants([grant({ effective_from: '2026-12-01T00:00:00.000Z' })], false, now, 1),
       'unpaid',
     );
   });
 
   it('is unpaid when the window has ended', () => {
     assert.equal(
-      entitlementFromGrants([grant({ effective_to: '2026-09-01T00:00:00.000Z' })], false, now),
+      entitlementFromGrants([grant({ effective_to: '2026-09-01T00:00:00.000Z' })], false, now, 1),
       'unpaid',
     );
   });
 
   it('is unknown when the read failed, even if rows were also returned', () => {
     assert.equal(entitlementFromGrants([grant()], true, now), 'unknown');
+  });
+
+  it('is unknown when the published count could not be read', () => {
+    assert.equal(entitlementFromGrants([], false, now, null), 'unknown');
   });
 
   it('treats a stack of grants as paid if any one of them is live', () => {

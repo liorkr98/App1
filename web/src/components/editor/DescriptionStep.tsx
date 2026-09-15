@@ -31,7 +31,10 @@ interface Props {
  * them they are being marked.
  */
 export function DescriptionStep({ text, generated, facts, onChange }: Props) {
-  const review = useMemo(() => reviewDescription(text, facts), [text, facts]);
+  const review = useMemo(
+    () => reviewDescription(text, facts, generated),
+    [text, facts, generated],
+  );
   const untouched = generated !== undefined && text !== '' && isUnedited(generated, text);
 
   return (

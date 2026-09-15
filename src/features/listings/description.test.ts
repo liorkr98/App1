@@ -59,7 +59,7 @@ describe('buildPrompt', () => {
 
     assert.match(prompt, /לתאר, לא לשבח/);
     assert.match(prompt, /אין להמציא עובדה/);
-    assert.match(prompt, /אין לכתוב על השכונה/);
+    assert.match(prompt, /רק דברים טובים/);
     assert.match(prompt, /אין לכתוב מספר שלא מופיע/);
   });
 
@@ -107,11 +107,8 @@ describe('findBannedWords', () => {
 });
 
 describe('findReservedTopics', () => {
-  it('flags claims the enrichment section already owns', () => {
-    // An unsourced sentence sitting above a sourced block is the one a reader
-    // remembers.
-    assert.ok(findReservedTopics('קרוב לבתי ספר טובים').includes('בתי ספר'));
-    assert.ok(findReservedTopics('תחבורה ציבורית זמינה').includes('תחבורה'));
+  it('no longer owns schools and transit — those are the description now', () => {
+    assert.deepEqual(findReservedTopics('קרוב לגן רימון ולרכבת הקלה.'), []);
   });
 
   it('flags future value, which is a valuation', () => {
@@ -156,12 +153,12 @@ describe('reviewDescription', () => {
 
   it('reports every kind of problem at once', () => {
     const review = reviewDescription(
-      'דירה חלומית, 6 חדרים, קרוב לבתי ספר מצוינים.',
+      'דירה חלומית, 6 חדרים, השקעה מצוינת.',
       FACTS,
     );
 
     assert.deepEqual(review.bannedWords, ['חלומית']);
-    assert.ok(review.reservedTopics.includes('בתי ספר'));
+    assert.ok(review.reservedTopics.includes('השקעה'));
     assert.deepEqual(review.unsupportedNumbers, ['6']);
     assert.equal(review.clean, false);
   });
