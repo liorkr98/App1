@@ -36,6 +36,8 @@ html{
   /* Removes the 300ms double-tap delay. This is a page read on a phone. */
   touch-action:manipulation;
   -webkit-tap-highlight-color:rgba(74,93,58,.18);
+  /* Keep :target / keyboard focus clear of the fixed WhatsApp dock. */
+  scroll-padding-block-end:7rem;
 }
 
 /* Smooth scrolling is motion too. The reference sets it unconditionally; a
@@ -270,8 +272,9 @@ p + p{margin-top:.9rem}
 
 footer{padding:1.6rem var(--gut) .5rem;text-align:center;font-size:.8rem;color:var(--muted)}
 footer a{color:var(--muted)}
-.odbl{font-size:.7rem;color:#96978E;margin-top:.5rem;line-height:1.6}
-.attribution{font-size:.7rem;color:var(--muted);line-height:1.6}
+/* #96978E on plaster is 2.83:1 — below WCAG AA. --muted is 4.87:1. */
+.odbl{font-size:.8rem;color:var(--muted);margin-top:.5rem;line-height:1.6}
+.attribution{font-size:.8rem;color:var(--muted);line-height:1.6}
 
 /* Sold — a record, not a live offer. Lives here so property and vehicle CSS
    stay byte-identical (verify-template-divergences.mjs). */

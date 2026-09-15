@@ -233,6 +233,9 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
       }
 
       .top-link {
+        display: inline-flex;
+        align-items: center;
+        min-block-size: 44px;
         font-size: var(--meta);
         font-weight: 800;
         /* 6.94:1 on --ink-deep. --olive-lift is 3.83:1 and fails here. */
@@ -1048,6 +1051,9 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
       }
 
       footer a {
+        display: inline-flex;
+        align-items: center;
+        min-block-size: 44px;
         color: var(--muted);
         text-underline-offset: 3px;
       }
