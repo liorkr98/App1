@@ -12,6 +12,7 @@
     "test": "tsc --outDir test-build && node --test \"test-build/**/*.test.js\"",
     "sync:schools": "node dist/ingest/src/index.js schools",
     "sync:transit": "node dist/ingest/src/index.js transit",
+    "sync:stations": "node dist/ingest/src/index.js stations",
     "sync:places": "node dist/ingest/src/index.js places"
   },
   "dependencies": {

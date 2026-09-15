@@ -4,13 +4,13 @@ import { t } from '../../lib/i18n';
 import '../../styles/tokens.css';
 
 /**
- * Admin grant UI. noindex. Fail closed if the session is not a site admin.
+ * Operator dashboard. noindex. Fail closed if the session is not a site admin.
  *
  * ============================ HUMAN REVIEW ============================
- * CLAUDE.md §8. This page reads entitlement (is_site_admin) and writes
- * listing_grants through admin_grant_listings. A required note, a count,
- * never an email stored in git. Unknown / not-admin → forbidden copy, no
- * table of listing bodies.
+ * CLAUDE.md §8. This page reads is_site_admin and listing_grants, and the
+ * grant form still writes through admin_grant_listings (count + required
+ * note). Analytics, the user directory and the contact inbox do not grant
+ * anything. Unknown / not-admin → forbidden copy, no tables.
  * ======================================================================
  */
 ---
@@ -38,7 +38,7 @@ import '../../styles/tokens.css';
         color: var(--ink);
         font-size: var(--t-body);
         line-height: 1.7;
-        max-inline-size: 52rem;
+        max-inline-size: 58rem;
         margin-inline: auto;
         padding: 1.5rem var(--gut) 3rem;
       }
@@ -62,6 +62,23 @@ import '../../styles/tokens.css';
         font-size: var(--t-h2);
         margin-block-end: 0.35rem;
       }
+      h2 {
+        font-family: 'Frank Ruhl Libre', serif;
+        font-size: 1.35rem;
+        margin-block: 2rem 0.7rem;
+      }
+      nav.jump {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem 1rem;
+        margin-block: 1rem 1.5rem;
+      }
+      nav.jump a {
+        color: var(--olive);
+        min-block-size: 44px;
+        display: inline-flex;
+        align-items: center;
+      }
       label { display: block; font-weight: 600; margin-block: 0.8rem 0.25rem; }
       input, textarea {
         width: 100%;
@@ -80,8 +97,17 @@ import '../../styles/tokens.css';
         color: var(--plaster);
         font: inherit;
         font-weight: 700;
+        cursor: pointer;
       }
       button:disabled { background: var(--stone); color: var(--muted); }
+      button.quiet {
+        background: transparent;
+        color: var(--olive);
+        border: 1px solid var(--stone);
+        margin-block-start: 0;
+        padding: 0.35rem 0.7rem;
+        min-block-size: 44px;
+      }
       .say { margin-block: 0.8rem; font-weight: 600; }
       .say.is-gate {
         padding: 1.1rem 1.15rem;
@@ -97,8 +123,35 @@ import '../../styles/tokens.css';
         align-items: center;
         min-block-size: 44px;
       }
-      table { width: 100%; border-collapse: collapse; margin-block-start: 2rem; }
-      th, td { text-align: start; padding: 0.45rem 0.3rem; border-block-end: 1px solid var(--stone); }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+        gap: 0.7rem;
+        margin-block: 1rem 0.5rem;
+      }
+      .stat {
+        background: var(--stone-warm);
+        border-radius: 12px;
+        padding: 0.85rem 0.9rem;
+      }
+      .stat b {
+        display: block;
+        font-family: 'Frank Ruhl Libre', serif;
+        font-size: 1.6rem;
+        line-height: 1.2;
+      }
+      .stat span { color: var(--muted); font-size: 0.82rem; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { text-align: start; padding: 0.45rem 0.3rem; border-block-end: 1px solid var(--stone); vertical-align: top; }
+      .msg {
+        border-block-end: 1px solid var(--stone);
+        padding-block: 0.9rem;
+      }
+      .msg.unread { background: var(--stone-warm); padding-inline: 0.7rem; border-radius: 8px; }
+      .msg-meta { color: var(--muted); font-size: 0.85rem; }
+      .msg-body { white-space: pre-wrap; margin-block: 0.4rem; }
+      .ops { display: none; }
+      .ops.is-on { display: block; }
     </style>
   </head>
   <body>
@@ -118,35 +171,94 @@ import '../../styles/tokens.css';
         <a href="/enter/">{t('agent.signIn')}</a>
       </p>
 
-      <form id="form" hidden>
-        <label for="email">{t('admin.email')}</label>
-        <input id="email" name="email" type="email" dir="ltr" autocomplete="email" required />
+      <div id="ops" class="ops">
+        <nav class="jump" aria-label={t('admin.title')}>
+          <a href="#overview">{t('admin.overview')}</a>
+          <a href="#users">{t('admin.users')}</a>
+          <a href="#funnel">{t('admin.funnel')}</a>
+          <a href="#inbox">{t('admin.inbox')}</a>
+          <a href="#listings">{t('admin.rollups')}</a>
+          <a href="#grants">{t('admin.grantSection')}</a>
+        </nav>
 
-        <button type="submit" id="search">{t('admin.search')}</button>
-        <p class="say" id="found" hidden></p>
+        <section id="overview">
+          <h2>{t('admin.overview')}</h2>
+          <div class="stats" id="stats"></div>
+        </section>
 
-        <label for="count">{t('admin.count')}</label>
-        <input id="count" name="count" type="number" min="1" max="100" value="1" required />
+        <section id="users">
+          <h2>{t('admin.users')}</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>{t('admin.who')}</th>
+                <th>{t('admin.listingsCol')}</th>
+                <th>{t('admin.publishedCol')}</th>
+                <th>{t('admin.remaining')}</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="users-body"></tbody>
+          </table>
+        </section>
 
-        <label for="note">{t('admin.note')}</label>
-        <textarea id="note" name="note" rows="3" required minlength="3"></textarea>
-        <p>{t('admin.noteHint')}</p>
+        <section id="funnel">
+          <h2>{t('admin.funnel')}</h2>
+          <p>{t('admin.funnelLead')}</p>
+          <table>
+            <thead>
+              <tr>
+                <th>{t('admin.step')}</th>
+                <th>{t('admin.entered')}</th>
+                <th>{t('admin.blocked')}</th>
+                <th>{t('admin.publishOk')}</th>
+                <th>{t('admin.publishFail')}</th>
+              </tr>
+            </thead>
+            <tbody id="funnel-body"></tbody>
+          </table>
+        </section>
 
-        <button type="button" id="grant">{t('admin.grant')}</button>
-        <p class="say" id="result" hidden></p>
-      </form>
+        <section id="inbox">
+          <h2>{t('admin.inbox')}</h2>
+          <div id="inbox-body"></div>
+        </section>
 
-      <h2 id="rollups-title" hidden>{t('admin.rollups')}</h2>
-      <table id="rollups" hidden>
-        <thead>
-          <tr>
-            <th>{t('dash.title')}</th>
-            <th>{t('admin.views')}</th>
-            <th>{t('admin.waTaps')}</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+        <section id="listings">
+          <h2>{t('admin.rollups')}</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>{t('dash.title')}</th>
+                <th>{t('admin.views')}</th>
+                <th>{t('admin.waTaps')}</th>
+              </tr>
+            </thead>
+            <tbody id="rollups-body"></tbody>
+          </table>
+        </section>
+
+        <section id="grants">
+          <h2>{t('admin.grantSection')}</h2>
+          <p>{t('admin.noteHint')}</p>
+          <form id="form">
+            <label for="email">{t('admin.email')}</label>
+            <input id="email" name="email" type="email" dir="ltr" autocomplete="email" required />
+
+            <button type="submit" id="search">{t('admin.search')}</button>
+            <p class="say" id="found" hidden></p>
+
+            <label for="count">{t('admin.count')}</label>
+            <input id="count" name="count" type="number" min="1" max="100" value="1" required />
+
+            <label for="note">{t('admin.note')}</label>
+            <textarea id="note" name="note" rows="3" required minlength="3"></textarea>
+
+            <button type="button" id="grant">{t('admin.grant')}</button>
+            <p class="say" id="result" hidden></p>
+          </form>
+        </section>
+      </div>
     </main>
 
     <script>
@@ -155,7 +267,21 @@ import '../../styles/tokens.css';
 
       const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
+      const bdi = (value: string | number) => {
+        const wrap = document.createElement('bdi');
+        wrap.textContent = String(value);
+        return wrap;
+      };
+
       let targetId: string | null = null;
+
+      const fillGrant = (email: string, userId: string) => {
+        targetId = userId;
+        ($('email') as HTMLInputElement).value = email;
+        $('found').textContent = email;
+        $('found').hidden = false;
+        $('grants').scrollIntoView({ block: 'start' });
+      };
 
       const boot = async () => {
         if (!supabaseConfigured) {
@@ -173,29 +299,151 @@ import '../../styles/tokens.css';
           $('gate').hidden = false;
           return;
         }
-        $('form').hidden = false;
+        $('ops').classList.add('is-on');
+
+        const overview = await client.rpc('admin_site_overview');
+        const row = Array.isArray(overview.data) ? overview.data[0] : overview.data;
+        if (row && typeof row === 'object') {
+          const stats: [string, string | number][] = [
+            [t('admin.statUsers'), (row as { users: number }).users ?? 0],
+            [t('admin.statListings'), (row as { listings: number }).listings ?? 0],
+            [t('admin.statDrafts'), (row as { drafts: number }).drafts ?? 0],
+            [t('admin.statPublished'), (row as { published: number }).published ?? 0],
+            [t('admin.statViews7d'), (row as { views_7d: number }).views_7d ?? 0],
+            [t('admin.statWa7d'), (row as { wa_7d: number }).wa_7d ?? 0],
+            [t('admin.statUnread'), (row as { unread_messages: number }).unread_messages ?? 0],
+            [t('admin.statGrants'), (row as { grants_remaining: number }).grants_remaining ?? 0],
+          ];
+          for (const [label, value] of stats) {
+            const card = document.createElement('div');
+            card.className = 'stat';
+            const strong = document.createElement('b');
+            strong.append(bdi(value));
+            const span = document.createElement('span');
+            span.textContent = label;
+            card.append(strong, span);
+            $('stats').append(card);
+          }
+        }
+
+        const users = await client.rpc('admin_users');
+        if (!users.error && users.data) {
+          for (const person of users.data as {
+            user_id: string;
+            email: string | null;
+            display_name: string | null;
+            agency_name: string | null;
+            listings: number;
+            published: number;
+            remaining: number;
+          }[]) {
+            const tr = document.createElement('tr');
+            const who = document.createElement('td');
+            const name = document.createElement('div');
+            name.textContent = person.agency_name || person.display_name || '—';
+            const mail = document.createElement('div');
+            mail.append(bdi(person.email ?? ''));
+            who.append(name, mail);
+            const listings = document.createElement('td');
+            listings.append(bdi(person.listings ?? 0));
+            const published = document.createElement('td');
+            published.append(bdi(person.published ?? 0));
+            const remaining = document.createElement('td');
+            remaining.append(bdi(person.remaining ?? 0));
+            const act = document.createElement('td');
+            const grantBtn = document.createElement('button');
+            grantBtn.type = 'button';
+            grantBtn.className = 'quiet';
+            grantBtn.textContent = t('admin.grantThis');
+            grantBtn.addEventListener('click', () => fillGrant(person.email ?? '', person.user_id));
+            act.append(grantBtn);
+            tr.append(who, listings, published, remaining, act);
+            $('users-body').append(tr);
+          }
+        }
+
+        const funnel = await client.rpc('admin_editor_funnel');
+        if (!funnel.error && funnel.data) {
+          for (const step of funnel.data as {
+            step: string;
+            entered: number;
+            blocked: number;
+            publish_ok: number;
+            publish_fail: number;
+          }[]) {
+            const tr = document.createElement('tr');
+            const name = document.createElement('td');
+            name.textContent = t(`editor.steps.${step.step}`);
+            const entered = document.createElement('td');
+            entered.append(bdi(step.entered ?? 0));
+            const blocked = document.createElement('td');
+            blocked.append(bdi(step.blocked ?? 0));
+            const ok = document.createElement('td');
+            ok.append(bdi(step.publish_ok ?? 0));
+            const fail = document.createElement('td');
+            fail.append(bdi(step.publish_fail ?? 0));
+            tr.append(name, entered, blocked, ok, fail);
+            $('funnel-body').append(tr);
+          }
+        }
+
+        const inbox = await client.rpc('admin_contact_messages');
+        if (!inbox.error && inbox.data) {
+          const box = $('inbox-body');
+          if ((inbox.data as unknown[]).length === 0) {
+            const empty = document.createElement('p');
+            empty.textContent = t('admin.inboxEmpty');
+            box.append(empty);
+          }
+          for (const msg of inbox.data as {
+            id: string;
+            name: string;
+            email: string;
+            body: string;
+            created_at: string;
+            read_at: string | null;
+          }[]) {
+            const article = document.createElement('article');
+            article.className = msg.read_at ? 'msg' : 'msg unread';
+            const meta = document.createElement('p');
+            meta.className = 'msg-meta';
+            const when = document.createElement('bdi');
+            when.textContent = msg.created_at.slice(0, 16).replace('T', ' ');
+            meta.append(document.createTextNode(`${msg.name} · `), bdi(msg.email), document.createTextNode(' · '), when);
+            const body = document.createElement('p');
+            body.className = 'msg-body';
+            body.textContent = msg.body;
+            article.append(meta, body);
+            if (!msg.read_at) {
+              const mark = document.createElement('button');
+              mark.type = 'button';
+              mark.className = 'quiet';
+              mark.textContent = t('admin.markRead');
+              mark.addEventListener('click', () => {
+                void (async () => {
+                  await supabase().rpc('admin_mark_contact_read', { p_id: msg.id });
+                  article.classList.remove('unread');
+                  mark.remove();
+                })();
+              });
+              article.append(mark);
+            }
+            box.append(article);
+          }
+        }
 
         const rollups = await client.rpc('admin_event_rollups');
         if (!rollups.error && rollups.data) {
-          const body = document.querySelector('#rollups tbody');
-          if (body) {
-            for (const row of rollups.data as { slug: string; title: string; views: number; wa_taps: number }[]) {
-              const tr = document.createElement('tr');
-              const title = document.createElement('td');
-              title.textContent = row.title || row.slug;
-              const views = document.createElement('td');
-              const viewsBdi = document.createElement('bdi');
-              viewsBdi.textContent = String(row.views ?? 0);
-              views.append(viewsBdi);
-              const wa = document.createElement('td');
-              const waBdi = document.createElement('bdi');
-              waBdi.textContent = String(row.wa_taps ?? 0);
-              wa.append(waBdi);
-              tr.append(title, views, wa);
-              body.append(tr);
-            }
-            $('rollups').hidden = false;
-            $('rollups-title').hidden = false;
+          for (const listing of rollups.data as { slug: string; title: string; views: number; wa_taps: number }[]) {
+            const tr = document.createElement('tr');
+            const title = document.createElement('td');
+            title.textContent = listing.title || listing.slug;
+            const views = document.createElement('td');
+            views.append(bdi(listing.views ?? 0));
+            const wa = document.createElement('td');
+            wa.append(bdi(listing.wa_taps ?? 0));
+            tr.append(title, views, wa);
+            $('rollups-body').append(tr);
           }
         }
       };

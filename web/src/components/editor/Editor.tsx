@@ -22,6 +22,7 @@ import { enqueuePublishJobs } from '../../lib/listing-jobs';
 import { stripAndResize, uploadDerived } from '../../lib/listing-photo';
 import { loadListing, publishListing, saveListing } from '../../lib/listing-save';
 import { loadProfile } from '../../lib/profile';
+import { recordEditorEvent } from '../../lib/editor-events';
 import type { AgentProfile } from '@/features/agents/profile';
 import { supabase, supabaseConfigured } from '../../lib/supabase';
 import { ConsentStep } from './ConsentStep';
@@ -297,6 +298,21 @@ export default function Editor() {
     (photo) => photo.status === 'local' || photo.status === 'uploading',
   );
 
+  useEffect(() => {
+    void recordEditorEvent(step, 'enter', listingId.current);
+  }, [step]);
+
+  const blockedSent = useRef<Step | null>(null);
+  useEffect(() => {
+    if (here.length === 0) {
+      blockedSent.current = null;
+      return;
+    }
+    if (blockedSent.current === step) return;
+    blockedSent.current = step;
+    void recordEditorEvent(step, 'blocked', listingId.current);
+  }, [here.length, step]);
+
   /**
    * "מודעה חדשה" passes ?fresh=1 so a previous session cannot skip the seller
    * to step 3 (photos). The dashboard's edit button passes ?id= and that row
@@ -516,6 +532,7 @@ export default function Editor() {
       setPublishing(false);
 
       if ('ok' in result) {
+        void recordEditorEvent('publish', 'publish_ok', id);
         const publishedSlug = result.slug || slug.current;
         if (publishedSlug) {
           slug.current = publishedSlug;
@@ -531,6 +548,8 @@ export default function Editor() {
           price: state.price,
         });
         clearDraft();
+      } else {
+        void recordEditorEvent('publish', 'publish_fail', id);
       }
     })();
   };

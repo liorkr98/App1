@@ -7,4 +7,105 @@ import { t } from '../lib/i18n';
   <h1>{t('legal.contactTitle')}</h1>
   <p class="updated">{t('legal.updated')} <bdi>2026</bdi></p>
   <p>{t('legal.contactBody')}</p>
+
+  <form id="contact-form" class="contact-form">
+    <label for="c-name">{t('legal.contactName')}</label>
+    <input id="c-name" name="name" type="text" required minlength="2" maxlength="80" autocomplete="name" />
+
+    <label for="c-email">{t('legal.contactEmail')}</label>
+    <input id="c-email" name="email" type="email" required maxlength="120" dir="ltr" autocomplete="email" />
+
+    <label for="c-body">{t('legal.contactMessage')}</label>
+    <textarea id="c-body" name="body" required minlength="10" maxlength="2000" rows="6"></textarea>
+
+    <div class="hp" aria-hidden="true">
+      <label for="c-site">{t('legal.contactSite')}</label>
+      <input id="c-site" name="website" type="text" tabindex="-1" autocomplete="off" />
+    </div>
+
+    <button type="submit">{t('legal.contactSend')}</button>
+    <p id="c-say" class="say" hidden></p>
+  </form>
 </Plain>
+
+<style>
+  .contact-form {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-block-start: 1.5rem;
+  }
+  .contact-form label {
+    font-weight: 600;
+    margin-block-start: 0.7rem;
+  }
+  .contact-form input,
+  .contact-form textarea {
+    font: inherit;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid var(--stone);
+    border-radius: 8px;
+  }
+  .contact-form button {
+    margin-block-start: 1rem;
+    min-block-size: 44px;
+    padding: 0.7rem 1.1rem;
+    border: 0;
+    border-radius: 999px;
+    background: var(--olive);
+    color: var(--plaster);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .contact-form button:disabled {
+    background: var(--stone);
+    color: var(--muted);
+  }
+  .say { font-weight: 600; margin-block-start: 0.8rem; }
+  .hp {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+</style>
+
+<script>
+  import { t } from '../lib/i18n';
+  import { supabase, supabaseConfigured } from '../lib/supabase';
+
+  const form = document.getElementById('contact-form') as HTMLFormElement;
+  const say = document.getElementById('c-say') as HTMLParagraphElement;
+
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    void (async () => {
+      say.hidden = true;
+      if (!supabaseConfigured) {
+        say.textContent = t('legal.contactFailed');
+        say.hidden = false;
+        return;
+      }
+      const button = form.querySelector('button');
+      if (button) button.disabled = true;
+      const { error } = await supabase().rpc('submit_contact_message', {
+        p_name: (document.getElementById('c-name') as HTMLInputElement).value,
+        p_email: (document.getElementById('c-email') as HTMLInputElement).value,
+        p_body: (document.getElementById('c-body') as HTMLTextAreaElement).value,
+        p_honeypot: (document.getElementById('c-site') as HTMLInputElement).value,
+      });
+      if (button) button.disabled = false;
+      if (error) {
+        say.textContent = t('legal.contactFailed');
+        say.hidden = false;
+        return;
+      }
+      form.reset();
+      say.textContent = t('legal.contactSent');
+      say.hidden = false;
+    })();
+  });
+</script>
