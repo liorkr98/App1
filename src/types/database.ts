@@ -873,12 +873,40 @@ export type Database = {
         Returns: {
           drafts: number
           grants_remaining: number
+          jobs_failed: number
+          jobs_pending: number
           listings: number
           published: number
           unread_messages: number
           users: number
           views_7d: number
           wa_7d: number
+        }[]
+      }
+      admin_listings: {
+        Args: never
+        Returns: {
+          category: string
+          created_at: string
+          listing_id: string
+          owner_email: string | null
+          published_at: string | null
+          slug: string
+          status: string
+          title: string
+          views: number
+          wa_taps: number
+        }[]
+      }
+      admin_ingest_status: {
+        Args: never
+        Returns: {
+          display_name: string
+          last_attempted_at: string | null
+          last_error: string | null
+          last_synced_at: string | null
+          row_count: number
+          source: string
         }[]
       }
       admin_users: {

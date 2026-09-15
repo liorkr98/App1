@@ -126,6 +126,9 @@
     "nextPhoto": "",
     "showAllPhotos": "",
     "currentPhoto": "",
+    "mapTitle": "",
+    "mapAlt": "",
+    "mapNavigate": "",
     "mapNearby": {
       "transit": "",
       "school": "",
@@ -521,6 +524,22 @@
     "statViews7d": "",
     "statWa7d": "",
     "statUnread": "",
-    "statGrants": ""
+    "statGrants": "",
+    "statJobsPending": "",
+    "statJobsFailed": "",
+    "ingest": "",
+    "ingestRows": "",
+    "ingestSynced": "",
+    "ingestError": "",
+    "neverSynced": "",
+    "emptyUsers": "",
+    "emptyListings": "",
+    "reply": "",
+    "owner": "",
+    "statusCol": "",
+    "statusDraft": "",
+    "statusPublished": "",
+    "statusSold": "",
+    "statusArchived": ""
   }
 }

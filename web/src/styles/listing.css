@@ -249,6 +249,10 @@ p + p{margin-top:.9rem}
 /* ---------- מפה ---------- */
 .map img{width:100%;display:block;border-radius:2px;background:var(--stone);aspect-ratio:2/1;object-fit:cover}
 .addr{font-size:.9rem;color:var(--muted);margin-block-start:.6rem}
+.map-nav{
+  display:inline-flex;align-items:center;min-block-size:44px;
+  margin-block-start:.25rem;color:var(--olive);font-weight:600;
+}
 .map-nearby{
   list-style:none;
   margin:0;

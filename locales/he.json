@@ -126,6 +126,9 @@
     "nextPhoto": "התמונה הבאה",
     "showAllPhotos": "כל התמונות",
     "currentPhoto": "נוכחי",
+    "mapTitle": "מיקום",
+    "mapAlt": "מפת האזור",
+    "mapNavigate": "ניווט בוויז",
     "mapNearby": {
       "transit": "תחבורה",
       "school": "חינוך",
@@ -495,7 +498,7 @@
     "failed": "לא הצלחנו להשלים. נסו שוב.",
     "views": "צפיות",
     "waTaps": "וואטסאפ",
-    "rollups": "מודעות פעילות",
+    "rollups": "מודעות",
     "overview": "סקירה",
     "users": "משתמשים",
     "funnel": "איפה נתקעים",
@@ -521,6 +524,22 @@
     "statViews7d": "צפיות בשבוע",
     "statWa7d": "וואטסאפ בשבוע",
     "statUnread": "פניות חדשות",
-    "statGrants": "יתרת מענקים"
+    "statGrants": "יתרת מענקים",
+    "statJobsPending": "עבודות ממתינות",
+    "statJobsFailed": "עבודות שנכשלו",
+    "ingest": "מקורות נתונים",
+    "ingestRows": "שורות",
+    "ingestSynced": "סנכרון אחרון",
+    "ingestError": "שגיאה",
+    "neverSynced": "עוד לא רץ",
+    "emptyUsers": "אין משתמשים עדיין.",
+    "emptyListings": "אין מודעות עדיין.",
+    "reply": "מענה במייל",
+    "owner": "בעלים",
+    "statusCol": "סטטוס",
+    "statusDraft": "טיוטה",
+    "statusPublished": "פורסמה",
+    "statusSold": "נמכרה",
+    "statusArchived": "בארכיון"
   }
 }

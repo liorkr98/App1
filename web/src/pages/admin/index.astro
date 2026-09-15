@@ -9,8 +9,9 @@ import '../../styles/tokens.css';
  * ============================ HUMAN REVIEW ============================
  * CLAUDE.md §8. This page reads is_site_admin and listing_grants, and the
  * grant form still writes through admin_grant_listings (count + required
- * note). Analytics, the user directory and the contact inbox do not grant
- * anything. Unknown / not-admin → forbidden copy, no tables.
+ * note). Analytics, the user directory, listings, ingest health, job
+ * counters and the contact inbox do not grant anything. Unknown / not-admin
+ * → forbidden copy, no tables.
  * ======================================================================
  */
 ---
@@ -50,7 +51,13 @@ import '../../styles/tokens.css';
         padding-block-end: 1rem;
         border-block-end: 1px solid var(--stone);
       }
-      header > a:not(.brand-mark) {
+      header > .head-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem 1rem;
+      }
+      header > a:not(.brand-mark),
+      header .head-actions > a {
         display: inline-flex;
         align-items: center;
         min-block-size: 44px;
@@ -141,7 +148,7 @@ import '../../styles/tokens.css';
         line-height: 1.2;
       }
       .stat span { color: var(--muted); font-size: 0.82rem; }
-      table { width: 100%; border-collapse: collapse; }
+      table a { color: var(--olive); }
       th, td { text-align: start; padding: 0.45rem 0.3rem; border-block-end: 1px solid var(--stone); vertical-align: top; }
       .msg {
         border-block-end: 1px solid var(--stone);
@@ -150,6 +157,9 @@ import '../../styles/tokens.css';
       .msg.unread { background: var(--stone-warm); padding-inline: 0.7rem; border-radius: 8px; }
       .msg-meta { color: var(--muted); font-size: 0.85rem; }
       .msg-body { white-space: pre-wrap; margin-block: 0.4rem; }
+      .msg a { color: var(--olive); display: inline-flex; align-items: center; min-block-size: 44px; }
+      .funnel-hot td:nth-child(3) { font-weight: 700; color: var(--olive); }
+      .err { color: var(--muted); }
       .ops { display: none; }
       .ops.is-on { display: block; }
     </style>
@@ -158,7 +168,10 @@ import '../../styles/tokens.css';
     <a class="skip" href="#main">{t('a11y.skip')}</a>
     <header>
       <BrandMark />
-      <a href="/mine/">{t('dash.title')}</a>
+      <div class="head-actions">
+        <a href="/mine/">{t('dash.title')}</a>
+        <button type="button" class="quiet" id="sign-out" hidden>{t('auth.signOut')}</button>
+      </div>
     </header>
     <main id="main">
       <h1>{t('admin.title')}</h1>
@@ -178,6 +191,7 @@ import '../../styles/tokens.css';
           <a href="#funnel">{t('admin.funnel')}</a>
           <a href="#inbox">{t('admin.inbox')}</a>
           <a href="#listings">{t('admin.rollups')}</a>
+          <a href="#ingest">{t('admin.ingest')}</a>
           <a href="#grants">{t('admin.grantSection')}</a>
         </nav>
 
@@ -230,11 +244,28 @@ import '../../styles/tokens.css';
             <thead>
               <tr>
                 <th>{t('dash.title')}</th>
+                <th>{t('admin.statusCol')}</th>
+                <th>{t('admin.owner')}</th>
                 <th>{t('admin.views')}</th>
                 <th>{t('admin.waTaps')}</th>
               </tr>
             </thead>
             <tbody id="rollups-body"></tbody>
+          </table>
+        </section>
+
+        <section id="ingest">
+          <h2>{t('admin.ingest')}</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>{t('admin.ingest')}</th>
+                <th>{t('admin.ingestRows')}</th>
+                <th>{t('admin.ingestSynced')}</th>
+                <th>{t('admin.ingestError')}</th>
+              </tr>
+            </thead>
+            <tbody id="ingest-body"></tbody>
           </table>
         </section>
 
@@ -300,6 +331,7 @@ import '../../styles/tokens.css';
           return;
         }
         $('ops').classList.add('is-on');
+        $('sign-out').hidden = false;
 
         const overview = await client.rpc('admin_site_overview');
         const row = Array.isArray(overview.data) ? overview.data[0] : overview.data;
@@ -313,6 +345,8 @@ import '../../styles/tokens.css';
             [t('admin.statWa7d'), (row as { wa_7d: number }).wa_7d ?? 0],
             [t('admin.statUnread'), (row as { unread_messages: number }).unread_messages ?? 0],
             [t('admin.statGrants'), (row as { grants_remaining: number }).grants_remaining ?? 0],
+            [t('admin.statJobsPending'), (row as { jobs_pending: number }).jobs_pending ?? 0],
+            [t('admin.statJobsFailed'), (row as { jobs_failed: number }).jobs_failed ?? 0],
           ];
           for (const [label, value] of stats) {
             const card = document.createElement('div');
@@ -328,7 +362,7 @@ import '../../styles/tokens.css';
 
         const users = await client.rpc('admin_users');
         if (!users.error && users.data) {
-          for (const person of users.data as {
+          const people = users.data as {
             user_id: string;
             email: string | null;
             display_name: string | null;
@@ -336,7 +370,13 @@ import '../../styles/tokens.css';
             listings: number;
             published: number;
             remaining: number;
-          }[]) {
+          }[];
+          if (people.length === 0) {
+            const empty = document.createElement('p');
+            empty.textContent = t('admin.emptyUsers');
+            $('users').append(empty);
+          }
+          for (const person of people) {
             const tr = document.createElement('tr');
             const who = document.createElement('td');
             const name = document.createElement('div');
@@ -372,6 +412,7 @@ import '../../styles/tokens.css';
             publish_fail: number;
           }[]) {
             const tr = document.createElement('tr');
+            if ((step.blocked ?? 0) > 0) tr.className = 'funnel-hot';
             const name = document.createElement('td');
             name.textContent = t(`editor.steps.${step.step}`);
             const entered = document.createElement('td');
@@ -414,6 +455,10 @@ import '../../styles/tokens.css';
             body.className = 'msg-body';
             body.textContent = msg.body;
             article.append(meta, body);
+            const reply = document.createElement('a');
+            reply.href = `mailto:${msg.email}`;
+            reply.textContent = t('admin.reply');
+            article.append(reply);
             if (!msg.read_at) {
               const mark = document.createElement('button');
               mark.type = 'button';
@@ -432,18 +477,76 @@ import '../../styles/tokens.css';
           }
         }
 
-        const rollups = await client.rpc('admin_event_rollups');
-        if (!rollups.error && rollups.data) {
-          for (const listing of rollups.data as { slug: string; title: string; views: number; wa_taps: number }[]) {
+        const listings = await client.rpc('admin_listings');
+        if (!listings.error && listings.data) {
+          const rows = listings.data as {
+            slug: string;
+            title: string;
+            status: string;
+            owner_email: string | null;
+            views: number;
+            wa_taps: number;
+          }[];
+          if (rows.length === 0) {
+            const empty = document.createElement('p');
+            empty.textContent = t('admin.emptyListings');
+            $('listings').append(empty);
+          }
+          const statusCopy: Record<string, string> = {
+            draft: t('admin.statusDraft'),
+            published: t('admin.statusPublished'),
+            sold: t('admin.statusSold'),
+            archived: t('admin.statusArchived'),
+          };
+          for (const listing of rows) {
             const tr = document.createElement('tr');
             const title = document.createElement('td');
-            title.textContent = listing.title || listing.slug;
+            const live = listing.status === 'published' || listing.status === 'sold';
+            if (live && listing.slug) {
+              const link = document.createElement('a');
+              link.href = `/a/${listing.slug}/`;
+              link.textContent = listing.title || listing.slug;
+              title.append(link);
+            } else {
+              title.textContent = listing.title || listing.slug;
+            }
+            const status = document.createElement('td');
+            status.textContent = statusCopy[listing.status] ?? listing.status;
+            const owner = document.createElement('td');
+            owner.append(bdi(listing.owner_email ?? ''));
             const views = document.createElement('td');
             views.append(bdi(listing.views ?? 0));
             const wa = document.createElement('td');
             wa.append(bdi(listing.wa_taps ?? 0));
-            tr.append(title, views, wa);
+            tr.append(title, status, owner, views, wa);
             $('rollups-body').append(tr);
+          }
+        }
+
+        const ingest = await client.rpc('admin_ingest_status');
+        if (!ingest.error && ingest.data) {
+          for (const source of ingest.data as {
+            display_name: string;
+            row_count: number;
+            last_synced_at: string | null;
+            last_error: string | null;
+          }[]) {
+            const tr = document.createElement('tr');
+            const name = document.createElement('td');
+            name.textContent = source.display_name;
+            const count = document.createElement('td');
+            count.append(bdi(source.row_count ?? 0));
+            const synced = document.createElement('td');
+            if (source.last_synced_at) {
+              synced.append(bdi(source.last_synced_at.slice(0, 16).replace('T', ' ')));
+            } else {
+              synced.textContent = t('admin.neverSynced');
+            }
+            const err = document.createElement('td');
+            err.className = 'err';
+            err.textContent = source.last_error ?? '';
+            tr.append(name, count, synced, err);
+            $('ingest-body').append(tr);
           }
         }
       };
@@ -483,6 +586,13 @@ import '../../styles/tokens.css';
           });
           $('result').textContent = error ? t('admin.failed') : t('admin.granted');
           $('result').hidden = false;
+        })();
+      });
+
+      $('sign-out').addEventListener('click', () => {
+        void (async () => {
+          await supabase().auth.signOut();
+          location.href = '/enter/';
         })();
       });
 
