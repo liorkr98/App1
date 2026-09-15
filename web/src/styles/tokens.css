@@ -26,6 +26,8 @@
 
     --olive-lift exists because --olive on --ink-deep is too close in value to
     read as type. It is the same hue carried up, not a second accent.
+    Contrast of --olive-lift on --ink-deep is 3.83:1 — large text only
+    (WCAG 2.0 AA). Body copy on dark uses plaster or #9C9D93.
   */
   --ink-deep: #111208;
   --olive-lift: #5f7749;
@@ -74,3 +76,40 @@
   margin: 0;
   padding: 0;
 }
+
+/*
+  Skip link and a visually-hidden utility, on every surface that imports
+  tokens (listing, homepage, editor, legal). Visible on focus only.
+*/
+.skip {
+  position: absolute;
+  inset-block-start: 0.75rem;
+  inset-inline-start: 0.75rem;
+  z-index: 100;
+  padding: 0.55rem 0.85rem;
+  background: var(--ink);
+  color: var(--plaster);
+  font-weight: 700;
+  text-decoration: none;
+  transform: translateY(-220%);
+}
+
+.skip:focus,
+.skip:focus-visible {
+  transform: none;
+}
+
+:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 3px;
+}
+
+.visually-hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+

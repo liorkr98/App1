@@ -1,5 +1,5 @@
 import type { Entitlement } from '@/features/listings/editor';
-import { entitlementFromAllowlist } from '@/features/billing/entitlement';
+import { entitlementFromGrants, type GrantRow } from '@/features/billing/entitlement';
 
 import { supabase, supabaseConfigured } from './supabase';
 
@@ -11,8 +11,9 @@ import { supabase, supabaseConfigured } from './supabase';
  * agent may publish. It does not invent a 'paid' on timeout, on a missing
  * table, or on a thrown error.
  *
- * Until a PSP is signed (ADR 0003), the source is `beta_publishers` — a table
- * with no client write policy. A row appears only when a human inserts one.
+ * Source: `listing_grants` (migration 0016). A live row with remaining > 0
+ * inside its window is 'paid'. The publish trigger is the server-side gate;
+ * this read is so the editor can explain the paywall before the agent hits it.
  * ======================================================================
  */
 export async function loadEntitlement(): Promise<Entitlement> {
@@ -23,15 +24,28 @@ export async function loadEntitlement(): Promise<Entitlement> {
     const { data: session } = await client.auth.getSession();
     if (!session.session) return 'unpaid';
 
-    const { data, error } = await client.from('beta_publishers').select('user_id').maybeSingle();
+    const { data, error } = await client
+      .from('listing_grants')
+      .select('remaining, effective_from, effective_to');
 
-    if (error) return entitlementFromAllowlist(null, true);
+    if (error) return entitlementFromGrants(null, true);
 
-    const row = data && typeof data === 'object' && 'user_id' in data
-      ? { user_id: String((data as { user_id: unknown }).user_id) }
-      : null;
+    const rows: GrantRow[] = (data ?? []).flatMap((row) => {
+      if (!row || typeof row !== 'object') return [];
+      const remaining = Number((row as { remaining?: unknown }).remaining);
+      const effective_from = (row as { effective_from?: unknown }).effective_from;
+      const effective_to = (row as { effective_to?: unknown }).effective_to;
+      if (!Number.isFinite(remaining) || typeof effective_from !== 'string') return [];
+      return [
+        {
+          remaining,
+          effective_from,
+          effective_to: typeof effective_to === 'string' ? effective_to : null,
+        },
+      ];
+    });
 
-    return entitlementFromAllowlist(row, false);
+    return entitlementFromGrants(rows, false);
   } catch {
     return 'unknown';
   }

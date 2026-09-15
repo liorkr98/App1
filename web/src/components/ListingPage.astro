@@ -14,7 +14,9 @@ import SellerBlock from './SellerBlock.astro';
 import Walk from './Walk.astro';
 import { CATEGORY_PRESENTATION } from '../lib/category-presentation';
 import { t } from '../lib/i18n';
+import { GALLERY_WIDTHS, largest } from '../lib/images';
 import { perUnitPrice } from '../lib/price';
+import { groupByRoom, hasRoomLabels } from '@/features/listings/photo-rooms';
 
 interface Props {
   listing: Listing;
@@ -66,14 +68,27 @@ const attributions =
   listing.enrichment?.category === 'property' ? listing.enrichment.attributions : [];
 
 const sold = listing.status === 'sold';
+const walkImages = [listing.media.cover, ...listing.media.gallery];
+const hasWalk = hasRoomLabels(walkImages)
+  ? groupByRoom(walkImages).some((group) => group.room !== undefined)
+  : false;
+const tourUrl = listing.media.tourUrl;
 ---
 <BaseListing
   listing={listing}
   ogFactKeys={presentation.ogFactKeys}
   heroHeight={presentation.heroHeight}
   robots={robots}
+  hasWalk={hasWalk}
 >
-  <Hero cover={listing.media.cover} title={listing.title} location={listing.location} />
+  <Hero
+    cover={listing.media.cover}
+    title={listing.title}
+    location={listing.location}
+    watermarkUrl={
+      listing.seller.logoPlacement === 'watermark' ? listing.seller.agencyLogoUrl : undefined
+    }
+  />
 
   <PriceBar
     price={listing.price}
@@ -107,9 +122,26 @@ const sold = listing.status === 'sold';
   )}
 
   <Walk
-    images={[listing.media.cover, ...listing.media.gallery]}
+    images={walkImages}
     allPhotosHref={listing.media.gallery.length > 0 ? '#listing-gallery' : undefined}
   />
+
+  {tourUrl ? (
+    <aside class="tour-poster reveal">
+      <a href={tourUrl} target="_blank" rel="noopener noreferrer">
+        <img
+          src={largest(listing.media.cover, GALLERY_WIDTHS)}
+          alt=""
+          width={listing.media.cover.width}
+          height={listing.media.cover.height}
+        />
+        <span>
+          {t('listing.tourCta')}
+          <span class="visually-hidden"> {t('listing.newWindow')}</span>
+        </span>
+      </a>
+    </aside>
+  ) : null}
 
   <Gallery images={listing.media.gallery} />
 
@@ -124,21 +156,29 @@ const sold = listing.status === 'sold';
 
   <SellerBlock seller={listing.seller} />
 
-  {/* A sold listing is a record, not a live offer. The WhatsApp dock would
-      invite a message about something that is gone. */}
-  {sold ? null : (
-    <CtaDock phone={listing.seller.phone} message={presentation.whatsappMessage} />
-  )}
+  <Fragment slot="after">
+    {/* A sold listing is a record, not a live offer. The WhatsApp dock would
+        invite a message about something that is gone. */}
+    {sold ? null : (
+      <CtaDock
+        phone={listing.seller.phone}
+        message={presentation.whatsappMessage}
+        slug={listing.slug}
+      />
+    )}
 
-  {/* נבנה בהיעד is the viral loop (CLAUDE.md §8) — a listing page is
-      forwarded to 30-80 people who are by definition interested in buying
-      something. The ODbL line beside it is a LICENCE CONDITION, not a
-      courtesy (§10), and it is driven by the payload so a page with no OSM
-      places carries no OSM credit. */}
-  <footer>
-    {t('common.builtByPrefix')}<a href="/">{t('common.brand')}</a>
-    {attributions.map((attribution) => (
-      <Fragment><br /><span class="attribution"><Prose text={attribution} /></span></Fragment>
-    ))}
-  </footer>
+    {/* נבנה בהיעד is the viral loop (CLAUDE.md §8) — a listing page is
+        forwarded to 30-80 people who are by definition interested in buying
+        something. The ODbL line beside it is a LICENCE CONDITION, not a
+        courtesy (§10), and it is driven by the payload so a page with no OSM
+        places carries no OSM credit. */}
+    <footer>
+      {t('common.builtByPrefix')}<a href="/">{t('common.brand')}</a>
+      {attributions.map((attribution) => (
+        <Fragment><br /><span class="attribution"><Prose text={attribution} /></span></Fragment>
+      ))}
+      <br />
+      <a href="/legal/accessibility/">{t('legal.accessibility')}</a>
+    </footer>
+  </Fragment>
 </BaseListing>

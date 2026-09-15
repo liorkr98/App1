@@ -1,5 +1,6 @@
 ---
 import ListingPage from '../../../components/ListingPage.astro';
+import { recordListingEvent } from '../../../lib/listing-events';
 import { publishedListing } from '../../../lib/listing-from-row';
 
 /**
@@ -33,5 +34,7 @@ const listing = slug ? await publishedListing(slug) : undefined;
 if (!listing) {
   return Astro.rewrite('/404');
 }
+
+await recordListingEvent(slug, 'view', Astro.request.headers.get('user-agent'));
 ---
 <ListingPage listing={listing} />

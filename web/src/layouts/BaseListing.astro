@@ -22,9 +22,11 @@ interface Props {
   heroHeight: string;
   /** Override robots. `/template-check/` forces noindex. */
   robots?: string;
+  /** True when the walk section will render. walkFirst then hides the hero. */
+  hasWalk?: boolean;
 }
 
-const { listing, ogFactKeys, heroHeight, robots: robotsOverride } = Astro.props;
+const { listing, ogFactKeys, heroHeight, robots: robotsOverride, hasWalk = false } = Astro.props;
 
 /**
  * The agent's accent, resolved to two stops and set as inline custom
@@ -72,6 +74,10 @@ const sold = listing.status === 'sold';
  * one most likely to be forwarded to somebody who has never heard of us.
  */
 const agency = listing.seller.agencyName;
+const logoPlacement = listing.seller.logoPlacement ?? 'bar';
+const showBarLogo =
+  Boolean(listing.seller.agencyLogoUrl) &&
+  (logoPlacement === 'bar' || logoPlacement === 'barWide');
 ---
 
 <!DOCTYPE html>
@@ -85,6 +91,8 @@ const agency = listing.seller.agencyName;
   lang="he"
   dir="rtl"
   data-template={listing.template}
+  data-logo={logoPlacement}
+  data-has-walk={hasWalk ? '1' : undefined}
   style={`--heroH:${heroHeight};--accent:${accent.base};--accent-lift:${accent.lift}`}
 >
 <head>
@@ -124,6 +132,8 @@ const agency = listing.seller.agencyName;
 </head>
 <body>
 
+<a class="skip" href="#main">{t('a11y.skip')}</a>
+
 {/*
   The progress line is decoration for something the scrollbar already says,
   so it is hidden from assistive technology. It has no styles at all outside
@@ -132,9 +142,9 @@ const agency = listing.seller.agencyName;
 */}
 <div class="progress" aria-hidden="true"></div>
 
-<div class="agent-bar">
+<header class="agent-bar">
   <div class="dot" aria-hidden="true">
-    {listing.seller.agencyLogoUrl ? (
+    {showBarLogo ? (
       <img src={listing.seller.agencyLogoUrl} alt="" />
     ) : null}
   </div>
@@ -149,10 +159,13 @@ const agency = listing.seller.agencyName;
       <span>{t('common.builtByPrefix')}<a href="/">{t('common.brand')}</a></span>
     </Fragment>
   )}
-</div>
+</header>
 
 {sold ? <p class="sold-banner">{t('listing.soldBanner')}</p> : null}
 
-<slot />
+<main id="main" class="listing-flow">
+  <slot />
+</main>
+<slot name="after" />
 </body>
 </html>

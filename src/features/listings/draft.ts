@@ -84,6 +84,7 @@ export function toDraft(state: EditorState): Stored {
       : { ownerConsentDeclaredAt: state.ownerConsentDeclaredAt }),
     ...(state.ownerConsentName === undefined ? {} : { ownerConsentName: state.ownerConsentName }),
     ...(state.disclosures === undefined ? {} : { disclosures: state.disclosures }),
+    ...(state.tourUrl === undefined ? {} : { tourUrl: state.tourUrl }),
   };
 }
 
@@ -188,6 +189,9 @@ export function fromDraft(raw: unknown): Draft | null {
       ? {}
       : { ownerConsentName }),
     ...(disclosuresResult === undefined ? {} : { disclosures: disclosuresResult }),
+    ...(typeof parsed.tourUrl === 'string' && parsed.tourUrl.startsWith('https://')
+      ? { tourUrl: parsed.tourUrl }
+      : {}),
   };
 }
 

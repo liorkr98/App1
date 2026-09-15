@@ -86,6 +86,12 @@ jobs:
       - name: Verify exactly four template divergences
         run: node scripts/verify-template-divergences.mjs
 
+      - name: Verify every template id has a reference, a mini-screen and a picker card
+        run: node scripts/verify-template-ids.mjs
+
+      - name: Verify listing and shell a11y landmarks
+        run: node scripts/verify-a11y.mjs
+
       # CLAUDE.md §4.2. A missing <bdi> is invisible in review AND usually on
       # the page: a bare number reads correctly until the words around it
       # change, then silently reorders. Runs on built HTML so it sees what is

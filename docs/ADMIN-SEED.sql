@@ -1,0 +1,23 @@
+-- Operator seed. Run in the Supabase SQL editor, not from git history.
+--
+-- 1. Look up the operator's auth.users id in the dashboard (Authentication).
+-- 2. Replace BOTH placeholders below with that uuid.
+-- 3. Do not paste an email address into this file or any other file in git.
+--
+-- ============================ HUMAN REVIEW ============================
+-- CLAUDE.md §8. This INSERT is an entitlement grant. It is dated, it has a
+-- note, and it is issued by a human. The application never writes site_admins.
+-- ======================================================================
+
+-- insert into public.site_admins (user_id)
+-- values ('00000000-0000-0000-0000-000000000000'::uuid)
+-- on conflict (user_id) do nothing;
+--
+-- insert into public.listing_grants (user_id, remaining, source, granted_by, note)
+-- values (
+--   '00000000-0000-0000-0000-000000000000'::uuid,
+--   50,
+--   'admin_comp',
+--   '00000000-0000-0000-0000-000000000000'::uuid,
+--   'operator grant'
+-- );

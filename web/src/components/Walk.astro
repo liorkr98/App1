@@ -43,11 +43,6 @@ slides.forEach((slide, index) => {
 {slides.length > 0 && (
   <section class="walk reveal">
     <h2>{t('listing.walkTitle')}</h2>
-    <nav class="walk-nav" aria-label={t('listing.walkTitle')}>
-      {groups.map((group) => (
-        <a href={`#walk-p${firstIndexByRoom.get(group.room) ?? 0}`}>{t(`editor.rooms.${group.room}`)}</a>
-      ))}
-    </nav>
     <div class="walk-viewer">
       <nav class="walk-film" aria-label={t('listing.filmstrip')}>
         {slides.map((slide, index) => (
@@ -62,6 +57,7 @@ slides.forEach((slide, index) => {
               loading="lazy"
               decoding="async"
             >
+            <span class="walk-current">{t('listing.currentPhoto')}</span>
           </a>
         ))}
       </nav>
@@ -81,6 +77,11 @@ slides.forEach((slide, index) => {
                   loading={index === 0 ? undefined : 'lazy'}
                   decoding="async"
                 >
+                <nav class="walk-chips" aria-label={t('listing.walkTitle')}>
+                  {groups.map((group) => (
+                    <a href={`#walk-p${firstIndexByRoom.get(group.room) ?? 0}`}>{t(`editor.rooms.${group.room}`)}</a>
+                  ))}
+                </nav>
                 {allPhotosHref && (
                   <a class="walk-all" href={allPhotosHref}>{t('listing.showAllPhotos')}</a>
                 )}

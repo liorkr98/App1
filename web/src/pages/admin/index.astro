@@ -1,0 +1,221 @@
+---
+import { t } from '../../lib/i18n';
+import '../../styles/tokens.css';
+
+/**
+ * Admin grant UI. noindex. Fail closed if the session is not a site admin.
+ *
+ * ============================ HUMAN REVIEW ============================
+ * CLAUDE.md §8. This page reads entitlement (is_site_admin) and writes
+ * listing_grants through admin_grant_listings. A required note, a count,
+ * never an email stored in git. Unknown / not-admin → forbidden copy, no
+ * table of listing bodies.
+ * ======================================================================
+ */
+---
+
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#FBFAF7" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>{t('admin.title')} · {t('common.brand')}</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@700&family=Assistant:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style is:global>
+      html { background: var(--plaster); color-scheme: light; }
+      body {
+        font-family: 'Assistant', system-ui, sans-serif;
+        background: var(--plaster);
+        color: var(--ink);
+        font-size: var(--t-body);
+        line-height: 1.7;
+        max-inline-size: 52rem;
+        margin-inline: auto;
+        padding: 1.5rem var(--gut) 3rem;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        margin-block-end: 1.5rem;
+      }
+      .mark {
+        font-family: 'Frank Ruhl Libre', serif;
+        font-weight: 700;
+        font-size: 1.35rem;
+        color: inherit;
+        text-decoration: none;
+      }
+      h1 {
+        font-family: 'Frank Ruhl Libre', serif;
+        font-size: var(--t-h2);
+        margin-block-end: 0.35rem;
+      }
+      label { display: block; font-weight: 600; margin-block: 0.8rem 0.25rem; }
+      input, textarea {
+        width: 100%;
+        padding: 0.55rem 0.7rem;
+        border: 1px solid var(--stone);
+        border-radius: 8px;
+        font: inherit;
+      }
+      button {
+        margin-block-start: 1rem;
+        padding: 0.7rem 1.1rem;
+        min-block-size: 44px;
+        border: 0;
+        border-radius: 999px;
+        background: var(--olive);
+        color: var(--plaster);
+        font: inherit;
+        font-weight: 700;
+      }
+      button:disabled { background: var(--stone); color: var(--muted); }
+      .say { margin-block: 0.8rem; font-weight: 600; }
+      table { width: 100%; border-collapse: collapse; margin-block-start: 2rem; }
+      th, td { text-align: start; padding: 0.45rem 0.3rem; border-block-end: 1px solid var(--stone); }
+    </style>
+  </head>
+  <body>
+    <a class="skip" href="#main">{t('a11y.skip')}</a>
+    <header>
+      <a class="mark" href="/">{t('common.brand')}</a>
+      <a href="/mine/">{t('dash.title')}</a>
+    </header>
+    <main id="main">
+      <h1>{t('admin.title')}</h1>
+      <p>{t('admin.lead')}</p>
+
+      <p class="say" id="gate" hidden>{t('admin.forbidden')}</p>
+      <p class="say" id="anon" hidden>{t('agent.signedOut')}</p>
+
+      <form id="form" hidden>
+        <label for="email">{t('admin.email')}</label>
+        <input id="email" name="email" type="email" dir="ltr" autocomplete="email" required />
+
+        <button type="submit" id="search">{t('admin.search')}</button>
+        <p class="say" id="found" hidden></p>
+
+        <label for="count">{t('admin.count')}</label>
+        <input id="count" name="count" type="number" min="1" max="100" value="1" required />
+
+        <label for="note">{t('admin.note')}</label>
+        <textarea id="note" name="note" rows="3" required minlength="3"></textarea>
+        <p>{t('admin.noteHint')}</p>
+
+        <button type="button" id="grant">{t('admin.grant')}</button>
+        <p class="say" id="result" hidden></p>
+      </form>
+
+      <h2>{t('admin.rollups')}</h2>
+      <table id="rollups" hidden>
+        <thead>
+          <tr>
+            <th>{t('dash.title')}</th>
+            <th>{t('admin.views')}</th>
+            <th>{t('admin.waTaps')}</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </main>
+
+    <script>
+      import { t } from '../../lib/i18n';
+      import { supabase, supabaseConfigured } from '../../lib/supabase';
+
+      const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+
+      let targetId: string | null = null;
+
+      const boot = async () => {
+        if (!supabaseConfigured) {
+          $('gate').hidden = false;
+          return;
+        }
+        const client = supabase();
+        const { data: session } = await client.auth.getSession();
+        if (!session.session) {
+          $('anon').hidden = false;
+          return;
+        }
+        const { data, error } = await client.rpc('is_site_admin');
+        if (error || data !== true) {
+          $('gate').hidden = false;
+          return;
+        }
+        $('form').hidden = false;
+
+        const rollups = await client.rpc('admin_event_rollups');
+        if (!rollups.error && rollups.data) {
+          const body = document.querySelector('#rollups tbody');
+          if (body) {
+            for (const row of rollups.data as { slug: string; title: string; views: number; wa_taps: number }[]) {
+              const tr = document.createElement('tr');
+              const title = document.createElement('td');
+              title.textContent = row.title || row.slug;
+              const views = document.createElement('td');
+              const viewsBdi = document.createElement('bdi');
+              viewsBdi.textContent = String(row.views ?? 0);
+              views.append(viewsBdi);
+              const wa = document.createElement('td');
+              const waBdi = document.createElement('bdi');
+              waBdi.textContent = String(row.wa_taps ?? 0);
+              wa.append(waBdi);
+              tr.append(title, views, wa);
+              body.append(tr);
+            }
+            $('rollups').hidden = false;
+          }
+        }
+      };
+
+      $('form').addEventListener('submit', (event) => {
+        event.preventDefault();
+        void (async () => {
+          targetId = null;
+          $('found').hidden = true;
+          const email = ($('email') as HTMLInputElement).value.trim();
+          const { data, error } = await supabase().rpc('admin_find_user', { p_email: email });
+          const row = Array.isArray(data) ? data[0] : data;
+          if (error || !row || typeof row !== 'object' || !('user_id' in row)) {
+            $('found').textContent = t('admin.notFound');
+            $('found').hidden = false;
+            return;
+          }
+          targetId = String((row as { user_id: string }).user_id);
+          $('found').textContent = String((row as { email?: string }).email ?? email);
+          $('found').hidden = false;
+        })();
+      });
+
+      $('grant').addEventListener('click', () => {
+        void (async () => {
+          if (!targetId) {
+            $('result').textContent = t('admin.notFound');
+            $('result').hidden = false;
+            return;
+          }
+          const count = Number(($('count') as HTMLInputElement).value);
+          const note = ($('note') as HTMLTextAreaElement).value.trim();
+          const { error } = await supabase().rpc('admin_grant_listings', {
+            p_user_id: targetId,
+            p_count: count,
+            p_note: note,
+          });
+          $('result').textContent = error ? t('admin.failed') : t('admin.granted');
+          $('result').hidden = false;
+        })();
+      });
+
+      void boot();
+    </script>
+  </body>
+</html>

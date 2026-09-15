@@ -58,7 +58,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#111208" />
+    <meta name="theme-color" content="#FBFAF7" />
 
     <title>{title}</title>
     <meta name="description" content={t('home.subTagline')} />
@@ -241,9 +241,17 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         display: none !important;
       }
 
-      .top-link:hover {
-        color: var(--on-dark);
-      }
+        .lit .top-link {
+          color: var(--muted);
+        }
+        .lit .top-link:hover {
+          color: var(--ink);
+        }
+        .lit .hero-sub,
+        .lit .hero-lead,
+        .lit .actions-note {
+          color: var(--muted);
+        }
 
       /* ---------- Hero ----------
          In RTL the grid fills from the right, so the first child lands where a
@@ -379,10 +387,13 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
       .device {
         flex: 1 1 0;
         max-inline-size: 300px;
+        min-inline-size: 140px;
         container-type: inline-size;
         display: grid;
         gap: 0.6rem;
         justify-items: center;
+        text-decoration: none;
+        color: inherit;
       }
 
       .screen {
@@ -724,6 +735,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
       */
       .tpl-row {
         display: flex;
+        flex-wrap: wrap;
         gap: clamp(0.75rem, 2vw, 1.5rem);
         align-items: stretch;
         justify-content: center;
@@ -954,7 +966,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         }
 
         /*
-          The cycle. 13.5s for three screens is 4.5s each — long enough to read
+          The cycle. 22.5s for five screens is 4.5s each — long enough to read
           a price and short enough that a reader who arrived for the headline
           sees a second one before they scroll.
 
@@ -963,7 +975,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
           to a press.
         */
         .stage > .device {
-          animation: cycle 13.5s calc(var(--i) * 4.5s) infinite both;
+          animation: cycle 22.5s calc(var(--i) * 4.5s) infinite both;
         }
 
         @keyframes cycle {
@@ -971,12 +983,12 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
             opacity: 0;
             transform: translateY(10px) scale(0.985);
           }
-          4%,
-          29% {
+          3%,
+          17% {
             opacity: 1;
             transform: none;
           }
-          33%,
+          20%,
           100% {
             opacity: 0;
             transform: translateY(-10px) scale(0.985);
@@ -1051,7 +1063,9 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
   </head>
 
   <body>
-    <div class="dark">
+    <a class="skip" href="#main">{t('a11y.skip')}</a>
+    <main id="main">
+    <div class="lit">
       <div class="shell">
         <header class="top">
           <span class="mark">{t('common.brand')}</span>
@@ -1080,16 +1094,16 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
 
           <div class="stage">
             {/*
-              THE HERO CYCLES THROUGH THE THREE TEMPLATES.
+              THE HERO CYCLES THROUGH THE FIVE TEMPLATES.
 
               This is the page's one piece of real motion and it is not
               decoration: the offer is "a few options, all professional", and a
               hero that shows the same listing becoming each of them in turn
               makes that argument while the reader is still reading the
               headline. It is also the honest demo — these are the real
-              templates, not three drawings of them.
+              templates, not drawings of them.
 
-              CSS only, on a 13.5s loop. Stacked in one grid cell rather than
+              CSS only, on a 22.5s loop. Stacked in one grid cell rather than
               absolutely positioned, so the container still sizes itself to the
               tallest screen and nothing has to be measured.
 
@@ -1099,14 +1113,14 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
               the hero blank.
             */}
             {TEMPLATE_IDS.map((tpl, index) => (
-              <div class="device cycling" data-tpl={tpl} style={`--i:${index}`}>
+              <a class="device cycling" data-tpl={tpl} style={`--i:${index}`} href={`/template-check/${tpl}/`}>
                 <MiniScreen
-                  listing={propertyListing}
+                  listing={{ ...propertyListing, template: tpl }}
                   cells={cells}
                   perUnit={perUnit}
                   eager={index === 0}
                 />
-              </div>
+              </a>
             ))}
           </div>
         </div>
@@ -1114,7 +1128,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
     </div>
 
     {/*
-      The centrepiece. One listing, three templates — the offer made in less
+      The centrepiece. One listing, five templates — the offer made in less
       time than a sentence about it would take to read.
     */}
     <section>
@@ -1127,17 +1141,44 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         <div class="tpl-row">
           {
             TEMPLATE_IDS.map((tpl) => (
-              <div class="device reveal" data-tpl={tpl}>
+              <a class="device reveal" data-tpl={tpl} href={`/template-check/${tpl}/`}>
                 <MiniScreen
-                  listing={vehicleListing}
+                  listing={{ ...vehicleListing, template: tpl }}
                   cells={vehicleCells}
                   perUnit={vehiclePerUnit}
                 />
                 <span class="device-label">{t(`editor.templates.${tpl}`)}</span>
-              </div>
+              </a>
             ))
           }
         </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="shell">
+        <div class="section-head">
+          <h2>{t('pricing.title')}</h2>
+          <p>{t('pricing.lead')}</p>
+        </div>
+        <ul class="tiers" style="list-style:none;display:flex;flex-wrap:wrap;gap:1rem">
+          <li>
+            <b><bdi>₪79</bdi></b>
+            <span> {t('pricing.single')}</span>
+          </li>
+          <li>
+            <b><bdi>₪129</bdi></b>
+            <span> {t('pricing.pack')}</span>
+          </li>
+          <li>
+            <span class="flag">{t('pricing.agentFlag')}</span>
+            {' '}
+            <b><bdi>₪249</bdi></b>
+            <span> {t('pricing.agent')}</span>
+          </li>
+        </ul>
+        <p><a href="/pricing/">{t('pricing.title')}</a></p>
+        <p class="actions-note" style="color:var(--muted)">{t('pricing.checkoutOff')}</p>
       </div>
     </section>
 
@@ -1214,6 +1255,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         <span class="actions-note" style="color:var(--muted)">{t('home.ctaNote')}</span>
       </div>
     </section>
+    </main>
 
     <footer>
       <div class="shell">
@@ -1222,6 +1264,10 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
           <a href="/legal/terms/">{t('legal.terms')}</a>
           {' · '}
           <a href="/legal/privacy/">{t('legal.privacy')}</a>
+          {' · '}
+          <a href="/legal/accessibility/">{t('legal.accessibility')}</a>
+          {' · '}
+          <a href="/pricing/">{t('pricing.title')}</a>
           {' · '}
           <a href="/new/">{t('home.cta')}</a>
         </span>

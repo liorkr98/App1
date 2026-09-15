@@ -77,6 +77,7 @@ const START: EditorState = {
   photoCount: 0,
   facts: [],
   description: '',
+  template: 'agency',
 
   // ========================== HUMAN REVIEW ==========================
   // CLAUDE.md §8: I may build the paywall and may NOT decide entitlement.
@@ -364,6 +365,10 @@ export default function Editor() {
               ? { audience: row.audience }
               : {}),
             ...(Array.isArray(row.disclosures) ? { disclosures: row.disclosures as string[] } : {}),
+            ...(typeof (row.media as { tourUrl?: unknown } | null)?.tourUrl === 'string' &&
+            String((row.media as { tourUrl: string }).tourUrl).startsWith('https://')
+              ? { tourUrl: String((row.media as { tourUrl: string }).tourUrl) }
+              : {}),
           };
         });
       })
@@ -476,7 +481,7 @@ export default function Editor() {
   };
 
   return (
-    <main className="editor">
+    <div className="editor">
       <header className="rail">
         <p className="rail-count">
           <Message
@@ -522,6 +527,9 @@ export default function Editor() {
             city={state.city ?? ''}
             street={state.street ?? ''}
             priceNote={state.priceNote ?? ''}
+            titleError={here.some((blocker) => blocker.code === 'titleMissing')}
+            priceError={here.some((blocker) => blocker.code === 'priceMissing')}
+            cityError={here.some((blocker) => blocker.code === 'cityMissing')}
             onChange={(patch) => setState((current) => ({ ...current, ...patch }))}
           />
         ) : null}
@@ -532,6 +540,17 @@ export default function Editor() {
             onChange={changePhotos}
             signedIn={signedIn}
             category={state.category}
+            tourUrl={state.tourUrl}
+            onTourUrl={(tourUrl) =>
+              setState((current) => {
+                const trimmed = tourUrl.trim();
+                if (trimmed === '') {
+                  const { tourUrl: _omitted, ...rest } = current;
+                  return rest;
+                }
+                return { ...current, tourUrl: trimmed };
+              })
+            }
           />
         ) : null}
 
@@ -636,8 +655,8 @@ export default function Editor() {
         ) : null}
       </section>
 
-      {here.length > 0 ? (
-        <section className="blockers" aria-live="polite">
+      {here.length > 0 && step !== 'details' ? (
+        <section className="blockers" role="alert">
           <h2 className="blockers-title">{t('editor.blockedTitle')}</h2>
           <ul>
             {here.map((blocker) => (
@@ -678,7 +697,7 @@ export default function Editor() {
           {t('common.next')}
         </button>
       </footer>
-    </main>
+    </div>
   );
 }
 

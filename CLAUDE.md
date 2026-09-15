@@ -378,6 +378,19 @@ summary:
 network failure. The payments provider is undecided — build behind an
 interface with one adapter and say what the interface needs.
 
+**Until a PSP is signed, entitlement is `listing_grants` (migration 0016).** A
+live row with `remaining > 0` inside its window is paid. Admins are
+`site_admins` (uuid only — never commit an email). Granting is an RPC with a
+required note. A Postgres `BEFORE UPDATE` trigger is the server-side publish
+gate: `draft→published` consumes one remaining listing or raises. The editor's
+`canPublish` is UX. Admin comps are dated quotas (`source = admin_comp`) and
+must not be wiped by a later failed webhook — there is no DELETE; close with
+`effective_to`. Seed with `docs/ADMIN-SEED.sql` against a uuid from the
+dashboard.
+
+Every PR that reads grant state and decides publish must flag CLAUDE.md §8 in
+the summary.
+
 ### The product rules
 
 **The free tier is create and preview only. Publishing requires payment.** The

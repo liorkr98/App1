@@ -58,6 +58,12 @@ function asSeller(value: unknown): Seller | undefined {
     ...(typeof value.agencyLogoUrl === 'string' && value.agencyLogoUrl.trim() !== ''
       ? { agencyLogoUrl: value.agencyLogoUrl }
       : {}),
+    ...(value.logoPlacement === 'bar' ||
+    value.logoPlacement === 'barWide' ||
+    value.logoPlacement === 'footerOnly' ||
+    value.logoPlacement === 'watermark'
+      ? { logoPlacement: value.logoPlacement }
+      : {}),
   };
 }
 
@@ -88,13 +94,16 @@ function asMedia(value: unknown): Media | undefined {
     cover,
     gallery,
     ...(typeof value.pdfUrl === 'string' ? { pdfUrl: value.pdfUrl } : {}),
+    ...(typeof value.tourUrl === 'string' && value.tourUrl.startsWith('https://')
+      ? { tourUrl: value.tourUrl }
+      : {}),
   };
 }
 
 function asTemplate(value: string): TemplateId {
   return (TEMPLATE_IDS as readonly string[]).includes(value)
     ? (value as TemplateId)
-    : 'editorial';
+    : 'agency';
 }
 
 /**

@@ -1,0 +1,139 @@
+---
+import { t } from '../lib/i18n';
+import '../styles/tokens.css';
+
+/**
+ * Cost page. Checkout is a disabled control until an Israeli PSP is wired
+ * (ADR 0003). Numbers in <bdi>. The popular flag is text, not colour-only.
+ */
+const tiers = [
+  { id: 'single', price: 79, popular: false },
+  { id: 'pack', price: 129, popular: false },
+  { id: 'agent', price: 249, popular: true },
+] as const;
+---
+
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#FBFAF7" />
+    <title>{t('pricing.title')} · {t('common.brand')}</title>
+    <meta name="description" content={t('pricing.lead')} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Assistant:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style is:global>
+      html { background: var(--plaster); color-scheme: light; }
+      body {
+        font-family: 'Assistant', system-ui, sans-serif;
+        background: var(--plaster);
+        color: var(--ink);
+        font-size: var(--t-body);
+        line-height: 1.7;
+        max-inline-size: 52rem;
+        margin-inline: auto;
+        padding: 1.5rem var(--gut) 3rem;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-block-end: 2rem;
+        padding-block-end: 1rem;
+        border-block-end: 1px solid var(--stone);
+      }
+      .mark {
+        font-family: 'Frank Ruhl Libre', serif;
+        font-weight: 700;
+        font-size: 1.4rem;
+        color: inherit;
+        text-decoration: none;
+      }
+      h1 {
+        font-family: 'Frank Ruhl Libre', serif;
+        font-weight: 700;
+        font-size: var(--t-h2);
+        margin-block-end: 0.4rem;
+      }
+      .lead { color: var(--muted); max-inline-size: 48ch; }
+      .tiers {
+        list-style: none;
+        display: grid;
+        gap: 1rem;
+        margin-block: 2rem;
+      }
+      @media (min-width: 720px) {
+        .tiers { grid-template-columns: repeat(3, 1fr); }
+      }
+      .tier {
+        border: 1px solid var(--stone);
+        border-radius: 12px;
+        padding: 1.15rem 1.2rem 1.3rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+      }
+      .tier b {
+        font-family: 'Frank Ruhl Libre', serif;
+        font-size: 2rem;
+        font-weight: 700;
+      }
+      .flag {
+        font-size: var(--t-label);
+        font-weight: 700;
+        color: var(--olive);
+      }
+      .tier button {
+        margin-block-start: auto;
+        padding: 0.7rem;
+        min-block-size: 44px;
+        border: 0;
+        border-radius: 999px;
+        background: var(--stone);
+        color: var(--muted);
+        font: inherit;
+        font-weight: 700;
+      }
+      .note { color: var(--muted); font-size: 0.92rem; }
+      footer { margin-block-start: 2rem; color: var(--muted); font-size: 0.85rem; }
+    </style>
+  </head>
+  <body>
+    <a class="skip" href="#main">{t('a11y.skip')}</a>
+    <header>
+      <a class="mark" href="/">{t('common.brand')}</a>
+      <a href="/">{t('legal.home')}</a>
+    </header>
+    <main id="main">
+      <h1>{t('pricing.title')}</h1>
+      <p class="lead">{t('pricing.lead')}</p>
+      <ul class="tiers">
+        {
+          tiers.map((tier) => (
+            <li class="tier">
+              {tier.popular ? <span class="flag">{t('pricing.agentFlag')}</span> : null}
+              <span>{t(`pricing.${tier.id}`)}</span>
+              <b><bdi>₪{tier.price}</bdi></b>
+              <p>{t(`pricing.${tier.id}Note`)}</p>
+              <button type="button" disabled>{t('pricing.disabled')}</button>
+            </li>
+          ))
+        }
+      </ul>
+      <p class="note">{t('pricing.checkoutOff')}</p>
+    </main>
+    <footer>
+      <a href="/legal/terms/">{t('legal.terms')}</a>
+      {' · '}
+      <a href="/legal/privacy/">{t('legal.privacy')}</a>
+      {' · '}
+      <a href="/legal/accessibility/">{t('legal.accessibility')}</a>
+    </footer>
+  </body>
+</html>

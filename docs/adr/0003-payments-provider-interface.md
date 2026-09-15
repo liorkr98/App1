@@ -3,13 +3,17 @@
 Status: **open decision.** Nothing implemented, no provider chosen.
 Date: September 2026
 
-**Current grant, until a PSP is signed:** membership of `beta_publishers`
-(migration 0013). A row is an explicit human INSERT — the table has no client
-write policy. The editor reads it through `entitlementFromAllowlist` and
-`loadEntitlement`. Fail closed: missing row is unpaid, a failed read is
-unknown, only a present row is treated as paid. This is not a PSP adapter;
-replacing it is a product change that needs the same human review (CLAUDE.md
-§8).
+**Current grant, until a PSP is signed:** rows in `listing_grants`
+(migration 0016). A live grant is a dated listing quota (`remaining > 0`,
+inside `effective_from`/`effective_to`) with `source` (`admin_comp` today,
+`psp:…` later) and a required note. The editor reads it through
+`entitlementFromGrants` and `loadEntitlement`. A Postgres trigger consumes one
+remaining listing on publish. Fail closed: no live grant is unpaid, a failed
+read is unknown, only remaining > 0 is treated as paid. `beta_publishers`
+(0013) is kept as history and was copied into grants; new reads do not use it.
+Replacing this with a payment check is a product change that needs the same
+human review (CLAUDE.md §8). Seed operators with `docs/ADMIN-SEED.sql` — never
+commit an email address.
 
 This exists to be taken to a vendor. Israeli PSP contracts run a year with an
 exit penalty, so the list is written to be checked against a sales engineer's

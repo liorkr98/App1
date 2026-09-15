@@ -1,4 +1,5 @@
 import type { Seller } from '@/types/listing.js';
+import { asLogoPlacement } from './logo-placement.js';
 
 /**
  * The agent's own details, asked once and reused by every listing they make.
@@ -51,6 +52,10 @@ export interface AgentProfile {
    * and the agent bar keeps the colour dot.
    */
   agencyLogoUrl?: string | null;
+  /**
+   * Where the mark sits on a listing. Absent means `bar`.
+   */
+  logoPlacement?: string | null;
 }
 
 /**
@@ -200,6 +205,7 @@ export function toSeller(
   const role = profile.role?.trim();
   const licenceNumber = profile.licenceNumber?.trim();
   const agencyLogoUrl = profile.agencyLogoUrl?.trim();
+  const logoPlacement = asLogoPlacement(profile.logoPlacement);
 
   return {
     name,
@@ -210,6 +216,6 @@ export function toSeller(
     // enough in enough places to produce an agency bar with no agency in it.
     ...(agencyName ? { agencyName } : {}),
     ...(licenceNumber ? { licenceNumber } : {}),
-    ...(agencyLogoUrl ? { agencyLogoUrl } : {}),
+    ...(agencyLogoUrl ? { agencyLogoUrl, logoPlacement } : {}),
   };
 }

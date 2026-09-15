@@ -511,6 +511,7 @@ import '../styles/tokens.css';
   </head>
 
   <body>
+    <a class="skip" href="#main">{t('a11y.skip')}</a>
     <header class="bar">
       <div class="shell">
         <a class="mark" href="/">{t('common.brand')}</a>
@@ -521,7 +522,7 @@ import '../styles/tokens.css';
       </div>
     </header>
 
-    <main class="shell">
+    <main id="main" class="shell">
       <div class="head">
         <h1>{t('dash.title')}</h1>
         <p class="lead">{t('dash.lead')}</p>
@@ -598,6 +599,7 @@ import '../styles/tokens.css';
       import { supabase, supabaseConfigured } from '../lib/supabase';
 
       type Row = {
+        id?: string;
         slug: string;
         title: string | null;
         price: number | null;
@@ -606,6 +608,8 @@ import '../styles/tokens.css';
         published_at: string | null;
         media: { cover?: { url?: string; alt?: string } } | null;
         location: { city?: string; street?: string } | null;
+        views?: number;
+        waTaps?: number;
       };
 
       const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -781,6 +785,28 @@ import '../styles/tokens.css';
 
         body.append(title, price);
 
+        if (row.status === 'published' || row.status === 'sold') {
+          const stats = document.createElement('div');
+          stats.className = 'where';
+          const views = document.createElement('bdi');
+          views.textContent = String(row.views ?? 0);
+          const wa = document.createElement('bdi');
+          wa.textContent = String(row.waTaps ?? 0);
+          stats.append(
+            views,
+            document.createTextNode(` ${t('dash.views')} · `),
+            wa,
+            document.createTextNode(` ${t('dash.waTaps')}`),
+          );
+          if (row.published_at) {
+            const days = Math.max(0, Math.floor((Date.now() - Date.parse(row.published_at)) / 86400000));
+            const daysBdi = document.createElement('bdi');
+            daysBdi.textContent = String(days);
+            stats.append(document.createTextNode(' · '), daysBdi, document.createTextNode(` ${t('dash.daysLive')}`));
+          }
+          body.append(stats);
+        }
+
         const place = [row.location?.street, row.location?.city].filter(Boolean).join(', ');
         if (place) {
           const where = document.createElement('div');
@@ -905,12 +931,30 @@ import '../styles/tokens.css';
          */
         const { data, error } = await client
           .from('listings')
-          .select('slug, title, price, status, category, media, location, published_at')
+          .select('id, slug, title, price, status, category, media, location, published_at')
           .order('created_at', { ascending: false });
 
         if (error) return show('failed');
 
         rows = (data ?? []) as Row[];
+
+        const counts = await client.from('listing_event_counts').select('listing_id, views, wa_taps');
+        if (!counts.error && counts.data) {
+          const byId = new Map(
+            (counts.data as { listing_id: string; views: number; wa_taps: number }[]).map((row) => [
+              row.listing_id,
+              row,
+            ]),
+          );
+          rows = rows.map((row) => {
+            const tally = row.id ? byId.get(row.id) : undefined;
+            return {
+              ...row,
+              views: Number(tally?.views ?? 0),
+              waTaps: Number(tally?.wa_taps ?? 0),
+            };
+          });
+        }
 
         /*
          * The first-run prompt, decided by the profile rather than by the

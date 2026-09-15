@@ -40,6 +40,71 @@ export type Database = {
         }
         Relationships: []
       }
+      listing_events: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          listing_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          listing_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          listing_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_events_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listing_grants: {
+        Row: {
+          created_at: string
+          effective_from: string
+          effective_to: string | null
+          granted_by: string | null
+          id: string
+          note: string
+          remaining: number
+          source: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          effective_from?: string
+          effective_to?: string | null
+          granted_by?: string | null
+          id?: string
+          note: string
+          remaining: number
+          source: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          effective_from?: string
+          effective_to?: string | null
+          granted_by?: string | null
+          id?: string
+          note?: string
+          remaining?: number
+          source?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       jobs: {
         Row: {
           attempts: number
@@ -268,6 +333,7 @@ export type Database = {
           id: string
           licence_number: string | null
           locale: string
+          logo_placement: string
           phone: string | null
           role: string | null
           updated_at: string
@@ -282,6 +348,7 @@ export type Database = {
           id: string
           licence_number?: string | null
           locale?: string
+          logo_placement?: string
           phone?: string | null
           role?: string | null
           updated_at?: string
@@ -296,6 +363,7 @@ export type Database = {
           id?: string
           licence_number?: string | null
           locale?: string
+          logo_placement?: string
           phone?: string | null
           role?: string | null
           updated_at?: string
@@ -338,6 +406,21 @@ export type Database = {
           stream?: string | null
           type?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      site_admins: {
+        Row: {
+          granted_at: string
+          user_id: string
+        }
+        Insert: {
+          granted_at?: string
+          user_id: string
+        }
+        Update: {
+          granted_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -465,6 +548,22 @@ export type Database = {
           type?: string | null
         }
         Relationships: []
+      }
+      listing_event_counts: {
+        Row: {
+          listing_id: string | null
+          views: number | null
+          wa_taps: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_events_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       listing_processing: {
         Row: {
@@ -685,6 +784,28 @@ export type Database = {
         | { Args: { schema_name: string; table_name: string }; Returns: string }
         | { Args: { table_name: string }; Returns: string }
       enablelongtransactions: { Args: never; Returns: string }
+      admin_event_rollups: {
+        Args: never
+        Returns: {
+          listing_id: string
+          slug: string
+          status: string
+          title: string
+          views: number
+          wa_taps: number
+        }[]
+      }
+      admin_find_user: {
+        Args: { p_email: string }
+        Returns: {
+          email: string
+          user_id: string
+        }[]
+      }
+      admin_grant_listings: {
+        Args: { p_count: number; p_note: string; p_user_id: string }
+        Returns: string
+      }
       enqueue_job: {
         Args: {
           p_input_hash: string
@@ -695,6 +816,11 @@ export type Database = {
           p_scope_label?: string
         }
         Returns: string
+      }
+      is_site_admin: { Args: never; Returns: boolean }
+      record_listing_event: {
+        Args: { p_kind: string; p_slug: string }
+        Returns: undefined
       }
       equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
       geometry: { Args: { "": string }; Returns: unknown }
@@ -1610,6 +1736,9 @@ export type Profile = Tables<'profiles'>;
 export type ListingRow = Tables<'listings'>;
 export type JobRow = Tables<'jobs'>;
 export type BetaPublisherRow = Tables<'beta_publishers'>;
+export type ListingGrantRow = Tables<'listing_grants'>;
+export type ListingEventRow = Tables<'listing_events'>;
+export type SiteAdminRow = Tables<'site_admins'>;
 export type SchoolRow = Tables<'schools'>;
 export type PlaceRow = Tables<'places'>;
 export type TransitStopRow = Tables<'transit_stops'>;

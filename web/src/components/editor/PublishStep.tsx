@@ -37,9 +37,10 @@ interface Props {
  * and there must never be one.
  * ======================================================================
  *
- * WHAT AN AGENT WILL ACTUALLY SEE TODAY depends on `beta_publishers`. The
+ * WHAT AN AGENT WILL ACTUALLY SEE TODAY depends on `listing_grants`. The
  * editor reads entitlement fail-closed; unpaid and unknown both block, with
- * different copy. There is no branch that publishes when the check failed.
+ * different copy. The database trigger is the real publish gate. There is no
+ * branch that publishes when the check failed.
  */
 export function PublishStep({
   state,
