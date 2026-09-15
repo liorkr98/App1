@@ -81,7 +81,13 @@ body{
 .agent-bar .dot img{inline-size:100%;block-size:100%;object-fit:cover;border-radius:50%;display:block}
 .agent-bar strong{font-weight:600}
 .agent-bar span{color:#9C9D93;margin-inline-start:auto;font-size:.8rem}
-.agent-bar a{color:inherit}
+.agent-bar a{
+  color:inherit;
+  display:inline-flex;
+  align-items:center;
+  min-block-size:44px;
+  min-inline-size:44px;
+}
 
 /* ============================================================
    Hero — full bleed, פרלקסה נטיבית
@@ -146,7 +152,7 @@ body{
   border:1px solid var(--olive);border-radius:2px;
   padding:.02rem .28rem;line-height:1.4;
 }
-.fact-cite{font-size:.62rem;color:var(--muted);line-height:1.4}
+.fact-cite{font-size:var(--t-label);color:var(--muted);line-height:1.4}
 
 /* ============================================================
    סקשנים — ריתמוס משתנה, לא אותו קו מפריד כל פעם
@@ -271,7 +277,11 @@ p + p{margin-top:.9rem}
 .cta:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
 
 footer{padding:1.6rem var(--gut) .5rem;text-align:center;font-size:.8rem;color:var(--muted)}
-footer a{color:var(--muted)}
+footer a{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-block-size:44px;min-inline-size:44px;
+  color:var(--muted);
+}
 /* #96978E on plaster is 2.83:1 — below WCAG AA. --muted is 4.87:1. */
 .odbl{font-size:.8rem;color:var(--muted);margin-top:.5rem;line-height:1.6}
 .attribution{font-size:.8rem;color:var(--muted);line-height:1.6}

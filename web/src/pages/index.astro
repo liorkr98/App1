@@ -860,7 +860,6 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
 
       .tpl-row .device {
         grid-template-rows: auto 1fr;
-        align-content: start;
         flex: 1 1 9.25rem;
         max-inline-size: 13.75rem;
         min-inline-size: 8.25rem;
@@ -1053,7 +1052,9 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
       footer a {
         display: inline-flex;
         align-items: center;
+        justify-content: center;
         min-block-size: 44px;
+        min-inline-size: 44px;
         color: var(--muted);
         text-underline-offset: 3px;
       }

@@ -90,7 +90,13 @@ import '../../styles/tokens.css';
         background: var(--stone-warm);
         font-weight: 500;
       }
-      .say.is-gate a { color: var(--olive); font-weight: 700; }
+      .say.is-gate a {
+        color: var(--olive);
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        min-block-size: 44px;
+      }
       table { width: 100%; border-collapse: collapse; margin-block-start: 2rem; }
       th, td { text-align: start; padding: 0.45rem 0.3rem; border-block-end: 1px solid var(--stone); }
     </style>
@@ -130,7 +136,7 @@ import '../../styles/tokens.css';
         <p class="say" id="result" hidden></p>
       </form>
 
-      <h2>{t('admin.rollups')}</h2>
+      <h2 id="rollups-title" hidden>{t('admin.rollups')}</h2>
       <table id="rollups" hidden>
         <thead>
           <tr>
@@ -189,6 +195,7 @@ import '../../styles/tokens.css';
               body.append(tr);
             }
             $('rollups').hidden = false;
+            $('rollups-title').hidden = false;
           }
         }
       };
