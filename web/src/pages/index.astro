@@ -5,7 +5,6 @@ import { perUnitPrice } from '../lib/price';
 import { HERO_WIDTHS, largest } from '../lib/images';
 import MiniScreen from '../components/MiniScreen.astro';
 import BrandMark from '../components/BrandMark.astro';
-import PriceTiers from '../components/PriceTiers.astro';
 import { TEMPLATE_IDS } from '@/types/listing';
 import { propertyListing, vehicleListing, withNamedRooms } from '../lib/listings';
 import '../styles/tokens.css';
@@ -196,6 +195,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         font-size: var(--display);
         line-height: 1.04;
         letter-spacing: -0.015em;
+        overflow-wrap: break-word;
       }
 
       h2 {
@@ -233,6 +233,9 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
       }
 
       .top-link {
+        display: inline-flex;
+        align-items: center;
+        min-block-size: 44px;
         font-size: var(--meta);
         font-weight: 800;
         /* 6.94:1 on --ink-deep. --olive-lift is 3.83:1 and fails here. */
@@ -332,7 +335,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
 
       .cta:hover {
         background: var(--olive-lift);
-        transform: translateY(-1px);
+        transform: scale(0.99);
         box-shadow: 0 14px 30px -12px rgba(74, 93, 58, 1);
       }
 
@@ -855,9 +858,25 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         inline-size: 100%;
       }
 
+      @media (max-width: 719px) {
+        .tpl-row {
+          flex-wrap: nowrap;
+          justify-content: start;
+          overflow-x: auto;
+          overscroll-behavior-inline: contain;
+          scroll-snap-type: inline mandatory;
+          padding-block-end: 0.4rem;
+        }
+        .tpl-row .device {
+          flex: 0 0 10.75rem;
+          max-inline-size: none;
+          min-inline-size: 10.75rem;
+          scroll-snap-align: start;
+        }
+      }
+
       .tpl-row .device {
         grid-template-rows: auto 1fr;
-        align-content: start;
         flex: 1 1 9.25rem;
         max-inline-size: 13.75rem;
         min-inline-size: 8.25rem;
@@ -875,8 +894,15 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         max-inline-size: 12rem;
       }
 
-      .tpl-row .device-label {
+      .tpl-row .device-label,
+      .cycle-name {
         align-self: end;
+      }
+
+      .cycle-name {
+        font-size: var(--meta);
+        font-weight: 600;
+        color: var(--dim);
       }
 
       /* ---------- Steps ----------
@@ -913,7 +939,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         gap: 0 0.9rem;
         align-items: baseline;
         padding-block-start: 1rem;
-        border-block-start: 2px solid var(--olive);
+        border-block-start: 1px solid var(--stone);
       }
 
       .steps li::before {
@@ -923,7 +949,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         font-weight: 700;
         font-size: 1.9rem;
         line-height: 1;
-        color: var(--olive);
+        color: var(--ink);
         font-variant-numeric: tabular-nums;
       }
 
@@ -1048,6 +1074,11 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
       }
 
       footer a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-block-size: 44px;
+        min-inline-size: 44px;
         color: var(--muted);
         text-underline-offset: 3px;
       }
@@ -1193,7 +1224,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
   <body>
     <a class="skip" href="#main">{t('a11y.skip')}</a>
     <main id="main">
-    <div class="lit">
+    <div class="dark">
       <div class="shell">
         <header class="top">
           <BrandMark href="/" />
@@ -1241,14 +1272,15 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
               the hero blank.
             */}
             {TEMPLATE_IDS.map((tpl, index) => (
-              <a class="device cycling" data-tpl={tpl} style={`--i:${index}`} href={`/template-check/${tpl}/`}>
+              <div class="device cycling" data-tpl={tpl} style={`--i:${index}`}>
                 <MiniScreen
                   listing={{ ...propertyShowcase, template: tpl }}
                   cells={cells}
                   perUnit={perUnit}
                   eager={index === 0}
                 />
-              </a>
+                <span class="cycle-name">{t(`editor.templates.${tpl}`)}</span>
+              </div>
             ))}
           </div>
         </div>
@@ -1280,17 +1312,6 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
             ))
           }
         </div>
-      </div>
-    </section>
-
-    <section>
-      <div class="shell">
-        <div class="section-head">
-          <h2>{t('pricing.title')}</h2>
-          <p>{t('pricing.lead')}</p>
-        </div>
-        <PriceTiers compact />
-        <p class="actions-note" style="color:var(--muted);margin-block-start:1.1rem">{t('pricing.checkoutOff')}</p>
       </div>
     </section>
 

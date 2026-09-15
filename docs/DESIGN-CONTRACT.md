@@ -79,7 +79,7 @@ One gutter, used by every full-bleed block. Page width is `620px`.
 |---|---|
 | `#9C9D93` | muted type on `--ink-deep` — agent bar, `.enrich-sub`, `.count`, `.erow em` |
 | `#83847B` | `.source` |
-| `#96978E` | `.odbl` |
+| `#96978E` | was `.odbl`; 2.83:1 on plaster, below AA. `.odbl` now uses `--muted` (4.87:1) |
 | `rgba(17,18,8,.9)` / `rgba(17,18,8,.55)` | `.hero-veil` gradient stops |
 | `rgba(251,250,247,.16)` / `rgba(251,250,247,.07)` | hairlines inside `.enrich` |
 

@@ -36,6 +36,13 @@ html{
   /* Removes the 300ms double-tap delay. This is a page read on a phone. */
   touch-action:manipulation;
   -webkit-tap-highlight-color:rgba(74,93,58,.18);
+  /* Keep :target / keyboard focus clear of the fixed WhatsApp dock. */
+  scroll-padding-block-end:7rem;
+}
+
+::selection{
+  background:var(--olive);
+  color:var(--plaster);
 }
 
 /* Smooth scrolling is motion too. The reference sets it unconditionally; a
@@ -79,7 +86,13 @@ body{
 .agent-bar .dot img{inline-size:100%;block-size:100%;object-fit:cover;border-radius:50%;display:block}
 .agent-bar strong{font-weight:600}
 .agent-bar span{color:#9C9D93;margin-inline-start:auto;font-size:.8rem}
-.agent-bar a{color:inherit}
+.agent-bar a{
+  color:inherit;
+  display:inline-flex;
+  align-items:center;
+  min-block-size:44px;
+  min-inline-size:44px;
+}
 
 /* ============================================================
    Hero — full bleed, פרלקסה נטיבית
@@ -144,7 +157,7 @@ body{
   border:1px solid var(--olive);border-radius:2px;
   padding:.02rem .28rem;line-height:1.4;
 }
-.fact-cite{font-size:.62rem;color:var(--muted);line-height:1.4}
+.fact-cite{font-size:var(--t-label);color:var(--muted);line-height:1.4}
 
 /* ============================================================
    סקשנים — ריתמוס משתנה, לא אותו קו מפריד כל פעם
@@ -161,6 +174,9 @@ p{max-width:62ch}
 p + p{margin-top:.9rem}
 
 /* ---------- גילוי נאות — רכב בלבד ---------- */
+.flaws,.seller{
+  --muted: var(--muted-warm);
+}
 .flaws{background:var(--stone-warm)}
 .flaws ul{list-style:none;margin-top:.3rem}
 .flaws li{
@@ -204,7 +220,7 @@ p + p{margin-top:.9rem}
     Body on this dark ground uses plaster or #9C9D93, never lift.
   */
 }
-.erow .mins small{font-size:.62rem;color:#9C9D93;font-family:'Assistant',sans-serif;display:block;margin-top:.15rem}
+.erow .mins small{font-size:var(--t-label);color:#9C9D93;font-family:'Assistant',sans-serif;display:block;margin-top:.15rem}
 .erow .who{flex:1}
 .erow .who b{font-weight:600;display:block}
 .erow .who em{font-style:normal;color:#9C9D93;font-size:.83rem}
@@ -269,9 +285,14 @@ p + p{margin-top:.9rem}
 .cta:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
 
 footer{padding:1.6rem var(--gut) .5rem;text-align:center;font-size:.8rem;color:var(--muted)}
-footer a{color:var(--muted)}
-.odbl{font-size:.7rem;color:#96978E;margin-top:.5rem;line-height:1.6}
-.attribution{font-size:.7rem;color:var(--muted);line-height:1.6}
+footer a{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-block-size:44px;min-inline-size:44px;
+  color:var(--muted);
+}
+/* #96978E on plaster is 2.83:1 — below WCAG AA. --muted is 4.87:1. */
+.odbl{font-size:.8rem;color:var(--muted);margin-top:.5rem;line-height:1.6}
+.attribution{font-size:.8rem;color:var(--muted);line-height:1.6}
 
 /* Sold — a record, not a live offer. Lives here so property and vehicle CSS
    stay byte-identical (verify-template-divergences.mjs). */

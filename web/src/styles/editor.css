@@ -597,6 +597,8 @@ textarea {
   padding: 1.1rem var(--gut);
   background: var(--stone-warm);
   border-block-start: 1px solid var(--stone);
+  /* --muted on --stone-warm is 4.35:1. Same carry-down as the homepage steps. */
+  --muted: #67685f;
 }
 
 .blockers-title {
@@ -671,11 +673,11 @@ textarea {
 }
 
 .nav button:disabled {
-  color: var(--muted);
+  color: var(--ink);
   background: var(--stone);
   border-color: var(--stone);
   box-shadow: none;
-  cursor: default;
+  cursor: not-allowed;
 }
 
 /* ---------- Audience question ----------
