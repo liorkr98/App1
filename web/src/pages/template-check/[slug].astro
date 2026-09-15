@@ -4,25 +4,25 @@ import { TEMPLATE_IDS } from '@/types/listing';
 import ListingPage from '../../components/ListingPage.astro';
 import { listings, propertyListing } from '../../lib/listings';
 
-function withTemplate(id: TemplateId): Listing {
-  const gallery = propertyListing.media.gallery;
-  const base: Listing = { ...propertyListing, template: id };
-  if (id !== 'walkFirst') return base;
-  return {
-    ...base,
-    media: {
-      ...base.media,
-      cover: { ...base.media.cover, room: 'living' },
-      gallery: [
-        { ...gallery[0]!, room: 'living' },
-        { ...gallery[1]!, room: 'kitchen' },
-        { ...gallery[2]!, room: 'balcony' },
-      ],
-    },
-  };
-}
-
 export function getStaticPaths() {
+  const withTemplate = (id: TemplateId): Listing => {
+    const gallery = propertyListing.media.gallery;
+    const base: Listing = { ...propertyListing, template: id };
+    if (id !== 'walkFirst') return base;
+    return {
+      ...base,
+      media: {
+        ...base.media,
+        cover: { ...base.media.cover, room: 'living' },
+        gallery: [
+          { ...gallery[0]!, room: 'living' },
+          { ...gallery[1]!, room: 'kitchen' },
+          { ...gallery[2]!, room: 'balcony' },
+        ],
+      },
+    };
+  };
+
   const demos = listings.map((listing) => ({ params: { slug: listing.slug }, props: { listing } }));
   const templates = TEMPLATE_IDS.map((id) => ({
     params: { slug: id },

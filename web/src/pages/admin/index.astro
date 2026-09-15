@@ -1,6 +1,6 @@
 ---
-import { t } from '../lib/i18n';
-import '../styles/tokens.css';
+import { t } from '../../lib/i18n';
+import '../../styles/tokens.css';
 
 /**
  * Admin grant UI. noindex. Fail closed if the session is not a site admin.
@@ -128,8 +128,8 @@ import '../styles/tokens.css';
     </main>
 
     <script>
-      import { t } from '../lib/i18n';
-      import { supabase, supabaseConfigured } from '../lib/supabase';
+      import { t } from '../../lib/i18n';
+      import { supabase, supabaseConfigured } from '../../lib/supabase';
 
       const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
