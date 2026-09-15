@@ -1,7 +1,8 @@
 ---
 import type { EnrichmentBlock } from '@/types/listing';
 
-import { citations, groupPlaces, modeLabel, orderTransit } from '../lib/enrichment';
+import { citations, groupCivic, groupPlaces, modeLabel, orderTransit } from '../lib/enrichment';
+import { t } from '../lib/i18n';
 import Prose from './Prose.astro';
 
 interface Props {
@@ -38,6 +39,7 @@ const isProperty = enrichment.category === 'property';
 const transit = isProperty ? orderTransit(enrichment.transit) : [];
 const schools = isProperty ? enrichment.schools : [];
 const placeGroups = isProperty ? groupPlaces(enrichment.places) : [];
+const civicGroups = isProperty ? groupCivic(enrichment.civic ?? []) : [];
 
 const ownership = !isProperty ? enrichment.ownershipHistory : [];
 
@@ -85,7 +87,7 @@ const yearsBetween = (from: string, to: string): number => {
 const yearsLabel = (years: number): string => (years === 1 ? 'שנה' : 'שנים');
 
 const sources = isProperty
-  ? citations([...transit, ...schools, ...enrichment.places])
+  ? citations([...transit, ...schools, ...enrichment.places, ...(enrichment.civic ?? [])])
   : citations([
       ...(enrichment.specSource ? [enrichment.specSource] : []),
       ...(enrichment.testSource ? [enrichment.testSource] : []),
@@ -160,6 +162,23 @@ const sources = isProperty
         <div class="erow">
           <div class="mins"><bdi>{place.walkMinutes}</bdi><small>דקות</small></div>
           <div class="who"><b><Prose text={place.name} /></b></div>
+        </div>
+      ))}
+    </div>
+  ))}
+
+  {civicGroups.map((group) => (
+    <div class="egroup">
+      <div class="egroup-head">
+        <h3>{t(`listing.civicKind.${group.kind}`)}</h3>
+        {group.items.length > MAX_ROWS && (
+          <span class="count">ועוד <bdi>{group.items.length - MAX_ROWS}</bdi></span>
+        )}
+      </div>
+      {group.items.slice(0, MAX_ROWS).map((site) => (
+        <div class="erow">
+          <div class="mins"><bdi>{site.walkMinutes}</bdi><small>דקות</small></div>
+          <div class="who"><b><Prose text={site.name} /></b></div>
         </div>
       ))}
     </div>

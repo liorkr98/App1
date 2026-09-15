@@ -7,6 +7,7 @@ import {
   type Seller,
   type TemplateId,
 } from '@/types/listing';
+import { parseEnrichmentBlock } from '@/features/listings/enrichment-payload';
 import { isPhotoRoom } from '@/features/listings/photo-rooms';
 
 import { listingBySlug } from './listings';
@@ -38,6 +39,7 @@ interface ListingRow {
   published_at: string | null;
   og_image_hash: string | null;
   audience: string | null;
+  listing_enrichment?: { payload: unknown } | { payload: unknown }[] | null;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -51,6 +53,12 @@ function asCoord(value: unknown): number | undefined {
     if (Number.isFinite(parsed)) return parsed;
   }
   return undefined;
+}
+
+function enrichmentFromRow(row: ListingRow) {
+  const nested = row.listing_enrichment;
+  const payload = Array.isArray(nested) ? nested[0]?.payload : nested?.payload;
+  return parseEnrichmentBlock(payload);
 }
 
 function asSeller(value: unknown): Seller | undefined {
@@ -130,6 +138,8 @@ export function listingFromRow(row: ListingRow): Listing | undefined {
   const media = asMedia(row.media);
   if (!seller || !media) return undefined;
 
+  const enrichment = enrichmentFromRow(row);
+
   const lat = isRecord(row.location) ? asCoord(row.location.lat) : undefined;
   const lng = isRecord(row.location) ? asCoord(row.location.lng) : undefined;
   const location = isRecord(row.location) && typeof row.location.city === 'string'
@@ -166,6 +176,7 @@ export function listingFromRow(row: ListingRow): Listing | undefined {
     ...(row.audience === 'investor' || row.audience === 'resident' || row.audience === 'both'
       ? { audience: row.audience }
       : {}),
+    ...(enrichment ? { enrichment } : {}),
   };
 }
 
@@ -192,7 +203,21 @@ export async function publishedListing(slug: string): Promise<Listing | undefine
       .maybeSingle();
 
     if (error || !data) return undefined;
-    return listingFromRow(data as ListingRow);
+    const listing = listingFromRow(data as ListingRow);
+    if (!listing) return undefined;
+
+    try {
+      const { data: enrich, error: enrichError } = await supabasePublic()
+        .from('listing_enrichment')
+        .select('payload')
+        .eq('listing_id', listing.id)
+        .maybeSingle();
+      if (enrichError || !enrich) return listing;
+      const parsed = parseEnrichmentBlock((enrich as { payload: unknown }).payload);
+      return parsed ? { ...listing, enrichment: parsed } : listing;
+    } catch {
+      return listing;
+    }
   } catch {
     return undefined;
   }

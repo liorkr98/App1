@@ -1,4 +1,6 @@
 import type {
+  CivicKind,
+  NearbyCivic,
   NearbyPlace,
   NearbyTransit,
   PlaceCategory,
@@ -82,6 +84,34 @@ export function groupPlaces(places: NearbyPlace[]): PlaceGroup[] {
       category,
       label: categoryLabel(category),
       places: [...matching].sort((a, b) => a.walkMinutes - b.walkMinutes),
+    });
+  }
+
+  return groups;
+}
+
+export interface CivicGroup {
+  kind: CivicKind;
+  items: NearbyCivic[];
+}
+
+const CIVIC_ORDER: CivicKind[] = ['police', 'parking', 'park_ride'];
+
+/**
+ * Groups civic sites by kind, dropping empty groups.
+ *
+ * Same omit-empty rule as places. A listing with no police desk in walking
+ * distance should not grow a heading that says משטרה and then nothing.
+ */
+export function groupCivic(civic: NearbyCivic[]): CivicGroup[] {
+  const groups: CivicGroup[] = [];
+
+  for (const kind of CIVIC_ORDER) {
+    const matching = civic.filter((item) => item.kind === kind);
+    if (matching.length === 0) continue;
+    groups.push({
+      kind,
+      items: [...matching].sort((a, b) => a.walkMinutes - b.walkMinutes),
     });
   }
 

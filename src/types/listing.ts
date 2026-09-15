@@ -372,6 +372,24 @@ export interface NearbyPlace extends Provenance {
   walkMinutes: number;
 }
 
+/** Police desks and public parking from data.gov.il. Not OSM. */
+export type CivicKind = 'police' | 'parking' | 'park_ride';
+
+export interface NearbyCivic extends Provenance {
+  id: string;
+  name: string;
+  kind: CivicKind;
+  walkMinutes: number;
+}
+
+/**
+ * Short Hebrew copy about the area, written at publish from the lists already
+ * on the page. Omitted when missing. Never a valuation, never a live model call.
+ */
+export interface NeighborhoodNote {
+  text: string;
+}
+
 /**
  * The headline numbers, so a reader gets the shape of a neighbourhood without
  * reading three lists.
@@ -404,7 +422,14 @@ export interface PropertyEnrichment {
   transit: NearbyTransit[];
   schools: NearbySchool[];
   places: NearbyPlace[];
+  /** Police / parking / park-and-ride. Empty or absent is omitted on the page. */
+  civic?: NearbyCivic[];
   summary: ProximitySummary;
+  /**
+   * Written once at publish from the routed lists. Not a verified badge, not
+   * a live call, and not shown when the sanitiser rejects the text.
+   */
+  neighborhoodNote?: NeighborhoodNote;
 
   /**
    * Licence attributions that MUST be rendered wherever this data is shown.

@@ -13,7 +13,10 @@
     "sync:schools": "node dist/ingest/src/index.js schools",
     "sync:transit": "node dist/ingest/src/index.js transit",
     "sync:stations": "node dist/ingest/src/index.js stations",
-    "sync:places": "node dist/ingest/src/index.js places"
+    "sync:places": "node dist/ingest/src/index.js places",
+    "sync:police": "node dist/ingest/src/index.js police",
+    "sync:parking": "node dist/ingest/src/index.js parking",
+    "sync:park-ride": "node dist/ingest/src/index.js park_ride"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.115.0"

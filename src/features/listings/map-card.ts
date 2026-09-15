@@ -3,8 +3,8 @@
  *
  * The listing page must not fetch OSM (or anyone) when a buyer opens the
  * link — CLAUDE.md §12, and the sample photos already follow the same rule.
- * This SVG is the location panel: a pin on plaster, with the routed nearby
- * facts listed underneath in MapSection.
+ * This SVG is the location panel: a pin on plaster, with walking-minute
+ * chips overlaid in MapSection and the named facts listed underneath.
  */
 
 const SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" aria-hidden="true">
