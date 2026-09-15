@@ -40,6 +40,11 @@ html{
   scroll-padding-block-end:7rem;
 }
 
+::selection{
+  background:var(--olive);
+  color:var(--plaster);
+}
+
 /* Smooth scrolling is motion too. The reference sets it unconditionally; a
    reader who has asked for less movement did not exclude this one. */
 @media (prefers-reduced-motion:reduce){
@@ -169,6 +174,9 @@ p{max-width:62ch}
 p + p{margin-top:.9rem}
 
 /* ---------- גילוי נאות — רכב בלבד ---------- */
+.flaws,.seller{
+  --muted: var(--muted-warm);
+}
 .flaws{background:var(--stone-warm)}
 .flaws ul{list-style:none;margin-top:.3rem}
 .flaws li{
@@ -212,7 +220,7 @@ p + p{margin-top:.9rem}
     Body on this dark ground uses plaster or #9C9D93, never lift.
   */
 }
-.erow .mins small{font-size:.62rem;color:#9C9D93;font-family:'Assistant',sans-serif;display:block;margin-top:.15rem}
+.erow .mins small{font-size:var(--t-label);color:#9C9D93;font-family:'Assistant',sans-serif;display:block;margin-top:.15rem}
 .erow .who{flex:1}
 .erow .who b{font-weight:600;display:block}
 .erow .who em{font-style:normal;color:#9C9D93;font-size:.83rem}
