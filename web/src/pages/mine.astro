@@ -112,6 +112,9 @@ import '../styles/tokens.css';
 
       .bar nav a {
         /* 6.94:1 on --ink-deep. --olive-lift is 3.83:1 and would fail here. */
+        display: inline-flex;
+        align-items: center;
+        min-block-size: 44px;
         color: #9c9d93;
         font-size: var(--t-label);
         font-weight: 600;
@@ -123,7 +126,10 @@ import '../styles/tokens.css';
       }
 
       .cta {
-        display: inline-block;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-block-size: 44px;
         padding: 0.6rem 1.2rem;
         background: var(--olive);
         color: var(--plaster);
