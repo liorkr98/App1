@@ -14,7 +14,6 @@ import SellerBlock from './SellerBlock.astro';
 import Walk from './Walk.astro';
 import { CATEGORY_PRESENTATION } from '../lib/category-presentation';
 import { t } from '../lib/i18n';
-import { GALLERY_WIDTHS, largest } from '../lib/images';
 import { perUnitPrice } from '../lib/price';
 import { groupByRoom, hasRoomLabels } from '@/features/listings/photo-rooms';
 
@@ -72,7 +71,6 @@ const walkImages = [listing.media.cover, ...listing.media.gallery];
 const hasWalk = hasRoomLabels(walkImages)
   ? groupByRoom(walkImages).some((group) => group.room !== undefined)
   : false;
-const tourUrl = listing.media.tourUrl;
 ---
 <BaseListing
   listing={listing}
@@ -125,23 +123,6 @@ const tourUrl = listing.media.tourUrl;
     images={walkImages}
     allPhotosHref={listing.media.gallery.length > 0 ? '#listing-gallery' : undefined}
   />
-
-  {tourUrl ? (
-    <aside class="tour-poster reveal">
-      <a href={tourUrl} target="_blank" rel="noopener noreferrer">
-        <img
-          src={largest(listing.media.cover, GALLERY_WIDTHS)}
-          alt=""
-          width={listing.media.cover.width}
-          height={listing.media.cover.height}
-        />
-        <span>
-          {t('listing.tourCta')}
-          <span class="visually-hidden"> {t('listing.newWindow')}</span>
-        </span>
-      </a>
-    </aside>
-  ) : null}
 
   <Gallery images={listing.media.gallery} />
 

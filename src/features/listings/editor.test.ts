@@ -142,6 +142,11 @@ describe('stepsFor', () => {
     assert.ok(stepsFor('property').includes('consent'));
   });
 
+  it('gives the property flow a rooms step, and not the vehicle', () => {
+    assert.ok(stepsFor('property').includes('rooms'));
+    assert.ok(!stepsFor('vehicle').includes('rooms'));
+  });
+
   it('does not show a vehicle seller a consent step', () => {
     // The vehicle question is narrower and already asked in the plate step —
     // see the doc comment on EditorState.ownerConsentDeclaredAt.
@@ -153,6 +158,7 @@ describe('stepsFor', () => {
       'category',
       'details',
       'photos',
+      'rooms',
       'consent',
       'facts',
       'disclosures',
@@ -385,6 +391,10 @@ describe('canAdvance', () => {
 
   it('stops a seller leaving a step that is incomplete', () => {
     assert.equal(canAdvance('photos', { ...ready(), photoCount: 0 }), false);
+  });
+
+  it('lets a seller skip naming rooms', () => {
+    assert.equal(canAdvance('rooms', ready()), true);
   });
 });
 

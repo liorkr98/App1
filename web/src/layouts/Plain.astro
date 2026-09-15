@@ -1,4 +1,5 @@
 ---
+import BrandMark from '../components/BrandMark.astro';
 import { t } from '../lib/i18n';
 import '../styles/tokens.css';
 
@@ -59,7 +60,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
         margin-block-end: 1.5rem;
         border-block-end: 1px solid var(--stone);
       }
-      header a {
+      header > a:not(.brand-mark) {
         color: var(--muted);
         font-size: 0.9rem;
       }
@@ -99,7 +100,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
   <body>
     <a class="skip" href="#main">{t('a11y.skip')}</a>
     <header>
-      <a class="mark" href="/">{t('common.brand')}</a>
+      <BrandMark />
       <a href="/">{t('legal.home')}</a>
     </header>
     <main id="main">

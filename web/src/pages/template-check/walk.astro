@@ -1,7 +1,7 @@
 ---
 import type { Listing } from '@/types/listing';
 import ListingPage from '../../components/ListingPage.astro';
-import { propertyListing } from '../../lib/listings';
+import { propertyListing, withNamedRooms } from '../../lib/listings';
 
 /**
  * The walk with rooms labelled, prerendered, so we can see the filmstrip in
@@ -12,18 +12,10 @@ import { propertyListing } from '../../lib/listings';
  * class="walk">, so the demo fixtures stay unlabeled on purpose. This URL
  * is the fixture for the tour itself: noindex, already disallowed under
  * /template-check, not compared by that script.
+ *
+ * Template stays editorial — `/template-check/walkFirst/` is the same rooms
+ * with the walk as the first screen.
  */
-const gallery = propertyListing.media.gallery;
-const listing: Listing = {
-  ...propertyListing,
-  media: {
-    cover: { ...propertyListing.media.cover, room: 'living' },
-    gallery: [
-      { ...gallery[0]!, room: 'living' },
-      { ...gallery[1]!, room: 'kitchen' },
-      { ...gallery[2]!, room: 'balcony' },
-    ],
-  },
-};
+const listing: Listing = withNamedRooms(propertyListing);
 ---
 <ListingPage listing={listing} robots="noindex,nofollow" />

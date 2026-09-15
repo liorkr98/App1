@@ -1,4 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="היעד">
-  <rect width="32" height="32" rx="6" fill="#4A5D3A"/>
-  <text x="16" y="23" text-anchor="middle" fill="#FBFAF7" font-family="Frank Ruhl Libre, Times New Roman, serif" font-weight="700" font-size="18">ה</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img">
+  <rect width="32" height="32" rx="8" fill="#4A5D3A"/>
+  <circle cx="16" cy="16" r="10" fill="none" stroke="#FBFAF7" stroke-width="1.8"/>
+  <circle cx="16" cy="16" r="5.8" fill="none" stroke="#FBFAF7" stroke-width="1.8"/>
+  <circle cx="16" cy="16" r="2.15" fill="#FBFAF7"/>
 </svg>

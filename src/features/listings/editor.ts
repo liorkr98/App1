@@ -13,14 +13,15 @@ import { isUnedited } from './description.js';
  * check them is to click through a form on a phone.
  *
  * Flow (E1):
- *   category → photos → (vehicle: plate | property: consent) → facts
- *   → description → template → preview → publish
+ *   category → details → photos → (property: rooms + consent | vehicle: plate)
+ *   → facts → description → template → preview → publish
  */
 
 export const STEPS = [
   'category',
   'details',
   'photos',
+  'rooms',
   'plate',
   'consent',
   'facts',
@@ -188,7 +189,8 @@ export function stepsFor(category: ListingCategory | undefined): Step[] {
   return STEPS.filter(
     (step) =>
       (step !== 'plate' || category === 'vehicle') &&
-      (step !== 'consent' || category === 'property'),
+      (step !== 'consent' || category === 'property') &&
+      (step !== 'rooms' || category === 'property'),
   );
 }
 

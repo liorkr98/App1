@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { groupByRoom, hasRoomLabels, isPhotoRoom } from './photo-rooms.js';
+import { groupByRoom, guessRoomFromName, hasRoomLabels, isPhotoRoom } from './photo-rooms.js';
 
 describe('isPhotoRoom', () => {
   it('accepts the rooms the editor offers', () => {
@@ -59,5 +59,18 @@ describe('hasRoomLabels', () => {
 
   it('is true when one photograph has a room', () => {
     assert.equal(hasRoomLabels([{ id: 'a' }, { id: 'b', room: 'balcony' as const }]), true);
+  });
+});
+
+describe('guessRoomFromName', () => {
+  it('reads Hebrew and English room words from a filename', () => {
+    assert.equal(guessRoomFromName('מטבח-2.jpg'), 'kitchen');
+    assert.equal(guessRoomFromName('IMG_bathroom_01.HEIC'), 'bathroom');
+    assert.equal(guessRoomFromName('bedroom.jpeg'), 'bedroom');
+  });
+
+  it('stays silent on a camera-roll name', () => {
+    assert.equal(guessRoomFromName('IMG_2048.jpg'), undefined);
+    assert.equal(guessRoomFromName(''), undefined);
   });
 });

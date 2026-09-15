@@ -436,6 +436,71 @@ textarea {
   outline-offset: 1px;
 }
 
+.room-ask {
+  margin: 0.9rem 0 1rem;
+}
+
+.room-ask img {
+  display: block;
+  inline-size: 100%;
+  max-block-size: 52svh;
+  object-fit: cover;
+  border-radius: 8px;
+  background: var(--stone);
+}
+
+.room-ask figcaption {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-block-start: 0.4rem;
+}
+
+.room-chips {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+
+.room-chip {
+  min-block-size: 44px;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--stone);
+  border-radius: 999px;
+  background: var(--plaster);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+}
+
+.room-chip.chosen,
+.room-chip[aria-pressed='true'] {
+  background: var(--ink-deep);
+  color: var(--plaster);
+  border-color: var(--ink-deep);
+}
+
+.room-nav {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.room-nav button {
+  min-block-size: 44px;
+  padding: 0.45rem 0.95rem;
+  border: 1px solid var(--stone);
+  border-radius: 999px;
+  background: var(--plaster);
+  font: inherit;
+  font-weight: 600;
+}
+
+.room-nav button:disabled {
+  color: var(--muted);
+}
+
 .shot-room {
   display: block;
   margin-block-start: 0.35rem;

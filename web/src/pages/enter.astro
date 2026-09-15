@@ -1,4 +1,5 @@
 ---
+import BrandMark from '../components/BrandMark.astro';
 import { t } from '../lib/i18n';
 import '../styles/tokens.css';
 
@@ -61,11 +62,7 @@ import '../styles/tokens.css';
         padding: 2.5rem var(--gut);
       }
 
-      .mark {
-        font-family: 'Frank Ruhl Libre', serif;
-        font-weight: 700;
-        font-size: 1.35rem;
-        letter-spacing: -0.02em;
+      .brand-mark {
         margin-block-end: 2rem;
       }
 
@@ -173,7 +170,7 @@ import '../styles/tokens.css';
   <body>
     <a class="skip" href="#main">{t('a11y.skip')}</a>
     <main id="main">
-      <p class="mark">{t('common.brand')}</p>
+      <BrandMark />
 
       <h1>{t('auth.title')}</h1>
       <p class="lead">{t('auth.lead')}</p>

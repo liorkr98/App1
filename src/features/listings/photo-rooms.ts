@@ -25,6 +25,32 @@ export function isPhotoRoom(value: unknown): value is PhotoRoom {
   return typeof value === 'string' && (PHOTO_ROOMS as readonly string[]).includes(value);
 }
 
+/**
+ * A hint from the filename, never a caption we invent for the buyer.
+ *
+ * Israeli agents often keep camera-roll names, which yield nothing. When the
+ * file is already called מטבח or kitchen.jpg, asking "is this the kitchen?"
+ * with that chip already pressed is the recognition the seller asked for —
+ * they still confirm it in the rooms step.
+ */
+const NAME_HINTS: readonly { room: PhotoRoom; pattern: RegExp }[] = [
+  { room: 'kitchen', pattern: /מטבח|kitchen|cook/i },
+  { room: 'bathroom', pattern: /אמבט|שירותים|מקלחת|bath|toilet|wc/i },
+  { room: 'bedroom', pattern: /שינה|bedroom|\bbed\b/i },
+  { room: 'living', pattern: /סלון|living|lounge|salon/i },
+  { room: 'balcony', pattern: /מרפסת|balcony|terrace/i },
+  { room: 'outdoor', pattern: /גינה|חוץ|garden|yard|outdoor|facade|חזית/i },
+];
+
+export function guessRoomFromName(fileName: string): PhotoRoom | undefined {
+  const name = fileName.trim();
+  if (!name) return undefined;
+  for (const hint of NAME_HINTS) {
+    if (hint.pattern.test(name)) return hint.room;
+  }
+  return undefined;
+}
+
 export interface RoomGroup<T> {
   room?: PhotoRoom;
   items: T[];

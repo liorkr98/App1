@@ -263,6 +263,30 @@ export const vehicleListing: Listing = {
 
 export const listings: Listing[] = [propertyListing, vehicleListing];
 
+/**
+ * The same apartment, with rooms named so a walkFirst miniature and the
+ * `/template-check/walkFirst` fixture can show the filmstrip.
+ *
+ * A7K2M itself stays unlabeled: a labelled walk is a `<section class="walk">`,
+ * and verify-template-divergences.mjs forbids a fifth section that exists on
+ * the property demo and not the vehicle one.
+ */
+const SHOWCASE_ROOMS = ['living', 'kitchen', 'balcony'] as const;
+
+export function withNamedRooms(listing: Listing): Listing {
+  return {
+    ...listing,
+    media: {
+      ...listing.media,
+      cover: { ...listing.media.cover, room: 'living' },
+      gallery: listing.media.gallery.map((image, index) => ({
+        ...image,
+        room: SHOWCASE_ROOMS[index] ?? 'other',
+      })),
+    },
+  };
+}
+
 export function listingBySlug(slug: string): Listing | undefined {
   return listings.find((listing) => listing.slug === slug);
 }
