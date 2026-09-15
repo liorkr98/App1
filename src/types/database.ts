@@ -69,6 +69,68 @@ export type Database = {
           },
         ]
       }
+      contact_messages: {
+        Row: {
+          body: string
+          created_at: string
+          email: string
+          id: string
+          name: string
+          read_at: string | null
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          read_at?: string | null
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          read_at?: string | null
+        }
+        Relationships: []
+      }
+      editor_events: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          listing_id: string | null
+          step: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          listing_id?: string | null
+          step: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          listing_id?: string | null
+          step?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "editor_events_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       listing_grants: {
         Row: {
           created_at: string
@@ -805,6 +867,95 @@ export type Database = {
       admin_grant_listings: {
         Args: { p_count: number; p_note: string; p_user_id: string }
         Returns: string
+      }
+      admin_site_overview: {
+        Args: never
+        Returns: {
+          drafts: number
+          grants_remaining: number
+          jobs_failed: number
+          jobs_pending: number
+          listings: number
+          published: number
+          unread_messages: number
+          users: number
+          views_7d: number
+          wa_7d: number
+        }[]
+      }
+      admin_listings: {
+        Args: never
+        Returns: {
+          category: string
+          created_at: string
+          listing_id: string
+          owner_email: string | null
+          published_at: string | null
+          slug: string
+          status: string
+          title: string
+          views: number
+          wa_taps: number
+        }[]
+      }
+      admin_ingest_status: {
+        Args: never
+        Returns: {
+          display_name: string
+          last_attempted_at: string | null
+          last_error: string | null
+          last_synced_at: string | null
+          row_count: number
+          source: string
+        }[]
+      }
+      admin_users: {
+        Args: never
+        Returns: {
+          agency_name: string | null
+          created_at: string
+          display_name: string | null
+          email: string | null
+          listings: number
+          published: number
+          remaining: number
+          user_id: string
+        }[]
+      }
+      admin_editor_funnel: {
+        Args: never
+        Returns: {
+          blocked: number
+          entered: number
+          publish_fail: number
+          publish_ok: number
+          step: string
+        }[]
+      }
+      admin_contact_messages: {
+        Args: never
+        Returns: {
+          body: string
+          created_at: string
+          email: string
+          id: string
+          name: string
+          read_at: string | null
+        }[]
+      }
+      admin_mark_contact_read: { Args: { p_id: string }; Returns: undefined }
+      submit_contact_message: {
+        Args: {
+          p_body: string
+          p_email: string
+          p_honeypot?: string
+          p_name: string
+        }
+        Returns: string
+      }
+      record_editor_event: {
+        Args: { p_kind: string; p_listing_id?: string | null; p_step: string }
+        Returns: undefined
       }
       enqueue_job: {
         Args: {
@@ -1738,6 +1889,8 @@ export type JobRow = Tables<'jobs'>;
 export type BetaPublisherRow = Tables<'beta_publishers'>;
 export type ListingGrantRow = Tables<'listing_grants'>;
 export type ListingEventRow = Tables<'listing_events'>;
+export type ContactMessageRow = Tables<'contact_messages'>;
+export type EditorEventRow = Tables<'editor_events'>;
 export type SiteAdminRow = Tables<'site_admins'>;
 export type SchoolRow = Tables<'schools'>;
 export type PlaceRow = Tables<'places'>;

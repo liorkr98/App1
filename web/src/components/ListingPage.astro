@@ -15,6 +15,7 @@ import Walk from './Walk.astro';
 import { CATEGORY_PRESENTATION } from '../lib/category-presentation';
 import { t } from '../lib/i18n';
 import { perUnitPrice } from '../lib/price';
+import { mapCardSrc } from '@/features/listings/map-card';
 import { isWalkItem, labeledWalkItems } from '@/features/listings/photo-rooms';
 
 interface Props {
@@ -47,7 +48,7 @@ const heading = listing.category === 'property' ? 'על הדירה' : 'על הר
 
 // A vehicle has no street, so no map. See DESIGN-CONTRACT §5.4.
 const showMap = Boolean(listing.location?.street);
-const mapImageUrl = '/sample/frame.png';
+const mapImageUrl = mapCardSrc();
 
 /**
  * ₪ per m², derived from the price and whichever fact the schema marks as the
@@ -132,7 +133,11 @@ const hasWalk = walkItems.length > 0;
   {listing.enrichment && <Enrichment enrichment={listing.enrichment} />}
 
   {showMap && listing.location && (
-    <MapSection location={listing.location} mapImageUrl={mapImageUrl} />
+    <MapSection
+      location={listing.location}
+      mapImageUrl={mapImageUrl}
+      enrichment={listing.enrichment?.category === 'property' ? listing.enrichment : undefined}
+    />
   )}
 
   <SellerBlock seller={listing.seller} />

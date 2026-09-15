@@ -273,10 +273,9 @@ they are **not queried at page render**. Ingestion stays scheduled.
 | Resource UUID | Dataset (from a live `datastore_search`) | Product fit |
 | --- | --- | --- |
 | `053cea08-09bc-40ec-8f7a-156f0677aff3` | Vehicle registry (`mispar_rechev`) | **Already wired** in `lookup-plate` |
-| `e873e6a2-66c1-494f-a677-f5e77348edb0` | Bus stations (`StationId`, lat/long, city) — 34,221 rows | Future transit ingest. `transit_stops` already exists; this is a lighter station list than GTFS |
+| `e873e6a2-66c1-494f-a677-f5e77348edb0` | Bus stations (`StationId`, lat/long, city) — 34,221 rows | **`sync:stations`**. Writes `transit_stops` with `gov-` ids. Walking minutes still OSRM at publish |
 | `e3673768-3dc2-4e62-b0ea-cf763c07a037` | Route travel-time samples — **~85 million rows** | Too large to join at listing time. Not a v1 ingest |
-| `34729a10-299b-448d-a223-5d7533e8f147` | Public parking (`חניה ציבורית`) — 5,826 rows | Candidate for a later `places` category. Not scraped from a portal |
+| `34729a10-299b-448d-a223-5d7533e8f147` | Public parking (`חניה ציבורית`) — 5,826 rows | **ITM** (`X`/`Y` ≈ 200000/550000), not WGS84. Not ingested until a 2039→4326 transform exists. Not scraped from a portal |
 | `d8b92642-bad4-43f4-b00f-ea24f0c0702b` | Operator on-time performance by line/month | Operator stats, not a buyer-facing listing fact |
 
-**Not ingested in this pass.** The page still reads only from us. A 85-million-row
-feed at render time would be the Distance Matrix mistake with extra steps.
+The listing **map** names the nearest transit stop, school and grocery from the enrichment payload (already routed). Empty groups are omitted. Pages still do not query data.gov.il at render. The 85-million-row feed at render time would be the Distance Matrix mistake with extra steps.

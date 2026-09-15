@@ -248,7 +248,37 @@ p + p{margin-top:.9rem}
 
 /* ---------- מפה ---------- */
 .map img{width:100%;display:block;border-radius:2px;background:var(--stone);aspect-ratio:2/1;object-fit:cover}
-.addr{font-size:.9rem;color:var(--muted);margin-top:.6rem}
+.addr{font-size:.9rem;color:var(--muted);margin-block-start:.6rem}
+.map-nav{
+  display:inline-flex;align-items:center;min-block-size:44px;
+  margin-block-start:.25rem;color:var(--olive);font-weight:600;
+}
+.map-nearby{
+  list-style:none;
+  margin:0;
+  padding:0;
+  margin-block-start:1rem;
+  display:flex;
+  flex-direction:column;
+  gap:.55rem;
+}
+.map-nearby li{
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  gap:.45rem .7rem;
+  align-items:baseline;
+  font-size:.92rem;
+  line-height:1.5;
+}
+.map-nearby-kind{
+  color:var(--olive);
+  font-weight:600;
+  font-size:.78rem;
+}
+.map-nearby-walk{
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
 
 /* ---------- סוכן ---------- */
 .seller{background:var(--stone-warm)}

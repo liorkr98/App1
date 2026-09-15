@@ -1,15 +1,24 @@
 ---
-import type { ListingLocation } from '@/types/listing';
+import type { ListingLocation, PropertyEnrichment } from '@/types/listing';
+import { mapNearbyItems } from '@/features/listings/nearby-map';
+import { wazeNavigateUrl } from '@/features/listings/map-card';
+import { t } from '../lib/i18n';
 import Prose from './Prose.astro';
 
 interface Props {
   location: ListingLocation;
   mapImageUrl: string;
+  enrichment?: PropertyEnrichment;
 }
 
-const { location, mapImageUrl } = Astro.props;
+const { location, mapImageUrl, enrichment } = Astro.props;
 
 const address = location.street ? `${location.street}, ${location.city}` : location.city;
+const nearby = enrichment ? mapNearbyItems(enrichment) : [];
+const navigate =
+  location.lat !== undefined && location.lng !== undefined
+    ? wazeNavigateUrl(location.lat, location.lng)
+    : undefined;
 ---
 {
   /**
@@ -17,13 +26,28 @@ const address = location.street ? `${location.street}, ${location.city}` : locat
    * approximate meeting area, not an address; pinning a private car for sale
    * to a home address on a public page is a theft risk.
    *
-   * A rendered image, never an interactive embed — a map SDK is hundreds of
-   * kilobytes and a third-party script on a page whose whole job is loading
-   * fast on cellular.
+   * The image is a local SVG pin card — never an interactive embed and never
+   * a third-party tile (CLAUDE.md §12). Transit, school and grocery under it
+   * are already-routed walking times from the enrichment payload. Omitted
+   * when that payload has nothing for a group. No live query at render.
    */
 }
 <section class="map reveal">
-  <h2>מיקום</h2>
-  <img src={mapImageUrl} alt="מפת האזור" loading="lazy" decoding="async" width="800" height="400">
+  <h2>{t('listing.mapTitle')}</h2>
+  <img src={mapImageUrl} alt={t('listing.mapAlt')} loading="lazy" decoding="async" width="800" height="400">
   <div class="addr"><Prose text={address} /></div>
+  {navigate && (
+    <a class="map-nav" href={navigate} rel="noopener noreferrer">{t('listing.mapNavigate')}</a>
+  )}
+  {nearby.length > 0 && (
+    <ul class="map-nearby">
+      {nearby.map((item) => (
+        <li>
+          <span class="map-nearby-kind">{t(`listing.mapNearby.${item.kind}`)}</span>
+          <b><Prose text={item.name} /></b>
+          <span class="map-nearby-walk"><bdi>{item.walkMinutes}</bdi> {t('listing.mapNearbyMinutes')}</span>
+        </li>
+      ))}
+    </ul>
+  )}
 </section>

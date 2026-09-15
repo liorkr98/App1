@@ -44,6 +44,15 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+function asCoord(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return undefined;
+}
+
 function asSeller(value: unknown): Seller | undefined {
   if (!isRecord(value)) return undefined;
   const name = typeof value.name === 'string' ? value.name : '';
@@ -121,10 +130,14 @@ export function listingFromRow(row: ListingRow): Listing | undefined {
   const media = asMedia(row.media);
   if (!seller || !media) return undefined;
 
+  const lat = isRecord(row.location) ? asCoord(row.location.lat) : undefined;
+  const lng = isRecord(row.location) ? asCoord(row.location.lng) : undefined;
   const location = isRecord(row.location) && typeof row.location.city === 'string'
     ? {
         city: row.location.city,
         ...(typeof row.location.street === 'string' ? { street: row.location.street } : {}),
+        ...(lat !== undefined ? { lat } : {}),
+        ...(lng !== undefined ? { lng } : {}),
       }
     : undefined;
 
