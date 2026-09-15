@@ -1,36 +1,76 @@
 ---
 import type { Image } from '@/types/listing';
+import { groupByRoom, hasRoomLabels } from '@/features/listings/photo-rooms';
 import { GALLERY_WIDTHS, largest, srcset } from '../lib/images';
+import { t } from '../lib/i18n';
 
 interface Props {
   images: Image[];
 }
 
 const { images } = Astro.props;
+
+const grouped = hasRoomLabels(images);
+const groups = grouped ? groupByRoom(images) : [{ items: images }];
 ---
 {/*
   Asymmetric by CSS, not by markup: .gallery figure:first-child spans both
   columns at 16/10 and the rest sit in pairs at 4/3. A uniform strip is what
   made the previous port read as a template.
 
-  So the FIRST image is doing two jobs — it is index 0, the cover the
-  WhatsApp card is cut from, and it is the one that gets the wide frame here.
-  Photo order is the seller's, and it is load-bearing in two places at once.
+  When the seller named rooms, each room is its own grid under a headline —
+  kitchen under מטבח, living under סלון — so a buyer scans the apartment
+  rather than a pile of photographs. Unlabeled pictures trail with no
+  invented heading.
+
+  The FIRST image of each group is still the wide frame. Photo order inside
+  a room is the seller's.
 */}
-<div class="gallery reveal">
-  {images.map((image) => (
-    <figure>
-      <img
-        src={largest(image, GALLERY_WIDTHS)}
-        srcset={srcset(image, GALLERY_WIDTHS) || undefined}
-        sizes="(max-width: 620px) 50vw, 310px"
-        width={image.width}
-        height={image.height}
-        alt={image.alt ?? ''}
-        loading="lazy"
-        decoding="async"
-      >
-      {image.caption && <figcaption>{image.caption}</figcaption>}
-    </figure>
-  ))}
-</div>
+{images.length > 0 && (
+  grouped ? (
+    <div id="listing-gallery">
+    {groups.map((group) => (
+      <section class="gallery-room">
+        {group.room ? <h2>{t(`editor.rooms.${group.room}`)}</h2> : null}
+        <div class="gallery reveal">
+          {group.items.map((image) => (
+            <figure>
+              <img
+                src={largest(image, GALLERY_WIDTHS)}
+                srcset={srcset(image, GALLERY_WIDTHS) || undefined}
+                sizes="(max-width: 620px) 50vw, 310px"
+                width={image.width}
+                height={image.height}
+                alt={image.alt ?? ''}
+                loading="lazy"
+                decoding="async"
+              >
+              {(image.caption || group.room) && (
+                <figcaption>{image.caption || (group.room ? t(`editor.rooms.${group.room}`) : '')}</figcaption>
+              )}
+            </figure>
+          ))}
+        </div>
+      </section>
+    ))}
+    </div>
+  ) : (
+    <div id="listing-gallery" class="gallery reveal">
+      {images.map((image) => (
+        <figure>
+          <img
+            src={largest(image, GALLERY_WIDTHS)}
+            srcset={srcset(image, GALLERY_WIDTHS) || undefined}
+            sizes="(max-width: 620px) 50vw, 310px"
+            width={image.width}
+            height={image.height}
+            alt={image.alt ?? ''}
+            loading="lazy"
+            decoding="async"
+          >
+          {image.caption && <figcaption>{image.caption}</figcaption>}
+        </figure>
+      ))}
+    </div>
+  )
+)}

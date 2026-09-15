@@ -11,6 +11,7 @@ import MapSection from './MapSection.astro';
 import PriceBar from './PriceBar.astro';
 import Prose from './Prose.astro';
 import SellerBlock from './SellerBlock.astro';
+import Walk from './Walk.astro';
 import { CATEGORY_PRESENTATION } from '../lib/category-presentation';
 import { t } from '../lib/i18n';
 import { perUnitPrice } from '../lib/price';
@@ -104,6 +105,11 @@ const sold = listing.status === 'sold';
   {listing.disclosures && listing.disclosures.length > 0 && (
     <Disclosures items={listing.disclosures} />
   )}
+
+  <Walk
+    images={[listing.media.cover, ...listing.media.gallery]}
+    allPhotosHref={listing.media.gallery.length > 0 ? '#listing-gallery' : undefined}
+  />
 
   <Gallery images={listing.media.gallery} />
 

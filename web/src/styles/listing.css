@@ -17,6 +17,8 @@
   at the end.
 */
 
+@import './walk.css';
+
 /* ============================================================
    היעד — עמוד מודעה
    טיפוגרפיה: Frank Ruhl Libre לכותרות ולמספרים, Assistant לגוף
@@ -220,6 +222,9 @@ p + p{margin-top:.9rem}
   aspect-ratio:4/3;object-fit:cover}
 .gallery figure:first-child img{aspect-ratio:16/10}
 .gallery figcaption{font-size:.78rem;color:var(--muted);margin-top:.35rem}
+
+.gallery-room .gallery{padding-inline:0;padding-block-end:0}
+.gallery-room + .gallery-room{padding-block-start:0}
 
 /* ---------- מפה ---------- */
 .map img{width:100%;display:block;border-radius:2px;background:var(--stone);aspect-ratio:2/1;object-fit:cover}
