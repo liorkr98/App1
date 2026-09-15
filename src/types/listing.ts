@@ -641,6 +641,12 @@ export interface Listing {
   indexable: boolean;
 
   /**
+   * When true, the public footer carries נבנה בהיעד. Free first listing: true.
+   * A paid grant turns it false. Absent means true, so older pages keep the mark.
+   */
+  hyadMark?: boolean;
+
+  /**
    * Who the seller is aiming this at. Defaults to 'resident' when absent.
    *
    * Reorders the facts grid — see orderForAudience. It is a question the

@@ -303,6 +303,7 @@ export type Database = {
           expires_at: string | null
           facts: Json
           id: string
+          hyad_mark: boolean
           indexable: boolean
           list_price: number | null
           location: Json | null
@@ -332,6 +333,7 @@ export type Database = {
           disclosures?: string[] | null
           expires_at?: string | null
           facts?: Json
+          hyad_mark?: boolean
           id?: string
           indexable?: boolean
           list_price?: number | null
@@ -362,6 +364,7 @@ export type Database = {
           disclosures?: string[] | null
           expires_at?: string | null
           facts?: Json
+          hyad_mark?: boolean
           id?: string
           indexable?: boolean
           list_price?: number | null

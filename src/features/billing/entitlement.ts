@@ -10,12 +10,15 @@ import type { Entitlement } from '../listings/editor.js';
  * failed. Splitting it this way is what makes the fail-closed rule
  * testable without a database:
  *
- *   read failed     → 'unknown'  (never 'paid')
- *   no live grant   → 'unpaid'
- *   remaining > 0   → 'paid'
+ *   read failed     → 'unknown'  (never 'paid', never 'free')
+ *   live grant      → 'paid'
+ *   no grant, 0 published (count succeeded) → 'free'
+ *   no grant, already published → 'unpaid'
+ *   published-count failed → 'unknown'
  *
  * There is no default, no timeout-as-paid, and no "assume true in
  * development". A missing argument is a type error, not a grant.
+ * ======================================================================
  *
  * A grant with remaining 0, a window that has not started, or a window
  * that has ended, is not live. Admin comps and (later) PSP rows share
@@ -48,12 +51,13 @@ export function entitlementFromGrants(
   rows: readonly GrantRow[] | null,
   readFailed: boolean,
   now: Date = new Date(),
+  publishedCount: number | null = 0,
 ): Entitlement {
   if (readFailed) return 'unknown';
-  if (!rows) return 'unpaid';
+  if (publishedCount === null) return 'unknown';
 
   const ts = now.getTime();
-  const live = rows.some((row) => {
+  const live = (rows ?? []).some((row) => {
     if (!Number.isFinite(row.remaining) || row.remaining <= 0) return false;
     const from = Date.parse(row.effective_from);
     if (!Number.isFinite(from) || from > ts) return false;
@@ -64,5 +68,7 @@ export function entitlementFromGrants(
     return true;
   });
 
-  return live ? 'paid' : 'unpaid';
+  if (live) return 'paid';
+  if (publishedCount === 0) return 'free';
+  return 'unpaid';
 }
