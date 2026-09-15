@@ -62,6 +62,8 @@ interface Props {
   /** Uploading needs a listing row, which needs a signed-in owner (0004). */
   signedIn: boolean;
   category?: ListingCategory;
+  tourUrl?: string;
+  onTourUrl?: (url: string) => void;
 }
 
 /**
@@ -107,7 +109,14 @@ interface Props {
  * thumb on a moving bus — and because the buttons make the order checkable
  * without a pointer at all.
  */
-export function PhotosStep({ photos, onChange, signedIn, category }: Props) {
+export function PhotosStep({
+  photos,
+  onChange,
+  signedIn,
+  category,
+  tourUrl,
+  onTourUrl,
+}: Props) {
   const [dragging, setDragging] = useState<number | null>(null);
 
   const add = (files: FileList | null) => {
@@ -303,6 +312,24 @@ export function PhotosStep({ photos, onChange, signedIn, category }: Props) {
       <p className="note">
         <Message path="editor.photoCount" values={{ count: photos.length, max: MAX_IMAGES }} />
       </p>
+
+      {onTourUrl ? (
+        <div className="field">
+          <label htmlFor="tour-url">{t('editor.tourUrl')}</label>
+          <input
+            id="tour-url"
+            name="tourUrl"
+            type="url"
+            inputMode="url"
+            dir="ltr"
+            autoComplete="off"
+            placeholder="https://"
+            value={tourUrl ?? ''}
+            onChange={(event) => onTourUrl(event.target.value)}
+          />
+          <p className="hint">{t('editor.tourUrlHint')}</p>
+        </div>
+      ) : null}
     </>
   );
 }

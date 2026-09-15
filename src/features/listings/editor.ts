@@ -172,6 +172,9 @@ export interface EditorState {
    */
   disclosures?: string[];
 
+  /** Optional https URL for a 3D tour. Poster only; never embedded. */
+  tourUrl?: string;
+
   entitlement: Entitlement;
 }
 

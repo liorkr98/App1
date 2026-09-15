@@ -75,21 +75,18 @@ Keep olive and plaster. Do not add blue.
 
 ## Templates
 
-The three templates (agency, editorial, dark) stay. A fourth visual template
-without a reference HTML file would be a redesign, which the design contract
-forbids. The walk lives **inside** the existing templates, the same way the
-map and the disclosures do: data-driven, identical CSS on property and
-vehicle pages, omitted when the data is not there.
+Five templates: `agency`, `editorial`, `dark`, `walkFirst`, `brochure`. Each
+has a Hebrew RTL reference HTML file (`listing-page-{id}.html`) before CSS.
+A new visual template without that file is a redesign, which CI cannot police
+(`scripts/verify-template-ids.mjs`). The walk lives **inside** the existing
+templates as well, and `walkFirst` only *reorders* it via flex `order`.
+Property vs vehicle still differ in **exactly four** ways.
 
-A future template worth designing, if a reference is drawn:
-
-1. **Walk-first.** Hero is the living room; the chips sit under the title;
-   facts come after the tour. For listings whose photographs are the sale.
-2. **Plan + rooms.** A floor-plan image with hotspots. Needs a plan the
-   seller usually does not have. Do not pretend a photo collage is a plan.
+Room chips overlay the large still. Optional `media.tourUrl` is a poster that
+opens a new tab (“נפתח בחלון חדש”). No iframe, no player, no JavaScript.
 
 Do not add blue. Do not add Matterport as a template. Do not add a Photos /
-3D toggle until the second video is in hand.
+3D toggle.
 
 ---
 

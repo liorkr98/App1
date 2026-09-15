@@ -9,6 +9,9 @@ interface Props {
   city: string;
   street: string;
   priceNote: string;
+  titleError?: boolean;
+  priceError?: boolean;
+  cityError?: boolean;
   onChange: (patch: {
     title?: string;
     price?: number;
@@ -48,6 +51,9 @@ export function DetailsStep({
   city,
   street,
   priceNote,
+  titleError = false,
+  priceError = false,
+  cityError = false,
   onChange,
 }: Props) {
   const isProperty = category === 'property';
@@ -65,8 +71,15 @@ export function DetailsStep({
           value={title}
           onChange={(event) => onChange({ title: event.target.value })}
           maxLength={90}
+          aria-invalid={titleError || undefined}
+          aria-describedby={titleError ? 'd-title-err' : 'd-title-hint'}
         />
-        <p className="field-hint">{t('editor.details.titleHint')}</p>
+        <p className="field-hint" id="d-title-hint">{t('editor.details.titleHint')}</p>
+        {titleError ? (
+          <p className="field-error" id="d-title-err" role="alert">
+            {t('editor.blockers.titleMissing')}
+          </p>
+        ) : null}
       </div>
 
       <div className="field">
@@ -93,7 +106,14 @@ export function DetailsStep({
             const digits = event.target.value.replace(/\D+/g, '');
             onChange({ price: digits === '' ? 0 : Number(digits) });
           }}
+          aria-invalid={priceError || undefined}
+          aria-describedby={priceError ? 'd-price-err' : undefined}
         />
+        {priceError ? (
+          <p className="field-error" id="d-price-err" role="alert">
+            {t('editor.blockers.priceMissing')}
+          </p>
+        ) : null}
       </div>
 
       <div className="field">
@@ -122,8 +142,17 @@ export function DetailsStep({
           value={city}
           onChange={(event) => onChange({ city: event.target.value })}
           maxLength={40}
+          aria-invalid={cityError || undefined}
+          aria-describedby={cityError ? 'd-city-err' : isProperty ? undefined : 'd-city-hint'}
         />
-        {!isProperty && <p className="field-hint">{t('editor.details.vehicleAreaHint')}</p>}
+        {!isProperty && (
+          <p className="field-hint" id="d-city-hint">{t('editor.details.vehicleAreaHint')}</p>
+        )}
+        {cityError ? (
+          <p className="field-error" id="d-city-err" role="alert">
+            {t('editor.blockers.cityMissing')}
+          </p>
+        ) : null}
       </div>
 
       {/* No street for a vehicle, and it is not hidden by CSS — it is not

@@ -10,7 +10,7 @@ interface Props {
 /**
  * Choosing how the page looks.
  *
- * The copy says outright that the data is identical in all three and only the
+ * The copy says outright that the data is identical in all five and only the
  * appearance changes. That sentence is there to stop a seller believing a
  * template makes their listing better — the enrichment is what does that, and
  * a seller hunting for the "best" template is a seller not adding photos.
@@ -20,7 +20,7 @@ interface Props {
  * appealing, and it is honest about a template that will make a bad set of
  * photographs worse.
  *
- * Driven from TEMPLATE_IDS rather than a list written out here, so a fourth
+ * Driven from TEMPLATE_IDS rather than a list written out here, so a new
  * template appears by existing — and its two strings are then missing from
  * locales/he.json, which is visible rather than silent.
  */

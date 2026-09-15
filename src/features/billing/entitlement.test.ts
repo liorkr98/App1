@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { entitlementFromAllowlist } from './entitlement.js';
+import {
+  entitlementFromAllowlist,
+  entitlementFromGrants,
+  type GrantRow,
+} from './entitlement.js';
 
 describe('entitlementFromAllowlist — fail closed', () => {
   it('grants only when a row is present and the read succeeded', () => {
@@ -16,8 +20,6 @@ describe('entitlementFromAllowlist — fail closed', () => {
   });
 
   it('is unknown when the read failed, even if a row was also returned', () => {
-    // A caller that both errored and produced a body is a confused caller.
-    // Unknown, not paid: we do not trust a row that arrived with an error.
     assert.equal(
       entitlementFromAllowlist({ user_id: 'user-1' }, true),
       'unknown',
@@ -26,5 +28,60 @@ describe('entitlementFromAllowlist — fail closed', () => {
 
   it('is unknown when the read failed and there is no row', () => {
     assert.equal(entitlementFromAllowlist(null, true), 'unknown');
+  });
+});
+
+const now = new Date('2026-09-15T12:00:00.000Z');
+
+function grant(overrides: Partial<GrantRow> = {}): GrantRow {
+  return {
+    remaining: 1,
+    effective_from: '2026-01-01T00:00:00.000Z',
+    effective_to: null,
+    ...overrides,
+  };
+}
+
+describe('entitlementFromGrants — fail closed', () => {
+  it('grants when a live row has remaining listings', () => {
+    assert.equal(entitlementFromGrants([grant()], false, now), 'paid');
+  });
+
+  it('is unpaid when there are no grants', () => {
+    assert.equal(entitlementFromGrants([], false, now), 'unpaid');
+    assert.equal(entitlementFromGrants(null, false, now), 'unpaid');
+  });
+
+  it('is unpaid when remaining is zero', () => {
+    assert.equal(entitlementFromGrants([grant({ remaining: 0 })], false, now), 'unpaid');
+  });
+
+  it('is unpaid when the window has not started', () => {
+    assert.equal(
+      entitlementFromGrants([grant({ effective_from: '2026-12-01T00:00:00.000Z' })], false, now),
+      'unpaid',
+    );
+  });
+
+  it('is unpaid when the window has ended', () => {
+    assert.equal(
+      entitlementFromGrants([grant({ effective_to: '2026-09-01T00:00:00.000Z' })], false, now),
+      'unpaid',
+    );
+  });
+
+  it('is unknown when the read failed, even if rows were also returned', () => {
+    assert.equal(entitlementFromGrants([grant()], true, now), 'unknown');
+  });
+
+  it('treats a stack of grants as paid if any one of them is live', () => {
+    assert.equal(
+      entitlementFromGrants(
+        [grant({ remaining: 0 }), grant({ remaining: 2 })],
+        false,
+        now,
+      ),
+      'paid',
+    );
   });
 });

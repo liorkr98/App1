@@ -680,6 +680,13 @@ textarea {
   margin-block-start: 0.45rem;
 }
 
+.field-error {
+  margin-block-start: 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #8c2f1e;
+}
+
 .plate-note.bad {
   color: #8c2f1e;
   font-weight: 600;

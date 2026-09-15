@@ -1,17 +1,19 @@
 ---
+import { t } from '../lib/i18n';
+
 interface Props {
   /** Digits only, international format without a plus, e.g. 972500000000. */
   phone: string;
   /** Hebrew opening message, encoded into the wa.me link. */
   message: string;
+  /** Public slug, so the tap is counted at /a/{slug}/wa before wa.me. */
+  slug: string;
 }
 
-const { phone, message } = Astro.props;
+const { message, slug } = Astro.props;
 
-// wa.me needs the text percent-encoded. encodeURIComponent handles Hebrew as
-// UTF-8, which is what WhatsApp expects.
-const href = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+const href = `/a/${slug}/wa?text=${encodeURIComponent(message)}`;
 ---
 <div class="cta-dock">
-  <a class="cta" href={href}>שליחת הודעה בוואטסאפ</a>
+  <a class="cta" href={href}>{t('listing.whatsappCta')}</a>
 </div>

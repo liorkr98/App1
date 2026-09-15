@@ -1,37 +1,34 @@
 ---
+import type { Listing, TemplateId } from '@/types/listing';
+import { TEMPLATE_IDS } from '@/types/listing';
 import ListingPage from '../../components/ListingPage.astro';
-import { listings } from '../../lib/listings';
+import { listings, propertyListing } from '../../lib/listings';
 
-/**
- * The two demo listings, PRERENDERED, so CI still has HTML to check.
- *
- * WHY THIS ROUTE EXISTS. /a/[slug] became SSR so that a real listing could
- * have a page at all, and that removed the built files two of the strongest
- * gates in this repo read:
- *
- *   verify-template-divergences.mjs  exactly four differences between the
- *                                    property and vehicle templates
- *   verify-bdi.mjs                   every number inside <bdi> (§4.2)
- *
- * Both check BUILT HTML on purpose — a missing <bdi> is invisible in review,
- * and the divergence check is what stops a fifth one appearing by accident.
- * Losing them to a routing change would have been a silent, permanent
- * downgrade.
- *
- * IT CANNOT DRIFT FROM THE REAL PAGE. Both routes render the same
- * ListingPage.astro with the same data; this one is a different URL and
- * nothing else. If they could differ, the check would be worthless.
- *
- * NOT underscore-prefixed, and that is not a style choice: Astro excludes
- * any path segment beginning with _ from routing entirely, so the first
- * version of this file emitted nothing at all and the divergence check failed
- * looking for output that was never built.
- *
- * Forced noindex, and disallowed in robots.txt, so it is not a second public
- * URL for the demos.
- */
+function withTemplate(id: TemplateId): Listing {
+  const gallery = propertyListing.media.gallery;
+  const base: Listing = { ...propertyListing, template: id };
+  if (id !== 'walkFirst') return base;
+  return {
+    ...base,
+    media: {
+      ...base.media,
+      cover: { ...base.media.cover, room: 'living' },
+      gallery: [
+        { ...gallery[0]!, room: 'living' },
+        { ...gallery[1]!, room: 'kitchen' },
+        { ...gallery[2]!, room: 'balcony' },
+      ],
+    },
+  };
+}
+
 export function getStaticPaths() {
-  return listings.map((listing) => ({ params: { slug: listing.slug }, props: { listing } }));
+  const demos = listings.map((listing) => ({ params: { slug: listing.slug }, props: { listing } }));
+  const templates = TEMPLATE_IDS.map((id) => ({
+    params: { slug: id },
+    props: { listing: withTemplate(id) },
+  }));
+  return [...demos, ...templates];
 }
 
 const { listing } = Astro.props;

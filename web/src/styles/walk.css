@@ -18,11 +18,27 @@
   margin-block-end:.85rem;
 }
 .walk-nav a,
-.walk-nav span{
+.walk-nav span,
+.walk-chips a{
   font-size:.78rem;font-weight:600;color:var(--olive);
   text-decoration:none;
   padding:.25rem .55rem;
   border:1px solid var(--stone);border-radius:999px;
+}
+
+.walk-chips{
+  position:absolute;
+  inset-block-start:.7rem;
+  inset-inline:.7rem;
+  z-index:2;
+  display:flex;
+  flex-wrap:wrap;
+  gap:.35rem;
+}
+.walk-chips a{
+  background:rgba(17,18,8,.72);
+  color:var(--on-dark);
+  border-color:transparent;
 }
 
 .walk-viewer{
@@ -45,6 +61,7 @@
 .walk-film a{
   display:block;
   flex:0 0 auto;
+  position:relative;
   border-radius:4px;
   overflow:hidden;
   outline:2px solid transparent;
@@ -85,6 +102,44 @@
 .walk-viewer:has(.walk-main figure:nth-child(24):target) .walk-film a:nth-child(24),
 .walk-viewer:has(.walk-main figure:nth-child(25):target) .walk-film a:nth-child(25){
   outline-color:var(--olive);
+}
+
+.walk-current{
+  display:none;
+  position:absolute;
+  inline-size:1px;
+  block-size:1px;
+  overflow:hidden;
+  clip:rect(0 0 0 0);
+  white-space:nowrap;
+}
+.walk-viewer:not(:has(.walk-main figure:target)) .walk-film a:nth-child(1) .walk-current,
+.walk-viewer:has(.walk-main figure:nth-child(1):target) .walk-film a:nth-child(1) .walk-current,
+.walk-viewer:has(.walk-main figure:nth-child(2):target) .walk-film a:nth-child(2) .walk-current,
+.walk-viewer:has(.walk-main figure:nth-child(3):target) .walk-film a:nth-child(3) .walk-current,
+.walk-viewer:has(.walk-main figure:nth-child(4):target) .walk-film a:nth-child(4) .walk-current,
+.walk-viewer:has(.walk-main figure:nth-child(5):target) .walk-film a:nth-child(5) .walk-current,
+.walk-viewer:has(.walk-main figure:nth-child(6):target) .walk-film a:nth-child(6) .walk-current,
+.walk-viewer:has(.walk-main figure:nth-child(7):target) .walk-film a:nth-child(7) .walk-current,
+.walk-viewer:has(.walk-main figure:nth-child(8):target) .walk-film a:nth-child(8) .walk-current,
+.walk-viewer:has(.walk-main figure:nth-child(9):target) .walk-film a:nth-child(9) .walk-current,
+.walk-viewer:has(.walk-main figure:nth-child(10):target) .walk-film a:nth-child(10) .walk-current,
+.walk-viewer:has(.walk-main figure:nth-child(11):target) .walk-film a:nth-child(11) .walk-current,
+.walk-viewer:has(.walk-main figure:nth-child(12):target) .walk-film a:nth-child(12) .walk-current,
+.walk-viewer:has(.walk-main figure:nth-child(13):target) .walk-film a:nth-child(13) .walk-current,
+.walk-viewer:has(.walk-main figure:nth-child(14):target) .walk-film a:nth-child(14) .walk-current,
+.walk-viewer:has(.walk-main figure:nth-child(15):target) .walk-film a:nth-child(15) .walk-current,
+.walk-viewer:has(.walk-main figure:nth-child(16):target) .walk-film a:nth-child(16) .walk-current,
+.walk-viewer:has(.walk-main figure:nth-child(17):target) .walk-film a:nth-child(17) .walk-current,
+.walk-viewer:has(.walk-main figure:nth-child(18):target) .walk-film a:nth-child(18) .walk-current,
+.walk-viewer:has(.walk-main figure:nth-child(19):target) .walk-film a:nth-child(19) .walk-current,
+.walk-viewer:has(.walk-main figure:nth-child(20):target) .walk-film a:nth-child(20) .walk-current,
+.walk-viewer:has(.walk-main figure:nth-child(21):target) .walk-film a:nth-child(21) .walk-current,
+.walk-viewer:has(.walk-main figure:nth-child(22):target) .walk-film a:nth-child(22) .walk-current,
+.walk-viewer:has(.walk-main figure:nth-child(23):target) .walk-film a:nth-child(23) .walk-current,
+.walk-viewer:has(.walk-main figure:nth-child(24):target) .walk-film a:nth-child(24) .walk-current,
+.walk-viewer:has(.walk-main figure:nth-child(25):target) .walk-film a:nth-child(25) .walk-current{
+  display:inline;
 }
 
 .walk-main{

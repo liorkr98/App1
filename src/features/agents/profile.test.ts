@@ -216,6 +216,7 @@ describe('toSeller', () => {
       seller?.agencyLogoUrl,
       'https://example.supabase.co/storage/v1/object/public/branding/x/logo.webp',
     );
+    assert.equal(seller?.logoPlacement, 'bar');
   });
 
   it('omits a blank logo URL rather than storing empty', () => {

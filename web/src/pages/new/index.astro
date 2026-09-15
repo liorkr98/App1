@@ -67,6 +67,9 @@ import '../../styles/editor.css';
   </head>
 
   <body>
-    <Editor client:load />
+    <a class="skip" href="#main">{t('a11y.skip')}</a>
+    <main id="main">
+      <Editor client:load />
+    </main>
   </body>
 </html>

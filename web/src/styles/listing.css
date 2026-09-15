@@ -199,6 +199,10 @@ p + p{margin-top:.9rem}
   flex:0 0 3.6rem;text-align:start;
   /* A column of walk times is read down, not across. */
   font-variant-numeric:tabular-nums;
+  /*
+    --olive-lift on --ink-deep is 3.83:1 — large text only (WCAG 2.0 AA).
+    Body on this dark ground uses plaster or #9C9D93, never lift.
+  */
 }
 .erow .mins small{font-size:.62rem;color:#9C9D93;font-family:'Assistant',sans-serif;display:block;margin-top:.15rem}
 .erow .who{flex:1}
@@ -250,6 +254,7 @@ p + p{margin-top:.9rem}
 .cta{
   display:flex;align-items:center;justify-content:center;gap:.5rem;
   width:100%;padding:1.02rem;
+  min-block-size:44px;
   background:var(--olive);color:var(--plaster);
   font-family:'Assistant',sans-serif;font-size:1.06rem;font-weight:700;
   border:none;border-radius:6px;text-decoration:none;
@@ -614,4 +619,115 @@ html[data-template='dark'] .gallery {
 
 html[data-template='dark'] .gallery img {
   border-radius: 0;
+}
+
+/* ============================================================
+   סיור ראשון / ברושור — תבניות 4 ו-5. אותו CSS על דירה ועל רכב.
+   ============================================================ */
+
+.listing-flow{
+  display:flex;
+  flex-direction:column;
+}
+
+html[data-template='walkFirst'][data-has-walk='1'] .hero{
+  display:none;
+}
+html[data-template='walkFirst'][data-has-walk='1'] .walk{
+  order:-2;
+}
+html[data-template='walkFirst'][data-has-walk='1'] .price-bar{
+  order:-1;
+}
+html[data-template='walkFirst'] .walk{
+  padding-block-start:1.1rem;
+}
+
+html[data-template='brochure']{
+  --heroH:92svh;
+}
+html[data-template='brochure'] .hero{
+  min-block-size:520px;
+}
+html[data-template='brochure'] .hero-title{
+  font-weight:700;
+  font-size:var(--t-hero);
+}
+html[data-template='brochure'] .facts{
+  display:flex;
+  flex-wrap:wrap;
+  gap:0;
+  background:transparent;
+  border-block:0;
+  padding-block-end:.4rem;
+}
+html[data-template='brochure'] .fact{
+  flex:1 1 6rem;
+  background:transparent;
+  padding:1.15rem .6rem .2rem;
+}
+html[data-template='brochure'] .gallery figure:not(:first-child) img{
+  border-radius:50%;
+  aspect-ratio:1;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible{
+  outline:3px solid var(--ink);
+  outline-offset:3px;
+}
+
+.hero-watermark{
+  position:absolute;
+  inset-block-start:.85rem;
+  inset-inline-end:.85rem;
+  inline-size:4.5rem;
+  block-size:auto;
+  max-block-size:4.5rem;
+  object-fit:contain;
+  opacity:.35;
+  pointer-events:none;
+  z-index:2;
+}
+
+html[data-logo='barWide'] .agent-bar .dot{
+  inline-size:42px;
+  block-size:42px;
+  border-radius:8px;
+}
+html[data-logo='footerOnly'] .agent-bar .dot,
+html[data-logo='watermark'] .agent-bar .dot{
+  display:none;
+}
+
+.tour-poster{
+  padding:0 var(--gut) 2.2rem;
+}
+.tour-poster a{
+  display:block;
+  text-decoration:none;
+  color:inherit;
+  border:1px solid var(--stone);
+  border-radius:8px;
+  overflow:hidden;
+}
+.tour-poster img{
+  display:block;
+  inline-size:100%;
+  aspect-ratio:16/10;
+  object-fit:cover;
+  background:var(--stone);
+}
+.tour-poster span{
+  display:block;
+  padding:.85rem 1rem 1rem;
+  font-weight:700;
+  color:var(--olive);
+}
+
+@media (min-width: 320px){
+  body{padding-block-end:7.5rem}
 }

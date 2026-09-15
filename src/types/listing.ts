@@ -1,3 +1,4 @@
+import type { LogoPlacement } from '@/features/agents/logo-placement.js';
 import type { ListingCategory } from '@/features/listings/schemas/index.js';
 import type { PhotoRoom } from '@/features/listings/photo-rooms.js';
 
@@ -274,6 +275,11 @@ export interface Media {
    * the download is not offered yet — never a broken link.
    */
   pdfUrl?: string;
+  /**
+   * Optional outbound 3D / Matterport URL. Rendered as a poster that opens
+   * a new tab. Never an iframe, never a player — listing pages stay zero JS.
+   */
+  tourUrl?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -488,6 +494,11 @@ export interface Seller {
    * rendered as exactly that, not a claim this product is vouching for.
    */
   licenceNumber?: string;
+  /**
+   * Where the agency mark sits. Copied from the profile at publish, same
+   * rule as the accent: changing /me next year must not repaint old pages.
+   */
+  logoPlacement?: LogoPlacement;
 }
 
 /**
@@ -517,7 +528,7 @@ export type ListingStatus = 'draft' | 'published' | 'sold' | 'archived';
  * carried its own hand-written copy of this list, which is exactly the kind
  * of second definition that agrees right up until someone adds a template.
  */
-export const TEMPLATE_IDS = ['agency', 'editorial', 'dark'] as const;
+export const TEMPLATE_IDS = ['agency', 'editorial', 'dark', 'walkFirst', 'brochure'] as const;
 
 export type TemplateId = (typeof TEMPLATE_IDS)[number];
 

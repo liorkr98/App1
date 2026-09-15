@@ -148,10 +148,24 @@ import '../styles/tokens.css';
         overflow: hidden;
       }
 
-      .agent-bar .dot img {
-        inline-size: 100%;
-        block-size: 100%;
-        object-fit: cover;
+      .agent-bar[data-logo='barWide'] .dot {
+        inline-size: 42px;
+        block-size: 42px;
+        border-radius: 8px;
+      }
+      .agent-bar[data-logo='footerOnly'] .dot,
+      .agent-bar[data-logo='watermark'] .dot {
+        display: none;
+      }
+      .preview-watermark {
+        display: none;
+        margin-block-start: 0.5rem;
+        inline-size: 4.5rem;
+        opacity: 0.35;
+      }
+      .preview[data-logo='watermark'] .preview-watermark {
+        display: block;
+      }
         border-radius: 50%;
         display: block;
       }
@@ -395,7 +409,8 @@ import '../styles/tokens.css';
   </head>
 
   <body>
-    <main>
+    <a class="skip" href="#main">{t('a11y.skip')}</a>
+    <main id="main">
       <div class="top">
         <a class="mark" href="/">{t('common.brand')}</a>
         <a href="/mine/">{t('auth.myListings')}</a>
@@ -422,11 +437,12 @@ import '../styles/tokens.css';
       <div id="panel">
         <div class="preview">
           <p class="preview-label">{t('agent.previewTitle')}</p>
-          <div class="agent-bar">
+          <div class="agent-bar" id="pv-bar">
             <span class="dot" aria-hidden="true"><img id="pv-logo" hidden alt="" /></span>
             <strong id="pv-name" data-empty="true">{t('agent.name')}</strong>
             <span class="brand" id="pv-brand">{t('agent.previewFallback')}</span>
           </div>
+          <img class="preview-watermark" id="pv-mark" alt="" />
         </div>
 
         <form id="form" novalidate>
@@ -499,6 +515,34 @@ import '../styles/tokens.css';
               </button>
             </div>
 
+            <div class="field" id="f-placement">
+              <label>{t('agent.logoPlacement')}</label>
+              <div class="swatches">
+                {
+                  (
+                    [
+                      ['bar', 'logoBar'],
+                      ['barWide', 'logoBarWide'],
+                      ['footerOnly', 'logoFooterOnly'],
+                      ['watermark', 'logoWatermark'],
+                    ] as const
+                  ).map(([id, key], index) => (
+                    <Fragment>
+                      <input
+                        type="radio"
+                        name="logoPlacement"
+                        id={`place-${id}`}
+                        value={id}
+                        checked={index === 0}
+                      />
+                      <label for={`place-${id}`}>{t(`agent.${key}`)}</label>
+                    </Fragment>
+                  ))
+                }
+              </div>
+              <p class="hint">{t('agent.logoPlacementHint')}</p>
+            </div>
+
             <div class="field" id="f-role">
               <label for="role">{t('agent.role')}</label>
               <input id="role" name="role" type="text" />
@@ -521,6 +565,7 @@ import '../styles/tokens.css';
 
     <script>
       import { ACCENTS } from '@/features/agents/accents';
+      import { asLogoPlacement } from '@/features/agents/logo-placement';
       import { profileBlockers, type ProfileBlockerCode } from '@/features/agents/profile';
       import { t } from '../lib/i18n';
       import { removeAgencyLogo, uploadAgencyLogo } from '../lib/agency-logo';
@@ -553,6 +598,9 @@ import '../styles/tokens.css';
       const pvDot = document.querySelector('.agent-bar .dot') as HTMLElement | null;
       const pvLogo = $<HTMLImageElement>('pv-logo');
       const pvBrand = $('pv-brand');
+      const pvBar = $('pv-bar');
+      const pvMark = $<HTMLImageElement>('pv-mark');
+      const preview = document.querySelector('.preview') as HTMLElement | null;
 
       // Kept beside the form, not in an input: the file control's value is
       // the local path, and the public URL is what the page actually stamps.
@@ -568,6 +616,12 @@ import '../styles/tokens.css';
         (document.querySelector('input[name="accent"]:checked') as HTMLInputElement | null)
           ?.value ?? 'olive';
 
+      const chosenPlacement = () =>
+        asLogoPlacement(
+          (document.querySelector('input[name="logoPlacement"]:checked') as HTMLInputElement | null)
+            ?.value,
+        );
+
       const read = () => ({
         displayName: name.value,
         phone: phone.value,
@@ -576,6 +630,7 @@ import '../styles/tokens.css';
         licenceNumber: licence.value,
         accent: chosenAccent(),
         agencyLogoUrl: logoUrl || null,
+        logoPlacement: chosenPlacement(),
       });
 
       /**
@@ -604,10 +659,15 @@ import '../styles/tokens.css';
         if (logoUrl) {
           pvLogo.src = logoUrl;
           pvLogo.hidden = false;
+          pvMark.src = logoUrl;
         } else {
           pvLogo.removeAttribute('src');
           pvLogo.hidden = true;
+          pvMark.removeAttribute('src');
         }
+        const placement = chosenPlacement();
+        pvBar.dataset.logo = placement;
+        if (preview) preview.dataset.logo = placement;
         logoRemove.hidden = logoUrl === '';
       };
 
@@ -640,7 +700,7 @@ import '../styles/tokens.css';
         return found.length === 0;
       };
 
-      for (const swatch of document.querySelectorAll('input[name="accent"]')) {
+      for (const swatch of document.querySelectorAll('input[name="accent"], input[name="logoPlacement"]')) {
         swatch.addEventListener('change', paint);
       }
 
@@ -725,6 +785,11 @@ import '../styles/tokens.css';
         role.value = profile.role ?? '';
         licence.value = profile.licenceNumber ?? '';
         logoUrl = profile.agencyLogoUrl?.trim() ?? '';
+
+        const savedPlace = document.querySelector(
+          `input[name="logoPlacement"][value="${CSS.escape(profile.logoPlacement ?? 'bar')}"]`,
+        ) as HTMLInputElement | null;
+        if (savedPlace) savedPlace.checked = true;
 
         const saved = document.querySelector(
           `input[name="accent"][value="${CSS.escape(profile.accent ?? 'olive')}"]`,

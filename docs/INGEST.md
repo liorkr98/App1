@@ -1,6 +1,7 @@
 # Ingestion, geocoding, and walking times
 
-**Deferred until an agent asks for the map.**
+**Deferred until an agent asks for the map.** Track 6 is documentation of the
+turn-on ladder, not a deploy.
 
 The code in `ingest/`, the PostGIS RPCs, and the enrichment UI on the listing
 page still exist. They are not on the publish path. Nominatim is not running.
@@ -16,14 +17,20 @@ fixtures in `web/src/lib/listings.ts` still render schools, transit and OSM so
 the UI does not rot. A real published listing omits empty groups, which is
 the correct empty state (CLAUDE.md §7).
 
-## When an agent asks
+An accessible map, when it is on, is a **static image plus the text address**.
+`alt` describes the area, not “map image”.
 
-Do these in order, one source at a time (CLAUDE.md §13):
+## When an agent asks — the ladder, in this order
+
+Do these one source at a time (CLAUDE.md §13). Do not skip to step 5.
 
 1. Address normalisation / Nominatim (or GovMap) for the listing pin.
 2. OSRM foot profile — never Google Distance Matrix, never straight-line
    walking time (CLAUDE.md §2).
 3. `npm run sync:schools --prefix ingest`
 4. Transit, then places, each when the previous feed is actually loaded.
+5. Join `listing_enrichment` on the **publish** path in
+   `listing-from-row.ts` — not before, and not at page-render time against
+   an external source.
 
 Do not scrape Madlan, Yad2, or any commercial portal.

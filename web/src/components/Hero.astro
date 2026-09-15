@@ -8,9 +8,11 @@ interface Props {
   /** Newlines become <br>, matching the reference titles. */
   title: string;
   location?: ListingLocation;
+  /** Corner mark when the profile chose watermark. Empty alt: the agency name is in the bar. */
+  watermarkUrl?: string;
 }
 
-const { cover, title, location } = Astro.props;
+const { cover, title, location, watermarkUrl } = Astro.props;
 
 /**
  * Street only when the seller supplied one.
@@ -31,7 +33,7 @@ const lines = title.split('\n');
   The parallax lives entirely in CSS (.hero-img, behind @supports
   animation-timeline). Nothing here knows the image moves.
 */}
-<header class="hero">
+<section class="hero">
   <img
     class="hero-img"
     src={largest(cover, HERO_WIDTHS)}
@@ -43,6 +45,9 @@ const lines = title.split('\n');
     fetchpriority="high"
     decoding="async"
   >
+  {watermarkUrl ? (
+    <img class="hero-watermark" src={watermarkUrl} alt="" width="72" height="72" />
+  ) : null}
   <div class="hero-veil">
     {place && <div class="hero-place"><Prose text={place} /></div>}
     <h1 class="hero-title">
@@ -54,4 +59,4 @@ const lines = title.split('\n');
       ))}
     </h1>
   </div>
-</header>
+</section>

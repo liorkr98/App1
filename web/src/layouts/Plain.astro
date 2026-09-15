@@ -97,15 +97,20 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
     </style>
   </head>
   <body>
+    <a class="skip" href="#main">{t('a11y.skip')}</a>
     <header>
       <a class="mark" href="/">{t('common.brand')}</a>
       <a href="/">{t('legal.home')}</a>
     </header>
+    <main id="main">
     <slot />
+    </main>
     <footer>
       <a href="/legal/terms/">{t('legal.terms')}</a>
       {' · '}
       <a href="/legal/privacy/">{t('legal.privacy')}</a>
+      {' · '}
+      <a href="/legal/accessibility/">{t('legal.accessibility')}</a>
     </footer>
   </body>
 </html>

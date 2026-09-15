@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl" data-template="walkFirst">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>סיור בדירה — תבנית ייחוס</title>
+<meta name="robots" content="noindex">
+</head>
+<body>
+<a class="skip" href="#main">דילוג לתוכן</a>
+<header class="agent-bar"><strong>ליאור</strong><span>היעד</span></header>
+<main id="main">
+  <section class="walk">
+    <h2>סיור בדירה</h2>
+    <div class="walk-viewer">
+      <nav class="walk-film" aria-label="תמונות הסיור">
+        <a href="#walk-p0" aria-label="סלון"><img alt="" src="/sample/frame.png" width="72" height="72"><span class="walk-current">נוכחי</span></a>
+        <a href="#walk-p1" aria-label="מטבח"><img alt="" src="/sample/frame.png" width="72" height="72"><span class="walk-current">נוכחי</span></a>
+      </nav>
+      <div class="walk-main">
+        <figure id="walk-p0">
+          <div class="walk-frame">
+            <img alt="סלון" src="/sample/frame.png" width="800" height="600">
+            <nav class="walk-chips"><a href="#walk-p0">סלון</a><a href="#walk-p1">מטבח</a></nav>
+            <a class="walk-next" href="#walk-p1">התמונה הבאה</a>
+          </div>
+        </figure>
+      </div>
+    </div>
+  </section>
+  <div class="price-bar"><div class="price"><bdi>₪1,850,000</bdi></div></div>
+  <div class="facts">
+    <div class="fact"><div class="fact-val"><bdi>4</bdi></div><div class="fact-lbl">חדרים</div></div>
+    <div class="fact"><div class="fact-val"><bdi>95</bdi></div><div class="fact-lbl">מ״ר</div></div>
+    <div class="fact"><div class="fact-val"><bdi>3</bdi></div><div class="fact-lbl">קומה</div></div>
+  </div>
+</main>
+</body>
+</html>

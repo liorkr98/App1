@@ -44,9 +44,11 @@ export interface SavedPhoto {
  * is cut from and the order the seller arranged is the order they meant
  * (CLAUDE.md §4.4 — in RTL the first item is the rightmost).
  */
-function toMedia(photos: readonly SavedPhoto[]) {
+function toMedia(photos: readonly SavedPhoto[], tourUrl?: string) {
   const [cover, ...rest] = photos;
   if (!cover) return {};
+
+  const tour = tourUrl?.trim();
 
   return {
     cover: {
@@ -65,6 +67,7 @@ function toMedia(photos: readonly SavedPhoto[]) {
       height: photo.height,
       ...(photo.room ? { room: photo.room } : {}),
     })),
+    ...(tour && tour.startsWith('https://') ? { tourUrl: tour } : {}),
   };
 }
 
@@ -130,7 +133,7 @@ export async function saveListing(
     .from('listings')
     .update({
       ...editorColumns(state),
-      media: toMedia(saved),
+      media: toMedia(saved, state.tourUrl),
     })
     .eq('id', listingId);
 
@@ -143,12 +146,9 @@ export async function saveListing(
  * ============================ HUMAN REVIEW ============================
  * CLAUDE.md §8: the paywall may be built here and ENTITLEMENT MAY NOT BE
  * DECIDED here. This function does not read, infer or grant entitlement. It
- * flips `status` and stamps `published_at`, and the ONLY thing that decides
- * whether it is called is `canPublish` in the shared domain, which fails
- * closed on anything that is not 'paid'.
- *
- * There is no branch here that publishes on an error, and there must never
- * be one.
+ * flips `status` and stamps `published_at`. The editor's `canPublish` is UX.
+ * The real gate is the Postgres trigger in migration 0016: a publish without
+ * a live grant raises, and a successful one decrements remaining.
  * ======================================================================
  */
 export async function publishListing(
@@ -157,8 +157,8 @@ export async function publishListing(
 ): Promise<{ ok: true; slug: string } | { error: string }> {
   // ============================ HUMAN REVIEW ============================
   // This function does not read entitlement. The editor's `canPublish` is
-  // what called it, and that already required 'paid'. A second check here
-  // would be the same decision in two places; a missed one would be a grant.
+  // what called it, and that already required 'paid'. A second client check
+  // here would duplicate the decision; the server trigger is the gate.
   // ======================================================================
   const category = state.category;
   if (!category) return { error: 'no_category' };
