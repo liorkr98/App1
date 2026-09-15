@@ -1,4 +1,6 @@
 import type {
+  CivicKind,
+  NearbyCivic,
   NearbyPlace,
   NearbySchool,
   NearbyTransit,
@@ -9,6 +11,7 @@ import type {
 } from '@/types/listing.js';
 
 import { db } from './db.js';
+import { neighborhoodNoteFromFacts } from './deepseek.js';
 import {
   CANDIDATE_RADIUS_METRES,
   MAX_WALK_MINUTES,
@@ -32,12 +35,13 @@ import {
 const CAP_TRANSIT = 4;
 const CAP_SCHOOLS = 4;
 const CAP_PER_PLACE_CATEGORY = 3;
+const CAP_PER_CIVIC_KIND = 2;
 
 /** Straight-line, and named for it. The summary claims metres, not minutes. */
 const SUMMARY_RADIUS_METRES = 500;
 
 interface CandidateRow {
-  kind: 'transit' | 'school' | 'place';
+  kind: 'transit' | 'school' | 'place' | 'civic';
   id: string;
   name: string;
   lon: number;
@@ -65,8 +69,17 @@ const PLACE_CATEGORIES = new Set<PlaceCategory>([
   'culture',
   'gym',
 ]);
+const CIVIC_KINDS = new Set<CivicKind>(['police', 'parking', 'park_ride']);
+const CIVIC_SOURCE: Record<CivicKind, string> = {
+  police: 'police',
+  parking: 'parking',
+  park_ride: 'park_ride',
+};
 
-export async function buildProximity(origin: Point): Promise<PropertyEnrichment> {
+export async function buildProximity(
+  origin: Point,
+  around?: { city?: string },
+): Promise<PropertyEnrichment> {
   const [candidates, sources] = await Promise.all([fetchCandidates(origin), fetchSources()]);
 
   // One OSRM call for everything. A hundred candidates is a hundred round
@@ -80,6 +93,7 @@ export async function buildProximity(origin: Point): Promise<PropertyEnrichment>
   const transit: NearbyTransit[] = [];
   const schools: NearbySchool[] = [];
   const places: NearbyPlace[] = [];
+  const civic: NearbyCivic[] = [];
 
   candidates.forEach((candidate, index) => {
     const seconds = durations[index];
@@ -120,6 +134,19 @@ export async function buildProximity(origin: Point): Promise<PropertyEnrichment>
       return;
     }
 
+    if (candidate.kind === 'civic') {
+      const kind = candidate.attr_a as CivicKind;
+      if (!CIVIC_KINDS.has(kind)) return;
+      civic.push({
+        id: candidate.id,
+        name: candidate.name,
+        kind,
+        walkMinutes,
+        ...provenance(sources, CIVIC_SOURCE[kind]),
+      });
+      return;
+    }
+
     const category = candidate.attr_a as PlaceCategory;
     if (!PLACE_CATEGORIES.has(category)) return;
 
@@ -133,17 +160,33 @@ export async function buildProximity(origin: Point): Promise<PropertyEnrichment>
   });
 
   const summary = buildSummary(candidates, durations, places);
+  const keptCivic = capCivic(civic);
+  const keptTransit = capTransit(transit);
+  const keptSchools = byWalk(schools).slice(0, CAP_SCHOOLS);
+  const keptPlaces = capPlacesPerCategory(places);
+
+  // City name only — the coordinate stays in this process. A miss or a
+  // rejected reply omits the note; the lists still publish.
+  const neighborhoodNote = await neighborhoodNoteFromFacts({
+    ...(around?.city ? { city: around.city } : {}),
+    transit: keptTransit,
+    schools: keptSchools,
+    places: keptPlaces,
+    civic: keptCivic,
+  });
 
   return {
     category: 'property',
     // Light rail first regardless of distance. It is the single fact a Tel
     // Aviv reader is looking for, and burying it under three bus stops that
     // happen to be nearer defeats the point of distinguishing modes at all.
-    transit: capTransit(transit),
-    schools: byWalk(schools).slice(0, CAP_SCHOOLS),
-    places: capPlacesPerCategory(places),
+    transit: keptTransit,
+    schools: keptSchools,
+    places: keptPlaces,
+    ...(keptCivic.length > 0 ? { civic: keptCivic } : {}),
     summary,
-    attributions: attributionsFor(sources, { places: places.length > 0 }),
+    attributions: attributionsFor(sources, { places: keptPlaces.length > 0 }),
+    ...(neighborhoodNote ? { neighborhoodNote } : {}),
   };
 }
 
@@ -201,6 +244,19 @@ function capTransit(transit: NearbyTransit[]): NearbyTransit[] {
   const bus = sorted.filter((stop) => stop.mode === 'bus');
 
   return [...rail, ...bus].slice(0, CAP_TRANSIT);
+}
+
+function capCivic(civic: NearbyCivic[]): NearbyCivic[] {
+  const perKind = new Map<CivicKind, NearbyCivic[]>();
+
+  for (const item of byWalk(civic)) {
+    const bucket = perKind.get(item.kind) ?? [];
+    if (bucket.length >= CAP_PER_CIVIC_KIND) continue;
+    bucket.push(item);
+    perKind.set(item.kind, bucket);
+  }
+
+  return (['police', 'parking', 'park_ride'] as const).flatMap((kind) => perKind.get(kind) ?? []);
 }
 
 function capPlacesPerCategory(places: NearbyPlace[]): NearbyPlace[] {

@@ -135,6 +135,15 @@
       "grocery": ""
     },
     "mapNearbyMinutes": "",
+    "mapNearbyMin": "",
+    "mapNearbyMinAria": "",
+    "neighborhoodTitle": "",
+    "neighborhoodDisclaimer": "",
+    "civicKind": {
+      "police": "",
+      "parking": "",
+      "park_ride": ""
+    },
     "tourCta": "",
     "newWindow": ""
   },

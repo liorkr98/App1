@@ -69,6 +69,30 @@ export type Database = {
           },
         ]
       }
+      civic_sites: {
+        Row: {
+          geom: unknown
+          kind: string
+          name: string
+          site_id: string
+          updated_at: string
+        }
+        Insert: {
+          geom: unknown
+          kind: string
+          name: string
+          site_id: string
+          updated_at?: string
+        }
+        Update: {
+          geom?: unknown
+          kind?: string
+          name?: string
+          site_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contact_messages: {
         Row: {
           body: string
@@ -1093,6 +1117,10 @@ export type Database = {
           name: string
         }[]
       }
+      upsert_civic_itm: {
+        Args: { p_rows: Json }
+        Returns: number
+      }
       populate_geometry_columns:
         | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
         | { Args: { use_typmod?: boolean }; Returns: string }
@@ -1890,6 +1918,7 @@ export type BetaPublisherRow = Tables<'beta_publishers'>;
 export type ListingGrantRow = Tables<'listing_grants'>;
 export type ListingEventRow = Tables<'listing_events'>;
 export type ContactMessageRow = Tables<'contact_messages'>;
+export type CivicSiteRow = Tables<'civic_sites'>;
 export type EditorEventRow = Tables<'editor_events'>;
 export type SiteAdminRow = Tables<'site_admins'>;
 export type SchoolRow = Tables<'schools'>;

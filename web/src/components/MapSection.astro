@@ -15,6 +15,7 @@ const { location, mapImageUrl, enrichment } = Astro.props;
 
 const address = location.street ? `${location.street}, ${location.city}` : location.city;
 const nearby = enrichment ? mapNearbyItems(enrichment) : [];
+const note = enrichment?.neighborhoodNote;
 const navigate =
   location.lat !== undefined && location.lng !== undefined
     ? wazeNavigateUrl(location.lat, location.lng)
@@ -27,14 +28,28 @@ const navigate =
    * to a home address on a public page is a theft risk.
    *
    * The image is a local SVG pin card — never an interactive embed and never
-   * a third-party tile (CLAUDE.md §12). Transit, school and grocery under it
-   * are already-routed walking times from the enrichment payload. Omitted
-   * when that payload has nothing for a group. No live query at render.
+   * a third-party tile (CLAUDE.md §12). Chips on the image are already-routed
+   * walking minutes (OSRM at publish). The named list under it repeats them.
+   * Omitted when that payload has nothing for a group. No live query at render.
    */
 }
 <section class="map reveal">
   <h2>{t('listing.mapTitle')}</h2>
-  <img src={mapImageUrl} alt={t('listing.mapAlt')} loading="lazy" decoding="async" width="800" height="400">
+  <div class="map-stage">
+    <img src={mapImageUrl} alt={t('listing.mapAlt')} loading="lazy" decoding="async" width="800" height="400">
+    {nearby.map((item) => (
+      <span
+        class={`map-pin map-pin--${item.kind}`}
+        aria-label={t('listing.mapNearbyMinAria', {
+          minutes: item.walkMinutes,
+          label: t(`listing.mapNearby.${item.kind}`),
+        })}
+      >
+        <span class="map-pin-mins"><bdi>{item.walkMinutes}</bdi></span>
+        <span class="map-pin-unit">{t('listing.mapNearbyMin')}</span>
+      </span>
+    ))}
+  </div>
   <div class="addr"><Prose text={address} /></div>
   {navigate && (
     <a class="map-nav" href={navigate} rel="noopener noreferrer">{t('listing.mapNavigate')}</a>
@@ -49,5 +64,12 @@ const navigate =
         </li>
       ))}
     </ul>
+  )}
+  {note && (
+    <div class="map-note">
+      <h3>{t('listing.neighborhoodTitle')}</h3>
+      <p><Prose text={note.text} /></p>
+      <p class="map-note-disclaimer">{t('listing.neighborhoodDisclaimer')}</p>
+    </div>
   )}
 </section>

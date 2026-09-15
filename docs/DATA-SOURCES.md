@@ -278,4 +278,24 @@ they are **not queried at page render**. Ingestion stays scheduled.
 | `34729a10-299b-448d-a223-5d7533e8f147` | Public parking (`חניה ציבורית`) — 5,826 rows | **ITM** (`X`/`Y` ≈ 200000/550000), not WGS84. Not ingested until a 2039→4326 transform exists. Not scraped from a portal |
 | `d8b92642-bad4-43f4-b00f-ea24f0c0702b` | Operator on-time performance by line/month | Operator stats, not a buyer-facing listing fact |
 
-The listing **map** names the nearest transit stop, school and grocery from the enrichment payload (already routed). Empty groups are omitted. Pages still do not query data.gov.il at render. The 85-million-row feed at render time would be the Distance Matrix mistake with extra steps.
+The listing **map** names the nearest transit stop, school and grocery from the enrichment payload (already routed). Walking **minutes sit on the map card itself** as chips, and again in the list under it. Empty groups are omitted. Pages still do not query data.gov.il at render. The 85-million-row feed at render time would be the Distance Matrix mistake with extra steps.
+
+### Civic sites — police, parking, park-and-ride (15 September 2026)
+
+Measured live against CKAN. Ingest writes `civic_sites`; walking time is still OSRM at publish. **Not queried at page render.**
+
+| Resource UUID | Dataset | Rows | Coords | Product |
+| --- | --- | --- | --- | --- |
+| `848b57bf-362f-4eda-993a-3c74b1feef44` | Police reception units | 213 | **WGS84** `Long_X_` / `Lat_Y` | `sync:police`. Gold vector: ITM 183375/656489 → 34.822599, 32.000961 (Beit Dagan traffic HQ) |
+| `34729a10-299b-448d-a223-5d7533e8f147` | Public parking (מפ״י) | 5,826 | **ITM** `X`/`Y` | `sync:parking`. Transform 2039→4326 in PostGIS (`upsert_civic_itm`). No proj npm package |
+| `e1666064-8b58-41ec-b770-c909a5075134` | Park-and-ride | 186 | **ITM** `X`/`Y` | `sync:park-ride`. Same transform. Only `STATUS = קיים` |
+
+**Skipped, on purpose**
+
+- Welfare-office frames (`de069ddf-bcbc-4754-bda0-84873a353f7b`) — phones and manager names. PII. Not ingested.
+- Route travel-time samples (`e3673768-3dc2-4e62-b0ea-cf763c07a037`) — ~85 million rows. Not a listing fact.
+- Hospitals / clinics / libraries on CKAN — no usable WGS84 in the tables that were opened.
+
+### Neighbourhood note (publish time)
+
+Hebrew copy about the area is written once when proximity is computed, from the lists already routed. The model sees **names and minutes, never coordinates**. A missing `DEEPSEEK_API_KEY`, a timeout, or a reply that sounds like a valuation is a silent omit. The page never calls the model. The note is not a `מאומת` badge.

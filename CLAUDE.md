@@ -498,6 +498,9 @@ Ingestion is run one source at a time, on a schedule, never all at once:
 ```bash
 npm run sync:schools --prefix ingest
 npm run sync:stations --prefix ingest  # bus stops from data.gov.il (34k rows)
+npm run sync:police  --prefix ingest   # police desks, WGS84
+npm run sync:parking --prefix ingest   # public parking, ITM→WGS84 in PostGIS
+npm run sync:park-ride --prefix ingest # park-and-ride lots, same transform
 npm run sync:transit --prefix ingest   # GTFS zip — not implemented, fails with why
 npm run sync:places  --prefix ingest   # not implemented — fails with why
 ```
