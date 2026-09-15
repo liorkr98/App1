@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { MAX_IMAGES } from '@/features/listings/editor';
-import { PHOTO_ROOMS, isPhotoRoom, type PhotoRoom } from '@/features/listings/photo-rooms';
+import { guessRoomFromName, type PhotoRoom } from '@/features/listings/photo-rooms';
 import { moveItem } from '@/features/listings/photo-order';
 import type { ListingCategory } from '@/features/listings/schemas';
 
@@ -62,8 +62,6 @@ interface Props {
   /** Uploading needs a listing row, which needs a signed-in owner (0004). */
   signedIn: boolean;
   category?: ListingCategory;
-  tourUrl?: string;
-  onTourUrl?: (url: string) => void;
 }
 
 /**
@@ -114,8 +112,6 @@ export function PhotosStep({
   onChange,
   signedIn,
   category,
-  tourUrl,
-  onTourUrl,
 }: Props) {
   const [dragging, setDragging] = useState<number | null>(null);
 
@@ -129,13 +125,17 @@ export function PhotosStep({
 
     onChange([
       ...photos,
-      ...taken.map((file) => ({
-        id: `${file.name}:${file.size}:${file.lastModified}:${Math.random().toString(36).slice(2, 8)}`,
-        url: URL.createObjectURL(file),
-        name: file.name,
-        file,
-        status: 'local' as const,
-      })),
+      ...taken.map((file) => {
+        const guessed = guessRoomFromName(file.name);
+        return {
+          id: `${file.name}:${file.size}:${file.lastModified}:${Math.random().toString(36).slice(2, 8)}`,
+          url: URL.createObjectURL(file),
+          name: file.name,
+          file,
+          status: 'local' as const,
+          ...(guessed && category === 'property' ? { room: guessed } : {}),
+        };
+      }),
     ]);
   };
 
@@ -252,37 +252,6 @@ export function PhotosStep({
                 />
               </label>
 
-              {category === 'property' ? (
-                <label className="shot-room">
-                  <span className="shot-room-label">{t('editor.photoRoom')}</span>
-                  <select
-                    value={photo.room ?? ''}
-                    aria-label={t('editor.photoRoom')}
-                    draggable={false}
-                    onPointerDown={(event) => event.stopPropagation()}
-                    onChange={(event) => {
-                      const value = event.target.value;
-                      onChange(
-                        photos.map((item, at) => {
-                          if (at !== index) return item;
-                          if (!isPhotoRoom(value)) {
-                            const { room: _omitted, ...rest } = item;
-                            return rest;
-                          }
-                          return { ...item, room: value };
-                        }),
-                      );
-                    }}
-                  >
-                    <option value="">{t('editor.photoRoomNone')}</option>
-                    {PHOTO_ROOMS.map((room) => (
-                      <option key={room} value={room}>
-                        {t(`editor.rooms.${room}`)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              ) : null}
             </li>
           ))}
         </ul>
@@ -312,24 +281,6 @@ export function PhotosStep({
       <p className="note">
         <Message path="editor.photoCount" values={{ count: photos.length, max: MAX_IMAGES }} />
       </p>
-
-      {onTourUrl ? (
-        <div className="field">
-          <label htmlFor="tour-url">{t('editor.tourUrl')}</label>
-          <input
-            id="tour-url"
-            name="tourUrl"
-            type="url"
-            inputMode="url"
-            dir="ltr"
-            autoComplete="off"
-            placeholder="https://"
-            value={tourUrl ?? ''}
-            onChange={(event) => onTourUrl(event.target.value)}
-          />
-          <p className="hint">{t('editor.tourUrlHint')}</p>
-        </div>
-      ) : null}
     </>
   );
 }

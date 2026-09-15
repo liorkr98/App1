@@ -35,6 +35,7 @@ import { FactsStep } from './FactsStep';
 import { Message } from './Message';
 import { PhotosStep, type EditorPhoto } from './PhotosStep';
 import { PlateStep } from './PlateStep';
+import { RoomsStep } from './RoomsStep';
 import { TemplateStep } from './TemplateStep';
 import { clearDraft, useDraft } from './useDraft';
 
@@ -540,18 +541,11 @@ export default function Editor() {
             onChange={changePhotos}
             signedIn={signedIn}
             category={state.category}
-            tourUrl={state.tourUrl}
-            onTourUrl={(tourUrl) =>
-              setState((current) => {
-                const trimmed = tourUrl.trim();
-                if (trimmed === '') {
-                  const { tourUrl: _omitted, ...rest } = current;
-                  return rest;
-                }
-                return { ...current, tourUrl: trimmed };
-              })
-            }
           />
+        ) : null}
+
+        {step === 'rooms' ? (
+          <RoomsStep photos={photos} onChange={changePhotos} />
         ) : null}
 
         {step === 'plate' ? (

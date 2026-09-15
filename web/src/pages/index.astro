@@ -4,8 +4,10 @@ import { toCells } from '../lib/facts';
 import { perUnitPrice } from '../lib/price';
 import { HERO_WIDTHS, largest } from '../lib/images';
 import MiniScreen from '../components/MiniScreen.astro';
+import BrandMark from '../components/BrandMark.astro';
+import PriceTiers from '../components/PriceTiers.astro';
 import { TEMPLATE_IDS } from '@/types/listing';
-import { propertyListing, vehicleListing } from '../lib/listings';
+import { propertyListing, vehicleListing, withNamedRooms } from '../lib/listings';
 import '../styles/tokens.css';
 
 /**
@@ -45,8 +47,7 @@ import '../styles/tokens.css';
 
 const cells = toCells('property', propertyListing.facts).slice(0, 3);
 const perUnit = perUnitPrice('property', propertyListing.facts, propertyListing.price);
-const vehicleCells = toCells('vehicle', vehicleListing.facts).slice(0, 3);
-const vehiclePerUnit = perUnitPrice('vehicle', vehicleListing.facts, vehicleListing.price);
+const propertyShowcase = withNamedRooms(propertyListing);
 
 const title = `${t('common.brand')} — ${t('home.tagline')}`;
 const canonical = new URL('/', Astro.site).href;
@@ -219,6 +220,10 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         font-weight: 700;
         font-size: 1.4rem;
         letter-spacing: -0.01em;
+      }
+
+      .top .brand-mark {
+        color: inherit;
       }
 
       .top nav {
@@ -458,6 +463,28 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         --s-lift: #aac28c;
       }
 
+      .device[data-tpl='walkFirst'] {
+        --s-ground: #fbfaf7;
+        --s-ink: #191a15;
+        --s-deep: #111208;
+        --s-line: #e4e0d6;
+        --s-warm: #f1ede3;
+        --s-muted: #67685f;
+        --s-accent: #4a5d3a;
+        --s-lift: #5f7749;
+      }
+
+      .device[data-tpl='brochure'] {
+        --s-ground: #fbfaf7;
+        --s-ink: #191a15;
+        --s-deep: #111208;
+        --s-line: #e4e0d6;
+        --s-warm: #f1ede3;
+        --s-muted: #67685f;
+        --s-accent: #4a5d3a;
+        --s-lift: #5f7749;
+      }
+
       .s-agent {
         display: flex;
         align-items: center;
@@ -502,7 +529,11 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
       .s-fact-lbl,
       .s-price,
       .s-price-note,
-      .s-cta {
+      .s-cta,
+      .s-walk,
+      .s-walk-film,
+      .s-chips,
+      .s-chip {
         display: block;
       }
 
@@ -690,6 +721,88 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         color: var(--s-ground);
       }
 
+      /* Walk-first: the filmstrip is the page. Room chips name the stills;
+         facts and the WhatsApp pill wait below the fold on the real listing. */
+      .device[data-tpl='walkFirst'] .s-walk {
+        display: grid;
+        grid-template-columns: 1.2em minmax(0, 1fr);
+        gap: 0.22em;
+        padding: 0.28em;
+        background: var(--s-deep);
+      }
+
+      .device[data-tpl='walkFirst'] .s-walk-film {
+        display: flex;
+        flex-direction: column;
+        gap: 0.18em;
+      }
+
+      .device[data-tpl='walkFirst'] .s-walk-film img {
+        display: block;
+        inline-size: 100%;
+        aspect-ratio: 1;
+        object-fit: cover;
+        border-radius: 0.12em;
+      }
+
+      .device[data-tpl='walkFirst'] .s-hero {
+        aspect-ratio: 3 / 4;
+      }
+
+      .device[data-tpl='walkFirst'] .s-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.22em;
+        padding: 0.4em 0.55em 0.1em;
+      }
+
+      .device[data-tpl='walkFirst'] .s-chip {
+        font-size: 0.42em;
+        font-weight: 700;
+        padding: 0.18em 0.5em;
+        border-radius: 999px;
+        background: var(--s-deep);
+        color: #fbfaf7;
+      }
+
+      .device[data-tpl='walkFirst'] .s-facts,
+      .device[data-tpl='walkFirst'] .s-cta {
+        display: none;
+      }
+
+      .device[data-tpl='walkFirst'] .s-price-bar {
+        padding-block: 0.5em 0.65em;
+      }
+
+      /* Brochure: one photograph owns the screen; facts are a caption. */
+      .device[data-tpl='brochure'] .s-hero {
+        aspect-ratio: 3 / 5;
+      }
+
+      .device[data-tpl='brochure'] .s-title {
+        font-size: 1.05em;
+        font-weight: 700;
+      }
+
+      .device[data-tpl='brochure'] .s-facts {
+        display: flex;
+        background: transparent;
+        border-block-start: 0;
+        gap: 0;
+        padding-inline: 0.2em;
+      }
+
+      .device[data-tpl='brochure'] .s-fact {
+        flex: 1 1 0;
+        background: transparent;
+        min-block-size: 0;
+        padding: 0.45em 0.15em 0.5em;
+      }
+
+      .device[data-tpl='brochure'] .s-cta {
+        display: none;
+      }
+
       .device-label {
         font-size: var(--meta);
         font-weight: 600;
@@ -736,7 +849,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
       .tpl-row {
         display: flex;
         flex-wrap: wrap;
-        gap: clamp(0.75rem, 2vw, 1.5rem);
+        gap: clamp(0.85rem, 2.2vw, 1.75rem);
         align-items: stretch;
         justify-content: center;
         inline-size: 100%;
@@ -745,6 +858,21 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
       .tpl-row .device {
         grid-template-rows: auto 1fr;
         align-content: start;
+        flex: 1 1 9.25rem;
+        max-inline-size: 13.75rem;
+        min-inline-size: 8.25rem;
+      }
+
+      .tpl-row .device[data-tpl='dark'] {
+        max-inline-size: 14.5rem;
+      }
+
+      .tpl-row .device[data-tpl='walkFirst'] {
+        max-inline-size: 15rem;
+      }
+
+      .tpl-row .device[data-tpl='brochure'] {
+        max-inline-size: 12rem;
       }
 
       .tpl-row .device-label {
@@ -1068,7 +1196,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
     <div class="lit">
       <div class="shell">
         <header class="top">
-          <span class="mark">{t('common.brand')}</span>
+          <BrandMark href="/" />
           <nav>
             {/* Logged out: only sign-in. Logged in: only my listings.
                 The homepage is static, so sign-in is the default paint and
@@ -1115,7 +1243,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
             {TEMPLATE_IDS.map((tpl, index) => (
               <a class="device cycling" data-tpl={tpl} style={`--i:${index}`} href={`/template-check/${tpl}/`}>
                 <MiniScreen
-                  listing={{ ...propertyListing, template: tpl }}
+                  listing={{ ...propertyShowcase, template: tpl }}
                   cells={cells}
                   perUnit={perUnit}
                   eager={index === 0}
@@ -1143,9 +1271,9 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
             TEMPLATE_IDS.map((tpl) => (
               <a class="device reveal" data-tpl={tpl} href={`/template-check/${tpl}/`}>
                 <MiniScreen
-                  listing={{ ...vehicleListing, template: tpl }}
-                  cells={vehicleCells}
-                  perUnit={vehiclePerUnit}
+                  listing={{ ...propertyShowcase, template: tpl }}
+                  cells={cells}
+                  perUnit={perUnit}
                 />
                 <span class="device-label">{t(`editor.templates.${tpl}`)}</span>
               </a>
@@ -1161,24 +1289,8 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
           <h2>{t('pricing.title')}</h2>
           <p>{t('pricing.lead')}</p>
         </div>
-        <ul class="tiers" style="list-style:none;display:flex;flex-wrap:wrap;gap:1rem">
-          <li>
-            <b><bdi>₪79</bdi></b>
-            <span> {t('pricing.single')}</span>
-          </li>
-          <li>
-            <b><bdi>₪129</bdi></b>
-            <span> {t('pricing.pack')}</span>
-          </li>
-          <li>
-            <span class="flag">{t('pricing.agentFlag')}</span>
-            {' '}
-            <b><bdi>₪249</bdi></b>
-            <span> {t('pricing.agent')}</span>
-          </li>
-        </ul>
-        <p><a href="/pricing/">{t('pricing.title')}</a></p>
-        <p class="actions-note" style="color:var(--muted)">{t('pricing.checkoutOff')}</p>
+        <PriceTiers compact />
+        <p class="actions-note" style="color:var(--muted);margin-block-start:1.1rem">{t('pricing.checkoutOff')}</p>
       </div>
     </section>
 

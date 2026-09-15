@@ -1,4 +1,5 @@
 ---
+import BrandMark from '../components/BrandMark.astro';
 import { t } from '../lib/i18n';
 import '../styles/tokens.css';
 
@@ -98,13 +99,8 @@ import '../styles/tokens.css';
         padding-block: 1rem;
       }
 
-      .mark {
-        font-family: 'Frank Ruhl Libre', serif;
-        font-weight: 700;
-        font-size: 1.3rem;
-        letter-spacing: -0.015em;
+      .bar .brand-mark {
         color: var(--plaster);
-        text-decoration: none;
       }
 
       .bar nav {
@@ -514,9 +510,10 @@ import '../styles/tokens.css';
     <a class="skip" href="#main">{t('a11y.skip')}</a>
     <header class="bar">
       <div class="shell">
-        <a class="mark" href="/">{t('common.brand')}</a>
+        <BrandMark />
         <nav>
           <a href="/me/">{t('agent.editDetails')}</a>
+          <a id="nav-admin" href="/admin/" hidden>{t('admin.link')}</a>
           <a class="cta" href="/new/">{t('dash.new')}</a>
         </nav>
       </div>
@@ -597,6 +594,7 @@ import '../styles/tokens.css';
       import { t } from '../lib/i18n';
       import { loadProfile } from '../lib/profile';
       import { supabase, supabaseConfigured } from '../lib/supabase';
+      import { revealIfSiteAdmin } from '../lib/site-admin';
 
       type Row = {
         id?: string;
@@ -921,6 +919,8 @@ import '../styles/tokens.css';
         const client = supabase();
         const { data: session } = await client.auth.getSession();
         if (!session.session) return show('anon');
+
+        void revealIfSiteAdmin(document.getElementById('nav-admin'));
 
         /*
          * No `.eq('owner_id', …)`, on purpose.

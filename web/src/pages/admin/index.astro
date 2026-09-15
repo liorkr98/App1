@@ -1,4 +1,5 @@
 ---
+import BrandMark from '../../components/BrandMark.astro';
 import { t } from '../../lib/i18n';
 import '../../styles/tokens.css';
 
@@ -44,14 +45,14 @@ import '../../styles/tokens.css';
       header {
         display: flex;
         justify-content: space-between;
+        align-items: center;
         margin-block-end: 1.5rem;
+        padding-block-end: 1rem;
+        border-block-end: 1px solid var(--stone);
       }
-      .mark {
-        font-family: 'Frank Ruhl Libre', serif;
-        font-weight: 700;
-        font-size: 1.35rem;
-        color: inherit;
-        text-decoration: none;
+      header > a:not(.brand-mark) {
+        color: var(--muted);
+        font-size: 0.92rem;
       }
       h1 {
         font-family: 'Frank Ruhl Libre', serif;
@@ -79,6 +80,14 @@ import '../../styles/tokens.css';
       }
       button:disabled { background: var(--stone); color: var(--muted); }
       .say { margin-block: 0.8rem; font-weight: 600; }
+      .say.is-gate {
+        padding: 1.1rem 1.15rem;
+        border: 1px solid var(--stone);
+        border-radius: 12px;
+        background: var(--stone-warm);
+        font-weight: 500;
+      }
+      .say.is-gate a { color: var(--olive); font-weight: 700; }
       table { width: 100%; border-collapse: collapse; margin-block-start: 2rem; }
       th, td { text-align: start; padding: 0.45rem 0.3rem; border-block-end: 1px solid var(--stone); }
     </style>
@@ -86,15 +95,19 @@ import '../../styles/tokens.css';
   <body>
     <a class="skip" href="#main">{t('a11y.skip')}</a>
     <header>
-      <a class="mark" href="/">{t('common.brand')}</a>
+      <BrandMark />
       <a href="/mine/">{t('dash.title')}</a>
     </header>
     <main id="main">
       <h1>{t('admin.title')}</h1>
       <p>{t('admin.lead')}</p>
 
-      <p class="say" id="gate" hidden>{t('admin.forbidden')}</p>
-      <p class="say" id="anon" hidden>{t('agent.signedOut')}</p>
+      <p class="say is-gate" id="gate" hidden>{t('admin.forbidden')}</p>
+      <p class="say is-gate" id="anon" hidden>
+        {t('agent.signedOut')}
+        {' '}
+        <a href="/enter/">{t('agent.signIn')}</a>
+      </p>
 
       <form id="form" hidden>
         <label for="email">{t('admin.email')}</label>

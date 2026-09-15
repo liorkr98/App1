@@ -113,3 +113,23 @@
   white-space: nowrap;
 }
 
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Frank Ruhl Libre', serif;
+  font-weight: 700;
+  font-size: 1.35rem;
+  line-height: 1;
+  color: inherit;
+  text-decoration: none;
+  letter-spacing: -0.01em;
+}
+
+.brand-mark svg {
+  inline-size: 1.55rem;
+  block-size: 1.55rem;
+  color: var(--olive);
+  flex: 0 0 auto;
+}
+
