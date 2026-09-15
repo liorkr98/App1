@@ -43,18 +43,20 @@ slides.forEach((slide, index) => {
     <h2>{t('listing.walkTitle')}</h2>
     <p class="walk-lead">{t('listing.walkLead')}</p>
     <div class="walk-viewer">
-      {slides.map((_, index) => (
-        <input
-          class="walk-pick"
-          type="radio"
-          name="listing-walk"
-          id={`walk-p${index}`}
-          checked={index === 0 ? true : undefined}
-        />
-      ))}
       <nav class="walk-film" aria-label={t('listing.filmstrip')}>
         {slides.map((slide, index) => (
           <label for={`walk-p${index}`} aria-label={t(`editor.rooms.${slide.room}`)}>
+            {/*
+              Radio lives inside the thumb it selects. A 1px radio at the
+              top of the viewer used to steal focus-scroll and jump the page.
+            */}
+            <input
+              class="walk-pick"
+              type="radio"
+              name="listing-walk"
+              id={`walk-p${index}`}
+              checked={index === 0 ? true : undefined}
+            />
             <img
               src={largest(slide.image, GALLERY_WIDTHS)}
               srcset={srcset(slide.image, GALLERY_WIDTHS) || undefined}

@@ -146,16 +146,6 @@ export function PreviewStep({ state, photos, agency, sellerName, accent, agencyL
             <section className="walk">
               <h2>{t('listing.walkTitle')}</h2>
               <div className="walk-viewer">
-                {walkSlides.map((slide, index) => (
-                  <input
-                    key={`pick-${slide.photo.id}`}
-                    className="walk-pick"
-                    type="radio"
-                    name="preview-walk"
-                    id={`preview-walk-p${index}`}
-                    defaultChecked={index === 0}
-                  />
-                ))}
                 <nav className="walk-film" aria-label={t('listing.filmstrip')}>
                   {walkSlides.map((slide, index) => (
                     <label
@@ -163,6 +153,13 @@ export function PreviewStep({ state, photos, agency, sellerName, accent, agencyL
                       htmlFor={`preview-walk-p${index}`}
                       aria-label={t(`editor.rooms.${slide.room}`)}
                     >
+                      <input
+                        className="walk-pick"
+                        type="radio"
+                        name="preview-walk"
+                        id={`preview-walk-p${index}`}
+                        defaultChecked={index === 0}
+                      />
                       <img src={slide.photo.publicUrl ?? slide.photo.url} alt="" width={72} height={72} />
                     </label>
                   ))}
