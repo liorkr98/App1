@@ -1,0 +1,33 @@
+# fly deploy runs from the repo root so the Dockerfile can COPY worker/.
+# Ignore everything the image does not need — without this, the context
+# is the whole checkout including node_modules.
+
+.git
+.github
+.eas
+.cursor
+**/.DS_Store
+
+node_modules
+web/node_modules
+worker/node_modules
+ingest/node_modules
+
+web
+ingest
+src
+app
+supabase
+docs
+locales
+scripts
+assets
+public
+
+**/*.md
+**/*.test.ts
+**/*.test.js
+worker/test-build
+worker/dist
+.env
+.env.*
