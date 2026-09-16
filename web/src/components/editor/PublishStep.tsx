@@ -10,6 +10,14 @@ interface Props {
   publishedUrl?: string | undefined;
   publishedSlug?: string | undefined;
   publishing: boolean;
+  /**
+   * Why the last publish attempt did not produce a link.
+   *
+   * A locale key, already resolved by the caller. Publishing used to fail in
+   * silence — the button stopped spinning, no link appeared, and the agent had
+   * no way to tell a refused publish from a slow one.
+   */
+  failure?: string | undefined;
   onPublish: () => void;
   onCopy: (url: string) => void;
   onIndexable: (indexable: boolean) => void;
@@ -48,6 +56,7 @@ export function PublishStep({
   publishedUrl,
   publishedSlug,
   publishing,
+  failure,
   onPublish,
   onCopy,
   onIndexable,
@@ -158,6 +167,12 @@ export function PublishStep({
         <span>{t('editor.publish.indexable')}</span>
       </label>
       <p className="field-hint">{t('editor.publish.indexableWhy')}</p>
+
+      {failure ? (
+        <p className="publish-failure" role="alert">
+          {failure}
+        </p>
+      ) : null}
 
       <button
         type="button"

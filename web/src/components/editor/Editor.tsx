@@ -143,6 +143,19 @@ export default function Editor() {
   const [publishedUrl, setPublishedUrl] = useState<string | undefined>(undefined);
   const [publishing, setPublishing] = useState(false);
 
+  /**
+   * Why the last publish, or the last save, did not work.
+   *
+   * Both used to be swallowed — `.catch(() => undefined)` on the save and no
+   * branch at all on a refused publish. The agent saw a button that stopped
+   * spinning and no link, which is indistinguishable from a slow network, and
+   * the one case that actually happened (photographs not yet written to the
+   * row) looked like nothing at all.
+   */
+  const [failure, setFailure] = useState<string | undefined>(undefined);
+  const [suggesting, setSuggesting] = useState(false);
+  const [suggestFailed, setSuggestFailed] = useState(false);
+
   useEffect(() => {
     if (!supabaseConfigured) return;
 
@@ -279,9 +292,80 @@ export default function Editor() {
 
     const id = listingId.current;
     if (id) {
-      await saveListing(id, stateRef.current, latest).catch(() => undefined);
+      const result = await saveListing(id, stateRef.current, latest).catch(
+        () => ({ error: 'failed' }) as const,
+      );
+      setFailure('error' in result ? t('errors.upload') : undefined);
     }
   };
+
+  /**
+   * The suggested description.
+   *
+   * Asked of the server, because the model key is a secret and this is a
+   * browser (see web/src/pages/api/description.ts). What comes back is put in
+   * the textarea AND recorded as `generatedDescription`, which is what makes
+   * the E6 gate work: the seller has to edit it before they can publish,
+   * because the claim on the page is theirs and not the model's.
+   *
+   * The row has to exist first — the facts are read from it, not sent — so
+   * this is only offered once a draft has been created, which happens on the
+   * first photo.
+   */
+  const canSuggest = Boolean(savedRow?.id ?? listingId.current) && supabaseConfigured && signedIn;
+
+  const suggest = () => {
+    const id = listingId.current;
+    if (!id || suggesting) return;
+
+    setSuggesting(true);
+    setSuggestFailed(false);
+
+    void (async () => {
+      try {
+        const { data } = await supabase().auth.getSession();
+        const token = data.session?.access_token;
+        if (!token) throw new Error('no_session');
+
+        const response = await fetch('/api/description', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ listingId: id }),
+        });
+        if (!response.ok) throw new Error(String(response.status));
+
+        const body = (await response.json()) as { text?: unknown };
+        const text = typeof body.text === 'string' ? body.text.trim() : '';
+        if (!text) throw new Error('empty');
+
+        setState((current) => ({
+          ...current,
+          description: text,
+          generatedDescription: text,
+        }));
+      } catch {
+        setSuggestFailed(true);
+      } finally {
+        setSuggesting(false);
+      }
+    })();
+  };
+
+  /**
+   * Offers one automatically, once, on an empty description.
+   *
+   * The seller is here to get a page out in four minutes. Arriving at "תיאור"
+   * to find a blank box is the step they stall on, and a draft they can edit
+   * is a far better starting point than a cursor. Pressing the button again
+   * replaces it; a description they have already written is never overwritten.
+   */
+  const autoSuggested = useRef(false);
+  useEffect(() => {
+    if (step !== 'description' || autoSuggested.current) return;
+    if (!canSuggest || state.description.trim() !== '') return;
+    autoSuggested.current = true;
+    suggest();
+  }, [step, canSuggest, state.description]);
 
   const changePhotos = (next: EditorPhoto[]) => {
     setPhotos(next);
@@ -504,7 +588,9 @@ export default function Editor() {
   const persist = () => {
     const id = listingId.current;
     if (!id || !supabaseConfigured || !signedIn) return;
-    void saveListing(id, stateRef.current, photos).catch(() => undefined);
+    void saveListing(id, stateRef.current, photos)
+      .then((result) => setFailure('error' in result ? t('editor.publish.saveFailed') : undefined))
+      .catch(() => setFailure(t('editor.publish.saveFailed')));
   };
 
   /**
@@ -521,14 +607,40 @@ export default function Editor() {
     const id = listingId.current;
     if (!id || !canPublish(state) || publishing) return;
 
+    /*
+     * A photo still in flight is not a publishable listing.
+     *
+     * `photoCount` says how many the seller PICKED; `publicUrl` says which of
+     * them a page can show. Publishing between those two facts is how a live
+     * listing ended up with no photographs and a page that would not render.
+     */
+    if (photosBusy) {
+      setFailure(t('editor.photosUploading'));
+      return;
+    }
+    if (!photos.some((photo) => photo.publicUrl)) {
+      setFailure(t('editor.publish.noPhotos'));
+      return;
+    }
+
     setPublishing(true);
+    setFailure(undefined);
 
     void (async () => {
       // Save first. Publishing a row that is one step behind what the agent
       // sees is how a page ships without the description they just wrote.
-      await saveListing(id, state, photos).catch(() => undefined);
+      const saved = await saveListing(id, state, photos).catch(
+        () => ({ error: 'failed' }) as const,
+      );
+      if ('error' in saved) {
+        setPublishing(false);
+        setFailure(t('editor.publish.saveFailed'));
+        return;
+      }
 
-      const result = await publishListing(id, state).catch(() => ({ error: 'failed' }) as const);
+      const result = await publishListing(id, state, photos).catch(
+        () => ({ error: 'failed' }) as const,
+      );
       setPublishing(false);
 
       if ('ok' in result) {
@@ -550,6 +662,11 @@ export default function Editor() {
         clearDraft();
       } else {
         void recordEditorEvent('publish', 'publish_fail', id);
+        setFailure(
+          result.error === 'no_photos'
+            ? t('editor.publish.noPhotos')
+            : t('editor.publish.failed'),
+        );
       }
     })();
   };
@@ -722,6 +839,7 @@ export default function Editor() {
             publishedUrl={publishedUrl}
             publishedSlug={slug.current ?? undefined}
             publishing={publishing}
+            failure={failure}
             onPublish={publish}
             onCopy={(url) => void navigator.clipboard.writeText(url).catch(() => undefined)}
             onIndexable={(indexable) => setState((current) => ({ ...current, indexable }))}
@@ -742,12 +860,24 @@ export default function Editor() {
             generated={state.generatedDescription}
             facts={state.facts}
             onChange={(description) => setState((current) => ({ ...current, description }))}
+            onSuggest={canSuggest ? suggest : undefined}
+            suggesting={suggesting}
+            suggestFailed={suggestFailed ? t('editor.description.suggestFailed') : undefined}
           />
         ) : null}
       </section>
 
       {step === 'photos' && photosBusy ? (
         <p className="hint">{t('editor.photosUploading')}</p>
+      ) : null}
+
+      {/* A save that failed is said out loud on whatever step the seller is
+          on. The publish step gets it inside PublishStep, beside the button
+          that did nothing. */}
+      {failure && step !== 'publish' ? (
+        <p className="publish-failure" role="alert">
+          {failure}
+        </p>
       ) : null}
 
       {here.length > 0 && step !== 'details' ? (

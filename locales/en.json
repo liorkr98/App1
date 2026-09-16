@@ -225,6 +225,13 @@
     "required": "",
     "factsHint": "",
     "descriptionHint": "",
+    "description": {
+      "suggest": "",
+      "suggestAgain": "",
+      "suggesting": "",
+      "suggestWhy": "",
+      "suggestFailed": ""
+    },
     "review": {
       "title": "",
       "banned": "",
@@ -325,6 +332,8 @@
       "prePortal": "",
       "prePortalWhy": "",
       "failed": "",
+      "noPhotos": "",
+      "saveFailed": "",
       "share": ""
     },
     "plateLookup": "",

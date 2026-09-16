@@ -7,6 +7,8 @@ import type {
   TransitMode,
 } from '../../types/listing.js';
 
+import { tidyParagraph } from './description.js';
+
 /**
  * Hebrew neighbourhood copy, from the lists already computed at publish.
  *
@@ -219,11 +221,7 @@ export function acceptNeighborhoodNote(
   raw: string,
   facts?: NeighborhoodFacts,
 ): NeighborhoodNote | undefined {
-  const text = raw
-    .replace(/\*\*/g, '')
-    .replace(/^["«»]+|["«»]+$/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
+  const text = tidyParagraph(raw);
 
   if (text.length < 24 || text.length > MAX_CHARS) return undefined;
   if (!HEBREW.test(text)) return undefined;

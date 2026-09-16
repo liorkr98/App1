@@ -46,7 +46,21 @@ export interface SavedPhoto {
  */
 function toMedia(photos: readonly SavedPhoto[], tourUrl?: string) {
   const [cover, ...rest] = photos;
-  if (!cover) return {};
+
+  /*
+   * NO COVER MEANS "DO NOT WRITE", not "write nothing".
+   *
+   * This returned `{}` and the callers wrote it, which is how an agent lost a
+   * whole listing's photographs: the files were in Storage — 41 of them, on
+   * the row that prompted this — and `listings.media` was `{}`, so the
+   * dashboard showed no pictures and the published page could not be built at
+   * all. Any save that ran before an upload finished overwrote the URLs of
+   * the uploads that HAD finished.
+   *
+   * Returning undefined lets `saveListing` leave the column alone, and the
+   * only place `{}` is now written is a seller who removed every photo.
+   */
+  if (!cover) return undefined;
 
   const tour = tourUrl?.trim();
 
@@ -113,21 +127,20 @@ export async function saveListing(
   state: EditorState,
   photos: readonly EditorPhoto[],
 ): Promise<{ ok: true } | { error: string }> {
-  const saved = photos
-    .filter((photo): photo is EditorPhoto & { publicUrl: string } => Boolean(photo.publicUrl))
-    .map((photo, index) => ({
-      id: photo.id,
-      url: photo.publicUrl,
-      // Empty is the correct value for "nobody wrote one" — inventing a
-      // description from the file name would be worse than silence.
-      alt: photo.alt?.trim() ?? '',
-      // Recorded at upload, so the page can reserve the box before the bytes
-      // arrive. Zero would produce a CLS penalty on every listing.
-      width: photo.width ?? 0,
-      height: photo.height ?? 0,
-      ...(photo.room ? { room: photo.room } : {}),
-      index,
-    }));
+  const saved = savedPhotos(photos);
+
+  /*
+   * Which of the three things a save can mean for `media`.
+   *
+   * write   at least one photo has a public URL — that is the gallery.
+   * clear   the seller removed every photo. `{}` is the honest value.
+   * leave   photos exist but none has finished uploading. Writing here is
+   *         what destroyed earlier uploads; the column keeps what it has and
+   *         the save that follows the upload writes the real list.
+   */
+  const media = toMedia(saved, state.tourUrl);
+  const mediaPatch =
+    media !== undefined ? { media } : photos.length === 0 ? { media: {} } : {};
 
   let seller: Record<string, unknown> | undefined;
   let accent: string | undefined;
@@ -150,13 +163,32 @@ export async function saveListing(
     .from('listings')
     .update({
       ...editorColumns(state),
-      media: toMedia(saved, state.tourUrl),
+      ...mediaPatch,
       ...(seller ? { seller } : {}),
       ...(accent ? { accent } : {}),
     })
     .eq('id', listingId);
 
   return error ? { error: error.message } : { ok: true };
+}
+
+/** The photos that have a public URL, in the seller's order. */
+function savedPhotos(photos: readonly EditorPhoto[]): SavedPhoto[] {
+  return photos
+    .filter((photo): photo is EditorPhoto & { publicUrl: string } => Boolean(photo.publicUrl))
+    .map((photo, index) => ({
+      id: photo.id,
+      url: photo.publicUrl,
+      // Empty is the correct value for "nobody wrote one" — inventing a
+      // description from the file name would be worse than silence.
+      alt: photo.alt?.trim() ?? '',
+      // Recorded at upload, so the page can reserve the box before the bytes
+      // arrive. Zero would produce a CLS penalty on every listing.
+      width: photo.width ?? 0,
+      height: photo.height ?? 0,
+      ...(photo.room ? { room: photo.room } : {}),
+      index,
+    }));
 }
 
 /**
@@ -175,6 +207,7 @@ export async function saveListing(
 export async function publishListing(
   listingId: string,
   state: EditorState,
+  photos: readonly EditorPhoto[] = [],
 ): Promise<{ ok: true; slug: string } | { error: string }> {
   // ============================ HUMAN REVIEW ============================
   // This function does not read entitlement. The editor's `canPublish` is
@@ -184,6 +217,22 @@ export async function publishListing(
   // ======================================================================
   const category = state.category;
   if (!category) return { error: 'no_category' };
+
+  /*
+   * PUBLISH IS THE AUTHORITATIVE WRITE FOR `media`, and it refuses without a
+   * cover.
+   *
+   * It used to update `status` alone and trust whatever the last step-boundary
+   * save had left behind. When that was `{}` — an upload still in flight, or a
+   * re-encode that failed — the row went public with no photographs, and the
+   * page could not be rendered from it at all. The seller got a link to a
+   * broken page and no indication anything had gone wrong.
+   *
+   * A listing with no cover is not publishable: index 0 is the frame the
+   * WhatsApp card is cut from (CLAUDE.md §6).
+   */
+  const media = toMedia(savedPhotos(photos), state.tourUrl);
+  if (!media) return { error: 'no_photos' };
 
   let seller: Record<string, unknown> | undefined;
   let accent: string = DEFAULT_ACCENT;
@@ -209,6 +258,7 @@ export async function publishListing(
       status: 'published',
       published_at: new Date().toISOString(),
       expires_at: expires.toISOString(),
+      media,
       indexable: state.indexable === true,
       pre_portal: state.prePortal === true,
       owner_consent_declared_at: state.ownerConsentDeclaredAt ?? null,

@@ -166,6 +166,28 @@ export interface FactDefinition {
    * carries make and model in the hero and not as cells.
    */
   showInGrid?: boolean;
+
+  /**
+   * How this fact reads inside a Hebrew SENTENCE, with `{value}` where the
+   * answer goes — `'{value} חדרים'`, `'קומה {value}'`.
+   *
+   * The grid can render `label: value` in either order because it is a table.
+   * Prose cannot: Hebrew wants "4 חדרים" and "קומה 3", and no rule derived
+   * from the label produces both. Without this the generated description read
+   * "חדרים 4, קומה 3, מ״ר 95" — recognisably written by a machine, which is
+   * the one thing a page an agent is proud to send cannot look like.
+   *
+   * Omit it and the fact stays out of the prose. That is the right default:
+   * a fact with no phrasing is still shown in the grid, where it is correct.
+   *
+   * Hebrew, in the schema, for the reason `label` is (CLAUDE.md §12) — how a
+   * field is said is a property of the field, not a translation.
+   *
+   * For a BOOLEAN the phrase is used when the answer is yes and the `{value}`
+   * placeholder is unnecessary: `'מעלית'`. A `false` never reaches prose —
+   * "no lift" is information the grid states and an advertisement omits (§7).
+   */
+  phrase?: string;
 }
 
 /** A category's ordered fact definitions. Order is display order. */

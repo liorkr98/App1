@@ -27,15 +27,34 @@ export const propertySchema: CategorySchema = {
    */
   investorLead: ['area_sqm', 'property_tax', 'building_fee'],
   facts: [
-    { key: 'rooms', label: 'חדרים', type: 'number', required: true },
-    { key: 'area_sqm', label: 'מ״ר', type: 'number', required: true, priceDenominator: true },
+    { key: 'rooms', label: 'חדרים', type: 'number', required: true, phrase: '{value} חדרים' },
+    {
+      key: 'area_sqm',
+      label: 'מ״ר',
+      type: 'number',
+      required: true,
+      priceDenominator: true,
+      phrase: '{value} מ״ר',
+    },
     // Rendered as one cell, "3 / 5", under קומה — matching the reference page.
-    { key: 'floor', label: 'קומה', type: 'number', pairWith: 'total_floors' },
+    {
+      key: 'floor',
+      label: 'קומה',
+      type: 'number',
+      pairWith: 'total_floors',
+      phrase: 'קומה {value}',
+    },
     { key: 'total_floors', label: 'מתוך קומות', type: 'number' },
-    { key: 'elevator', label: 'מעלית', type: 'boolean' },
-    { key: 'parking', label: 'חניה', type: 'boolean' },
-    { key: 'shelter', label: 'ממ״ד', type: 'boolean' },
-    { key: 'balcony_sqm', label: 'מרפסת שמש', type: 'number', unit: 'מ״ר' },
+    { key: 'elevator', label: 'מעלית', type: 'boolean', phrase: 'מעלית' },
+    { key: 'parking', label: 'חניה', type: 'boolean', phrase: 'חניה' },
+    { key: 'shelter', label: 'ממ״ד', type: 'boolean', phrase: 'ממ״ד' },
+    {
+      key: 'balcony_sqm',
+      label: 'מרפסת שמש',
+      type: 'number',
+      unit: 'מ״ר',
+      phrase: 'מרפסת שמש {value} מ״ר',
+    },
     {
       key: 'aspect',
       label: 'כיווני אוויר',
@@ -50,13 +69,15 @@ export const propertySchema: CategorySchema = {
         'דרום־מזרח',
         'דרום־מערב',
       ],
+      phrase: 'כיווני אוויר {value}',
     },
-    { key: 'storage', label: 'מחסן', type: 'boolean' },
+    { key: 'storage', label: 'מחסן', type: 'boolean', phrase: 'מחסן' },
     {
       key: 'condition',
       label: 'מצב הנכס',
       type: 'enum',
       options: ['חדש מקבלן', 'משופץ', 'שמור', 'דורש שיפוץ'],
+      phrase: 'הנכס {value}',
     },
     { key: 'property_tax', label: 'ארנונה', type: 'number', unit: '₪ לחודשיים' },
     { key: 'building_fee', label: 'ועד בית', type: 'number', unit: '₪ לחודש' },
@@ -67,6 +88,7 @@ export const propertySchema: CategorySchema = {
       // Accepts a date OR one of these. Sellers frequently do not have a firm
       // date, and forcing one produces a made-up answer.
       options: ['מיידי', 'גמיש'],
+      phrase: 'כניסה {value}',
     },
   ],
 };

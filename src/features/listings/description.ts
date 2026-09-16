@@ -23,6 +23,15 @@ export interface DescriptionInput {
   facts: readonly Fact[];
   /** The seller's own words, if they wrote any. Never invented for them. */
   sellerNotes?: string;
+  /** Hebrew city, when the category has one. A vehicle carries no location. */
+  city?: string;
+  /**
+   * The area paragraph, when the enrichment ran: named stops, named schools,
+   * routed walking minutes. Already grounded by neighborhood-note.ts, so it
+   * is passed through rather than re-derived — and absent far more often than
+   * present, because the proximity job is not on the publish path yet.
+   */
+  areaNote?: string;
 }
 
 /**
@@ -94,9 +103,11 @@ export function buildPrompt(input: DescriptionInput): string {
 
   return [
     `כתוב תיאור קצר ל${input.categoryLabel} למודעה בעברית.`,
+    ...(input.city ? ['', `עיר: ${input.city}`] : []),
     '',
     'העובדות שנמסרו:',
     ...factLines,
+    ...(input.areaNote ? ['', 'על הסביבה, מתוך נתונים ציבוריים:', input.areaNote] : []),
     ...(input.sellerNotes ? ['', 'מה שהמוכר כתב:', input.sellerNotes] : []),
     '',
     'כללים:',
@@ -155,7 +166,16 @@ export function findUnsupportedNumbers(text: string, facts: readonly Fact[]): st
     for (const number of asText.match(/\d+/g) ?? []) supported.add(number);
   }
 
-  const used = text.match(/\d+/g) ?? [];
+  /*
+   * Thousands separators are removed before the digits are read.
+   *
+   * A mileage of 80000 is written "80,000" by anybody — the seller, and the
+   * formatter that produces the generated paragraph. Read literally that is
+   * two numbers, 80 and 000, neither of which any fact supports, so the one
+   * check here that catches real fabrications spent its credibility flagging
+   * correctly formatted figures.
+   */
+  const used = text.replace(/(?<=\d)[,\u066C](?=\d)/g, '').match(/\d+/g) ?? [];
   return [...new Set(used)].filter((number) => !supported.has(number));
 }
 
@@ -187,6 +207,24 @@ export function reviewDescription(
       reservedTopics.length === 0 &&
       unsupportedNumbers.length === 0,
   };
+}
+
+/**
+ * A model's reply, tidied into one paragraph.
+ *
+ * ORDER MATTERS AND IT IS THE BUG THIS EXISTS TO PREVENT. Whitespace is
+ * collapsed BEFORE the surrounding quotes are stripped: a reply that starts
+ * with a space or a newline — most of them do — does not match an anchored
+ * quote pattern, so stripping first leaves the quotation marks in place and
+ * the seller is handed a paragraph wrapped in `"`.
+ */
+export function tidyParagraph(raw: string): string {
+  return raw
+    .replace(/\*\*/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/^["«»]+|["«»]+$/g, '')
+    .trim();
 }
 
 /**
