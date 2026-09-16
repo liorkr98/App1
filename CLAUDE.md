@@ -393,23 +393,15 @@ the summary.
 
 ### The product rules
 
-**The free tier is create and preview only. Publishing requires payment.** The
-seller goes through the whole flow and sees their finished page — that is the
-conversion moment — but cannot share a link until they pay. A free published
-page would be the entire product given away: someone selling one apartment
-would take it and never come back.
+**The first published listing is free, and it carries נבנה בהיעד in the footer.** That mark is the viral loop: a listing page is forwarded to 30–80 people who are by definition interested in buying something. Small, elegant, clickable.
 
-**Metering is LISTINGS, not images.** Cap images per listing at 25. The user
-thinks in listings; our cost is in images; the cap is what bridges the two.
+**A live grant (purchase or admin) publishes further listings and takes the mark off** — including listings already published. Buying one listing is enough. A second listing without a grant does not publish.
 
-**No free trial on subscription tiers.** A private seller would take the trial,
-publish their one listing and churn — cannibalising the single-listing purchase
-that is the correct product for them.
+**Metering is LISTINGS, not images.** Cap images per listing at 25. The user thinks in listings; our cost is in images; the cap is what bridges the two.
 
-**Every published page carries נבנה בהיעד in the footer**, removable only on
-agent tiers. This is the viral loop: a listing page is forwarded to 30–80
-people who are by definition interested in buying something. Small, elegant,
-clickable. Not obnoxious and not invisible.
+**No free trial on subscription tiers.** A private seller would take the trial, publish their one listing and churn — cannibalising the single-listing purchase that is the correct product for them. The one free listing with the mark is not a subscription trial.
+
+**Fail closed still.** Unknown or errored entitlement means not paid and not free. Never grant on network failure. The editor's `canPublish` is UX. The Postgres trigger is the law.
 
 ---
 

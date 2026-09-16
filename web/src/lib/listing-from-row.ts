@@ -8,13 +8,14 @@ import {
   type TemplateId,
 } from '@/types/listing';
 import { parseEnrichmentBlock } from '@/features/listings/enrichment-payload';
+import { descriptionOrArea } from '@/features/listings/neighborhood-note';
 import { isPhotoRoom } from '@/features/listings/photo-rooms';
 
 import { listingBySlug } from './listings';
 import { supabaseConfigured, supabasePublic } from './supabase';
 
 const LISTING_COLUMNS =
-  'id, slug, category, title, description, price, currency, list_price, price_note, facts, media, disclosures, location, seller, template, accent, status, indexable, pre_portal, published_at, og_image_hash, audience';
+  'id, slug, category, title, description, price, currency, list_price, price_note, facts, media, disclosures, location, seller, template, accent, status, indexable, pre_portal, published_at, og_image_hash, audience, hyad_mark';
 
 interface ListingRow {
   id: string;
@@ -34,11 +35,12 @@ interface ListingRow {
   template: string;
   accent: string | null;
   status: string;
-  indexable: boolean;
+      indexable: boolean;
   pre_portal?: boolean | null;
   published_at: string | null;
   og_image_hash: string | null;
   audience: string | null;
+  hyad_mark?: boolean | null;
   listing_enrichment?: { payload: unknown } | { payload: unknown }[] | null;
 }
 
@@ -156,7 +158,10 @@ export function listingFromRow(row: ListingRow): Listing | undefined {
     slug: row.slug,
     category: row.category as Listing['category'],
     title: row.title,
-    description: row.description ?? '',
+    description: descriptionOrArea(
+      row.description ?? '',
+      enrichment && enrichment.category === 'property' ? enrichment.neighborhoodNote : undefined,
+    ),
     price: Number(row.price),
     currency: row.currency ?? 'ILS',
     ...(row.list_price != null ? { listPrice: Number(row.list_price) } : {}),
@@ -171,6 +176,7 @@ export function listingFromRow(row: ListingRow): Listing | undefined {
     status: row.status as ListingStatus,
     ...(row.published_at ? { publishedAt: row.published_at } : {}),
     indexable: row.indexable === true,
+    hyadMark: row.hyad_mark !== false,
     ...(row.pre_portal === true ? { prePortal: true } : {}),
     ...(row.og_image_hash ? { ogImageHash: row.og_image_hash } : {}),
     ...(row.audience === 'investor' || row.audience === 'resident' || row.audience === 'both'
@@ -214,7 +220,15 @@ export async function publishedListing(slug: string): Promise<Listing | undefine
         .maybeSingle();
       if (enrichError || !enrich) return listing;
       const parsed = parseEnrichmentBlock((enrich as { payload: unknown }).payload);
-      return parsed ? { ...listing, enrichment: parsed } : listing;
+      if (!parsed) return listing;
+      return {
+        ...listing,
+        enrichment: parsed,
+        description: descriptionOrArea(
+          listing.description,
+          parsed.category === 'property' ? parsed.neighborhoodNote : undefined,
+        ),
+      };
     } catch {
       return listing;
     }

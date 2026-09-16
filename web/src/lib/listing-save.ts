@@ -166,8 +166,10 @@ export async function saveListing(
  * CLAUDE.md §8: the paywall may be built here and ENTITLEMENT MAY NOT BE
  * DECIDED here. This function does not read, infer or grant entitlement. It
  * flips `status` and stamps `published_at`. The editor's `canPublish` is UX.
- * The real gate is the Postgres trigger in migration 0016: a publish without
- * a live grant raises, and a successful one decrements remaining.
+ * The real gate is the Postgres trigger (migrations 0016 + 0022): a first
+ * listing publishes free with the היעד mark; a live grant publishes without
+ * the mark and decrements remaining; anything else raises. This function
+ * does not grant on a failed read.
  * ======================================================================
  */
 export async function publishListing(
@@ -176,8 +178,9 @@ export async function publishListing(
 ): Promise<{ ok: true; slug: string } | { error: string }> {
   // ============================ HUMAN REVIEW ============================
   // This function does not read entitlement. The editor's `canPublish` is
-  // what called it, and that already required 'paid'. A second client check
-  // here would duplicate the decision; the server trigger is the gate.
+  // what called it, and that already required 'paid' or 'free'. A second
+  // client check here would duplicate the decision; the server trigger is
+  // the gate.
   // ======================================================================
   const category = state.category;
   if (!category) return { error: 'no_category' };

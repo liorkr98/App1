@@ -68,14 +68,6 @@ export const BANNED_SUPERLATIVES = [
  * forbids presenting data as one.
  */
 export const RESERVED_TOPICS = [
-  'שכונה',
-  'בית ספר',
-  'בתי ספר',
-  'גן ילדים',
-  'תחבורה',
-  'אוטובוס',
-  'רכבת',
-  'קו הרכבת',
   'השקעה',
   'עליית ערך',
   'פוטנציאל',
@@ -111,7 +103,8 @@ export function buildPrompt(input: DescriptionInput): string {
     '- שניים עד שלושה פסקאות קצרות, בעברית מדוברת וטבעית.',
     '- לתאר, לא לשבח. בלי מילות הפלגה כמו חלומית, מדהימה, ייחודית.',
     '- אין להמציא עובדה שלא מופיעה ברשימה למעלה.',
-    '- אין לכתוב על השכונה, בתי ספר, תחבורה ציבורית או ערך עתידי.',
+    '- רק דברים טובים שיש. מה שחסר — לא נכתב.',
+    '- אין לכתוב על שווי, השקעה, תשואה או ערך עתידי.',
     '- אין לכתוב מספר שלא מופיע ברשימה למעלה.',
   ].join('\n');
 }
@@ -174,10 +167,16 @@ export interface DescriptionReview {
   clean: boolean;
 }
 
-export function reviewDescription(text: string, facts: readonly Fact[]): DescriptionReview {
+export function reviewDescription(
+  text: string,
+  facts: readonly Fact[],
+  generated?: string,
+): DescriptionReview {
   const bannedWords = findBannedWords(text);
   const reservedTopics = findReservedTopics(text);
-  const unsupportedNumbers = findUnsupportedNumbers(text, facts);
+  const extra = (generated?.match(/\d+/g) ?? []).map(String);
+  const factsOnly = findUnsupportedNumbers(text, facts);
+  const unsupportedNumbers = factsOnly.filter((number) => !extra.includes(number));
 
   return {
     bannedWords,

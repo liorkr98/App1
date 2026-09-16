@@ -11,9 +11,10 @@ import { supabase, supabaseConfigured } from './supabase';
  * agent may publish. It does not invent a 'paid' on timeout, on a missing
  * table, or on a thrown error.
  *
- * Source: `listing_grants` (migration 0016). A live row with remaining > 0
- * inside its window is 'paid'. The publish trigger is the server-side gate;
- * this read is so the editor can explain the paywall before the agent hits it.
+ * Source: `listing_grants` (migration 0016) plus a count of this user's
+ * published/sold listings (migration 0022). A live grant is 'paid'. No
+ * grant and zero published is 'free' (watermark on). Count or grant read
+ * failed: 'unknown'. The trigger is the server-side gate.
  * ======================================================================
  */
 export async function loadEntitlement(): Promise<Entitlement> {
@@ -28,7 +29,7 @@ export async function loadEntitlement(): Promise<Entitlement> {
       .from('listing_grants')
       .select('remaining, effective_from, effective_to');
 
-    if (error) return entitlementFromGrants(null, true);
+    if (error) return entitlementFromGrants(null, true, new Date(), null);
 
     const rows: GrantRow[] = (data ?? []).flatMap((row) => {
       if (!row || typeof row !== 'object') return [];
@@ -45,7 +46,17 @@ export async function loadEntitlement(): Promise<Entitlement> {
       ];
     });
 
-    return entitlementFromGrants(rows, false);
+    const { count, error: countError } = await client
+      .from('listings')
+      .select('id', { count: 'exact', head: true })
+      .eq('owner_id', session.session.user.id)
+      .in('status', ['published', 'sold']);
+
+    if (countError || count === null) {
+      return entitlementFromGrants(rows, false, new Date(), null);
+    }
+
+    return entitlementFromGrants(rows, false, new Date(), count);
   } catch {
     return 'unknown';
   }

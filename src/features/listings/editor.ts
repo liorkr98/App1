@@ -55,11 +55,11 @@ export const MIN_IMAGES = 1;
  * arrives, and `unknown` exists so that "we could not reach the provider" is
  * representable rather than collapsing into a boolean that has to guess.
  *
- * FAIL CLOSED: only 'paid' unblocks publishing. 'unknown' does not, and a
- * network failure must produce 'unknown' rather than 'paid'.
+ * FAIL CLOSED: 'paid' and 'free' may publish. 'unknown' does not, and a
+ * network failure must produce 'unknown' rather than 'paid' or 'free'.
  * ======================================================================
  */
-export type Entitlement = 'paid' | 'unpaid' | 'unknown';
+export type Entitlement = 'paid' | 'free' | 'unpaid' | 'unknown';
 
 export interface EditorState {
   category?: ListingCategory;
@@ -320,15 +320,13 @@ export function blockers(state: EditorState): Blocker[] {
   }
 
   // ========================== HUMAN REVIEW ==========================
-  // The entitlement read. Anything that is not 'paid' blocks publishing,
-  // including 'unknown' — a provider we could not reach is not a licence
-  // to give the product away (CLAUDE.md §8).
+  // The entitlement read. 'paid' (grant) and 'free' (first listing, mark
+  // on) may publish. 'unknown' never does — a provider we could not reach
+  // is not a licence to give a second listing away (CLAUDE.md §8).
   //
-  // The two cases get DIFFERENT codes because they are different
-  // situations and the seller can act on only one of them: "pay to
-  // publish" is a button, "we could not check" is a wait.
+  // unpaid and unknown get DIFFERENT codes: pay vs wait.
   // ==================================================================
-  if (state.entitlement !== 'paid') {
+  if (state.entitlement !== 'paid' && state.entitlement !== 'free') {
     found.push({
       step: 'publish',
       code: state.entitlement === 'unpaid' ? 'paymentRequired' : 'paymentUnverified',
@@ -355,8 +353,9 @@ export function canAdvance(step: Step, state: EditorState): boolean {
  *
  * ============================ HUMAN REVIEW ============================
  * The single place access is granted. Every blocker must be clear, which
- * includes the entitlement one — so this returns false whenever payment is
- * unconfirmed, and there is no branch that grants on error.
+ * includes the entitlement one — so this returns false whenever the
+ * read is unpaid or unknown, and there is no branch that grants on error.
+ * 'paid' and 'free' still have to clear every other blocker.
  * ======================================================================
  */
 export function canPublish(state: EditorState): boolean {
