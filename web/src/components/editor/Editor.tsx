@@ -319,7 +319,7 @@ export default function Editor() {
    */
   const canSuggest = Boolean(savedRow?.id ?? listingId.current) && supabaseConfigured && signedIn;
 
-  const suggest = () => {
+  const suggest = (retriesLeft = 1) => {
     const id = listingId.current;
     if (!id || suggesting) return;
 
@@ -339,7 +339,7 @@ export default function Editor() {
         });
         if (!response.ok) throw new Error(String(response.status));
 
-        const body = (await response.json()) as { text?: unknown };
+        const body = (await response.json()) as { text?: unknown; areaPending?: unknown };
         const text = typeof body.text === 'string' ? body.text.trim() : '';
         if (!text) throw new Error('empty');
 
@@ -348,6 +348,24 @@ export default function Editor() {
           description: text,
           generatedDescription: text,
         }));
+
+        /*
+         * The paragraph about the address is the one worth waiting for.
+         *
+         * `areaPending` means the server had a street to look up and
+         * OpenStreetMap did not answer in time — a busy minute on a public
+         * service, which a second attempt usually gets past. The seller
+         * already has a description in the box, so this replaces it quietly
+         * rather than making them wait for it.
+         *
+         * ONE retry. Anything more would queue requests against a service run
+         * on donations for a paragraph the seller can also just write.
+         */
+        if (body.areaPending === true && retriesLeft > 0) {
+          setSuggesting(false);
+          window.setTimeout(() => suggest(retriesLeft - 1), 4000);
+          return;
+        }
       } catch {
         setSuggestFailed(true);
       } finally {
@@ -370,6 +388,9 @@ export default function Editor() {
     if (!canSuggest || state.description.trim() !== '') return;
     autoSuggested.current = true;
     suggest();
+    // `suggest` is stable enough for this: it reads the listing id from a ref
+    // and guards on `suggesting`, so it cannot fire twice for one arrival.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, canSuggest, state.description]);
 
   const changePhotos = (next: EditorPhoto[]) => {

@@ -9,13 +9,14 @@ import {
 } from '@/types/listing';
 import { parseEnrichmentBlock } from '@/features/listings/enrichment-payload';
 import { descriptionOrArea } from '@/features/listings/neighborhood-note';
+import { OSM_ATTRIBUTION } from '@/features/listings/area-note';
 import { isPhotoRoom } from '@/features/listings/photo-rooms';
 
 import { listingBySlug } from './listings';
 import { supabaseConfigured, supabasePublic } from './supabase';
 
 const LISTING_COLUMNS =
-  'id, slug, category, title, description, price, currency, list_price, price_note, facts, media, disclosures, location, seller, template, accent, status, indexable, pre_portal, published_at, og_image_hash, audience, hyad_mark';
+  'id, slug, category, title, description, price, currency, list_price, price_note, facts, media, disclosures, location, seller, template, accent, status, indexable, pre_portal, published_at, og_image_hash, audience, hyad_mark, area_places';
 
 interface ListingRow {
   id: string;
@@ -41,11 +42,28 @@ interface ListingRow {
   og_image_hash: string | null;
   audience: string | null;
   hyad_mark?: boolean | null;
+  area_places?: unknown;
   listing_enrichment?: { payload: unknown } | { payload: unknown }[] | null;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Whether OpenStreetMap names were fetched for this listing's address.
+ *
+ * `{}` is the default and means no query was ever made, so the page owes no
+ * credit. Any non-empty list means the description could have been built from
+ * those names, and crediting a source we consulted is the safe direction for a
+ * licence condition.
+ */
+function usedOsmNames(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+
+  return ['neighbourhoods', 'schools', 'transit', 'parks', 'community', 'shops'].some(
+    (key) => Array.isArray(value[key]) && (value[key] as unknown[]).length > 0,
+  );
 }
 
 function asCoord(value: unknown): number | undefined {
@@ -177,6 +195,13 @@ export function listingFromRow(row: ListingRow): Listing | undefined {
     ...(row.published_at ? { publishedAt: row.published_at } : {}),
     indexable: row.indexable === true,
     hyadMark: row.hyad_mark !== false,
+    /*
+     * ODbL, carried by the data (CLAUDE.md §10). The description may have been
+     * written from OpenStreetMap names, and `area_places` is the record that
+     * it could have been — so the credit appears exactly on the pages that
+     * used the source, and on no others.
+     */
+    ...(usedOsmNames(row.area_places) ? { textAttributions: [OSM_ATTRIBUTION] } : {}),
     ...(row.pre_portal === true ? { prePortal: true } : {}),
     ...(row.og_image_hash ? { ogImageHash: row.og_image_hash } : {}),
     ...(row.audience === 'investor' || row.audience === 'resident' || row.audience === 'both'

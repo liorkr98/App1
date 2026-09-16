@@ -64,8 +64,12 @@ const perUnit = perUnitPrice(listing.category, listing.facts, listing.price);
  * page that gains a new attributed source cannot forget to add one. Hardcoding
  * it in the footer would make the credit depend on a template remembering.
  */
-const attributions =
-  listing.enrichment?.category === 'property' ? listing.enrichment.attributions : [];
+const attributions = [
+  ...(listing.enrichment?.category === 'property' ? listing.enrichment.attributions : []),
+  // The description's own sources, which are not the grid's. A page can owe
+  // one, both, or neither — see Listing.textAttributions.
+  ...(listing.textAttributions ?? []),
+];
 
 const sold = listing.status === 'sold';
 const walkImages = [listing.media.cover, ...listing.media.gallery];

@@ -685,4 +685,19 @@ export interface Listing {
    * rendered as מאומת; it is לפי המוכר.
    */
   prePortal?: boolean;
+
+  /**
+   * Licence credits this page owes for the words on it, as opposed to for the
+   * enrichment grid.
+   *
+   * The description can be written from OpenStreetMap names — the real schools,
+   * stops and parks around the address (area-note.ts) — and ODbL attribution
+   * is a condition of using them, not a courtesy (CLAUDE.md §10). Carried on
+   * the listing rather than hardcoded in the footer, so a page that was
+   * written without them credits nothing it did not use.
+   *
+   * Separate from `enrichment.attributions`, which credits the sources behind
+   * the proximity GRID. A page can owe one, both, or neither.
+   */
+  textAttributions?: string[];
 }
