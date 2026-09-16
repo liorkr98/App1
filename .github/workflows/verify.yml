@@ -66,8 +66,22 @@ jobs:
       # Its own package.json, deliberately not an npm workspace: making the
       # root a workspace root would rewrite web's and worker's dependency
       # trees.
+      # RETRIED ONCE, and the reason is specific rather than superstitious.
+      # There are no lockfiles here on purpose (.gitignore says why), so every
+      # build resolves from the registry — and on 16 September 2026 npm served
+      # metadata for rolldown 1.2.9 a few minutes before its tarball existed.
+      # vite depends on it as ~1.2.6, so `npm install` chose the version that
+      # could not be downloaded:
+      #
+      #   npm error 404 Not Found - GET .../rolldown-1.2.9.tgz
+      #
+      # That failed this workflow AND the Cloudflare production deploy, for a
+      # publish race that resolved itself within the hour. A lockfile is the
+      # other answer and is a strategy change, not a fix (.gitignore again).
       - name: Install web dependencies
-        run: npm install --no-audit --no-fund --prefix web
+        run: |
+          npm install --no-audit --no-fund --prefix web \
+            || (sleep 25 && npm install --no-audit --no-fund --prefix web)
 
       - name: Web typecheck
         run: npm run typecheck --prefix web

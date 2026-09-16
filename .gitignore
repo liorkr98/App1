@@ -83,6 +83,14 @@ test-build/
 # than `npm ci`. A lockfile here would be a second source of truth for the
 # same pins. If that strategy ever changes, commit the lockfiles and delete
 # this block — do not do one without the other.
+#
+# WHAT IT COSTS, recorded once so the next outage is recognisable. The pins are
+# on DIRECT dependencies; transitive ones still resolve fresh on every build.
+# On 16 September 2026 npm published metadata for rolldown 1.2.9 — which vite
+# takes as ~1.2.6 — minutes before its tarball was fetchable, and the 404 broke
+# both CI and the Cloudflare production deploy for a race that cleared itself
+# within the hour. The install steps retry once rather than pinning a
+# transitive version in two places (verify.yml, and the root build script).
 package-lock.json
 web/package-lock.json
 
