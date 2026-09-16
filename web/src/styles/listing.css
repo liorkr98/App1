@@ -317,6 +317,61 @@ p + p{margin-top:.9rem}
   color:var(--muted);
   font-variant-numeric:tabular-nums;
 }
+/* ---------- The neighbourhood map ----------
+   The drawing is an SVG built from real coordinates at publish, so there is no
+   tile, no embed and no request when a buyer opens the link (CLAUDE.md §12).
+   It deliberately does not mirror for Hebrew: north is up and east is east in
+   every language, which is why its positions are SVG geometry rather than the
+   logical offsets everything else on this page uses. */
+.area-map{margin:0}
+.area-map-svg{
+  display:block;
+  inline-size:100%;
+  block-size:auto;
+  border-radius:2px;
+  background:var(--stone);
+}
+.area-map-list{
+  list-style:none;
+  margin:0;
+  padding:0;
+  margin-block-start:1rem;
+  display:grid;
+  gap:.5rem;
+}
+.area-map-list li{
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  gap:.45rem .7rem;
+  align-items:baseline;
+  font-size:.92rem;
+  line-height:1.5;
+}
+/* The key that ties a line of the list to a pin in the drawing. A Hebrew
+   letter and not a digit, so no number sits outside <bdi> (§4.2). */
+.area-map-key{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  inline-size:1.5rem;
+  block-size:1.5rem;
+  border-radius:50%;
+  background:var(--pin,var(--olive));
+  color:var(--plaster);
+  font-family:'Frank Ruhl Libre',serif;
+  font-weight:700;
+  font-size:.86rem;
+}
+.area-map-walk{
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+/* ODbL. A licence condition, so it is not styled to disappear. */
+.area-map-credit{
+  margin-block-start:.8rem;
+  font-size:.72rem;
+  color:var(--muted);
+}
 .map-note{margin-block-start:1.15rem}
 .map-note h3{
   margin:0;

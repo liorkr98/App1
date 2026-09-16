@@ -67,7 +67,7 @@ sellers are secondary. When a design decision trades one against the other,
 | Database | **Supabase** (Postgres, Auth, Realtime, RLS) |
 | Image storage | **Supabase Storage**. Decided 10 September 2026 — see below. |
 | Spatial | **PostGIS** for proximity queries |
-| Routing | **OSRM**, foot profile, self-hosted |
+| Routing | **OSRM**, foot profile, self-hosted — `osrm/`, see docs/OSRM.md |
 | Worker | **Fly.io** container, Postgres job queue |
 | Images | **sharp**/libvips, local, no external API in v1 |
 | PDF | **Puppeteer**, in its own Fly process group |
@@ -169,6 +169,21 @@ previous plan. Straight-line distance lies in Israel — a motorway or a wadi
 turns 300 metres into a twenty-minute walk, and the buyer discovers that on
 foot. The exclusion is written down because the fallback is tempting on the
 day OSRM is inconvenient.
+
+> **16 September 2026: OSRM is built but not deployed, and there is an interim
+> router.** `osrm/` holds the service (graph baked in, foot profile) and
+> `docs/OSRM.md` the deploy. Until `OSRM_URL` is set, walking times come from
+> **Valhalla on the OpenStreetMap Foundation's instance**, pedestrian costing,
+> one matrix call per listing, cached on the row.
+>
+> That is a public service and therefore the interim rather than the plan. It
+> is recorded here because it is a third-party routing dependency and this
+> section is where those are decided.
+>
+> **The OSRM demo server is NOT an option**, and it is the trap here. It
+> answers `/table/v1/foot/…` with 200 and returns CAR times: 162 seconds for a
+> hop Valhalla's pedestrian costing puts at 277. A profile is what the graph
+> was built with, not a segment of the URL. Measured, not assumed.
 
 Do not introduce a dependency without asking. Justify: what it does, size,
 last publish date, and why the stack above cannot do it.

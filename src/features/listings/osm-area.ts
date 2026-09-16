@@ -1,4 +1,4 @@
-import type { AreaPlaces } from './area-note.js';
+import type { AreaPlace, AreaPlaces } from './area-note.js';
 
 /**
  * OpenStreetMap features → the five groups the area paragraph talks about.
@@ -15,9 +15,28 @@ import type { AreaPlaces } from './area-note.js';
  * express.
  */
 
-/** The raw shape Overpass returns for `out center tags`. */
+/**
+ * The raw shape Overpass returns for `out center tags`.
+ *
+ * A node carries `lat`/`lon`; a way or relation carries `center` because the
+ * query asks for `out center`. Both are needed: a school is usually a polygon
+ * and a bus stop is usually a node.
+ */
 export interface OsmElement {
   tags?: Record<string, string>;
+  lat?: number;
+  lon?: number;
+  center?: { lat?: number; lon?: number };
+}
+
+/** Where an element is, whichever way Overpass expressed it. */
+export function pointOf(
+  element: OsmElement,
+): { lat: number; lon: number } | undefined {
+  const lat = element.lat ?? element.center?.lat;
+  const lon = element.lon ?? element.center?.lon;
+
+  return typeof lat === 'number' && typeof lon === 'number' ? { lat, lon } : undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -237,7 +256,7 @@ export function placesFromOsm(
   elements: readonly OsmElement[],
   where: { city: string; street?: string },
 ): AreaPlaces {
-  const buckets: Record<AreaGroup, string[]> = {
+  const buckets: Record<AreaGroup, AreaPlace[]> = {
     neighbourhood: [],
     school: [],
     transit: [],
@@ -246,11 +265,31 @@ export function placesFromOsm(
     shop: [],
   };
 
+  /*
+   * The street's own geometry, which becomes the point everything is measured
+   * from. The query returns its ways alongside the places for exactly this:
+   * without an origin there is no routing and no map, and geocoding the
+   * building is neither available nor wanted (ingest/src/geocode says why).
+   */
+  const streetPoints: { lat: number; lon: number }[] = [];
+
   for (const element of elements) {
     const tags = element.tags;
     if (!tags) continue;
 
+    const at = pointOf(element);
+    if (!at) continue;
+
     const group = groupFor(tags);
+
+    // A road: the query returns the matched street alongside the places, and
+    // `groupFor` classifies no road except a bus stop, so anything with a
+    // `highway` tag and no group is the street we asked for.
+    if (!group && tags.highway !== undefined) {
+      streetPoints.push(at);
+      continue;
+    }
+
     if (!group) continue;
 
     const name = nameFor(tags);
@@ -260,17 +299,59 @@ export function placesFromOsm(
     // come back as a neighbourhood called the city.
     if (group === 'neighbourhood' && name === where.city) continue;
 
-    if (!buckets[group].includes(name)) buckets[group].push(name);
+    if (!buckets[group].some((place) => place.name === name)) {
+      buckets[group].push({ name, lat: at.lat, lon: at.lon });
+    }
   }
+
+  const origin = midpoint(streetPoints);
 
   return {
     city: where.city,
     ...(where.street ? { street: where.street } : {}),
+    ...(origin ? { origin } : {}),
     neighbourhoods: buckets.neighbourhood.slice(0, KEEP),
-    schools: buckets.school.slice(0, KEEP),
-    transit: buckets.transit.slice(0, KEEP),
-    parks: buckets.park.slice(0, KEEP),
-    community: buckets.community.slice(0, KEEP),
-    shops: buckets.shop.slice(0, KEEP),
+    schools: nearestFirst(buckets.school, origin).slice(0, KEEP),
+    transit: nearestFirst(buckets.transit, origin).slice(0, KEEP),
+    parks: nearestFirst(buckets.park, origin).slice(0, KEEP),
+    community: nearestFirst(buckets.community, origin).slice(0, KEEP),
+    shops: nearestFirst(buckets.shop, origin).slice(0, KEEP),
   };
+}
+
+/** The middle of the matched road, as the point to measure from. */
+function midpoint(
+  points: readonly { lat: number; lon: number }[],
+): { lat: number; lon: number } | undefined {
+  if (points.length === 0) return undefined;
+
+  const lat = points.reduce((sum, p) => sum + p.lat, 0) / points.length;
+  const lon = points.reduce((sum, p) => sum + p.lon, 0) / points.length;
+  return { lat, lon };
+}
+
+/**
+ * Closest first, so the six we keep are the six nearest rather than the six
+ * Overpass happened to list.
+ *
+ * ORDERING ONLY. This is straight-line distance and it never becomes a claim:
+ * nothing printed anywhere is derived from it, and the walking time comes from
+ * a router or is absent (CLAUDE.md §2). Sorting candidates by how far they
+ * look is a different act from telling a buyer how long a walk takes.
+ */
+function nearestFirst(
+  places: readonly AreaPlace[],
+  origin: { lat: number; lon: number } | undefined,
+): AreaPlace[] {
+  if (!origin) return [...places];
+
+  const roughly = (place: AreaPlace) => {
+    const dLat = place.lat - origin.lat;
+    // Longitude degrees are shorter than latitude degrees away from the
+    // equator; at Israel's latitude the factor is about 0.84.
+    const dLon = (place.lon - origin.lon) * Math.cos((origin.lat * Math.PI) / 180);
+    return dLat * dLat + dLon * dLon;
+  };
+
+  return [...places].sort((a, b) => roughly(a) - roughly(b));
 }

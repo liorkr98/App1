@@ -16,15 +16,46 @@ import {
  * סוקולוב, חולון. A fixture of invented Hebrew names would not exercise the
  * thing these guards exist for.
  */
+/**
+ * Coordinates are real too — read off the same Overpass answer — because the
+ * map and the routing both use them, and a fixture of round numbers would not
+ * catch a projection that ignores latitude.
+ */
+const at = (name: string, lat: number, lon: number, walkMinutes?: number) => ({
+  name,
+  lat,
+  lon,
+  ...(walkMinutes === undefined ? {} : { walkMinutes }),
+});
+
 const HOLON: AreaPlaces = {
   city: 'חולון',
   street: 'סוקולוב',
-  neighbourhoods: ['רסקו א׳', 'קריית עבודה'],
-  schools: ['אורט חולון', 'כצנלסון', 'גן גרנית'],
-  transit: ['סוקולוב/שדרות קוגל', 'ויצמן/ההסתדרות'],
-  parks: ['גן הרצל', 'גן השומרון'],
-  community: ['מתנ״ס וולפסון', 'ספריית בן יהודה'],
-  shops: ['שופרסל אקספרס', 'מאפה ברכה'],
+  origin: { lat: 32.0154, lon: 34.7795 },
+  neighbourhoods: [at('רסקו א׳', 32.0161, 34.7801), at('קריית עבודה', 32.0189, 34.7742)],
+  schools: [
+    at('אורט חולון', 32.0148, 34.7812),
+    at('כצנלסון', 32.0171, 34.7768),
+    at('גן גרנית', 32.0139, 34.7783),
+  ],
+  transit: [at('סוקולוב/שדרות קוגל', 32.0157, 34.7789), at('ויצמן/ההסתדרות', 32.0166, 34.7821)],
+  parks: [at('גן הרצל', 32.0143, 34.7776), at('גן השומרון', 32.0182, 34.7809)],
+  community: [at('מתנ״ס וולפסון', 32.0150, 34.7803), at('ספריית בן יהודה', 32.0174, 34.7791)],
+  shops: [at('שופרסל אקספרס', 32.0146, 34.7797), at('מאפה ברכה', 32.0163, 34.7773)],
+};
+
+/** The same area once a router has answered. */
+const HOLON_ROUTED: AreaPlaces = {
+  ...HOLON,
+  schools: [
+    at('אורט חולון', 32.0148, 34.7812, 7),
+    at('כצנלסון', 32.0171, 34.7768, 9),
+    at('גן גרנית', 32.0139, 34.7783, 4),
+  ],
+  transit: [
+    at('סוקולוב/שדרות קוגל', 32.0157, 34.7789, 2),
+    at('ויצמן/ההסתדרות', 32.0166, 34.7821, 6),
+  ],
 };
 
 const EMPTY: AreaPlaces = {
@@ -60,7 +91,9 @@ describe('buildAreaPrompt', () => {
   it('caps each group so four lines do not become a list of forty', () => {
     const prompt = buildAreaPrompt({
       ...HOLON,
-      transit: ['תחנה א', 'תחנה ב', 'תחנה ג', 'תחנה ד', 'תחנה ה', 'תחנה ו'],
+      transit: ['תחנה א', 'תחנה ב', 'תחנה ג', 'תחנה ד', 'תחנה ה', 'תחנה ו'].map((n, i) =>
+        at(n, 32.015 + i / 1000, 34.779),
+      ),
     });
 
     // The whole line, not a substring search: a single Hebrew letter appears
@@ -120,6 +153,37 @@ describe('isGrounded', () => {
 
   it('rejects a population claim, which nothing in the list supports', () => {
     assert.equal(isGrounded('שכונת רסקו א׳ היא שכונה עם תושבים ותיקים.', HOLON), false);
+  });
+});
+
+describe('routed minutes', () => {
+  it('states a routed time and allows exactly that number', () => {
+    const prompt = buildAreaPrompt(HOLON_ROUTED);
+    assert.ok(prompt.includes('אורט חולון (7 דקות הליכה)'));
+
+    assert.equal(
+      isGrounded('הדירה ברסקו א׳. אורט חולון 7 דקות הליכה מהבית.', HOLON_ROUTED),
+      true,
+    );
+  });
+
+  it('refuses a walking time the router did not give', () => {
+    // The whole point: nine minutes is a real number for a different place,
+    // and three is nobody's answer. Neither may be said about אורט חולון.
+    assert.equal(
+      isGrounded('אורט חולון 3 דקות הליכה מהבית, ליד גן הרצל.', HOLON_ROUTED),
+      false,
+    );
+  });
+
+  it('allows no digit at all when no router answered', () => {
+    assert.equal(isGrounded('אורט חולון 7 דקות הליכה מהבית.', HOLON), false);
+  });
+
+  it('writes the time into the plain paragraph when it has one', () => {
+    const text = areaNoteFromPlaces(HOLON_ROUTED);
+    assert.ok(text.includes('אורט חולון (7 דקות הליכה)'));
+    assert.equal(isGrounded(text, HOLON_ROUTED), true);
   });
 });
 

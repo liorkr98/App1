@@ -87,6 +87,50 @@ export interface Fact {
   sourceDate?: string;
 }
 
+/** One named thing near the address. */
+export interface AreaPlace {
+  name: string;
+  /** Where OSM says it is. Used for the map and for routing, never printed. */
+  lat: number;
+  lon: number;
+  /**
+   * ROUTED walking minutes, from a pedestrian router, or absent.
+   *
+   * Absent is the normal state until a router is configured, and absent means
+   * the page says nothing about how long anything takes. It is never derived
+   * from the coordinates above: straight-line distance is not a walk
+   * (CLAUDE.md §2), and the two numbers differ most exactly where it matters —
+   * across a motorway, a rail cutting or a wadi.
+   */
+  walkMinutes?: number;
+}
+
+/** The five groups the paragraph may talk about. */
+export interface AreaPlaces {
+  /** Hebrew city, from the listing. Always present or there is no query. */
+  city: string;
+  /** Hebrew street, when the seller gave one. */
+  street?: string;
+  /**
+   * A point on that street, which is what walking times are measured from and
+   * where the map centres. The street, not the building: OSM names roads, and
+   * a listing page should not pin somebody's front door anyway.
+   */
+  origin?: { lat: number; lon: number };
+  /** OSM `place=suburb|neighbourhood|quarter` names near the street. */
+  neighbourhoods: AreaPlace[];
+  /** Schools and kindergartens. */
+  schools: AreaPlace[];
+  /** Named bus stops, rail and light-rail stations. */
+  transit: AreaPlace[];
+  /** Parks, gardens and playgrounds. */
+  parks: AreaPlace[];
+  /** Community centres, libraries, culture and sport. */
+  community: AreaPlace[];
+  /** Supermarkets, groceries, bakeries, pharmacies. */
+  shops: AreaPlace[];
+}
+
 /**
  * The schema-side definition a Fact is built from. Lives in a category schema
  * file; `options` applies to `enum`, and to `date` fields that also accept a
@@ -685,6 +729,17 @@ export interface Listing {
    * rendered as מאומת; it is לפי המוכר.
    */
   prePortal?: boolean;
+
+  /**
+   * What OpenStreetMap says is around this address: the neighbourhood, and the
+   * named schools, stops, parks, community places and shops, each with its
+   * position and — when a pedestrian router answered — routed walking minutes.
+   *
+   * Written when an agent asks for a description (web/src/pages/api/
+   * description.ts) and read by the page to draw the neighbourhood map. It is
+   * the reason `textAttributions` below exists.
+   */
+  areaPlaces?: AreaPlaces;
 
   /**
    * Licence credits this page owes for the words on it, as opposed to for the

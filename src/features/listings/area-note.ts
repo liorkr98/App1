@@ -38,25 +38,23 @@ import {
  * =========================================================================
  */
 
-/** The five groups the paragraph may talk about. */
-export interface AreaPlaces {
-  /** Hebrew city, from the listing. Always present or there is no query. */
-  city: string;
-  /** Hebrew street, when the seller gave one. */
-  street?: string;
-  /** OSM `place=suburb|neighbourhood|quarter` names near the street. */
-  neighbourhoods: string[];
-  /** Schools and kindergartens, by name. */
-  schools: string[];
-  /** Named bus stops, rail and light-rail stations. */
-  transit: string[];
-  /** Parks, gardens and playgrounds. */
-  parks: string[];
-  /** Community centres, libraries, culture and sport. */
-  community: string[];
-  /** Supermarkets, groceries, bakeries, pharmacies. */
-  shops: string[];
+import type { AreaPlace, AreaPlaces } from '../../types/listing.js';
+
+export type { AreaPlace, AreaPlaces };
+
+/** Every group as one list, in the order the paragraph introduces them. */
+export function allPlaces(places: AreaPlaces): AreaPlace[] {
+  return [
+    ...places.neighbourhoods,
+    ...places.schools,
+    ...places.transit,
+    ...places.parks,
+    ...places.community,
+    ...places.shops,
+  ];
 }
+
+const names = (places: readonly AreaPlace[]): string[] => places.map((place) => place.name);
 
 /** Empty means there is nothing to write about and we do not pretend. */
 export function hasPlaces(places: AreaPlaces): boolean {
@@ -76,12 +74,7 @@ export function allowedNames(places: AreaPlaces): string[] {
   return [
     places.city,
     ...(places.street ? [places.street] : []),
-    ...places.neighbourhoods,
-    ...places.schools,
-    ...places.transit,
-    ...places.parks,
-    ...places.community,
-    ...places.shops,
+    ...names(allPlaces(places)),
   ];
 }
 
@@ -101,8 +94,19 @@ const CAPS = {
   shops: 2,
 } as const;
 
-function line(label: string, names: readonly string[], cap: number): string | undefined {
-  const kept = names.slice(0, cap);
+/**
+ * One line of the prompt, with routed minutes where we have them.
+ *
+ * "שם (7 דקות הליכה)" is the only shape in which a number reaches the model,
+ * and `isGrounded` allows exactly the numbers that appear here. A place with
+ * no routed time is named without one rather than guessed at.
+ */
+function line(label: string, places: readonly AreaPlace[], cap: number): string | undefined {
+  const kept = places.slice(0, cap).map((place) =>
+    place.walkMinutes === undefined
+      ? place.name
+      : `${place.name} (${place.walkMinutes} דקות הליכה)`,
+  );
   return kept.length > 0 ? `${label}: ${kept.join(', ')}` : undefined;
 }
 
@@ -184,12 +188,27 @@ const OTHER_CITIES = [
  * mentioning schools without naming one of the real ones is not.
  */
 export function isGrounded(text: string, places: AreaPlaces): boolean {
-  // No digits at all. There is no number in this paragraph we could source —
-  // no routed time, no distance, no population, no bus line.
-  if (/\d/.test(text)) return false;
+  /*
+   * THE ONLY NUMBERS ALLOWED ARE ROUTED WALKING MINUTES WE WERE GIVEN.
+   *
+   * With no router configured that set is empty, and the rule reduces to "no
+   * digits at all" — which is correct, because then there is nothing numeric
+   * about the area we could source. With a router it admits exactly the
+   * minutes in the prompt, so "7 דקות" is allowed when the router said seven
+   * and refused when it said nothing or said nine.
+   */
+  const allowed = new Set(
+    allPlaces(places)
+      .map((place) => place.walkMinutes)
+      .filter((minutes): minutes is number => minutes !== undefined)
+      .map(String),
+  );
+  for (const number of text.match(/\d+/g) ?? []) {
+    if (!allowed.has(number)) return false;
+  }
 
-  const mentions = (needle: RegExp, names: readonly string[]) =>
-    !needle.test(text) || names.some((name) => text.includes(name));
+  const mentions = (needle: RegExp, group: readonly AreaPlace[]) =>
+    !needle.test(text) || group.some((place) => text.includes(place.name));
 
   if (!mentions(/בית ספר|בתי ספר|בי״ס|גן ילדים|גני ילדים|תיכון|חטיבה/, places.schools)) {
     return false;
@@ -249,17 +268,23 @@ function hebrewList(items: readonly string[]): string {
  */
 export function areaNoteFromPlaces(places: AreaPlaces): string {
   const where = places.neighbourhoods[0]
-    ? `${places.neighbourhoods[0]}, ${places.city}`
+    ? `${places.neighbourhoods[0].name}, ${places.city}`
     : places.city;
 
   const sentences = [`הדירה ב${where}.`];
 
-  const schools = places.schools.slice(0, 3);
+  /** "אורט חולון" or "אורט חולון, 7 דקות הליכה" — never a guessed time. */
+  const said = (place: AreaPlace): string =>
+    place.walkMinutes === undefined
+      ? place.name
+      : `${place.name} (${place.walkMinutes} דקות הליכה)`;
+
+  const schools = places.schools.slice(0, 3).map(said);
   if (schools.length > 0) {
     sentences.push(`בסביבה ${hebrewList(schools)}.`);
   }
 
-  const transit = places.transit.slice(0, 2);
+  const transit = places.transit.slice(0, 2).map(said);
   if (transit.length > 0) {
     sentences.push(`תחנות ${hebrewList(transit)}.`);
   }
@@ -269,9 +294,9 @@ export function areaNoteFromPlaces(places: AreaPlaces): string {
    * על שם בני לוטי רייך לאזרחים ותיקים" is one item — and five of them in a
    * sentence is a list, not a description. The brief was a few lines.
    */
-  const amenities = [places.parks[0], places.community[0], places.shops[0]].filter(
-    (name): name is string => Boolean(name),
-  );
+  const amenities = [places.parks[0], places.community[0], places.shops[0]]
+    .filter((place): place is AreaPlace => Boolean(place))
+    .map(said);
   if (amenities.length > 0) {
     sentences.push(`וגם ${hebrewList(amenities)}.`);
   }

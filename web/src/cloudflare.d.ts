@@ -29,5 +29,18 @@ declare module 'cloudflare:workers' {
      * deploy that has never had a key.
      */
     DEEPSEEK_API_KEY?: string;
+
+    /**
+     * A self-hosted OSRM with the FOOT profile, e.g. `https://osrm.fly.dev`.
+     *
+     *   npx wrangler secret put OSRM_URL
+     *
+     * Optional, and it is the preferred router when set (CLAUDE.md §2). `osrm/`
+     * in this repository builds and deploys the service; docs/OSRM.md has the
+     * graph build. Without it, walking times come from the OpenStreetMap
+     * Foundation's Valhalla instead — see web/src/lib/routing.ts, which also
+     * records why the public OSRM demo server cannot be used.
+     */
+    OSRM_URL?: string;
   };
 }

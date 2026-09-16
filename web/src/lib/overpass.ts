@@ -104,6 +104,11 @@ export function areaQuery(city: string, street: string): string {
    * `map_to_area` off the boundary relation, with `(area.city)` on the POIs as
    * well as the street: 5.7 seconds for the same address, and nothing from a
    * neighbouring town. Correct and fast, so this is the shape.
+   *
+   * The last line returns the MATCHED ROAD as well as the places. Its midpoint
+   * is what walking times are measured from and where the map centres; without
+   * it there is no origin, and geocoding the building itself is neither
+   * available nor wanted (ingest/src/geocode/index.ts).
    */
   return `[out:json][timeout:50];
 rel["boundary"="administrative"]["name"~${JSON.stringify(cityPattern(city))}]->.rels;
@@ -117,7 +122,8 @@ way(area.city)["highway"]["name"~${JSON.stringify(pattern)}]->.scope;
   nwr(around.scope:${RADIUS_M})(area.city)["railway"~"^(station|halt|tram_stop)$"];
   nwr(around.scope:800)(area.city)["place"~"^(suburb|neighbourhood|quarter)$"];
 );
-out center tags 300;`;
+out center tags 300;
+.scope out center tags 60;`;
 }
 
 /**

@@ -6,6 +6,7 @@ import {
   groupFor,
   nameFor,
   placesFromOsm,
+  pointOf,
   streetPattern,
   withoutHouseNumber,
   withoutStreetPrefix,
@@ -152,54 +153,132 @@ describe('nameFor', () => {
   });
 });
 
+describe('pointOf', () => {
+  it('reads a node\u2019s own position and a way\u2019s centre', () => {
+    // A bus stop is a node; a school is usually a polygon, and `out center`
+    // is why the second form exists at all.
+    assert.deepEqual(pointOf({ lat: 32.0157, lon: 34.7789 }), {
+      lat: 32.0157,
+      lon: 34.7789,
+    });
+    assert.deepEqual(pointOf({ center: { lat: 32.0148, lon: 34.7812 } }), {
+      lat: 32.0148,
+      lon: 34.7812,
+    });
+    assert.equal(pointOf({}), undefined);
+  });
+});
+
 describe('placesFromOsm', () => {
   const where = { city: 'חולון', street: 'סוקולוב' };
+  const node = (tags: Record<string, string>, lat = 32.015, lon = 34.779) => ({
+    tags,
+    lat,
+    lon,
+  });
 
   it('groups, names and de-duplicates', () => {
     const places = placesFromOsm(
       [
-        { tags: { amenity: 'school', 'name:he': 'אורט חולון' } },
+        node({ amenity: 'school', 'name:he': 'אורט חולון' }, 32.0148, 34.7812),
         // The same school as a building polygon as well as a node.
-        { tags: { amenity: 'school', 'name:he': 'אורט חולון' } },
-        { tags: { highway: 'bus_stop', name: 'סוקולוב/שדרות קוגל' } },
+        { tags: { amenity: 'school', 'name:he': 'אורט חולון' }, center: { lat: 32.0148, lon: 34.7812 } },
+        node({ highway: 'bus_stop', name: 'סוקולוב/שדרות קוגל' }, 32.0157, 34.7789),
         // The other direction of the same stop.
-        { tags: { highway: 'bus_stop', name: 'סוקולוב/שדרות קוגל' } },
-        { tags: { leisure: 'park', name: 'גן הרצל' } },
-        { tags: { amenity: 'bench' } },
-        { tags: { leisure: 'park' } },
+        node({ highway: 'bus_stop', name: 'סוקולוב/שדרות קוגל' }, 32.0158, 34.779),
+        node({ leisure: 'park', name: 'גן הרצל' }, 32.0143, 34.7776),
+        node({ amenity: 'bench' }),
+        node({ leisure: 'park' }),
       ],
       where,
     );
 
-    assert.deepEqual(places.schools, ['אורט חולון']);
-    assert.deepEqual(places.transit, ['סוקולוב/שדרות קוגל']);
-    assert.deepEqual(places.parks, ['גן הרצל']);
+    assert.deepEqual(
+      places.schools.map((p) => p.name),
+      ['אורט חולון'],
+    );
+    assert.deepEqual(
+      places.transit.map((p) => p.name),
+      ['סוקולוב/שדרות קוגל'],
+    );
+    assert.deepEqual(places.parks[0], { name: 'גן הרצל', lat: 32.0143, lon: 34.7776 });
     assert.equal(places.city, 'חולון');
     assert.equal(places.street, 'סוקולוב');
+  });
+
+  it('skips a place OSM gave no position for', () => {
+    // No coordinate means no map pin and nothing to route to.
+    const places = placesFromOsm([{ tags: { leisure: 'park', name: 'גן הרצל' } }], where);
+    assert.deepEqual(places.parks, []);
+  });
+
+  it('takes the matched road as the origin, and does not list it as a place', () => {
+    const places = placesFromOsm(
+      [
+        node({ highway: 'residential', name: 'סוקולוב' }, 32.014, 34.778),
+        node({ highway: 'residential', name: 'סוקולוב' }, 32.016, 34.78),
+        node({ leisure: 'park', name: 'גן הרצל' }, 32.0143, 34.7776),
+      ],
+      where,
+    );
+
+    // The middle of the road, which is what walking times are measured from.
+    // Compared with a tolerance because it is a mean of floats.
+    assert.ok(Math.abs((places.origin?.lat ?? 0) - 32.015) < 1e-9);
+    assert.ok(Math.abs((places.origin?.lon ?? 0) - 34.779) < 1e-9);
+    assert.equal(places.parks.length, 1);
+  });
+
+  it('never invents a walking time from the coordinates it holds', () => {
+    // The one rule this whole module exists under: distance orders candidates
+    // and draws the map, and a walking time comes from a router or not at all.
+    const places = placesFromOsm(
+      [node({ leisure: 'park', name: 'גן הרצל' }, 32.0143, 34.7776)],
+      where,
+    );
+
+    assert.equal(places.parks[0]?.walkMinutes, undefined);
   });
 
   it('does not report the city as its own neighbourhood', () => {
     const places = placesFromOsm(
       [
-        { tags: { place: 'city', 'name:he': 'חולון' } },
-        { tags: { place: 'suburb', 'name:he': 'רסקו א׳' } },
+        node({ place: 'city', 'name:he': 'חולון' }),
+        node({ place: 'suburb', 'name:he': 'רסקו א׳' }),
       ],
       where,
     );
 
-    assert.deepEqual(places.neighbourhoods, ['רסקו א׳']);
+    assert.deepEqual(
+      places.neighbourhoods.map((p) => p.name),
+      ['רסקו א׳'],
+    );
   });
 
-  it('caps each group, because one street can sit near forty stops', () => {
-    const stops = Array.from({ length: 40 }, (_, i) => ({
-      tags: { highway: 'bus_stop', name: `תחנה ${String.fromCharCode(1488 + (i % 22))}${i}` },
-    }));
+  it('keeps the SIX NEAREST when a street sits near forty stops', () => {
+    const stops = Array.from({ length: 40 }, (_, i) =>
+      node(
+        { highway: 'bus_stop', name: `תחנה ${i}` },
+        // Increasingly far from the origin below.
+        32.015 + i / 2000,
+        34.779,
+      ),
+    );
 
-    assert.equal(placesFromOsm(stops, where).transit.length, 6);
+    const places = placesFromOsm(
+      [node({ highway: 'residential', name: 'סוקולוב' }, 32.015, 34.779), ...stops],
+      where,
+    );
+
+    assert.equal(places.transit.length, 6);
+    assert.deepEqual(
+      places.transit.map((p) => p.name),
+      ['תחנה 0', 'תחנה 1', 'תחנה 2', 'תחנה 3', 'תחנה 4', 'תחנה 5'],
+    );
   });
 
   it('omits the street when the seller withheld it', () => {
-    const places = placesFromOsm([{ tags: { leisure: 'park', name: 'גן הרצל' } }], {
+    const places = placesFromOsm([node({ leisure: 'park', name: 'גן הרצל' })], {
       city: 'חולון',
     });
 

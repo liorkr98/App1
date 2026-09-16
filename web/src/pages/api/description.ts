@@ -5,11 +5,13 @@ import { env } from 'cloudflare:workers';
 
 import {
   acceptAreaNote,
+  allPlaces,
   areaNoteFromPlaces,
   AREA_SYSTEM_PROMPT,
   buildAreaPrompt,
   hasPlaces,
   OSM_ATTRIBUTION,
+  type AreaPlace,
   type AreaPlaces,
 } from '@/features/listings/area-note';
 import {
@@ -24,6 +26,7 @@ import type { Fact } from '@/types/listing';
 
 import { deepseekParagraph } from '../../lib/deepseek';
 import { addressForQuery, areaPlaces } from '../../lib/overpass';
+import { walkMinutes } from '../../lib/routing';
 import { supabaseAsUser, supabaseConfigured } from '../../lib/supabase';
 
 /**
@@ -78,6 +81,42 @@ function isCategory(value: unknown): value is ListingCategory {
 
 function asString(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() !== '' ? value.trim() : undefined;
+}
+
+/**
+ * The same places with routed walking minutes attached, where a router had an
+ * answer.
+ *
+ * One matrix request for every place at once. A router that is not configured,
+ * or does not answer, leaves every `walkMinutes` undefined — which renders as
+ * no time at all rather than as a guess (CLAUDE.md §2).
+ */
+async function withWalkMinutes(
+  places: AreaPlaces | undefined,
+): Promise<AreaPlaces | undefined> {
+  if (!places?.origin) return places;
+
+  const flat = allPlaces(places);
+  if (flat.length === 0) return places;
+
+  const minutes = await walkMinutes(places.origin, flat);
+  const byName = new Map(flat.map((place, index) => [place.name, minutes[index]]));
+
+  const timed = (group: readonly AreaPlace[]): AreaPlace[] =>
+    group.map((place) => {
+      const found = byName.get(place.name);
+      return found === undefined ? place : { ...place, walkMinutes: found };
+    });
+
+  return {
+    ...places,
+    neighbourhoods: timed(places.neighbourhoods),
+    schools: timed(places.schools),
+    transit: timed(places.transit),
+    parks: timed(places.parks),
+    community: timed(places.community),
+    shops: timed(places.shops),
+  };
 }
 
 /**
@@ -163,7 +202,10 @@ export const POST: APIRoute = async ({ request }) => {
     const cached = cachedPlaces(row.area_places, where);
     const places = cached ?? (await areaPlaces(where.city, where.street));
 
-    if (places && hasPlaces(places)) {
+    const routed = cached ? places : await withWalkMinutes(places);
+
+    if (routed && hasPlaces(routed)) {
+      const places = routed;
       /*
        * Kept on the listing row so a second press costs nothing, and so the
        * published page can carry the ODbL credit for text derived from these

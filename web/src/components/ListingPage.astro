@@ -16,6 +16,7 @@ import { CATEGORY_PRESENTATION } from '../lib/category-presentation';
 import { t } from '../lib/i18n';
 import { perUnitPrice } from '../lib/price';
 import { mapCardSrc } from '@/features/listings/map-card';
+import { areaMap } from '@/features/listings/area-map';
 import { isWalkItem, labeledWalkItems } from '@/features/listings/photo-rooms';
 
 interface Props {
@@ -49,6 +50,13 @@ const heading = listing.category === 'property' ? 'על הדירה' : 'על הר
 // A vehicle has no street, so no map. See DESIGN-CONTRACT §5.4.
 const showMap = Boolean(listing.location?.street);
 const mapImageUrl = mapCardSrc();
+
+/**
+ * The neighbourhood drawn from real coordinates, when the address was looked
+ * up. Undefined falls back to the generic pin card, which is the honest state
+ * for a listing whose surroundings we have never fetched.
+ */
+const neighbourhoodMap = listing.areaPlaces ? areaMap(listing.areaPlaces) : undefined;
 
 /**
  * ₪ per m², derived from the price and whichever fact the schema marks as the
@@ -141,6 +149,8 @@ const hasWalk = walkItems.length > 0;
       location={listing.location}
       mapImageUrl={mapImageUrl}
       enrichment={listing.enrichment?.category === 'property' ? listing.enrichment : undefined}
+      areaMap={neighbourhoodMap}
+      areaAttribution={listing.textAttributions?.[0]}
     />
   )}
 

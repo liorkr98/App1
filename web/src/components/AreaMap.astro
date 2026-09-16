@@ -1,0 +1,103 @@
+---
+import type { AreaMap } from '@/features/listings/area-map';
+import { t } from '../lib/i18n';
+import Prose from './Prose.astro';
+
+interface Props {
+  map: AreaMap;
+  /** ODbL. The data is OpenStreetMap's and saying so is a licence condition. */
+  attribution: string;
+}
+
+const { map, attribution } = Astro.props;
+
+/**
+ * The neighbourhood, drawn.
+ *
+ * THE DRAWING IS GEOMETRY AND THE LIST IS WORDS, and the split is deliberate
+ * (see area-map.ts). The SVG carries pins and Hebrew letter keys; every name
+ * and every number is in the list below it, where a number can sit inside
+ * `<bdi>` as §4.2 requires and a screen reader gets a list instead of a
+ * picture. The SVG is aria-hidden for the same reason.
+ *
+ * THE MAP DOES NOT MIRROR. Everything else on this page flips for Hebrew;
+ * north stays up and east stays east. That is why the positions are SVG
+ * attributes and not CSS offsets — there is no inline-start here to flip.
+ */
+const colour: Record<string, string> = {
+  transit: '#4a5d3a',
+  school: '#7a5c2e',
+  park: '#3f6b4a',
+  community: '#5a4a7a',
+  shop: '#7a3f3f',
+  neighbourhood: '#67685f',
+};
+---
+
+<figure class="area-map">
+  <svg
+    class="area-map-svg"
+    viewBox={`0 0 ${map.width} ${map.height}`}
+    role="presentation"
+    aria-hidden="true"
+  >
+    <rect width={map.width} height={map.height} rx="4" fill="#f1ede3" />
+
+    {/* A faint grid for scale, and nothing that pretends to be a road. */}
+    <g stroke="#e4e0d6" stroke-width="2">
+      {[0.25, 0.5, 0.75].map((at) => (
+        <line x1={map.width * at} y1="0" x2={map.width * at} y2={map.height} />
+      ))}
+      {[0.33, 0.66].map((at) => (
+        <line x1="0" y1={map.height * at} x2={map.width} y2={map.height * at} />
+      ))}
+    </g>
+
+    {/* Spokes from the flat to each place, so direction reads at a glance. */}
+    <g stroke="#d4cfc3" stroke-width="2" stroke-dasharray="6 6">
+      {map.pins.map((pin) => (
+        <line x1={map.origin.x} y1={map.origin.y} x2={pin.x} y2={pin.y} />
+      ))}
+    </g>
+
+    {map.pins.map((pin) => (
+      <g>
+        <circle cx={pin.x} cy={pin.y} r="17" fill={colour[pin.group] ?? colour.neighbourhood} />
+        <text
+          x={pin.x}
+          y={pin.y}
+          text-anchor="middle"
+          dominant-baseline="central"
+          font-family="'Frank Ruhl Libre', serif"
+          font-size="19"
+          font-weight="700"
+          fill="#fbfaf7"
+        >{pin.key}</text>
+      </g>
+    ))}
+
+    {/* The flat. Last, so it sits above the spokes. */}
+    <g>
+      <circle cx={map.origin.x} cy={map.origin.y} r="13" fill="#fbfaf7" />
+      <circle cx={map.origin.x} cy={map.origin.y} r="8" fill="#191a15" />
+    </g>
+  </svg>
+
+  <ol class="area-map-list">
+    {map.pins.map((pin) => (
+      <li>
+        <span class="area-map-key" style={`--pin:${colour[pin.group] ?? colour.neighbourhood}`}>
+          {pin.key}
+        </span>
+        <b><Prose text={pin.name} /></b>
+        {pin.walkMinutes === undefined ? null : (
+          <span class="area-map-walk">
+            <bdi>{pin.walkMinutes}</bdi> {t('listing.mapNearbyMinutes')}
+          </span>
+        )}
+      </li>
+    ))}
+  </ol>
+
+  <figcaption class="area-map-credit"><Prose text={attribution} /></figcaption>
+</figure>
