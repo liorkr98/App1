@@ -27,8 +27,8 @@ redirects when `media.pdfUrl` exists, and the worker is not deployed from this
 change. Deploy:
 
 ```
-fly deploy --config worker/fly.toml --dockerfile worker/Dockerfile
-fly secrets set SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=...
+fly deploy --app app1-mmbfma --config worker/fly.toml --dockerfile worker/Dockerfile
+fly secrets set --app app1-mmbfma SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=...
 ```
 
 Do not set `PAGE_BASE_URL` until `hasivuv.com` is the live origin.

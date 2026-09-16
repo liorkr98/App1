@@ -1,15 +1,15 @@
 # Fly configuration for the pipeline worker (ADR 0001).
 #
 # Deploy from the REPO ROOT so the Dockerfile can see worker/:
-#   fly deploy --config worker/fly.toml --dockerfile worker/Dockerfile
+#   fly deploy --app app1-mmbfma --config worker/fly.toml --dockerfile worker/Dockerfile
 #
 # Secrets are set by hand and never live in this file or the repo:
-#   fly secrets set SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=...
+#   fly secrets set --app app1-mmbfma SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=...
 #
 # The service-role key bypasses RLS entirely. It is the one credential in the
 # system that must never reach a client (CLAUDE.md §8).
 
-app = "listing-worker"
+app = "app1-mmbfma"
 primary_region = "fra"   # Frankfurt, matching the eu-central-1 Supabase project
 
 [build]
