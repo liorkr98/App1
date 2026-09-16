@@ -1,4 +1,5 @@
 import type { Fact, Listing } from '@/types/listing';
+import { factDefinition } from '@/features/listings/schemas';
 
 import { factValue, ils, num } from './format';
 
@@ -53,6 +54,35 @@ export function ogDescription(listing: Listing, keys: string[]): string {
   for (const key of keys) {
     const fact = get(listing.facts, key);
     if (!fact) continue;
+
+    /*
+     * THE SCHEMA SAYS HOW A FACT IS SAID IN A SENTENCE, and this line is one.
+     *
+     * `${label} ${value}` produced "מעלית יש", "ממ״ד יש" and — because a unit
+     * replaced the label entirely — "12 מ״ר" for a balcony, on the same line
+     * as "95 מ״ר" for the flat. That is the single most-read string in the
+     * product (§6): it is what a buyer sees in a WhatsApp thread beside
+     * messages from actual people, and it read as machine output.
+     *
+     * `phrase` is the same field the generated description uses, so the card
+     * and the prose say a fact the same way. A boolean's phrase is the thing
+     * itself — "מעלית" — which is how anybody lists what a flat has.
+     */
+    const definition = factDefinition(listing.category, key);
+    if (definition?.phrase) {
+      if (fact.type === 'boolean') {
+        if (fact.value === true) parts.push(definition.phrase.replace('{value}', '').trim());
+        continue;
+      }
+      parts.push(
+        definition.phrase.replace(
+          '{value}',
+          factValue(fact.value, definition.grouped !== false),
+        ),
+      );
+      continue;
+    }
+
     const value = factValue(fact.value);
     parts.push(fact.unit ? `${value} ${fact.unit}` : `${fact.label} ${value}`.trim());
   }
