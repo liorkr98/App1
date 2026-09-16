@@ -17,7 +17,22 @@ export async function recordEditorEvent(
   if (!supabaseConfigured) return;
 
   try {
-    await supabase().rpc('record_editor_event', {
+    const client = supabase();
+
+    /*
+     * The no-op this file already claimed to do, now actually done.
+     *
+     * `record_editor_event` is granted to `authenticated` and not to `anon`,
+     * so a ping from a signed-out visitor is a 401 — one on every single
+     * editor load, because the first "enter" event fires on mount, before any
+     * session has been restored. `.rpc()` returns its error rather than
+     * throwing, so the catch below never caught it and the failure showed up
+     * only as a console error in a browser nobody was watching.
+     */
+    const { data: session } = await client.auth.getSession();
+    if (!session.session) return;
+
+    await client.rpc('record_editor_event', {
       p_step: step,
       p_kind: kind,
       p_listing_id: listingId ?? undefined,

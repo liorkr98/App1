@@ -35,6 +35,10 @@ import '../../styles/editor.css';
     */}
     <meta name="robots" content="noindex,nofollow" />
 
+    {/* Without this the browser asks for /favicon.ico, which does not exist,
+        and every editor load carries a 404. */}
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

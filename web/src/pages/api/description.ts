@@ -1,4 +1,7 @@
 import type { APIRoute } from 'astro';
+// The Worker's own environment, which is where a Cloudflare secret lives.
+// See web/src/cloudflare.d.ts for why it is read this way and not another.
+import { env } from 'cloudflare:workers';
 
 import {
   acceptDescription,
@@ -73,7 +76,7 @@ async function areaNote(
   }
 }
 
-export const POST: APIRoute = async ({ request, locals }) => {
+export const POST: APIRoute = async ({ request }) => {
   if (!supabaseConfigured) return json({ error: 'not_configured' }, 503);
 
   const token = (request.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
@@ -129,15 +132,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     ...(note ? { areaNote: note } : {}),
   };
 
-  /*
-   * The runtime env, not import.meta.env. A Worker secret exists per request
-   * and is not inlined at build time; reading it the other way returns
-   * undefined on the deployed site and works locally, which is the worst
-   * possible split.
-   */
-  const apiKey = (
-    locals as { runtime?: { env?: Record<string, string | undefined> } }
-  ).runtime?.env?.DEEPSEEK_API_KEY;
+  const apiKey = env.DEEPSEEK_API_KEY;
 
   if (apiKey) {
     const raw = await deepseekParagraph({
