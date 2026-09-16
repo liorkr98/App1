@@ -276,13 +276,18 @@ export default function Editor() {
        */
       const processed = await stripAndResize(photo.file);
       if (!processed) {
-        mark(photo.id, { status: 'uploaded', path: result.path });
+        // The browser could not decode it — an unsupported camera format is
+        // the usual reason. The original is safe and the pipeline can produce
+        // a public copy later, but this photo has no URL, so it is marked
+        // failed rather than shown as done: a photo the page cannot display
+        // must not look published.
+        mark(photo.id, { status: 'failed', path: result.path });
         continue;
       }
 
-      const published = await uploadDerived(listingId.current, photo.id, processed);
+      const published = await uploadDerived(listingId.current, result.path, processed);
       mark(photo.id, {
-        status: 'uploaded',
+        status: 'error' in published ? 'failed' : 'uploaded',
         path: result.path,
         ...('error' in published ? {} : { publicUrl: published.url }),
         width: processed.width,

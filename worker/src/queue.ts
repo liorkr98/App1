@@ -26,7 +26,36 @@ export async function claim(jobTypes: JobType[]): Promise<Job | null> {
     throw new Error(`claim failed: ${error.message}`);
   }
 
-  return (data as Job | null) ?? null;
+  return claimedJob(data);
+}
+
+/**
+ * What the claim RPC actually returned: a job, or nothing to do.
+ *
+ * AN EMPTY QUEUE ARRIVES AS A ROW OF NULLS, NOT AS null.
+ *
+ * `claim_job` is declared `returns public.jobs`, and PostgREST renders a
+ * composite NULL as an object with every field set to null rather than as JSON
+ * null. A `?? null` therefore kept it, the loop treated it as a claimed job,
+ * no handler matched a null `job_type`, and the failure path issued
+ *
+ *   PATCH /rest/v1/jobs?id=eq.null  ->  400
+ *
+ * Because a job HAD been "claimed", the loop also skipped its idle sleep and
+ * polled again immediately. On the live project that was thousands of 400s a
+ * minute, indefinitely, from a machine with nothing to do — and it started the
+ * moment the queue emptied, so the thing that triggered it was the pipeline
+ * working correctly.
+ *
+ * Exported for its test rather than for a caller: the shape of a composite
+ * NULL over PostgREST is not something to rediscover in production.
+ */
+export function claimedJob(data: unknown): Job | null {
+  if (!data || typeof data !== 'object') return null;
+
+  // The primary key. A row without one is not a row.
+  const { id } = data as { id?: unknown };
+  return typeof id === 'string' && id !== '' ? (data as Job) : null;
 }
 
 /** Reports progress to the row the app is subscribed to over Realtime. */

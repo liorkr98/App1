@@ -81,6 +81,35 @@ export async function stripAndResize(
 }
 
 /**
+ * Where the public copy of one photograph lives.
+ *
+ * NAMED AFTER THE ORIGINAL, not after the editor's own photo id, and both
+ * halves of that matter.
+ *
+ * The id was `${file.name}:${file.size}:${file.lastModified}:${random}` —
+ * built to be unique in a React list, not to be a storage key. It put colons
+ * and a second dot into an object name, and an upload that a storage backend
+ * rejects for its key is an upload whose error nobody reads: the photograph
+ * ended up in `originals`, the public copy did not exist, and the listing was
+ * published with no pictures.
+ *
+ * The original's path is already sanitised by `originalPath` and is already
+ * unique — it carries a timestamp. Reusing its stem also lines this file up
+ * with the worker's enhanced ladder, which is `{stem}-{width}.webp` from the
+ * same original (worker/src/handlers/enhance.ts). Two producers, one naming
+ * convention, so the enhanced variants can be attached to a listing later
+ * without renaming anything.
+ */
+export function derivedPath(listingId: string, sourcePath: string): string {
+  const name = sourcePath.split('/').pop() ?? '';
+  const stem = name.replace(/\.[^.]+$/, '').replace(/[^\w.-]+/g, '-');
+
+  // Empty only if the caller had no original path at all, which would mean the
+  // upload it belongs to never happened.
+  return `${listingId}/${stem || Date.now()}.webp`;
+}
+
+/**
  * Uploads the public copy and returns its URL.
  *
  * The path's FIRST SEGMENT IS THE LISTING ID, which is what every storage
@@ -90,11 +119,11 @@ export async function stripAndResize(
  */
 export async function uploadDerived(
   listingId: string,
-  photoId: string,
+  sourcePath: string,
   processed: ProcessedPhoto,
 ): Promise<{ url: string } | { error: string }> {
   const client = supabase();
-  const path = `${listingId}/${photoId}.webp`;
+  const path = derivedPath(listingId, sourcePath);
 
   const { error } = await client.storage.from('derived').upload(path, processed.blob, {
     contentType: 'image/webp',
