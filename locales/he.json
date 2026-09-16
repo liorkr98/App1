@@ -135,6 +135,15 @@
       "grocery": "מכולת"
     },
     "mapNearbyMinutes": "דקות הליכה",
+    "mapNearbyMin": "דק׳",
+    "mapNearbyMinAria": "{minutes} דקות הליכה ל{label}",
+    "neighborhoodTitle": "על השכונה",
+    "neighborhoodDisclaimer": "נכתב לפי הנתונים שכבר על העמוד. לא הערכת שווי.",
+    "civicKind": {
+      "police": "משטרה",
+      "parking": "חניון ציבורי",
+      "park_ride": "חניון חנה וסע"
+    },
     "tourCta": "סיור תלת־ממד",
     "newWindow": "נפתח בחלון חדש"
   },

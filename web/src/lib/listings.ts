@@ -115,10 +115,19 @@ const propertyEnrichment: PropertyEnrichment = {
     { id: 'p4', name: 'קפה גרג', category: 'cafe', walkMinutes: 6, ...{ sourceName: 'OpenStreetMap', sourceDate: '2026-09-05' } },
     { id: 'p5', name: 'מסעדת הדרים', category: 'restaurant', walkMinutes: 11, ...{ sourceName: 'OpenStreetMap', sourceDate: '2026-09-05' } },
   ],
+  civic: [
+    { id: 'c1', name: 'תחנת חולון', kind: 'police', walkMinutes: 12, sourceName: 'משטרת ישראל', sourceDate: '2026-09-15' },
+    { id: 'c2', name: 'חניה ציבורית, חולון', kind: 'parking', walkMinutes: 4, sourceName: 'מפ״י', sourceDate: '2026-09-15' },
+  ],
   summary: {
     restaurantsWithin500m: 7,
     nearestGrocery: { name: 'שופרסל שלי', walkMinutes: 5 },
     nearestPark: { name: 'פארק פרס', walkMinutes: 9 },
+  },
+  // Hand-written from the sample facts above so the demo shows the block
+  // without calling a model at build time.
+  neighborhoodNote: {
+    text: 'בחולון, ליד סוקולוב. הרכבת הקלה בוולפסון כשבע דקות הליכה, וגן רימון כארבע. שופרסל שלי חמש דקות ברגל.',
   },
   // Carried by the data, so a page with no OSM places carries no OSM credit.
   attributions: ['© מפתחי OpenStreetMap, ברישיון ODbL'],
