@@ -15,7 +15,6 @@ const { location, mapImageUrl, enrichment } = Astro.props;
 
 const address = location.street ? `${location.street}, ${location.city}` : location.city;
 const nearby = enrichment ? mapNearbyItems(enrichment) : [];
-const note = enrichment?.neighborhoodNote;
 const navigate =
   location.lat !== undefined && location.lng !== undefined
     ? wazeNavigateUrl(location.lat, location.lng)
@@ -64,12 +63,5 @@ const navigate =
         </li>
       ))}
     </ul>
-  )}
-  {note && (
-    <div class="map-note">
-      <h3>{t('listing.neighborhoodTitle')}</h3>
-      <p><Prose text={note.text} /></p>
-      <p class="map-note-disclaimer">{t('listing.neighborhoodDisclaimer')}</p>
-    </div>
   )}
 </section>

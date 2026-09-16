@@ -11,9 +11,10 @@
  * Present on every listing page regardless of category, because the WhatsApp
  * CTA is what the whole product is built around.
  *
- * Copied byte for byte from web/src/components/CtaDock.astro. If that string
- * is ever edited this check starts failing, which is the correct outcome and
- * not a bug: the sentinel needs updating in the same commit.
+ * Copied byte for byte from locales/he.json `listing.whatsappCta`, which is
+ * what CtaDock.astro renders. If that string is ever edited this check
+ * starts failing, which is the correct outcome and not a bug: the sentinel
+ * needs updating in the same commit.
  */
 export const HEBREW_SENTINEL = 'שליחת הודעה בוואטסאפ';
 

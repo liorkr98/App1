@@ -86,7 +86,7 @@ const START: EditorState = {
   // 'unknown' is the fail-closed value — it blocks publishing, which is
   // the correct behaviour for a client that has asked nobody. loadEntitlement
   // replaces this once the session exists, and that read must still produce
-  // 'unknown' on any error rather than 'paid'.
+  // 'unknown' on any error rather than 'paid' or 'free'.
   //
   // A seller can still reach the preview with this value, which is the
   // point: seeing the finished page is the conversion moment.
@@ -513,8 +513,8 @@ export default function Editor() {
    * ======================== HUMAN REVIEW ========================
    * CLAUDE.md §8. The gate is `canPublish`, which is false whenever ANY
    * blocker stands — including the entitlement one, which fails closed on
-   * anything that is not 'paid'. This function does not read or decide
-   * entitlement; it refuses to act when the shared rule says no.
+   * anything that is not 'paid' or 'free'. This function does not read or
+   * decide entitlement; it refuses to act when the shared rule says no.
    * ==============================================================
    */
   const publish = () => {
