@@ -26,12 +26,69 @@ exactly like a missing feature.
 
 `osrm/` is that service now.
 
-## Deploying it
+## Two Fly apps, not one
+
+The Fly app that is already live (`app1-mmbfma`) is the **listing worker**:
+photos, OG, PDF. It cannot host the routing graph. OSRM is a **second** Fly
+app. Do not `fly deploy` this Dockerfile onto `app1-mmbfma` — that would
+replace the worker with a router and take pictures down.
+
+This environment cannot run that second deploy: there is no Fly token that
+authenticates (`fly auth whoami` returns 401), and the graph is built by
+Fly's remote builder, not here. The steps below are what you run on a
+machine where `fly auth whoami` prints your email.
+
+## What you do
+
+From a clone of this repo, logged in to Fly and Cloudflare:
+
+**1. Create the OSRM app** (once). The name in `osrm/fly.toml` is
+`hasivuv-osrm`. If that name is taken, change `app =` there first.
+
+```
+fly apps create hasivuv-osrm
+```
+
+**2. Deploy the graph.** From the **repo root**, not from `osrm/`:
 
 ```
 fly deploy --config osrm/fly.toml --dockerfile osrm/Dockerfile
-npx wrangler secret put OSRM_URL        # https://<app>.fly.dev
 ```
+
+This downloads the Geofabrik Israel extract and runs `osrm-extract` /
+`osrm-partition` / `osrm-customize` on Fly's builder. Expect **tens of
+minutes** and a large image. If it fails, the failure is almost always
+builder memory during `osrm-extract`, not the 2 GB app VM.
+
+**3. Confirm a real pedestrian route**, not a ping:
+
+```
+curl "https://hasivuv-osrm.fly.dev/route/v1/foot/34.781812,32.085338;34.783014,32.087958?overview=false"
+```
+
+You want HTTP 200 and a `routes[0].duration` in seconds. Anything else means
+the process is up without a graph — do not point the site at it yet.
+
+**4. Point the Cloudflare Worker at it.** Production Worker is `besivov`.
+The URL is a **secret**, not a `PUBLIC_` / wrangler var:
+
+```
+cd web
+npx wrangler secret put OSRM_URL
+# paste: https://hasivuv-osrm.fly.dev
+```
+
+No trailing slash. After this, `web/src/lib/routing.ts` uses OSRM's
+`/table/v1/foot` instead of Valhalla.
+
+**5. Ship the code that reads `OSRM_URL`.** Cloudflare Pages/Workers deploys
+**`main`**. Walking times, the map, and the OSRM preference live on the
+publish/photos branch until that is merged. Setting the secret on today's
+`main` does nothing visible until that merge.
+
+**6. Re-ask for a description** on a listing (or publish again). Walk minutes
+are computed then and stored on `listings.area_places`. Old rows keep whatever
+they already have until that runs.
 
 The graph is built at **image build time** and only the finished graph ships,
 so a machine boots ready rather than preparing data on first request. The build
