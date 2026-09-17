@@ -94,6 +94,7 @@ function asAreaPlaces(value: unknown): AreaPlaces | undefined {
           ...(walkMinutes !== undefined && Number.isFinite(walkMinutes) && walkMinutes > 0
             ? { walkMinutes: Math.round(walkMinutes) }
             : {}),
+          ...(item.mode === 'bus' || item.mode === 'rail' ? { mode: item.mode } : {}),
         },
       ];
     });

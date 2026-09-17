@@ -103,6 +103,12 @@ export interface AreaPlace {
    * across a motorway, a rail cutting or a wadi.
    */
   walkMinutes?: number;
+  /**
+   * Bus stop vs rail / light rail. Used so the description can say
+   * "תחנת האוטובוס הקרובה" or "תחנת הרכבת הקרובה" instead of dumping every
+   * stop as a comma list. Absent on older cached rows — those read as a stop.
+   */
+  mode?: 'bus' | 'rail';
 }
 
 /** The five groups the paragraph may talk about. */

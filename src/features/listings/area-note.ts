@@ -24,17 +24,11 @@ import {
  * these names carries the attribution (CLAUDE.md §10).
  * =======================================================================
  *
- * ========================= NO DISTANCES, NO TIMES =========================
- * Not one number reaches this paragraph. OSRM is not running, so we have no
- * routed walking time, and straight-line distance is forbidden as a substitute
- * — in Israel a motorway or a wadi turns 300 metres into a twenty-minute walk
- * (CLAUDE.md §2). "Around 600 metres" would be a distance the reader converts
- * into a walk themselves, which is the same lie with an extra step.
- *
- * So the copy names things and does not measure them, and `isGrounded` rejects
- * any reply containing a digit at all. When OSRM is up, the richer paragraph
- * with routed minutes already exists in neighborhood-note.ts and should take
- * over — this module is the version that works today.
+ * ========================= NO GUESSED DISTANCES =========================
+ * A number reaches this paragraph only as a routed walking time we were given.
+ * Straight-line metres are forbidden as a substitute — in Israel a motorway or
+ * a wadi turns 300 metres into a twenty-minute walk (CLAUDE.md §2).
+ * `isGrounded` admits exactly the minutes in the list, and nothing else.
  * =========================================================================
  */
 
@@ -87,12 +81,25 @@ export function allowedNames(places: AreaPlaces): string[] {
  */
 const CAPS = {
   neighbourhoods: 2,
-  schools: 4,
-  transit: 3,
-  parks: 3,
-  community: 3,
-  shops: 2,
+  schools: 3,
+  parks: 2,
+  community: 2,
 } as const;
+
+/** Closest first when a router answered; otherwise the OSM order (already nearest). */
+function nearest(places: readonly AreaPlace[]): AreaPlace[] {
+  return [...places].sort((a, b) => {
+    const left = a.walkMinutes ?? Number.POSITIVE_INFINITY;
+    const right = b.walkMinutes ?? Number.POSITIVE_INFINITY;
+    return left - right;
+  });
+}
+
+const busesOf = (places: AreaPlaces) =>
+  places.transit.filter((place) => place.mode !== 'rail');
+
+const railsOf = (places: AreaPlaces) =>
+  places.transit.filter((place) => place.mode === 'rail');
 
 /**
  * One line of the prompt, with routed minutes where we have them.
@@ -101,13 +108,20 @@ const CAPS = {
  * and `isGrounded` allows exactly the numbers that appear here. A place with
  * no routed time is named without one rather than guessed at.
  */
+function named(place: AreaPlace): string {
+  return place.walkMinutes === undefined
+    ? place.name
+    : `${place.name} (${place.walkMinutes} דקות הליכה)`;
+}
+
 function line(label: string, places: readonly AreaPlace[], cap: number): string | undefined {
-  const kept = places.slice(0, cap).map((place) =>
-    place.walkMinutes === undefined
-      ? place.name
-      : `${place.name} (${place.walkMinutes} דקות הליכה)`,
-  );
+  const kept = nearest(places).slice(0, cap).map(named);
   return kept.length > 0 ? `${label}: ${kept.join(', ')}` : undefined;
+}
+
+function closestLine(label: string, places: readonly AreaPlace[]): string | undefined {
+  const place = nearest(places)[0];
+  return place ? `${label}: ${named(place)}` : undefined;
 }
 
 /** The user message. Names only — there is no coordinate and no distance. */
@@ -116,11 +130,13 @@ export function buildAreaPrompt(places: AreaPlaces): string {
     `עיר: ${places.city}`,
     places.street ? `רחוב: ${places.street}` : undefined,
     line('שכונה', places.neighbourhoods, CAPS.neighbourhoods),
-    line('חינוך — בשם המוסד', places.schools, CAPS.schools),
-    line('תחבורה — בשם התחנה', places.transit, CAPS.transit),
+    line('קהילה ותרבות', places.community, CAPS.community),
     line('פארקים וגינות', places.parks, CAPS.parks),
-    line('קהילה, תרבות וספורט', places.community, CAPS.community),
-    line('קניות', places.shops, CAPS.shops),
+    closestLine('תחנת האוטובוס הקרובה — רק זו', busesOf(places)),
+    closestLine('תחנת הרכבת או הרכבת הקלה הקרובה — רק זו', railsOf(places)),
+    line('חינוך — בשם המוסד, שניים או שלושה', places.schools, CAPS.schools),
+    'כתוב כמו מתווך: קודם המקום והאנשים סביבו, אחר כך איך מגיעים, אחר כך החינוך.',
+    'לא רשימת שמות. לא חנויות. דקות הליכה רק בצורה שנמסרה למעלה.',
   ]
     .filter((entry): entry is string => entry !== undefined)
     .join('\n');
@@ -129,27 +145,29 @@ export function buildAreaPrompt(places: AreaPlaces): string {
 /**
  * The instruction, and every clause in it is load-bearing.
  *
- * "A few lines, not more" is the agent's own requirement and it is also the
- * product's: this paragraph is read on a phone, in sunlight, by somebody
- * deciding whether to reply. Length is not thoroughness here.
+ * The seller asked for professional agency copy: a little about the
+ * neighbourhood and community, a little about how you get around (the closest
+ * bus, and a train if there is one), a little about the schools. A comma list
+ * of every OSM name is the thing they already have and do not want.
  */
 export const AREA_SYSTEM_PROMPT =
-  'אתה כותב פסקה קצרה בעברית על הסביבה של דירה למכירה. ' +
-  'שניים עד ארבעה משפטים קצרים, ולא יותר. ' +
-  'מותר להזכיר רק שמות שמופיעים ברשימה שנמסרה לך — בתי ספר, גנים, תחנות, פארקים, מוסדות קהילה, חנויות. ' +
-  'אסור להוסיף שם של מקום שלא ברשימה. ' +
-  'אסור לכתוב מרחקים, זמני הליכה, דקות, מספרים או קווי אוטובוס. ' +
-  'אסור לכתוב על מחיר, שווי, השקעה, תשואה או פוטנציאל. ' +
+  'אתה כותב תיאור קצר בעברית כמו מתווך מורשה שכותב מודעה ללקוח. ' +
+  'שלושה משפטים, פסקה אחת, בלי כותרות ובלי נקודות. ' +
+  'משפט ראשון: השכונה והקהילה — שם השכונה, ומוסד קהילה או גינה מהרשימה אם יש. ' +
+  'משפט שני: התחבורה — תחנת האוטובוס הקרובה, ואם יש ברשימה גם רכבת או רכבת קלה אז אותה. ' +
+  'משפט שלישי: שני בתי ספר או גנים מהרשימה, לא יותר משלושה. ' +
+  'מותר להזכיר רק שמות שמופיעים ברשימה. אסור שם שלא ברשימה. ' +
+  'זמני הליכה מותרים רק במספרים שמופיעים ליד השם, בצורה "N דקות הליכה". אסור להמציא דקות או קו אוטובוס. ' +
+  'אסור מרחקים במטרים. אסור מחיר, שווי, השקעה, תשואה או פוטנציאל. ' +
   'אסור מילות הפלגה כמו מדהים, ייחודי, חלומי, יוקרתי. ' +
-  'אסור לכתוב מה אין בסביבה. ' +
-  'כתוב בעברית פשוטה, כמו מתווך שמתאר שכונה שהוא מכיר. ' +
-  'בלי כותרת, בלי רשימת נקודות, בלי אמוג׳י, בלי שם של מודל.';
+  'אסור לכתוב מה אין בסביבה. אסור חנויות ומאפיות. ' +
+  'עברית רהוטה, לא רשימה. בלי אמוג׳י, בלי שם של מודל, בלי אנגלית.';
 
 const HEBREW = /[\u0590-\u05FF]/;
 
-/** Two sentences of Hebrew, and not a page. "A few lines, not more." */
+/** A broker paragraph, not a page and not a caption. */
 const MIN_CHARS = 40;
-const MAX_CHARS = 420;
+const MAX_CHARS = 720;
 
 /**
  * Cities a model reaches for when it is filling space rather than reading the
@@ -260,45 +278,54 @@ function hebrewList(items: readonly string[]): string {
 }
 
 /**
- * The same paragraph with no model involved: the names, in sentences.
+ * The same paragraph with no model involved: neighbourhood, the closest stop,
+ * the schools — in sentences a broker would send.
  *
  * Used when there is no key, when the provider is down, and when a reply fails
- * grounding. It is plainer than the model's version and it is never wrong,
- * which is the right way round for a page an agent puts their name on.
+ * grounding. Plainer than the model's version and never a comma dump of OSM.
  */
 export function areaNoteFromPlaces(places: AreaPlaces): string {
-  const where = places.neighbourhoods[0]
-    ? `${places.neighbourhoods[0].name}, ${places.city}`
-    : places.city;
+  const hood = places.neighbourhoods[0]?.name;
+  const street = places.street;
+  const where = hood
+    ? street
+      ? `הדירה בשכונת ${hood} ב${places.city}, ברחוב ${street}.`
+      : `הדירה בשכונת ${hood} ב${places.city}.`
+    : street
+      ? `הדירה ב${places.city}, ברחוב ${street}.`
+      : `הדירה ב${places.city}.`;
 
-  const sentences = [`הדירה ב${where}.`];
+  const sentences = [where];
 
-  /** "אורט חולון" or "אורט חולון, 7 דקות הליכה" — never a guessed time. */
-  const said = (place: AreaPlace): string =>
-    place.walkMinutes === undefined
-      ? place.name
-      : `${place.name} (${place.walkMinutes} דקות הליכה)`;
+  const park = places.parks[0];
+  const community = places.community[0];
+  if (hood && (park || community)) {
+    if (park && community) {
+      sentences.push(`השכונה חיה סביב ${named(park)} ו${named(community)}.`);
+    } else {
+      sentences.push(`השכונה חיה סביב ${named(park ?? community!)}.`);
+    }
+  } else if (park && community) {
+    sentences.push(`בסביבה ${named(park)} ו${named(community)}.`);
+  } else if (park || community) {
+    sentences.push(`בסביבה ${named(park ?? community!)}.`);
+  }
 
-  const schools = places.schools.slice(0, 3).map(said);
+  const bus = nearest(busesOf(places))[0];
+  const rail = nearest(railsOf(places))[0];
+  if (bus && rail) {
+    sentences.push(
+      `תחנת האוטובוס הקרובה היא ${named(bus)}, ותחנת הרכבת הקרובה היא ${named(rail)}.`,
+    );
+  } else if (rail) {
+    sentences.push(`תחנת הרכבת הקרובה היא ${named(rail)}.`);
+  } else if (bus) {
+    sentences.push(`תחנת האוטובוס הקרובה היא ${named(bus)}.`);
+  }
+
+  const schools = nearest(places.schools).slice(0, 3).map(named);
   if (schools.length > 0) {
-    sentences.push(`בסביבה ${hebrewList(schools)}.`);
-  }
-
-  const transit = places.transit.slice(0, 2).map(said);
-  if (transit.length > 0) {
-    sentences.push(`תחנות ${hebrewList(transit)}.`);
-  }
-
-  /*
-   * ONE OF EACH, THREE AT MOST. Israeli place names run long — "מרכז קהילתי
-   * על שם בני לוטי רייך לאזרחים ותיקים" is one item — and five of them in a
-   * sentence is a list, not a description. The brief was a few lines.
-   */
-  const amenities = [places.parks[0], places.community[0], places.shops[0]]
-    .filter((place): place is AreaPlace => Boolean(place))
-    .map(said);
-  if (amenities.length > 0) {
-    sentences.push(`וגם ${hebrewList(amenities)}.`);
+    sentences.push(`בתי הספר בסביבה כוללים את ${hebrewList(schools)}.`);
   }
 
   return sentences.join(' ');

@@ -205,6 +205,202 @@
   margin-block-start: 0.1rem;
 }
 
+/* Template picker: a miniature of each page, not a list of names.
+   The screenshot that failed this step was five sparse rows and a field of
+   plaster — the seller could not tell משרד from סיור, and most of the
+   screen was blank. */
+
+.step-templates {
+  padding-block-start: 1.2rem;
+}
+
+.template-step .hint {
+  margin-block-end: 0.85rem;
+}
+
+.template-grid {
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
+}
+
+.template-card {
+  display: flex;
+  flex-direction: column;
+  inline-size: 100%;
+  min-block-size: 0;
+  padding: 0.55rem;
+  font: inherit;
+  text-align: start;
+  color: var(--ink);
+  background: var(--stone-warm);
+  border: 1px solid var(--stone);
+  border-radius: 8px;
+  cursor: pointer;
+  transition:
+    transform var(--press) var(--ease-out),
+    border-color var(--press) var(--ease-out),
+    box-shadow var(--press) var(--ease-out);
+}
+
+.template-card:hover {
+  border-color: var(--olive);
+}
+
+.template-card:active {
+  transform: scale(0.99);
+}
+
+.template-card.chosen {
+  border-color: var(--olive);
+  box-shadow: 0 0 0 1px var(--olive);
+}
+
+.template-card .choice-name {
+  margin-block-start: 0.45rem;
+  font-size: 0.95rem;
+}
+
+.template-card .choice-note {
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.template-thumb {
+  display: block;
+  inline-size: 100%;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #fff;
+  padding: 0.35rem;
+}
+
+.thumb-hero,
+.thumb-film,
+.thumb-price,
+.thumb-facts {
+  display: block;
+}
+
+.thumb-hero {
+  block-size: 42%;
+  border-radius: 3px;
+  background: linear-gradient(to top, #3d4034 20%, #b7b4a8 100%);
+}
+
+.thumb-film {
+  display: flex;
+  gap: 0.18rem;
+  block-size: 38%;
+}
+
+.thumb-film > span {
+  flex: 1;
+  border-radius: 2px;
+  background: #8a8d7c;
+}
+
+.thumb-film > span:first-child {
+  flex: 1.6;
+  background: #5c5f50;
+}
+
+.thumb-price {
+  block-size: 0.45rem;
+  inline-size: 42%;
+  margin-block-start: 0.35rem;
+  margin-inline-start: auto;
+  background: var(--olive);
+  border-radius: 1px;
+}
+
+.thumb-facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.25rem;
+  margin-block-start: 0.35rem;
+}
+
+.thumb-facts > span {
+  block-size: 1.15rem;
+  border-radius: 2px;
+  background: var(--stone);
+}
+
+.thumb-agency {
+  background: #fff;
+}
+
+.thumb-agency .thumb-hero {
+  block-size: 28%;
+}
+
+.thumb-agency .thumb-facts {
+  grid-template-columns: 1fr 1fr;
+}
+
+.thumb-agency .thumb-facts > span:last-child {
+  display: none;
+}
+
+.thumb-editorial {
+  background: #fbfaf7;
+}
+
+.thumb-editorial .thumb-hero {
+  block-size: 36%;
+}
+
+.thumb-dark {
+  background: #14150f;
+}
+
+.thumb-dark .thumb-hero {
+  block-size: 52%;
+  background: linear-gradient(to top, #0a0b06 10%, #6a6d5c 100%);
+}
+
+.thumb-dark .thumb-price {
+  background: #7e9a62;
+}
+
+.thumb-dark .thumb-facts > span {
+  background: #2c2e24;
+}
+
+.thumb-walkFirst {
+  background: #fbfaf7;
+}
+
+.thumb-brochure {
+  background: #fff;
+}
+
+.thumb-brochure .thumb-hero {
+  block-size: 58%;
+}
+
+.thumb-brochure .thumb-facts {
+  grid-template-columns: 1fr;
+}
+
+.thumb-brochure .thumb-facts > span:nth-child(n + 2) {
+  display: none;
+}
+
+@media (max-width: 28rem) {
+  .template-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .template-card .choice-note {
+    display: none;
+  }
+}
+
 /* ---------- Facts entry ---------- */
 
 .facts-entry {
@@ -664,7 +860,7 @@ textarea {
   inset-inline: 0;
   bottom: 0;
   z-index: 20;
-  max-width: 620px;
+  max-width: 720px;
   margin-inline: auto;
   display: flex;
   gap: 0.6rem;

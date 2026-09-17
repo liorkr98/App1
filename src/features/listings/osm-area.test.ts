@@ -201,9 +201,23 @@ describe('placesFromOsm', () => {
       places.transit.map((p) => p.name),
       ['סוקולוב/שדרות קוגל'],
     );
+    assert.equal(places.transit[0]?.mode, 'bus');
     assert.deepEqual(places.parks[0], { name: 'גן הרצל', lat: 32.0143, lon: 34.7776 });
     assert.equal(places.city, 'חולון');
     assert.equal(places.street, 'סוקולוב');
+  });
+
+  it('marks a railway station as rail, not as another bus stop', () => {
+    const places = placesFromOsm(
+      [
+        node({ highway: 'bus_stop', name: 'סוקולוב/שדרות קוגל' }, 32.0157, 34.7789),
+        node({ railway: 'station', 'name:he': 'חולון וולפסון' }, 32.016, 34.781),
+      ],
+      where,
+    );
+
+    assert.equal(places.transit.find((p) => p.name === 'חולון וולפסון')?.mode, 'rail');
+    assert.equal(places.transit.find((p) => p.name === 'סוקולוב/שדרות קוגל')?.mode, 'bus');
   });
 
   it('skips a place OSM gave no position for', () => {
