@@ -26,32 +26,52 @@ exactly like a missing feature.
 
 `osrm/` is that service now.
 
-## Deploying it
+## Where it is running
+
+As of 17 September 2026 it is a machine on the **listing worker app**, not a
+second Fly app. The deploy token we had could push to `app1-mmbfma` and could
+not `fly apps create hasivuv-osrm`.
+
+- App: `app1-mmbfma`
+- Process group: `osrm` (machine name `osrm-foot`)
+- Image: `registry.fly.io/app1-mmbfma:osrm-foot` (376 MB, foot MLD, Israel extract)
+- URL: `https://app1-mmbfma.fly.dev`
+- Check, measured: Tel Aviv 364 m walked in **264 seconds** (foot). The public
+  OSRM demo said 162 s (car) for the same hop; Valhalla pedestrian said 277 s.
+
+The photo worker and PDF machines are unchanged. A worker deploy that does not
+pass `--process-groups worker,pdf` will destroy the OSRM machine. Prefer a
+dedicated `hasivuv-osrm` app when an org-level token can create one.
+
+Point the site at it:
 
 ```
-fly deploy --config osrm/fly.toml --dockerfile osrm/Dockerfile
-npx wrangler secret put OSRM_URL        # https://<app>.fly.dev
+cd web
+npx wrangler secret put OSRM_URL
+# https://app1-mmbfma.fly.dev
 ```
 
-The graph is built at **image build time** and only the finished graph ships,
-so a machine boots ready rather than preparing data on first request. The build
-is slow and the image is large; both are paid once per data refresh, and for
-walking routes the extract goes stale over months, not days.
+## Deploying a refresh of the graph
 
-`osrm-extract` is the memory-hungry step and it runs on Fly's **builder**, not
-on the app machine. If the first deploy fails, that is where to look.
-
-Verify with a real route rather than a ping — the process can be up with no
-graph loaded, and anything simpler than a route will answer 200 anyway:
+From `osrm/` so the build context is small (the OSRM image has no `apt-get`;
+the PBF is downloaded in a Debian stage):
 
 ```
-curl "$OSRM_URL/route/v1/foot/34.781812,32.085338;34.783014,32.087958?overview=false"
+cd osrm
+fly deploy --app app1-mmbfma --config fly.toml --dockerfile Dockerfile --build-only --push --image-label osrm-foot
+fly machine update <osrm-machine-id> -a app1-mmbfma --image registry.fly.io/app1-mmbfma:osrm-foot
 ```
 
-**None of the figures in `osrm/fly.toml` are measured.** There is no Docker on
-either development machine or on the agent VM, so the graph has never been
-built here. The memory and size are from OSRM's guidance for a country-sized
-MLD graph. CLAUDE.md §11: do not report a number you did not measure.
+The graph is built at **image build time** and only the finished graph ships.
+`osrm-extract` plus partition plus customize took **87 seconds** on Fly's
+builder for this extract; peak RAM during customize was about **640 MB**.
+The 2 GB app VM is enough at runtime (measured).
+
+Verify with a real route rather than a ping:
+
+```
+curl "https://app1-mmbfma.fly.dev/route/v1/foot/34.781812,32.085338;34.783014,32.087958?overview=false"
+```
 
 ## What runs until then
 

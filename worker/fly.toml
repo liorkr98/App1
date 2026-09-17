@@ -1,4 +1,10 @@
-# Fly configuration for the pipeline worker (ADR 0001).
+# The pipeline worker (photos, OG, PDF). Process groups: worker, pdf.
+#
+# OSRM is a THIRD machine on the same Fly app (process group `osrm`, image
+# `app1-mmbfma:osrm-foot`). A full `fly deploy` of this file will replace
+# machines that are not in [processes] below. Deploy the worker with:
+#   fly deploy --config worker/fly.toml --dockerfile worker/Dockerfile --process-groups worker,pdf
+# so the router is not destroyed. See docs/OSRM.md.
 #
 # Deploy from the REPO ROOT so the Dockerfile can see worker/:
 #   fly deploy --config worker/fly.toml --dockerfile worker/Dockerfile
