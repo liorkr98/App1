@@ -24,13 +24,14 @@ Nothing in a Cloudflare Worker can host that. So "OSRM is not running" meant
 absent — which was correct behaviour for a page with no router, and looked
 exactly like a missing feature.
 
-`osrm/` is that service now.
+`osrm/` is that service now, and it is live.
 
 ## Where it is running
 
-As of 17 September 2026 it is a machine on the **listing worker app**, not a
-second Fly app. The deploy token we had could push to `app1-mmbfma` and could
-not `fly apps create hasivuv-osrm`.
+As of 17 September 2026 it is a **third machine** on the listing worker app,
+not a second Fly app. The deploy token could push to `app1-mmbfma` and could
+not `fly apps create hasivuv-osrm`. The photo and PDF machines were not
+replaced.
 
 - App: `app1-mmbfma`
 - Process group: `osrm` (machine name `osrm-foot`)
@@ -39,19 +40,26 @@ not `fly apps create hasivuv-osrm`.
 - Check, measured: Tel Aviv 364 m walked in **264 seconds** (foot). The public
   OSRM demo said 162 s (car) for the same hop; Valhalla pedestrian said 277 s.
 
-The photo worker and PDF machines are unchanged. A worker deploy that does not
-pass `--process-groups worker,pdf` will destroy the OSRM machine. Prefer a
-dedicated `hasivuv-osrm` app when an org-level token can create one.
+A worker deploy that does not pass `--process-groups worker,pdf` will destroy
+the OSRM machine.
 
-Point the site at it:
+## What is still on you
+
+The calculator is on. The **website** does not use it until this secret is set
+on Cloudflare Worker `besivov`:
 
 ```
 cd web
 npx wrangler secret put OSRM_URL
-# https://app1-mmbfma.fly.dev
+# paste: https://app1-mmbfma.fly.dev
 ```
 
-## Deploying a refresh of the graph
+No trailing slash. Then press **הצע תיאור** again on a listing (or publish
+again). Walk minutes are stored on that row; old listings keep whatever they
+already have until that runs. After this, `web/src/lib/routing.ts` uses OSRM's
+`/table/v1/foot` instead of Valhalla.
+
+## Refreshing the graph
 
 From `osrm/` so the build context is small (the OSRM image has no `apt-get`;
 the PBF is downloaded in a Debian stage):
@@ -73,12 +81,16 @@ Verify with a real route rather than a ping:
 curl "https://app1-mmbfma.fly.dev/route/v1/foot/34.781812,32.085338;34.783014,32.087958?overview=false"
 ```
 
-## What runs until then
+A later split into a dedicated `hasivuv-osrm` app is optional. Do not
+`fly deploy` the OSRM Dockerfile as a **replacement** of `app1-mmbfma` — that
+would take pictures down. Adding a machine in process group `osrm` is what
+already happened.
+
+## Until the secret is set
 
 `web/src/lib/routing.ts` prefers `OSRM_URL` and falls back to **Valhalla on the
 OpenStreetMap Foundation's instance**, pedestrian costing. One matrix request
-per listing, cached on the listing row, no key to hold. It is a public service
-used lightly, and the right answer at volume is the self-hosted graph above.
+per listing, cached on the listing row, no key to hold.
 
 **Not the OSRM demo server.** `router.project-osrm.org/table/v1/foot/…` answers
 200 and returns CAR times: measured against a 370-metre hop in Tel Aviv it said

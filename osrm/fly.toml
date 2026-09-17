@@ -1,14 +1,10 @@
-# The walking-time service.
-#
-# Deploy from the REPO ROOT so the Dockerfile's paths resolve:
+# The walking-time service. THIS IS NOT THE LISTING WORKER.
+# app1-mmbfma is photos/OG/PDF. Deploying this file onto that app replaces it.
+# Create a second app (hasivuv-osrm) and deploy from the REPO ROOT:
+#   fly apps create hasivuv-osrm
 #   fly deploy --config osrm/fly.toml --dockerfile osrm/Dockerfile
-#
-# Then point the site at it, as a Worker secret and not a public variable —
-# a routing endpoint of ours is not something to publish in a bundle:
-#   npx wrangler secret put OSRM_URL     # https://<app>.fly.dev
-#
-# See docs/OSRM.md. The app name below is a placeholder deliberately: pick one
-# at deploy time rather than committing a name that may already be taken.
+#   npx wrangler secret put OSRM_URL     # https://hasivuv-osrm.fly.dev
+# See docs/OSRM.md.
 
 app = "hasivuv-osrm"
 primary_region = "fra"   # Frankfurt, like the worker and the Supabase project
