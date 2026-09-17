@@ -2,7 +2,6 @@ import type { Fact, ListingAudience, TemplateId } from '../../types/listing.js';
 // ListingCategory comes from the schemas module, not from types/listing.js —
 // that file imports the name for its own use and does not re-export it.
 import type { ListingCategory } from './schemas/index.js';
-import { isUnedited } from './description.js';
 
 /**
  * The editor's state machine.
@@ -211,7 +210,6 @@ export const BLOCKER_CODES = [
   'photosTooMany',
   'factMissing',
   'descriptionEmpty',
-  'descriptionUnedited',
   'templateMissing',
   'sellerMissing',
   'consentMissing',
@@ -289,14 +287,6 @@ export function blockers(state: EditorState): Blocker[] {
 
   if (state.description.trim() === '') {
     found.push({ step: 'description', code: 'descriptionEmpty' });
-  } else if (
-    state.generatedDescription &&
-    isUnedited(state.generatedDescription, state.description)
-  ) {
-    // E6. Not because the model writes badly — because the seller is the one
-    // making a representation about their own property, and a description
-    // nobody read is a claim nobody stands behind.
-    found.push({ step: 'description', code: 'descriptionUnedited' });
   }
 
   if (!state.template) {

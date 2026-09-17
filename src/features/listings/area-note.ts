@@ -1,8 +1,4 @@
-import {
-  findBannedWords,
-  findReservedTopics,
-  tidyParagraph,
-} from './description.js';
+import { findBannedWords, findReservedTopics } from './description.js';
 
 /**
  * The area paragraph: what is around this address, by name.
@@ -84,6 +80,7 @@ const CAPS = {
   schools: 3,
   parks: 2,
   community: 2,
+  shops: 2,
 } as const;
 
 /** Closest first when a router answered; otherwise the OSM order (already nearest). */
@@ -135,8 +132,9 @@ export function buildAreaPrompt(places: AreaPlaces): string {
     closestLine('תחנת האוטובוס הקרובה — רק זו', busesOf(places)),
     closestLine('תחנת הרכבת או הרכבת הקלה הקרובה — רק זו', railsOf(places)),
     line('חינוך — בשם המוסד, שניים או שלושה', places.schools, CAPS.schools),
-    'כתוב כמו מתווך: קודם המקום והאנשים סביבו, אחר כך איך מגיעים, אחר כך החינוך.',
-    'לא רשימת שמות. לא חנויות. דקות הליכה רק בצורה שנמסרה למעלה.',
+    line('מסחר יומיומי', places.shops, CAPS.shops),
+    'כתוב מודעה של מתווך בארבעה חלקים: המקום, הירוק מסביב, הלימוד, ההגעה, ואם יש גם קניות מהרשימה.',
+    'רק שמות מהרשימה. דקות הליכה רק בצורה שנמסרה. בלי מספר תושבים ובלי דרך שלא נמסרה.',
   ]
     .filter((entry): entry is string => entry !== undefined)
     .join('\n');
@@ -151,23 +149,25 @@ export function buildAreaPrompt(places: AreaPlaces): string {
  * of every OSM name is the thing they already have and do not want.
  */
 export const AREA_SYSTEM_PROMPT =
-  'אתה כותב תיאור קצר בעברית כמו מתווך מורשה שכותב מודעה ללקוח. ' +
-  'שלושה משפטים, פסקה אחת, בלי כותרות ובלי נקודות. ' +
-  'משפט ראשון: השכונה והקהילה — שם השכונה, ומוסד קהילה או גינה מהרשימה אם יש. ' +
-  'משפט שני: התחבורה — תחנת האוטובוס הקרובה, ואם יש ברשימה גם רכבת או רכבת קלה אז אותה. ' +
-  'משפט שלישי: שני בתי ספר או גנים מהרשימה, לא יותר משלושה. ' +
+  'אתה כותב תיאור שכונה בעברית כמו מתווך מורשה במודעת נדל״ן. ' +
+  'ארבע עד שש משפטים רהוטים, אפשר שני פסקאות קצרות, בלי כותרות ובלי נקודות. ' +
+  'קודם השכונה והעיר — איך המקום מרגיש, לפי השמות שניתנו בלבד. ' +
+  'אחר כך סביבה וטבע: פארק או גינה מהרשימה. ' +
+  'אחר כך חינוך: שני מוסדות בשם. ' +
+  'אחר כך תחבורה: תחנת האוטובוס הקרובה, ורכבת אם יש ברשימה. ' +
+  'לבסוף מסחר יומיומי אם יש ברשימה. ' +
   'מותר להזכיר רק שמות שמופיעים ברשימה. אסור שם שלא ברשימה. ' +
-  'זמני הליכה מותרים רק במספרים שמופיעים ליד השם, בצורה "N דקות הליכה". אסור להמציא דקות או קו אוטובוס. ' +
-  'אסור מרחקים במטרים. אסור מחיר, שווי, השקעה, תשואה או פוטנציאל. ' +
+  'זמני הליכה מותרים רק במספרים שמופיעים ליד השם, בצורה "N דקות הליכה". אסור להמציא דקות, קו אוטובוס, כביש או מספר תושבים. ' +
+  'אסור מחיר, שווי, השקעה, תשואה או פוטנציאל. ' +
   'אסור מילות הפלגה כמו מדהים, ייחודי, חלומי, יוקרתי. ' +
-  'אסור לכתוב מה אין בסביבה. אסור חנויות ומאפיות. ' +
-  'עברית רהוטה, לא רשימה. בלי אמוג׳י, בלי שם של מודל, בלי אנגלית.';
+  'אסור לכתוב מה אין בסביבה. ' +
+  'עברית רהוטה. בלי אמוג׳י, בלי שם של מודל, בלי אנגלית.';
 
 const HEBREW = /[\u0590-\u05FF]/;
 
 /** A broker paragraph, not a page and not a caption. */
 const MIN_CHARS = 40;
-const MAX_CHARS = 720;
+const MAX_CHARS = 900;
 
 /**
  * Cities a model reaches for when it is filling space rather than reading the
@@ -258,7 +258,13 @@ export function isGrounded(text: string, places: AreaPlaces): boolean {
  * nothing else.
  */
 export function acceptAreaNote(raw: string, places: AreaPlaces): string | undefined {
-  const text = tidyParagraph(raw);
+  const text = raw
+    .replace(/\*\*/g, '')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+    .replace(/^["«»]+|["«»]+$/g, '')
+    .trim();
 
   if (text.length < MIN_CHARS || text.length > MAX_CHARS) return undefined;
   if (!HEBREW.test(text)) return undefined;
@@ -326,6 +332,11 @@ export function areaNoteFromPlaces(places: AreaPlaces): string {
   const schools = nearest(places.schools).slice(0, 3).map(named);
   if (schools.length > 0) {
     sentences.push(`בתי הספר בסביבה כוללים את ${hebrewList(schools)}.`);
+  }
+
+  const shops = nearest(places.shops).slice(0, 2).map(named);
+  if (shops.length > 0) {
+    sentences.push(`למסחר יומיומי יש את ${hebrewList(shops)}.`);
   }
 
   return sentences.join(' ');

@@ -276,28 +276,23 @@ describe('blockers', () => {
 describe('the description gate', () => {
   const generated = 'הדירה בת 4 חדרים ובה מעלית.';
 
-  it('blocks publishing text the seller never touched', () => {
+  it('lets a suggested description through without forcing an edit', () => {
     const found = blockers({
       ...ready(),
       generatedDescription: generated,
       description: generated,
     });
 
-    assert.ok(found.some((blocker) => blocker.step === 'description'));
-  });
-
-  it('clears once the seller has edited it', () => {
-    const found = blockers({
-      ...ready(),
-      generatedDescription: generated,
-      description: 'הדירה בת 4 חדרים, ובה מעלית וממ״ד.',
-    });
-
     assert.deepEqual(found, []);
   });
 
+  it('still blocks an empty description', () => {
+    assert.ok(
+      blockers({ ...ready(), description: '' }).some((blocker) => blocker.code === 'descriptionEmpty'),
+    );
+  });
+
   it('does not apply when the seller wrote it themselves', () => {
-    // No generatedDescription means nothing was generated to review.
     assert.deepEqual(blockers({ ...ready(), description: 'כתבתי בעצמי.' }), []);
   });
 });

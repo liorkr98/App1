@@ -270,7 +270,9 @@ export function listingFromRow(row: ListingRow): Listing | undefined {
 }
 
 /**
- * A published or sold listing, by slug.
+ * A published listing, by slug.
+ *
+ * Sold and archived listings 404. The public link is for a live ad.
  *
  * Demo fixtures win so `/a/A7K2M` stays the visual contract even if someone
  * later inserts a real row with that slug — they cannot, the check is five
@@ -288,7 +290,7 @@ export async function publishedListing(slug: string): Promise<Listing | undefine
       .from('listings')
       .select(LISTING_COLUMNS)
       .eq('slug', slug)
-      .in('status', ['published', 'sold'])
+      .eq('status', 'published')
       .maybeSingle();
 
     if (error || !data) return undefined;
@@ -329,7 +331,7 @@ export async function indexableListings(): Promise<{ slug: string; publishedAt?:
       .from('listings')
       .select('slug, published_at')
       .eq('indexable', true)
-      .in('status', ['published', 'sold']);
+      .eq('status', 'published');
 
     if (error || !data) return [];
     return data.map((row) => ({
