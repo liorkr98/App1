@@ -1,6 +1,7 @@
 import {
   acceptNeighborhoodNote,
   buildNeighborhoodPrompt,
+  groundedAreaDescription,
   NEIGHBORHOOD_SYSTEM_PROMPT,
   type NeighborhoodFacts,
 } from '../../src/features/listings/neighborhood-note.js';
@@ -22,11 +23,14 @@ const DEFAULT_URL = 'https://api.deepseek.com/chat/completions';
 export async function neighborhoodNoteFromFacts(
   facts: NeighborhoodFacts,
 ): Promise<NeighborhoodNote | undefined> {
-  const key = process.env.DEEPSEEK_API_KEY;
-  if (!key) return undefined;
-
   const prompt = buildNeighborhoodPrompt(facts);
   if (prompt.trim() === '') return undefined;
+
+  const key = process.env.DEEPSEEK_API_KEY;
+  if (!key) {
+    const grounded = groundedAreaDescription(facts);
+    return acceptNeighborhoodNote(grounded, facts);
+  }
 
   const url = (process.env.DEEPSEEK_API_URL ?? DEFAULT_URL).replace(/\/+$/, '');
 
@@ -49,15 +53,23 @@ export async function neighborhoodNoteFromFacts(
       signal: AbortSignal.timeout(12_000),
     });
 
-    if (!response.ok) return undefined;
+    if (!response.ok) {
+      const grounded = groundedAreaDescription(facts);
+      return acceptNeighborhoodNote(grounded, facts);
+    }
 
     const body = (await response.json()) as {
       choices?: { message?: { content?: string } }[];
     };
     const content = body.choices?.[0]?.message?.content;
-    if (typeof content !== 'string') return undefined;
-    return acceptNeighborhoodNote(content);
+    if (typeof content === 'string') {
+      const accepted = acceptNeighborhoodNote(content, facts);
+      if (accepted) return accepted;
+    }
   } catch {
-    return undefined;
+    // Silent omit of the model; the deterministic paragraph still publishes.
   }
+
+  const grounded = groundedAreaDescription(facts);
+  return acceptNeighborhoodNote(grounded, facts);
 }

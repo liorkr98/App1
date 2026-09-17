@@ -225,6 +225,13 @@
     "required": "",
     "factsHint": "",
     "descriptionHint": "",
+    "description": {
+      "suggest": "",
+      "suggestAgain": "",
+      "suggesting": "",
+      "suggestWhy": "",
+      "suggestFailed": ""
+    },
     "review": {
       "title": "",
       "banned": "",
@@ -310,6 +317,7 @@
     },
     "publish": {
       "hint": "",
+      "freeHint": "",
       "photos": "",
       "action": "",
       "working": "",
@@ -324,6 +332,8 @@
       "prePortal": "",
       "prePortalWhy": "",
       "failed": "",
+      "noPhotos": "",
+      "saveFailed": "",
       "share": ""
     },
     "plateLookup": "",
@@ -479,6 +489,10 @@
   "pricing": {
     "title": "",
     "lead": "",
+    "freeLine": "",
+    "free": "",
+    "freeNote": "",
+    "freePrice": "",
     "single": "",
     "singleNote": "",
     "pack": "",

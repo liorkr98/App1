@@ -88,6 +88,29 @@ export function supabasePublic(): SupabaseClient {
   });
 }
 
+/**
+ * A client that acts AS the signed-in agent, for a server route.
+ *
+ * The access token comes from the request's Authorization header, so every
+ * read and write still runs under that user's RLS policies — an agent can
+ * only reach their own draft, and the route needs no service-role key to be
+ * useful. That is the point: the key that bypasses RLS never has to exist in
+ * the Worker at all (CLAUDE.md §9).
+ */
+export function supabaseAsUser(accessToken: string): SupabaseClient {
+  if (!supabaseConfigured) {
+    throw new Error(
+      'Supabase is not configured. Set PUBLIC_SUPABASE_URL and ' +
+        'PUBLIC_SUPABASE_ANON_KEY as BUILD variables — see docs/DEPLOY.md.',
+    );
+  }
+
+  return createClient(url, key, {
+    global: { headers: { Authorization: `Bearer ${accessToken}` } },
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  });
+}
+
 let client: SupabaseClient | null = null;
 
 /**

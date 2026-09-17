@@ -40,6 +40,41 @@ describe('parseEnrichmentBlock', () => {
     assert.equal(parsed.neighborhoodNote, undefined);
   });
 
+  it('keeps a grounded neighbourhood paragraph as the listing description', () => {
+    const parsed = parseEnrichmentBlock({
+      category: 'property',
+      transit: [
+        {
+          id: 't1',
+          name: 'וולפסון',
+          mode: 'light_rail',
+          routes: ['הקו הסגול'],
+          walkMinutes: 7,
+          sourceName: 'משרד התחבורה',
+          sourceDate: '2026-09-01',
+        },
+      ],
+      schools: [
+        {
+          id: 's1',
+          name: 'גן רימון',
+          type: 'גן ילדים',
+          walkMinutes: 4,
+          sourceName: 'משרד החינוך',
+          sourceDate: '2026-08-14',
+        },
+      ],
+      places: [],
+      summary: {},
+      attributions: [],
+      neighborhoodNote: {
+        text: 'בחולון. הרכבת הקלה בוולפסון כ־7 דקות הליכה, וגן רימון 4 דקות.',
+      },
+    });
+    assert.ok(parsed && parsed.category === 'property');
+    assert.match(parsed.neighborhoodNote?.text ?? '', /וולפסון/);
+  });
+
   it('omits a payload that is not an enrichment block', () => {
     assert.equal(parseEnrichmentBlock({ hello: true }), undefined);
     assert.equal(parseEnrichmentBlock(null), undefined);

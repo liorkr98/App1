@@ -10,6 +10,14 @@ interface Props {
   publishedUrl?: string | undefined;
   publishedSlug?: string | undefined;
   publishing: boolean;
+  /**
+   * Why the last publish attempt did not produce a link.
+   *
+   * A locale key, already resolved by the caller. Publishing used to fail in
+   * silence — the button stopped spinning, no link appeared, and the agent had
+   * no way to tell a refused publish from a slow one.
+   */
+  failure?: string | undefined;
   onPublish: () => void;
   onCopy: (url: string) => void;
   onIndexable: (indexable: boolean) => void;
@@ -37,10 +45,10 @@ interface Props {
  * and there must never be one.
  * ======================================================================
  *
- * WHAT AN AGENT WILL ACTUALLY SEE TODAY depends on `listing_grants`. The
- * editor reads entitlement fail-closed; unpaid and unknown both block, with
- * different copy. The database trigger is the real publish gate. There is no
- * branch that publishes when the check failed.
+ * WHAT AN AGENT WILL ACTUALLY SEE TODAY depends on `listing_grants` plus
+ * how many listings they already published. The first one is free, with
+ * נבנה בהיעד. Unpaid (second listing, no grant) and unknown both block,
+ * with different copy. The database trigger is the real publish gate.
  */
 export function PublishStep({
   state,
@@ -48,6 +56,7 @@ export function PublishStep({
   publishedUrl,
   publishedSlug,
   publishing,
+  failure,
   onPublish,
   onCopy,
   onIndexable,
@@ -122,6 +131,10 @@ export function PublishStep({
         the rule and this explains the situation — and right now the
         situation is that it is nobody's fault.
       */}
+      {state.entitlement === 'free' && !payment ? (
+        <p className="field-hint">{t('editor.publish.freeHint')}</p>
+      ) : null}
+
       {payment && (
         <div className="paywall">
           <p>{t(`editor.blockers.${payment.code}`)}</p>
@@ -154,6 +167,12 @@ export function PublishStep({
         <span>{t('editor.publish.indexable')}</span>
       </label>
       <p className="field-hint">{t('editor.publish.indexableWhy')}</p>
+
+      {failure ? (
+        <p className="publish-failure" role="alert">
+          {failure}
+        </p>
+      ) : null}
 
       <button
         type="button"

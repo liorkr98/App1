@@ -10,6 +10,7 @@ interface Props {
 const { compact = false } = Astro.props;
 
 const tiers = [
+  { id: 'free', price: 0, featured: false },
   { id: 'single', price: 79, featured: false },
   { id: 'pack', price: 129, featured: false },
   { id: 'agent', price: 249, featured: true },
@@ -31,7 +32,9 @@ const tiers = [
         <>
           {tier.featured ? <p class="price-tier-flag">{t('pricing.agentFlag')}</p> : null}
           {tier.featured ? null : <p class="price-tier-name">{t(`pricing.${tier.id}`)}</p>}
-          <p class="price-tier-sum"><bdi>{ils(tier.price)}</bdi></p>
+          <p class="price-tier-sum">
+            {tier.price === 0 ? t('pricing.freePrice') : <bdi>{ils(tier.price)}</bdi>}
+          </p>
           <p class="price-tier-note">{t(`pricing.${tier.id}Note`)}</p>
           {compact ? null : (
             <button type="button" disabled>
@@ -61,10 +64,16 @@ const tiers = [
     padding: 0;
   }
 
-  @media (min-width: 720px) {
+  @media (min-width: 560px) {
     .price-tiers {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       align-items: stretch;
+    }
+  }
+
+  @media (min-width: 960px) {
+    .price-tiers {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
     }
   }
 

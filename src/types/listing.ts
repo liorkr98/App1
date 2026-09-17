@@ -87,6 +87,50 @@ export interface Fact {
   sourceDate?: string;
 }
 
+/** One named thing near the address. */
+export interface AreaPlace {
+  name: string;
+  /** Where OSM says it is. Used for the map and for routing, never printed. */
+  lat: number;
+  lon: number;
+  /**
+   * ROUTED walking minutes, from a pedestrian router, or absent.
+   *
+   * Absent is the normal state until a router is configured, and absent means
+   * the page says nothing about how long anything takes. It is never derived
+   * from the coordinates above: straight-line distance is not a walk
+   * (CLAUDE.md §2), and the two numbers differ most exactly where it matters —
+   * across a motorway, a rail cutting or a wadi.
+   */
+  walkMinutes?: number;
+}
+
+/** The five groups the paragraph may talk about. */
+export interface AreaPlaces {
+  /** Hebrew city, from the listing. Always present or there is no query. */
+  city: string;
+  /** Hebrew street, when the seller gave one. */
+  street?: string;
+  /**
+   * A point on that street, which is what walking times are measured from and
+   * where the map centres. The street, not the building: OSM names roads, and
+   * a listing page should not pin somebody's front door anyway.
+   */
+  origin?: { lat: number; lon: number };
+  /** OSM `place=suburb|neighbourhood|quarter` names near the street. */
+  neighbourhoods: AreaPlace[];
+  /** Schools and kindergartens. */
+  schools: AreaPlace[];
+  /** Named bus stops, rail and light-rail stations. */
+  transit: AreaPlace[];
+  /** Parks, gardens and playgrounds. */
+  parks: AreaPlace[];
+  /** Community centres, libraries, culture and sport. */
+  community: AreaPlace[];
+  /** Supermarkets, groceries, bakeries, pharmacies. */
+  shops: AreaPlace[];
+}
+
 /**
  * The schema-side definition a Fact is built from. Lives in a category schema
  * file; `options` applies to `enum`, and to `date` fields that also accept a
@@ -166,6 +210,28 @@ export interface FactDefinition {
    * carries make and model in the hero and not as cells.
    */
   showInGrid?: boolean;
+
+  /**
+   * How this fact reads inside a Hebrew SENTENCE, with `{value}` where the
+   * answer goes — `'{value} חדרים'`, `'קומה {value}'`.
+   *
+   * The grid can render `label: value` in either order because it is a table.
+   * Prose cannot: Hebrew wants "4 חדרים" and "קומה 3", and no rule derived
+   * from the label produces both. Without this the generated description read
+   * "חדרים 4, קומה 3, מ״ר 95" — recognisably written by a machine, which is
+   * the one thing a page an agent is proud to send cannot look like.
+   *
+   * Omit it and the fact stays out of the prose. That is the right default:
+   * a fact with no phrasing is still shown in the grid, where it is correct.
+   *
+   * Hebrew, in the schema, for the reason `label` is (CLAUDE.md §12) — how a
+   * field is said is a property of the field, not a translation.
+   *
+   * For a BOOLEAN the phrase is used when the answer is yes and the `{value}`
+   * placeholder is unnecessary: `'מעלית'`. A `false` never reaches prose —
+   * "no lift" is information the grid states and an advertisement omits (§7).
+   */
+  phrase?: string;
 }
 
 /** A category's ordered fact definitions. Order is display order. */
@@ -641,6 +707,12 @@ export interface Listing {
   indexable: boolean;
 
   /**
+   * When true, the public footer carries נבנה בהיעד. Free first listing: true.
+   * A paid grant turns it false. Absent means true, so older pages keep the mark.
+   */
+  hyadMark?: boolean;
+
+  /**
    * Who the seller is aiming this at. Defaults to 'resident' when absent.
    *
    * Reorders the facts grid — see orderForAudience. It is a question the
@@ -657,4 +729,30 @@ export interface Listing {
    * rendered as מאומת; it is לפי המוכר.
    */
   prePortal?: boolean;
+
+  /**
+   * What OpenStreetMap says is around this address: the neighbourhood, and the
+   * named schools, stops, parks, community places and shops, each with its
+   * position and — when a pedestrian router answered — routed walking minutes.
+   *
+   * Written when an agent asks for a description (web/src/pages/api/
+   * description.ts) and read by the page to draw the neighbourhood map. It is
+   * the reason `textAttributions` below exists.
+   */
+  areaPlaces?: AreaPlaces;
+
+  /**
+   * Licence credits this page owes for the words on it, as opposed to for the
+   * enrichment grid.
+   *
+   * The description can be written from OpenStreetMap names — the real schools,
+   * stops and parks around the address (area-note.ts) — and ODbL attribution
+   * is a condition of using them, not a courtesy (CLAUDE.md §10). Carried on
+   * the listing rather than hardcoded in the footer, so a page that was
+   * written without them credits nothing it did not use.
+   *
+   * Separate from `enrichment.attributions`, which credits the sources behind
+   * the proximity GRID. A page can owe one, both, or neither.
+   */
+  textAttributions?: string[];
 }

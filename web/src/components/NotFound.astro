@@ -1,0 +1,30 @@
+---
+import Plain from '../layouts/Plain.astro';
+import { t } from '../lib/i18n';
+
+/**
+ * The "not here" page, as a COMPONENT rather than only a route.
+ *
+ * `/a/[slug]` used to answer a missing listing with `Astro.rewrite('/404')`,
+ * and on Cloudflare that threw:
+ *
+ *   Error: Unexpectedly unable to find a component instance for route /404
+ *
+ * A rewrite needs a route the SSR runtime can instantiate, and `/404` is
+ * PRERENDERED — it is a file in the assets bundle, not a component the Worker
+ * holds. So every real slug that was not renderable answered **HTTP 500 with
+ * an empty body**, including a listing that had genuinely been published. The
+ * one link the whole product exists to send was the one thing that did not
+ * work, and it looked like an outage rather than a missing page.
+ *
+ * Rendering the markup here means the SSR route needs no rewrite at all: it
+ * renders this and sets the status. `404.astro` renders the same thing, so
+ * there is one design and not two.
+ */
+---
+
+<Plain title={t('notFound.title')} robots="noindex">
+  <h1>{t('notFound.title')}</h1>
+  <p>{t('notFound.body')}</p>
+  <p><a href="/">{t('notFound.home')}</a></p>
+</Plain>

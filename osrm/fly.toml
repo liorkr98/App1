@@ -1,0 +1,49 @@
+# The walking-time service.
+#
+# Deploy from the REPO ROOT so the Dockerfile's paths resolve:
+#   fly deploy --config osrm/fly.toml --dockerfile osrm/Dockerfile
+#
+# Then point the site at it, as a Worker secret and not a public variable —
+# a routing endpoint of ours is not something to publish in a bundle:
+#   npx wrangler secret put OSRM_URL     # https://<app>.fly.dev
+#
+# See docs/OSRM.md. The app name below is a placeholder deliberately: pick one
+# at deploy time rather than committing a name that may already be taken.
+
+app = "hasivuv-osrm"
+primary_region = "fra"   # Frankfurt, like the worker and the Supabase project
+
+[build]
+
+[http_service]
+  internal_port = 5000
+  force_https = true
+
+  # SCALE TO ZERO, and this service is the ideal shape for it: it is queried
+  # when an agent asks for a description, which is a handful of times a day at
+  # this stage, and it holds no state between requests. A cold start pays for
+  # loading the graph; an agent waiting a few extra seconds once is cheaper
+  # than a machine running all night.
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[http_service.checks]]
+  # A real route, not a ping: the process can be up with no graph loaded, and
+  # that failure answers 200 on anything simpler. These two points are in
+  # Tel Aviv, a few hundred metres apart.
+  interval = "30s"
+  timeout = "5s"
+  grace_period = "60s"
+  method = "GET"
+  path = "/route/v1/foot/34.781812,32.085338;34.783014,32.087958?overview=false"
+
+[[vm]]
+  # UNMEASURED, and said plainly (CLAUDE.md §11). There is no Docker on either
+  # development machine or on the agent VM, so the graph has never been built
+  # here and these numbers are from OSRM's own guidance for a country-sized
+  # MLD graph rather than from a run. Watch the first deploy: `osrm-extract`
+  # is the memory-hungry step and it happens on the BUILDER, not here, so if
+  # anything is short at runtime it will be this.
+  size = "shared-cpu-2x"
+  memory = "2gb"

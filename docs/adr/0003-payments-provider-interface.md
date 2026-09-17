@@ -4,16 +4,17 @@ Status: **open decision.** Nothing implemented, no provider chosen.
 Date: September 2026
 
 **Current grant, until a PSP is signed:** rows in `listing_grants`
-(migration 0016). A live grant is a dated listing quota (`remaining > 0`,
-inside `effective_from`/`effective_to`) with `source` (`admin_comp` today,
-`psp:…` later) and a required note. The editor reads it through
-`entitlementFromGrants` and `loadEntitlement`. A Postgres trigger consumes one
-remaining listing on publish. Fail closed: no live grant is unpaid, a failed
-read is unknown, only remaining > 0 is treated as paid. `beta_publishers`
-(0013) is kept as history and was copied into grants; new reads do not use it.
-Replacing this with a payment check is a product change that needs the same
-human review (CLAUDE.md §8). Seed operators with `docs/ADMIN-SEED.sql` — never
-commit an email address.
+(migration 0016) plus one free first listing with the היעד mark (migration
+0022). A live grant is a dated listing quota (`remaining > 0`, inside
+`effective_from`/`effective_to`) with `source` (`admin_comp` today, `psp:…`
+later) and a required note. The editor reads it through
+`entitlementFromGrants` and `loadEntitlement`. Fail closed: a failed read is
+unknown. A live grant is paid (mark off). No grant and zero published/sold
+listings is the one free listing (mark on). A second listing without a grant
+is unpaid. `beta_publishers` (0013) is kept as history; new reads do not use
+it. Replacing this with a payment check is a product change that needs the
+same human review (CLAUDE.md §8). Seed operators with `docs/ADMIN-SEED.sql`
+— never commit an email address.
 
 This exists to be taken to a vendor. Israeli PSP contracts run a year with an
 exit penalty, so the list is written to be checked against a sales engineer's
@@ -31,8 +32,9 @@ Stripe is excluded on principle, permanently: see CLAUDE.md §2.
 
 **A synchronous transaction-status endpoint is non-negotiable.**
 
-CLAUDE.md §8 says fail closed: unknown or errored entitlement means not paid.
-Publishing is gated on payment. If the only signal that a payment succeeded is
+CLAUDE.md §8 says fail closed: unknown or errored entitlement means not paid
+and not free. The first listing publishes with the mark; the next one is
+gated on a live grant. If the only signal that a payment succeeded is
 an asynchronous webhook, then at publish time we must either block waiting for
 one, or grant access on unverified state. The first is a bad experience, the
 second is a bug that gives the product away.

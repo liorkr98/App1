@@ -16,6 +16,7 @@ import { CATEGORY_PRESENTATION } from '../lib/category-presentation';
 import { t } from '../lib/i18n';
 import { perUnitPrice } from '../lib/price';
 import { mapCardSrc } from '@/features/listings/map-card';
+import { areaMap } from '@/features/listings/area-map';
 import { isWalkItem, labeledWalkItems } from '@/features/listings/photo-rooms';
 
 interface Props {
@@ -51,6 +52,13 @@ const showMap = Boolean(listing.location?.street);
 const mapImageUrl = mapCardSrc();
 
 /**
+ * The neighbourhood drawn from real coordinates, when the address was looked
+ * up. Undefined falls back to the generic pin card, which is the honest state
+ * for a listing whose surroundings we have never fetched.
+ */
+const neighbourhoodMap = listing.areaPlaces ? areaMap(listing.areaPlaces) : undefined;
+
+/**
  * ₪ per m², derived from the price and whichever fact the schema marks as the
  * denominator. A vehicle has no such fact and gets nothing — inventing a
  * price per kilometre would be worse than an empty line.
@@ -64,8 +72,12 @@ const perUnit = perUnitPrice(listing.category, listing.facts, listing.price);
  * page that gains a new attributed source cannot forget to add one. Hardcoding
  * it in the footer would make the credit depend on a template remembering.
  */
-const attributions =
-  listing.enrichment?.category === 'property' ? listing.enrichment.attributions : [];
+const attributions = [
+  ...(listing.enrichment?.category === 'property' ? listing.enrichment.attributions : []),
+  // The description's own sources, which are not the grid's. A page can owe
+  // one, both, or neither — see Listing.textAttributions.
+  ...(listing.textAttributions ?? []),
+];
 
 const sold = listing.status === 'sold';
 const walkImages = [listing.media.cover, ...listing.media.gallery];
@@ -137,6 +149,8 @@ const hasWalk = walkItems.length > 0;
       location={listing.location}
       mapImageUrl={mapImageUrl}
       enrichment={listing.enrichment?.category === 'property' ? listing.enrichment : undefined}
+      areaMap={neighbourhoodMap}
+      areaAttribution={listing.textAttributions?.[0]}
     />
   )}
 
@@ -153,13 +167,13 @@ const hasWalk = walkItems.length > 0;
       />
     )}
 
-    {/* נבנה בהיעד is the viral loop (CLAUDE.md §8) — a listing page is
-        forwarded to 30-80 people who are by definition interested in buying
-        something. The ODbL line beside it is a LICENCE CONDITION, not a
-        courtesy (§10), and it is driven by the payload so a page with no OSM
-        places carries no OSM credit. */}
+    {/* נבנה בהיעד is the viral loop (CLAUDE.md §8). Free listings keep it;
+        a paid grant sets listing.hyadMark false and the mark comes off.
+        The ODbL line is a LICENCE CONDITION, not a courtesy (§10). */}
     <footer>
-      {t('common.builtByPrefix')}<a href="/">{t('common.brand')}</a>
+      {listing.hyadMark !== false && (
+        <Fragment>{t('common.builtByPrefix')}<a href="/">{t('common.brand')}</a></Fragment>
+      )}
       {attributions.map((attribution) => (
         <Fragment><br /><span class="attribution"><Prose text={attribution} /></span></Fragment>
       ))}

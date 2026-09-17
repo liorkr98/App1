@@ -2,9 +2,12 @@
 import { t } from '../lib/i18n';
 import { toCells } from '../lib/facts';
 import { perUnitPrice } from '../lib/price';
+import { ogDescription, ogTitle } from '../lib/og';
+import { CATEGORY_PRESENTATION } from '../lib/category-presentation';
 import { HERO_WIDTHS, largest } from '../lib/images';
 import MiniScreen from '../components/MiniScreen.astro';
 import BrandMark from '../components/BrandMark.astro';
+import Prose from '../components/Prose.astro';
 import { TEMPLATE_IDS } from '@/types/listing';
 import { propertyListing, vehicleListing, withNamedRooms } from '../lib/listings';
 import '../styles/tokens.css';
@@ -47,6 +50,19 @@ import '../styles/tokens.css';
 const cells = toCells('property', propertyListing.facts).slice(0, 3);
 const perUnit = perUnitPrice('property', propertyListing.facts, propertyListing.price);
 const propertyShowcase = withNamedRooms(propertyListing);
+
+/*
+  The WhatsApp card, built by the SAME two functions the real one is.
+  `ogTitle` and `ogDescription` are what BaseListing writes into the meta tags,
+  so the card shown on the homepage cannot promise a shape the product does not
+  produce. The image is the demo listing's own cover.
+*/
+const cardTitle = ogTitle(propertyShowcase);
+const cardFacts = ogDescription(
+  propertyShowcase,
+  CATEGORY_PRESENTATION.property.ogFactKeys,
+);
+const cardImage = largest(propertyShowcase.media.cover, HERO_WIDTHS);
 
 const title = `${t('common.brand')} — ${t('home.tagline')}`;
 const canonical = new URL('/', Astro.site).href;
@@ -267,20 +283,27 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
 
       .hero {
         display: grid;
-        gap: clamp(2.5rem, 5vw, 4rem);
-        padding-block: clamp(2.5rem, 5vw, 3.75rem) clamp(3rem, 6vw, 4.5rem);
+        gap: clamp(2rem, 4vw, 3rem);
+        padding-block: clamp(2.25rem, 4.5vw, 3.25rem) clamp(2.25rem, 4.5vw, 3.25rem);
       }
 
+      /*
+        WIDER PHONE, TIGHTER SHELL.
+        The stage column was capped at 330px and the copy at 32rem, which on a
+        1280px screen left a column of nothing between them and a band of
+        nothing under both — the "empty, a lot of blank spaces" the homepage
+        was reported for. The two columns now claim the width they are given.
+      */
       @media (min-width: 1000px) {
         .hero {
-          grid-template-columns: minmax(0, 1fr) minmax(260px, 330px);
+          grid-template-columns: minmax(0, 1fr) minmax(300px, 25rem);
           align-items: center;
           gap: clamp(2rem, 4vw, 3.5rem);
         }
       }
 
       .hero-copy {
-        max-inline-size: 32rem;
+        max-inline-size: 34rem;
       }
 
       .hero-sub {
@@ -360,18 +383,54 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         positioning so the container still sizes to the tallest — nothing has
         to be measured and there is no fixed height to get wrong.
       */
+      /*
+        A PHONE-SHAPED WINDOW, and the shape is the fix.
+
+        The five templates are genuinely different heights — that is what they
+        are for — and this cell was auto-sized to the TALLEST while showing
+        whichever one the cycle had reached. On a phone that left 296px of bare
+        dark ground under the shortest of them: a third of the screen, directly
+        below the headline, which reads as a page that failed to load. It is
+        most of what "the homepage looks empty" was about.
+
+        An aspect-ratio rather than a fixed height, so one rule holds at every
+        width and the window is the same shape on a phone as on a desktop.
+        `grid-template-rows` is the half that actually constrains it: a grid
+        ROW is sized by its content regardless of the container's height, so
+        without this the screens overflowed a 480px stage at 715px tall and
+        nothing appeared to change.
+      */
       .stage {
         display: grid;
+        grid-template-rows: minmax(0, 1fr);
         justify-items: center;
         inline-size: 100%;
+        aspect-ratio: 1 / 1.3;
+        max-block-size: 70vh;
+        overflow: hidden;
+      }
+
+      /* The screen takes the window's height and the caption keeps its own, so
+         the five captions still sit on one line as they did. */
+      .stage > .device {
+        block-size: 100%;
+        min-block-size: 0;
+        grid-template-rows: minmax(0, 1fr) auto;
+      }
+
+      .stage .screen {
+        block-size: 100%;
+        min-block-size: 0;
+        /* The crop, and the fade that admits to it: a listing page continues
+           past the fold, and this says so instead of ending in a hard line. */
+        mask-image: linear-gradient(to bottom, #000 86%, transparent 100%);
       }
 
       .stage > .device {
         grid-area: 1 / 1;
-        /* The cell is as tall as the TALLEST of the three, and without this
-           the shorter screens stretch to fill it — which painted a block of
-           empty white below the agency one. Each keeps its own height and
-           hangs from the top of the cell. */
+        /* Each screen hangs from the top of the cell rather than stretching to
+           fill it: a stretched miniature is a listing page with its type in
+           the wrong place. */
         align-content: start;
         /* A grid item under justify-items:center sizes to its CONTENT, and the
            content is a screen at inline-size:100% — which resolves against the
@@ -820,8 +879,10 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
          More space above a heading than below it: the heading belongs to what
          follows, and even spacing leaves it floating between two blocks. */
 
+      /* Tightened from 5rem. Six sections each holding a screen of padding is
+         how a page with plenty in it reads as sparse. */
       section > .shell {
-        padding-block: clamp(3.25rem, 6vw, 5rem);
+        padding-block: clamp(2.75rem, 5vw, 4rem);
       }
 
       .section-head {
@@ -903,6 +964,102 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         font-size: var(--meta);
         font-weight: 600;
         color: var(--dim);
+      }
+
+      /* ---------- The WhatsApp card ----------
+         A thread, not a screenshot: the bubble is built from the same markup
+         the real card's metadata describes, so it stays true by construction
+         and costs no image. */
+
+      .link-grid {
+        display: grid;
+        gap: clamp(2rem, 4vw, 3rem);
+        align-items: center;
+      }
+
+      @media (min-width: 900px) {
+        .link-grid {
+          grid-template-columns: minmax(0, 1fr) minmax(280px, 26rem);
+        }
+      }
+
+      /* The chat ground. Muted on purpose — the card is the subject and a
+         saturated green would make the mock the subject instead. */
+      .thread {
+        padding: clamp(1rem, 2.5vw, 1.5rem);
+        background: var(--stone-warm);
+        border: var(--rule);
+        border-radius: 10px;
+      }
+
+      .bubble {
+        max-inline-size: 22rem;
+        /* Outgoing: the inline end of the thread. In Hebrew that is the left,
+           and nothing here has to know that. */
+        margin-inline-start: auto;
+        padding: 0.4rem;
+        background: #e7f3d8;
+        border-radius: 10px 10px 4px 10px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+      }
+
+      .card {
+        background: var(--plaster);
+        border-radius: 6px;
+        overflow: hidden;
+      }
+
+      .card img {
+        display: block;
+        inline-size: 100%;
+        /* The card is 1200x630 and WhatsApp crops nothing (§6). */
+        aspect-ratio: 1200 / 630;
+        /* NOT redundant. The element carries width/height attributes for the
+           no-CSS case, and the height one is a presentational hint that beats
+           `aspect-ratio` unless the height is explicitly released — which
+           rendered the preview 630px tall and three times too deep. */
+        block-size: auto;
+        object-fit: cover;
+      }
+
+      .card-text {
+        display: grid;
+        gap: 0.15rem;
+        padding: 0.5rem 0.6rem 0.6rem;
+        line-height: 1.45;
+      }
+
+      .card-text strong {
+        font-size: 0.9rem;
+        font-weight: 700;
+      }
+
+      .card-text span {
+        font-size: 0.78rem;
+        color: var(--muted);
+      }
+
+      .card-text em {
+        font-style: normal;
+        font-size: 0.7rem;
+        color: var(--muted);
+      }
+
+      .bubble-link {
+        display: block;
+        padding: 0.4rem 0.3rem 0.15rem;
+        font-size: 0.78rem;
+        color: #2c5a8a;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+        overflow-wrap: anywhere;
+      }
+
+      .thread-note {
+        margin-block-start: 0.8rem;
+        font-size: var(--meta);
+        color: var(--muted);
+        text-align: center;
       }
 
       /* ---------- Steps ----------
@@ -1311,6 +1468,48 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
               </a>
             ))
           }
+        </div>
+      </div>
+    </section>
+
+    {/*
+      THE CARD THE LINK BECOMES.
+
+      The highest-leverage thing in the product (CLAUDE.md §6) and the homepage
+      never showed it — `home.linkTitle`, `home.linkBody` and
+      `home.linkCaption` were written for this block and nothing rendered them,
+      which is half the reason the page read as empty. An agent decides whether
+      this is worth four minutes by looking at what lands in the group chat.
+
+      OUTGOING, SO IT SITS AT THE INLINE END. In an RTL thread the message you
+      sent is on the left; `margin-inline-start: auto` puts it there without
+      naming a side (§4.1).
+    */}
+    <section class="link-band">
+      <div class="shell">
+        <div class="link-grid">
+          <div class="section-head">
+            <h2>{t('home.linkTitle')}</h2>
+            <p>{t('home.linkBody')}</p>
+          </div>
+
+          <div class="thread">
+            <div class="bubble">
+              <div class="card">
+                <img src={cardImage} alt="" loading="lazy" decoding="async" width="1200" height="630" />
+                <div class="card-text">
+                  <strong><Prose text={cardTitle} /></strong>
+                  <span><Prose text={cardFacts} /></span>
+                  <em dir="ltr">hasivuv.com</em>
+                </div>
+              </div>
+              {/* bdi, not only dir="ltr": the slug carries digits inside a
+                  Hebrew document, and §4.2 wants them isolated by the tag the
+                  build gate can see. */}
+              <span class="bubble-link"><bdi dir="ltr">hasivuv.com/a/A7K2M</bdi></span>
+            </div>
+            <p class="thread-note">{t('home.linkCaption')}</p>
+          </div>
         </div>
       </div>
     </section>

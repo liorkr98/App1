@@ -8,13 +8,15 @@ import {
   type TemplateId,
 } from '@/types/listing';
 import { parseEnrichmentBlock } from '@/features/listings/enrichment-payload';
+import { descriptionOrArea } from '@/features/listings/neighborhood-note';
+import { OSM_ATTRIBUTION, type AreaPlace, type AreaPlaces } from '@/features/listings/area-note';
 import { isPhotoRoom } from '@/features/listings/photo-rooms';
 
 import { listingBySlug } from './listings';
 import { supabaseConfigured, supabasePublic } from './supabase';
 
 const LISTING_COLUMNS =
-  'id, slug, category, title, description, price, currency, list_price, price_note, facts, media, disclosures, location, seller, template, accent, status, indexable, pre_portal, published_at, og_image_hash, audience';
+  'id, slug, category, title, description, price, currency, list_price, price_note, facts, media, disclosures, location, seller, template, accent, status, indexable, pre_portal, published_at, og_image_hash, audience, hyad_mark, area_places';
 
 interface ListingRow {
   id: string;
@@ -34,16 +36,88 @@ interface ListingRow {
   template: string;
   accent: string | null;
   status: string;
-  indexable: boolean;
+      indexable: boolean;
   pre_portal?: boolean | null;
   published_at: string | null;
   og_image_hash: string | null;
   audience: string | null;
+  hyad_mark?: boolean | null;
+  area_places?: unknown;
   listing_enrichment?: { payload: unknown } | { payload: unknown }[] | null;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+const AREA_GROUPS = [
+  'neighbourhoods',
+  'schools',
+  'transit',
+  'parks',
+  'community',
+  'shops',
+] as const;
+
+/**
+ * The OpenStreetMap names around this address, validated.
+ *
+ * `{}` is the column default and means no lookup was ever made, so the page
+ * draws no map and owes no credit. Anything that survives this is a list of
+ * named points, each with a position, and — only when a pedestrian router
+ * answered — routed walking minutes.
+ *
+ * A place with no coordinate is DROPPED rather than defaulted: it has nowhere
+ * to go on the map. `walkMinutes` is kept only when it is a real number, so a
+ * `null` left by a router that could not reach somewhere renders as no time at
+ * all rather than as zero (CLAUDE.md §7 — absent is not the same as none).
+ */
+function asAreaPlaces(value: unknown): AreaPlaces | undefined {
+  if (!isRecord(value) || typeof value.city !== 'string') return undefined;
+
+  const group = (key: string): AreaPlace[] => {
+    const raw = value[key];
+    if (!Array.isArray(raw)) return [];
+
+    return raw.flatMap((item) => {
+      if (!isRecord(item) || typeof item.name !== 'string') return [];
+      const lat = asCoord(item.lat);
+      const lon = asCoord(item.lon);
+      if (lat === undefined || lon === undefined) return [];
+
+      const walkMinutes = typeof item.walkMinutes === 'number' ? item.walkMinutes : undefined;
+      return [
+        {
+          name: item.name,
+          lat,
+          lon,
+          ...(walkMinutes !== undefined && Number.isFinite(walkMinutes) && walkMinutes > 0
+            ? { walkMinutes: Math.round(walkMinutes) }
+            : {}),
+        },
+      ];
+    });
+  };
+
+  const origin = isRecord(value.origin)
+    ? { lat: asCoord(value.origin.lat), lon: asCoord(value.origin.lon) }
+    : undefined;
+
+  const places: AreaPlaces = {
+    city: value.city,
+    ...(typeof value.street === 'string' ? { street: value.street } : {}),
+    ...(origin?.lat !== undefined && origin.lon !== undefined
+      ? { origin: { lat: origin.lat, lon: origin.lon } }
+      : {}),
+    neighbourhoods: group('neighbourhoods'),
+    schools: group('schools'),
+    transit: group('transit'),
+    parks: group('parks'),
+    community: group('community'),
+    shops: group('shops'),
+  };
+
+  return AREA_GROUPS.some((key) => places[key].length > 0) ? places : undefined;
 }
 
 function asCoord(value: unknown): number | undefined {
@@ -139,6 +213,7 @@ export function listingFromRow(row: ListingRow): Listing | undefined {
   if (!seller || !media) return undefined;
 
   const enrichment = enrichmentFromRow(row);
+  const areaPlaces = asAreaPlaces(row.area_places);
 
   const lat = isRecord(row.location) ? asCoord(row.location.lat) : undefined;
   const lng = isRecord(row.location) ? asCoord(row.location.lng) : undefined;
@@ -156,7 +231,10 @@ export function listingFromRow(row: ListingRow): Listing | undefined {
     slug: row.slug,
     category: row.category as Listing['category'],
     title: row.title,
-    description: row.description ?? '',
+    description: descriptionOrArea(
+      row.description ?? '',
+      enrichment && enrichment.category === 'property' ? enrichment.neighborhoodNote : undefined,
+    ),
     price: Number(row.price),
     currency: row.currency ?? 'ILS',
     ...(row.list_price != null ? { listPrice: Number(row.list_price) } : {}),
@@ -171,6 +249,16 @@ export function listingFromRow(row: ListingRow): Listing | undefined {
     status: row.status as ListingStatus,
     ...(row.published_at ? { publishedAt: row.published_at } : {}),
     indexable: row.indexable === true,
+    hyadMark: row.hyad_mark !== false,
+    /*
+     * The neighbourhood, and the ODbL credit it comes with (CLAUDE.md §10).
+     * The page draws its map from these names and may have been written from
+     * them, so the credit appears exactly on the pages that used the source
+     * and on no others.
+     */
+    ...(areaPlaces
+      ? { areaPlaces, textAttributions: [OSM_ATTRIBUTION] }
+      : {}),
     ...(row.pre_portal === true ? { prePortal: true } : {}),
     ...(row.og_image_hash ? { ogImageHash: row.og_image_hash } : {}),
     ...(row.audience === 'investor' || row.audience === 'resident' || row.audience === 'both'
@@ -214,7 +302,15 @@ export async function publishedListing(slug: string): Promise<Listing | undefine
         .maybeSingle();
       if (enrichError || !enrich) return listing;
       const parsed = parseEnrichmentBlock((enrich as { payload: unknown }).payload);
-      return parsed ? { ...listing, enrichment: parsed } : listing;
+      if (!parsed) return listing;
+      return {
+        ...listing,
+        enrichment: parsed,
+        description: descriptionOrArea(
+          listing.description,
+          parsed.category === 'property' ? parsed.neighborhoodNote : undefined,
+        ),
+      };
     } catch {
       return listing;
     }

@@ -9,6 +9,7 @@ import {
   type VehicleEnrichment,
 } from '@/types/listing';
 import { propertySchema, vehicleSchema } from '@/features/listings/schemas';
+import { groundedAreaDescription } from '@/features/listings/neighborhood-note';
 
 /**
  * Sample listings, with the content of the two reference pages.
@@ -114,6 +115,7 @@ const propertyEnrichment: PropertyEnrichment = {
     { id: 'p3', name: 'פארק פרס', category: 'park', walkMinutes: 9, ...{ sourceName: 'OpenStreetMap', sourceDate: '2026-09-05' } },
     { id: 'p4', name: 'קפה גרג', category: 'cafe', walkMinutes: 6, ...{ sourceName: 'OpenStreetMap', sourceDate: '2026-09-05' } },
     { id: 'p5', name: 'מסעדת הדרים', category: 'restaurant', walkMinutes: 11, ...{ sourceName: 'OpenStreetMap', sourceDate: '2026-09-05' } },
+    { id: 'p6', name: 'מתנ״ס חולון', category: 'culture', walkMinutes: 8, ...{ sourceName: 'OpenStreetMap', sourceDate: '2026-09-05' } },
   ],
   civic: [
     { id: 'c1', name: 'תחנת חולון', kind: 'police', walkMinutes: 12, sourceName: 'משטרת ישראל', sourceDate: '2026-09-15' },
@@ -124,14 +126,20 @@ const propertyEnrichment: PropertyEnrichment = {
     nearestGrocery: { name: 'שופרסל שלי', walkMinutes: 5 },
     nearestPark: { name: 'פארק פרס', walkMinutes: 9 },
   },
-  // Hand-written from the sample facts above so the demo shows the block
-  // without calling a model at build time.
-  neighborhoodNote: {
-    text: 'בחולון, ליד סוקולוב. הרכבת הקלה בוולפסון כשבע דקות הליכה, וגן רימון כארבע. שופרסל שלי חמש דקות ברגל.',
-  },
+  // Filled immediately below from the same facts DeepSeek sees at publish.
+  neighborhoodNote: { text: 'placeholder' },
   // Carried by the data, so a page with no OSM places carries no OSM credit.
   attributions: ['© מפתחי OpenStreetMap, ברישיון ODbL'],
 };
+
+const SAMPLE_AREA = groundedAreaDescription({
+  city: 'חולון',
+  transit: propertyEnrichment.transit,
+  schools: propertyEnrichment.schools,
+  places: propertyEnrichment.places,
+  civic: propertyEnrichment.civic ?? [],
+});
+propertyEnrichment.neighborhoodNote = { text: SAMPLE_AREA };
 
 export const propertyListing: Listing = {
   id: 'sample-property',
@@ -139,8 +147,7 @@ export const propertyListing: Listing = {
   category: 'property',
 
   title: 'דירת 4 חדרים,\nמשופצת מהיסוד',
-  description:
-    'הדירה עברה שיפוץ מלא לפני שנתיים — חשמל, אינסטלציה, מטבח וריצוף. הסלון פונה למרפסת שמש דרומית שמקבלת אור מהבוקר עד אחר הצהריים. שלושה חדרי שינה, אחד מהם עם יציאה נפרדת למרפסת שירות.\n\nהבניין שקט, שמונה דיירים בלבד, ועד בית פעיל. חניה בטאבו. בית ספר וגן ילדים במרחק הליכה, ותחנת הרכבת הקלה שבע דקות ברגל.',
+  description: SAMPLE_AREA,
   price: 1850000,
   currency: 'ILS',
   priceNote: 'פינוי גמיש',
@@ -183,6 +190,7 @@ export const propertyListing: Listing = {
   status: 'published',
   publishedAt: '2026-09-07T00:00:00.000Z',
   indexable: false,
+  hyadMark: true,
 };
 
 
@@ -269,6 +277,7 @@ export const vehicleListing: Listing = {
   status: 'published',
   publishedAt: '2026-09-07T00:00:00.000Z',
   indexable: false,
+  hyadMark: true,
 };
 
 export const listings: Listing[] = [propertyListing, vehicleListing];
