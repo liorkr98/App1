@@ -25,12 +25,13 @@ const HOLON: AreaPlaces = {
 };
 
 describe('areaMap', () => {
-  it('puts the flat at the centre and everything else where it is', () => {
+  it('puts the flat on the tiles and everything else where it is', () => {
     const map = areaMap(HOLON);
     assert.ok(map);
 
-    assert.equal(map.origin.x, map.width / 2);
-    assert.equal(map.origin.y, map.height / 2);
+    assert.ok(map.cols >= 1 && map.rows >= 1);
+    assert.ok(map.origin.x >= 0 && map.origin.x <= map.width);
+    assert.ok(map.origin.y >= 0 && map.origin.y <= map.height);
 
     // גן איל is south and west of the flat, so below it and — since this is a
     // map and not a layout — to the LEFT of it, in Hebrew as in English.
@@ -85,7 +86,7 @@ describe('areaMap', () => {
     }
   });
 
-  it('fits the frame to what it drew rather than letterboxing it', () => {
+  it('covers the drawing with street tiles rather than a blank frame', () => {
     const tight = areaMap({
       ...HOLON,
       schools: [at('קרוב', 32.0229, 34.7781)],
@@ -96,8 +97,9 @@ describe('areaMap', () => {
       neighbourhoods: [],
     });
     assert.ok(tight);
-    assert.ok(tight.height <= 600, 'a phone should not get a map and nothing else');
-    assert.ok(tight.height >= 200);
+    assert.equal(tight.width, tight.cols * 256);
+    assert.equal(tight.height, tight.rows * 256);
+    assert.ok(tight.height <= 1024, 'a phone should not get a map and nothing else');
   });
 
   it('keys the pins with Hebrew letters, never digits', () => {

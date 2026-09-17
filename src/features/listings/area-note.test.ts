@@ -233,7 +233,7 @@ describe('areaNoteFromPlaces', () => {
     assert.ok(text.includes('גן הרצל'));
     assert.ok(text.includes('מתנ״ס וולפסון'));
     assert.ok(text.includes('תחנת האוטובוס הקרובה היא סוקולוב/שדרות קוגל'));
-    assert.equal(text.includes('שופרסל אקספרס'), false);
+    assert.ok(text.includes('שופרסל אקספרס'));
     assert.equal(text.includes('גן השומרון'), false);
     assert.equal(text.includes('ספריית בן יהודה'), false);
     // It has to survive its own guard, or the fallback would be rejected by

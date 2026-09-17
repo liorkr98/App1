@@ -28,8 +28,8 @@ const listing = slug ? await publishedListing(slug) : undefined;
 
 /*
  * A missing listing is a 404, and so is a DRAFT — publishedListing cannot see
- * one, because the public-read policy in 0002 exposes only 'published' and
- * 'sold'. Telling a stranger which unpublished slugs exist would be an
+ * one, because the public-read policy exposes only `published`. Sold and
+ * archived slugs 404 the same way. Telling a stranger which unpublished slugs exist would be an
  * information leak dressed as a helpful error.
  *
  * RENDERED HERE, NOT REWRITTEN. `Astro.rewrite('/404')` threw on Cloudflare —

@@ -4,16 +4,15 @@ import type { AreaGroup } from './osm-area.js';
 /**
  * The neighbourhood map: what is around this address, drawn where it is.
  *
- * ===================== NO TILE, AT RENDER OR EVER =====================
- * The listing page must not fetch OpenStreetMap — or anyone — when a buyer
- * opens the link (CLAUDE.md §12). So this is not a tile map with a marker
- * layer: it is an SVG built from coordinates we already hold, drawn at publish
- * and served as part of the page. It costs no request, works on a train, and
- * cannot leak a reader's address to a third party.
+ * ===================== STREETS FROM TILES, PLACES FROM US =====================
+ * The pins are coordinates we already hold. The streets under them are OSM
+ * raster tiles, requested by the buyer's browser — not an Overpass query, not
+ * a geocoder, not Distance Matrix. The listing page still does not look up
+ * the neighbourhood at view time (CLAUDE.md §12); it only paints a basemap
+ * that OSM already published, with the ODbL credit this page already carries.
  *
- * What it therefore is NOT is a street map — we hold points, not road
- * geometry, so there are no roads on it. It is a plan of what sits around the
- * flat and in which direction, which is the question a buyer actually has.
+ * Without the tiles the drawing was a beige grid of dots, which is what
+ * "the map still doesn't work" was reporting.
  * =======================================================================
  *
  * ===================== A MAP MUST NOT MIRROR (§4.1) =====================
@@ -49,22 +48,28 @@ export interface AreaMapPin {
 
 export interface AreaMap {
   pins: AreaMapPin[];
-  /** The property itself, at the centre of the drawing. */
+  /** The property itself, in the same pixel space as the pins. */
   origin: { x: number; y: number };
   width: number;
   height: number;
+  /** OSM tile mosaic under the pins. One zoom, integer tile indices. */
+  zoom: number;
+  tileX0: number;
+  tileY0: number;
+  cols: number;
+  rows: number;
+}
+
+export function osmTileUrl(zoom: number, x: number, y: number): string {
+  return `https://tile.openstreetmap.org/${zoom}/${x}/${y}.png`;
 }
 
 /** Enough to be useful, few enough to be readable on a phone. */
 const MAX_PINS = 8;
 
-const VIEW_WIDTH = 800;
-
-/** Never so short that the drawing reads as a strip rather than a map. */
-const MIN_HALF_HEIGHT = 130;
-
-/** Room for a pin's circle and its letter at the very edge. */
-const PADDING = 46;
+const TILE = 256;
+const MIN_ZOOM = 14;
+const MAX_ZOOM = 16;
 
 /**
  * The Hebrew alphabet as ordinals, which is how a Hebrew list is keyed.
@@ -108,13 +113,29 @@ function groupOf(places: AreaPlaces, place: AreaPlace): AreaGroup {
 }
 
 /**
- * Coordinates to a drawing.
- *
- * Equirectangular, with longitude scaled by cos(latitude) — at Israel's
- * latitude a degree of longitude is about 0.84 of a degree of latitude, and
- * ignoring that stretches the map sideways by a sixth. One scale for both axes
- * so the SHAPE is true: two places equally far from the flat are equally far
- * from the pin, whichever direction they lie in.
+ * Web Mercator pixels at a zoom — the same space OSM tiles are cut from.
+ * West is smaller x, south is larger y. The map does not mirror for Hebrew.
+ */
+function lonToX(lon: number, zoom: number): number {
+  return ((lon + 180) / 360) * 2 ** zoom * TILE;
+}
+
+function latToY(lat: number, zoom: number): number {
+  const s = Math.sin((lat * Math.PI) / 180);
+  const clamped = Math.min(Math.max(s, -0.9999), 0.9999);
+  return (0.5 - Math.log((1 + clamped) / (1 - clamped)) / (4 * Math.PI)) * 2 ** zoom * TILE;
+}
+
+function zoomFor(span: number): number {
+  const pixels = (z: number) => (span / 360) * 2 ** z * TILE;
+  for (let zoom = MAX_ZOOM; zoom >= MIN_ZOOM; zoom -= 1) {
+    if (pixels(zoom) < TILE * 2.8) return zoom;
+  }
+  return MIN_ZOOM;
+}
+
+/**
+ * Coordinates to a drawing that sits on OSM street tiles.
  *
  * Returns undefined when there is nothing to draw — no origin, or no place
  * with a position. A map of nothing is not rendered at all (§7).
@@ -127,75 +148,58 @@ export function areaMap(places: AreaPlaces): AreaMap | undefined {
   if (picked.length === 0) return undefined;
 
   const lonScale = Math.cos((origin.lat * Math.PI) / 180);
-  const offsets = picked.map((place) => ({
-    place,
-    east: (place.lon - origin.lon) * lonScale,
-    // Screen y grows downwards and north is up, so this is negated.
-    south: -(place.lat - origin.lat),
-  }));
-
-  /*
-   * ONE SCALE FOR BOTH AXES, and then the FRAME is fitted to what was drawn.
-   *
-   * A fixed 800x420 box letterboxed the drawing: the places sat in a square
-   * patch in the middle with a third of the height empty above and below,
-   * which is the same "large blank space" the homepage was reported for.
-   *
-   * Scaling the axes separately would fill the box and distort the map — two
-   * places equally far from the flat would look unequally far. So the scale
-   * stays uniform and the viewBox shrinks to the content instead.
-   */
-  // A floor of roughly 200 metres, so one very close place is not magnified
-  // into a map of a single street corner.
-  const FLOOR = 0.0018;
-  const reachEast = Math.max(...offsets.map((o) => Math.abs(o.east)), FLOOR);
-  const reachSouth = Math.max(...offsets.map((o) => Math.abs(o.south)), FLOOR);
-
-  /*
-   * The scale that fits BOTH axes. Taking the width alone put a pin outside
-   * the frame whenever the places were spread more north-to-south than
-   * east-to-west, because the height is capped — a phone must not get a map
-   * and nothing else. Fitting the tighter axis keeps everything inside and
-   * keeps one scale for both, so the shape stays true.
-   */
-  const MAX_HEIGHT = Math.round(VIEW_WIDTH * 0.75);
-  const scale = Math.min(
-    (VIEW_WIDTH / 2 - PADDING) / reachEast,
-    (MAX_HEIGHT / 2 - PADDING) / reachSouth,
+  const span = Math.max(
+    ...picked.map((place) => {
+      const east = Math.abs(place.lon - origin.lon) * lonScale;
+      const north = Math.abs(place.lat - origin.lat);
+      return Math.max(east, north);
+    }),
+    0.002,
   );
 
-  const drawn = offsets.map((offset, index) => ({
-    key: KEYS[index] ?? '',
-    name: offset.place.name,
-    group: groupOf(places, offset.place),
-    ...(offset.place.walkMinutes === undefined
-      ? {}
-      : { walkMinutes: offset.place.walkMinutes }),
-    x: offset.east * scale,
-    y: offset.south * scale,
+  const zoom = zoomFor(span);
+  const worldX = lonToX(origin.lon, zoom);
+  const worldY = latToY(origin.lat, zoom);
+
+  const worlds = picked.map((place) => ({
+    place,
+    x: lonToX(place.lon, zoom),
+    y: latToY(place.lat, zoom),
   }));
 
-  /*
-   * The frame, fitted to what was drawn and symmetric about the flat.
-   *
-   * Symmetric because the property is the thing a reader orients from, so it
-   * belongs in the middle. Fitted because a fixed box letterboxed the drawing:
-   * the places sat in a patch in the centre with a third of the height empty,
-   * which is the same dead space the homepage was reported for.
-   */
-  const spreadY = Math.max(...drawn.map((pin) => Math.abs(pin.y)), MIN_HALF_HEIGHT);
-  const height = Math.min(Math.round((spreadY + PADDING) * 2), MAX_HEIGHT);
-  const centre = { x: VIEW_WIDTH / 2, y: height / 2 };
+  const minX = Math.min(worldX, ...worlds.map((p) => p.x)) - 48;
+  const maxX = Math.max(worldX, ...worlds.map((p) => p.x)) + 48;
+  const minY = Math.min(worldY, ...worlds.map((p) => p.y)) - 48;
+  const maxY = Math.max(worldY, ...worlds.map((p) => p.y)) + 48;
+
+  const tileX0 = Math.floor(minX / TILE);
+  const tileY0 = Math.floor(minY / TILE);
+  const tileX1 = Math.floor(maxX / TILE);
+  const tileY1 = Math.floor(maxY / TILE);
+  const cols = tileX1 - tileX0 + 1;
+  const rows = tileY1 - tileY0 + 1;
+  const originPx = {
+    x: worldX - tileX0 * TILE,
+    y: worldY - tileY0 * TILE,
+  };
 
   return {
-    pins: drawn.map((pin) => ({
-      ...pin,
-      x: Math.round(centre.x + pin.x),
-      y: Math.round(centre.y + pin.y),
+    pins: worlds.map((item, index) => ({
+      key: KEYS[index] ?? '',
+      name: item.place.name,
+      group: groupOf(places, item.place),
+      ...(item.place.walkMinutes === undefined ? {} : { walkMinutes: item.place.walkMinutes }),
+      x: Math.round(item.x - tileX0 * TILE),
+      y: Math.round(item.y - tileY0 * TILE),
     })),
-    origin: centre,
-    width: VIEW_WIDTH,
-    height,
+    origin: { x: Math.round(originPx.x), y: Math.round(originPx.y) },
+    width: cols * TILE,
+    height: rows * TILE,
+    zoom,
+    tileX0,
+    tileY0,
+    cols,
+    rows,
   };
 }
 

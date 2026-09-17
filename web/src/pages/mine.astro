@@ -745,6 +745,22 @@ import '../styles/tokens.css';
         paint();
       };
 
+      const deleteListing = async (slug: string, button: HTMLButtonElement) => {
+        if (!window.confirm(t('dash.confirmDelete'))) return;
+
+        button.disabled = true;
+
+        const { error } = await supabase().from('listings').delete().eq('slug', slug);
+
+        button.disabled = false;
+
+        if (error) return tell(t('dash.deletedFailed'), 'bad');
+
+        rows = rows.filter((candidate) => candidate.slug !== slug);
+        tell(t('dash.deletedDone'));
+        paint();
+      };
+
       const archiveListing = async (slug: string, button: HTMLButtonElement) => {
         if (!window.confirm(t('dash.confirmArchive'))) return;
 
@@ -771,7 +787,7 @@ import '../styles/tokens.css';
         item.dataset.status = row.status;
 
         const href = publicUrl(row.slug);
-        const sendable = row.status === 'published' || row.status === 'sold';
+          const sendable = row.status === 'published';
 
         // --- Cover -------------------------------------------------------
         const shot = document.createElement(sendable ? 'a' : 'div');
@@ -919,6 +935,13 @@ import '../styles/tokens.css';
           archive.addEventListener('click', () => void archiveListing(row.slug, archive));
           acts.append(archive);
         }
+
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'act';
+        remove.textContent = t('dash.delete');
+        remove.addEventListener('click', () => void deleteListing(row.slug, remove));
+        acts.append(remove);
 
         item.append(acts);
         return item;

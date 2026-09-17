@@ -346,11 +346,16 @@
 }
 
 .thumb-editorial {
-  background: #fbfaf7;
+  background: #f3eee4;
 }
 
 .thumb-editorial .thumb-hero {
-  block-size: 36%;
+  block-size: 52%;
+  background: linear-gradient(to top, #2a2924 30%, #c4bba8 100%);
+}
+
+.thumb-editorial .thumb-facts {
+  grid-template-columns: 1fr;
 }
 
 .thumb-dark {
@@ -379,7 +384,7 @@
 }
 
 .thumb-brochure .thumb-hero {
-  block-size: 58%;
+  block-size: 72%;
 }
 
 .thumb-brochure .thumb-facts {
