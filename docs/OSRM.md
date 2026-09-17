@@ -24,98 +24,73 @@ Nothing in a Cloudflare Worker can host that. So "OSRM is not running" meant
 absent — which was correct behaviour for a page with no router, and looked
 exactly like a missing feature.
 
-`osrm/` is that service now.
+`osrm/` is that service now, and it is live.
 
-## Two Fly apps, not one
+## Where it is running
 
-The Fly app that is already live (`app1-mmbfma`) is the **listing worker**:
-photos, OG, PDF. It cannot host the routing graph. OSRM is a **second** Fly
-app. Do not `fly deploy` this Dockerfile onto `app1-mmbfma` — that would
-replace the worker with a router and take pictures down.
+As of 17 September 2026 it is a **third machine** on the listing worker app,
+not a second Fly app. The deploy token could push to `app1-mmbfma` and could
+not `fly apps create hasivuv-osrm`. The photo and PDF machines were not
+replaced.
 
-This environment cannot run that second deploy: there is no Fly token that
-authenticates (`fly auth whoami` returns 401), and the graph is built by
-Fly's remote builder, not here. The steps below are what you run on a
-machine where `fly auth whoami` prints your email.
+- App: `app1-mmbfma`
+- Process group: `osrm` (machine name `osrm-foot`)
+- Image: `registry.fly.io/app1-mmbfma:osrm-foot` (376 MB, foot MLD, Israel extract)
+- URL: `https://app1-mmbfma.fly.dev`
+- Check, measured: Tel Aviv 364 m walked in **264 seconds** (foot). The public
+  OSRM demo said 162 s (car) for the same hop; Valhalla pedestrian said 277 s.
 
-## What you do
+A worker deploy that does not pass `--process-groups worker,pdf` will destroy
+the OSRM machine.
 
-From a clone of this repo, logged in to Fly and Cloudflare:
+## What is still on you
 
-**1. Create the OSRM app** (once). The name in `osrm/fly.toml` is
-`hasivuv-osrm`. If that name is taken, change `app =` there first.
-
-```
-fly apps create hasivuv-osrm
-```
-
-**2. Deploy the graph.** From the **repo root**, not from `osrm/`:
-
-```
-fly deploy --config osrm/fly.toml --dockerfile osrm/Dockerfile
-```
-
-This downloads the Geofabrik Israel extract and runs `osrm-extract` /
-`osrm-partition` / `osrm-customize` on Fly's builder. Expect **tens of
-minutes** and a large image. If it fails, the failure is almost always
-builder memory during `osrm-extract`, not the 2 GB app VM.
-
-**3. Confirm a real pedestrian route**, not a ping:
-
-```
-curl "https://hasivuv-osrm.fly.dev/route/v1/foot/34.781812,32.085338;34.783014,32.087958?overview=false"
-```
-
-You want HTTP 200 and a `routes[0].duration` in seconds. Anything else means
-the process is up without a graph — do not point the site at it yet.
-
-**4. Point the Cloudflare Worker at it.** Production Worker is `besivov`.
-The URL is a **secret**, not a `PUBLIC_` / wrangler var:
+The calculator is on. The **website** does not use it until this secret is set
+on Cloudflare Worker `besivov`:
 
 ```
 cd web
 npx wrangler secret put OSRM_URL
-# paste: https://hasivuv-osrm.fly.dev
+# paste: https://app1-mmbfma.fly.dev
 ```
 
-No trailing slash. After this, `web/src/lib/routing.ts` uses OSRM's
+No trailing slash. Then press **הצע תיאור** again on a listing (or publish
+again). Walk minutes are stored on that row; old listings keep whatever they
+already have until that runs. After this, `web/src/lib/routing.ts` uses OSRM's
 `/table/v1/foot` instead of Valhalla.
 
-**5. Ship the code that reads `OSRM_URL`.** Cloudflare Pages/Workers deploys
-**`main`**. Walking times, the map, and the OSRM preference live on the
-publish/photos branch until that is merged. Setting the secret on today's
-`main` does nothing visible until that merge.
+## Refreshing the graph
 
-**6. Re-ask for a description** on a listing (or publish again). Walk minutes
-are computed then and stored on `listings.area_places`. Old rows keep whatever
-they already have until that runs.
-
-The graph is built at **image build time** and only the finished graph ships,
-so a machine boots ready rather than preparing data on first request. The build
-is slow and the image is large; both are paid once per data refresh, and for
-walking routes the extract goes stale over months, not days.
-
-`osrm-extract` is the memory-hungry step and it runs on Fly's **builder**, not
-on the app machine. If the first deploy fails, that is where to look.
-
-Verify with a real route rather than a ping — the process can be up with no
-graph loaded, and anything simpler than a route will answer 200 anyway:
+From `osrm/` so the build context is small (the OSRM image has no `apt-get`;
+the PBF is downloaded in a Debian stage):
 
 ```
-curl "$OSRM_URL/route/v1/foot/34.781812,32.085338;34.783014,32.087958?overview=false"
+cd osrm
+fly deploy --app app1-mmbfma --config fly.toml --dockerfile Dockerfile --build-only --push --image-label osrm-foot
+fly machine update <osrm-machine-id> -a app1-mmbfma --image registry.fly.io/app1-mmbfma:osrm-foot
 ```
 
-**None of the figures in `osrm/fly.toml` are measured.** There is no Docker on
-either development machine or on the agent VM, so the graph has never been
-built here. The memory and size are from OSRM's guidance for a country-sized
-MLD graph. CLAUDE.md §11: do not report a number you did not measure.
+The graph is built at **image build time** and only the finished graph ships.
+`osrm-extract` plus partition plus customize took **87 seconds** on Fly's
+builder for this extract; peak RAM during customize was about **640 MB**.
+The 2 GB app VM is enough at runtime (measured).
 
-## What runs until then
+Verify with a real route rather than a ping:
+
+```
+curl "https://app1-mmbfma.fly.dev/route/v1/foot/34.781812,32.085338;34.783014,32.087958?overview=false"
+```
+
+A later split into a dedicated `hasivuv-osrm` app is optional. Do not
+`fly deploy` the OSRM Dockerfile as a **replacement** of `app1-mmbfma` — that
+would take pictures down. Adding a machine in process group `osrm` is what
+already happened.
+
+## Until the secret is set
 
 `web/src/lib/routing.ts` prefers `OSRM_URL` and falls back to **Valhalla on the
 OpenStreetMap Foundation's instance**, pedestrian costing. One matrix request
-per listing, cached on the listing row, no key to hold. It is a public service
-used lightly, and the right answer at volume is the self-hosted graph above.
+per listing, cached on the listing row, no key to hold.
 
 **Not the OSRM demo server.** `router.project-osrm.org/table/v1/foot/…` answers
 200 and returns CAR times: measured against a 370-metre hop in Tel Aviv it said
