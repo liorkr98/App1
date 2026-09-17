@@ -27,22 +27,27 @@
 
 ARG OSRM_VERSION=v6.0.0
 
-# ---------------------------------------------------------------------------
-# Build the graph
-# ---------------------------------------------------------------------------
-FROM ghcr.io/project-osrm/osrm-backend:${OSRM_VERSION} AS graph
+# The published OSRM image has no apt-get (measured on v6.0.0: exit 127).
+# Download the extract in Debian, then hand it to the OSRM image for extract.
+FROM debian:bookworm-slim AS pbf
 
-# Israel and the Palestinian territories, from Geofabrik. The same extract
-# ingest/src/osm/extract.ts downloads for places, so one source serves both.
 ARG EXTRACT_URL=https://download.geofabrik.de/asia/israel-and-palestine-latest.osm.pbf
-
-WORKDIR /data
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-RUN curl -fsSL -o region.osm.pbf "${EXTRACT_URL}"
+# Israel and the Palestinian territories, from Geofabrik. The same extract
+# ingest/src/osm/extract.ts downloads for places, so one source serves both.
+RUN curl -fsSL -o /region.osm.pbf "${EXTRACT_URL}"
+
+# ---------------------------------------------------------------------------
+# Build the graph
+# ---------------------------------------------------------------------------
+FROM ghcr.io/project-osrm/osrm-backend:${OSRM_VERSION} AS graph
+
+WORKDIR /data
+COPY --from=pbf /region.osm.pbf /data/region.osm.pbf
 
 # MLD, not CH. `osrm-routed --algorithm mld` answers /table for a hundred
 # destinations at once, which is the call this product makes — one matrix per

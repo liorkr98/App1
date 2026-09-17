@@ -755,7 +755,7 @@ export default function Editor() {
         </div>
       </header>
 
-      <section className="step">
+      <section className={step === 'template' ? 'step step-templates' : 'step'}>
         {step === 'category' ? (
           <CategoryStep chosen={state.category} onChoose={choose} />
         ) : null}

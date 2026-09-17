@@ -21,11 +21,18 @@ import {
  * map and the routing both use them, and a fixture of round numbers would not
  * catch a projection that ignores latitude.
  */
-const at = (name: string, lat: number, lon: number, walkMinutes?: number) => ({
+const at = (
+  name: string,
+  lat: number,
+  lon: number,
+  walkMinutes?: number,
+  mode?: 'bus' | 'rail',
+) => ({
   name,
   lat,
   lon,
   ...(walkMinutes === undefined ? {} : { walkMinutes }),
+  ...(mode ? { mode } : {}),
 });
 
 const HOLON: AreaPlaces = {
@@ -76,7 +83,7 @@ describe('hasPlaces', () => {
 });
 
 describe('buildAreaPrompt', () => {
-  it('sends the address and the names, and no number of any kind', () => {
+  it('sends the closest stop, not a catalogue of every name', () => {
     const prompt = buildAreaPrompt(HOLON);
 
     assert.ok(prompt.includes('עיר: חולון'));
@@ -98,8 +105,8 @@ describe('buildAreaPrompt', () => {
 
     // The whole line, not a substring search: a single Hebrew letter appears
     // inside half the words on the page.
-    assert.ok(prompt.includes('תחבורה — בשם התחנה: תחנה א, תחנה ב, תחנה ג\n'));
-    assert.equal(prompt.includes('תחנה ד'), false);
+    assert.ok(prompt.includes('תחנת האוטובוס הקרובה — רק זו: תחנה א\n'));
+    assert.equal(prompt.includes('תחנה ב'), false);
   });
 
   it('omits a group with nothing in it rather than saying it is empty', () => {
@@ -183,6 +190,7 @@ describe('routed minutes', () => {
   it('writes the time into the plain paragraph when it has one', () => {
     const text = areaNoteFromPlaces(HOLON_ROUTED);
     assert.ok(text.includes('אורט חולון (7 דקות הליכה)'));
+    assert.ok(text.includes('תחנת האוטובוס הקרובה היא סוקולוב/שדרות קוגל (2 דקות הליכה)'));
     assert.equal(isGrounded(text, HOLON_ROUTED), true);
   });
 });
@@ -205,7 +213,7 @@ describe('acceptAreaNote', () => {
   });
 
   it('refuses a page of prose — the brief was a few lines', () => {
-    const long = `הדירה ברסקו א׳ בחולון. ${'בסביבה אורט חולון וגן הרצל. '.repeat(20)}`;
+    const long = `הדירה ברסקו א׳ בחולון. ${'בסביבה אורט חולון וגן הרצל. '.repeat(40)}`;
     assert.equal(acceptAreaNote(long, HOLON), undefined);
   });
 
@@ -219,17 +227,15 @@ describe('areaNoteFromPlaces', () => {
   it('writes the same paragraph with no model, leading with the neighbourhood', () => {
     const text = areaNoteFromPlaces(HOLON);
 
-    assert.ok(text.startsWith('הדירה ברסקו א׳, חולון.'));
+    assert.ok(text.startsWith('הדירה בשכונת רסקו א׳ בחולון, ברחוב סוקולוב.'));
     assert.ok(text.includes('אורט חולון'));
 
-    // One park, one community place, one shop — Israeli place names run long
-    // and five in a sentence is a list rather than a description.
     assert.ok(text.includes('גן הרצל'));
     assert.ok(text.includes('מתנ״ס וולפסון'));
-    assert.ok(text.includes('שופרסל אקספרס'));
+    assert.ok(text.includes('תחנת האוטובוס הקרובה היא סוקולוב/שדרות קוגל'));
+    assert.equal(text.includes('שופרסל אקספרס'), false);
     assert.equal(text.includes('גן השומרון'), false);
     assert.equal(text.includes('ספריית בן יהודה'), false);
-    assert.equal(text.includes('מאפה ברכה'), false);
     // It has to survive its own guard, or the fallback would be rejected by
     // the rule the model is held to.
     assert.equal(isGrounded(text, HOLON), true);
@@ -237,7 +243,20 @@ describe('areaNoteFromPlaces', () => {
 
   it('falls back to the city when OSM named no neighbourhood', () => {
     const text = areaNoteFromPlaces({ ...HOLON, neighbourhoods: [] });
-    assert.ok(text.startsWith('הדירה בחולון.'));
+    assert.ok(text.startsWith('הדירה בחולון, ברחוב סוקולוב.'));
+  });
+
+  it('names the closest bus and the closest rail as two different things', () => {
+    const text = areaNoteFromPlaces({
+      ...HOLON,
+      transit: [
+        at('סוקולוב/שדרות קוגל', 32.0157, 34.7789, 2, 'bus'),
+        at('חולון וולפסון', 32.016, 34.781, 11, 'rail'),
+      ],
+    });
+
+    assert.ok(text.includes('תחנת האוטובוס הקרובה היא סוקולוב/שדרות קוגל (2 דקות הליכה)'));
+    assert.ok(text.includes('תחנת הרכבת הקרובה היא חולון וולפסון (11 דקות הליכה)'));
   });
 
   it('says only where it is when nothing else is known', () => {

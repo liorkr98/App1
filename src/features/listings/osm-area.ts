@@ -300,7 +300,18 @@ export function placesFromOsm(
     if (group === 'neighbourhood' && name === where.city) continue;
 
     if (!buckets[group].some((place) => place.name === name)) {
-      buckets[group].push({ name, lat: at.lat, lon: at.lon });
+      const mode =
+        group === 'transit'
+          ? tags.railway !== undefined
+            ? ('rail' as const)
+            : ('bus' as const)
+          : undefined;
+      buckets[group].push({
+        name,
+        lat: at.lat,
+        lon: at.lon,
+        ...(mode ? { mode } : {}),
+      });
     }
   }
 
