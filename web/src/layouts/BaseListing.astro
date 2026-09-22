@@ -118,9 +118,11 @@ const showBarLogo =
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Assistant:wght@400;600;700&display=swap" rel="stylesheet">
+{/* Hebrew faces first. Latin subsets load on unicode-range. No Google Fonts
+    request — a listing is forwarded, and that CDN call is a third-party
+    connection on every buyer (DESIGN-CONTRACT §2). */}
+<link rel="preload" href="/fonts/frank-ruhl-hebrew.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/assistant-hebrew.woff2" as="font" type="font/woff2" crossorigin>
 
 {jsonLd && (
   <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
