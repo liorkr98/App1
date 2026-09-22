@@ -355,6 +355,14 @@ export interface Image {
    * The failure mode of forgetting is a larger download, not a broken image.
    */
   variants?: boolean;
+
+  /**
+   * Cover crop, percent from the physical left and top (CSS object-position).
+   * Absent means centre. Copied onto the image at publish so the page does
+   * not read the agent's profile.
+   */
+  focalX?: number;
+  focalY?: number;
 }
 
 export interface Media {
@@ -693,6 +701,12 @@ export interface Listing {
   listPrice?: number;
   /** Free text beside the price when there is no listPrice, e.g. פינוי גמיש. */
   priceNote?: string;
+
+  /**
+   * Up to three first-screen chips. Agent-chosen from HIGHLIGHT_LABELS plus
+   * one custom. Absent means none — "up to three" is a maximum, not a quota.
+   */
+  highlights?: string[];
 
   facts: Fact[];
   media: Media;

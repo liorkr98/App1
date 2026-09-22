@@ -3,11 +3,11 @@
 */
 
 html[data-template='brochure'] {
-  --heroH: 92svh;
+  --heroWant: 92svh;
 }
 
 html[data-template='brochure'] .hero {
-  min-block-size: 560px;
+  min-block-size: 0;
 }
 
 html[data-template='brochure'] .hero-title {

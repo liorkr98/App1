@@ -9,18 +9,18 @@ html[data-template='studio'] {
   --ink-deep: #141310;
   --stone: #d9d2c4;
   --stone-warm: #ece6d8;
-  --heroH: 80svh;
+  --heroWant: 80svh;
 }
 
 html[data-template='studio'] .agent-bar {
-  padding-block: 1rem;
+  padding-block: 0.7rem;
 }
 
 html[data-template='studio'] .hero {
   margin-inline: var(--gut);
-  margin-block: 0.75rem 0;
+  margin-block: 0.35rem 0;
   border-radius: 18px;
-  min-block-size: 420px;
+  min-block-size: 0;
   overflow: hidden;
 }
 

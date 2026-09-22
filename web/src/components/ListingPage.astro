@@ -6,6 +6,7 @@ import Disclosures from './Disclosures.astro';
 import Enrichment from './Enrichment.astro';
 import FactsGrid from './FactsGrid.astro';
 import Gallery from './Gallery.astro';
+import HighlightChips from './HighlightChips.astro';
 import Hero from './Hero.astro';
 import MapSection from './MapSection.astro';
 import PriceBar from './PriceBar.astro';
@@ -122,6 +123,8 @@ const homeLabel = listing.category === 'property' ? t('listing.section.home') : 
     priceNote={listing.priceNote}
     perUnit={perUnit}
   />
+
+  <HighlightChips highlights={listing.highlights} />
 
   {/* Seller declaration, omitted when sold — urgency that the thing is
       gone is a different claim than "not yet on the portals". Never
