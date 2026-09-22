@@ -2,21 +2,39 @@
 import type { Listing, TemplateId } from '@/types/listing';
 import { TEMPLATE_IDS } from '@/types/listing';
 import ListingPage from '../../components/ListingPage.astro';
-import { listings, propertyListing, withNamedRooms } from '../../lib/listings';
+import {
+  fixtures,
+  listings,
+  matrixListings,
+  propertyListing,
+  withNamedRooms,
+} from '../../lib/listings';
+
+function applyTemplate(listing: Listing, id: TemplateId): Listing {
+  const next: Listing = { ...listing, template: id };
+  if (id === 'walkFirst' && listing.slug === propertyListing.slug) {
+    return withNamedRooms(next);
+  }
+  return next;
+}
 
 export function getStaticPaths() {
-  const withTemplate = (id: TemplateId): Listing => {
-    const base: Listing = { ...propertyListing, template: id };
-    if (id !== 'walkFirst') return base;
-    return withNamedRooms(base);
-  };
-
   const demos = listings.map((listing) => ({ params: { slug: listing.slug }, props: { listing } }));
   const templates = TEMPLATE_IDS.map((id) => ({
     params: { slug: id },
-    props: { listing: withTemplate(id) },
+    props: { listing: applyTemplate(propertyListing, id) },
   }));
-  return [...demos, ...templates];
+  const fixturePages = fixtures.map((listing) => ({
+    params: { slug: listing.slug },
+    props: { listing },
+  }));
+  const combos = matrixListings.flatMap((listing) =>
+    TEMPLATE_IDS.map((id) => ({
+      params: { slug: `${listing.slug}-${id}` },
+      props: { listing: applyTemplate(listing, id) },
+    })),
+  );
+  return [...demos, ...templates, ...fixturePages, ...combos];
 }
 
 const { listing } = Astro.props;

@@ -1,0 +1,77 @@
+{
+  "tlv-living": {
+    "width": 1200,
+    "height": 790,
+    "bytes": 61610
+  },
+  "tlv-kitchen": {
+    "width": 1200,
+    "height": 800,
+    "bytes": 71268
+  },
+  "tlv-balcony": {
+    "width": 1200,
+    "height": 674,
+    "bytes": 45880
+  },
+  "tlv-bath": {
+    "width": 934,
+    "height": 1400,
+    "bytes": 38956
+  },
+  "holon-facade": {
+    "width": 1200,
+    "height": 900,
+    "bytes": 94496
+  },
+  "holon-balconies": {
+    "width": 1200,
+    "height": 800,
+    "bytes": 63956
+  },
+  "holon-kitchen": {
+    "width": 1200,
+    "height": 800,
+    "bytes": 50678
+  },
+  "holon-room": {
+    "width": 1200,
+    "height": 800,
+    "bytes": 48710
+  },
+  "moshav-house": {
+    "width": 900,
+    "height": 1200,
+    "bytes": 173956
+  },
+  "moshav-living": {
+    "width": 1200,
+    "height": 800,
+    "bytes": 98484
+  },
+  "moshav-rooms": {
+    "width": 1200,
+    "height": 800,
+    "bytes": 61794
+  },
+  "moshav-kitchen": {
+    "width": 1200,
+    "height": 797,
+    "bytes": 31534
+  },
+  "golf-side": {
+    "width": 1200,
+    "height": 675,
+    "bytes": 38910
+  },
+  "polo-front": {
+    "width": 1200,
+    "height": 800,
+    "bytes": 70100
+  },
+  "beetle-side": {
+    "width": 1200,
+    "height": 675,
+    "bytes": 44252
+  }
+}
