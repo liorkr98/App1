@@ -145,6 +145,9 @@ const shareHref = whatsappShareUrl(
     }
   />
 
+  {/* M7: CSS view-timeline reveals this after the hero (or walkFirst
+      tour) leaves. Until then it is display:none / opacity:0, so it
+      cannot sit under the dock on the first screen. */}
   {!sold && (
     <div class="compact-bar">
       {listing.price > 0 && listing.priceDisplay !== 'on_request' ? (

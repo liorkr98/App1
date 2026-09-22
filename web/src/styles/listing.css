@@ -599,6 +599,17 @@ footer a{
   color:var(--olive);
 }
 
+/* M7 — compact bar after the hero. Hidden until the hero leaves, so it does
+   not sit on the first screen under the dock. Browsers without view() keep
+   only the dock (one WhatsApp, thumb-reach). Reduced-motion keeps the dock
+   too: a sticky bar that slides in is motion, and IntersectionObserver is
+   the JS this page is not allowed. Default is display:none AND opacity:0
+   inside @supports, so a named timeline that fails to resolve never paints
+   a bar over the first screen. */
+.compact-bar{
+  display:none;
+}
+
 /* ============================================================
    תנועה — scroll-driven נטיבי. אפס JS.
    דפדפן שלא תומך פשוט מציג את התוכן. שיפור מדורג.
@@ -670,6 +681,51 @@ footer a{
       0%,100%{transform:scale(.92);opacity:.72}
       50%{transform:none;opacity:1}
     }
+
+    /* Named timeline so a fixed bar can watch the hero (a sibling), not
+       itself — a fixed element is always in view. timeline-scope hoists
+       the name to .listing-flow. walkFirst hides the hero, so that
+       template watches .walk instead: first-screen photography leaving
+       is the same moment. */
+    .listing-flow{
+      timeline-scope:--listing-hero;
+    }
+    .hero{
+      view-timeline-name:--listing-hero;
+      view-timeline-axis:block;
+    }
+    html[data-template='walkFirst'][data-has-walk='1'] .hero{
+      view-timeline-name:none;
+    }
+    html[data-template='walkFirst'][data-has-walk='1'] .walk{
+      view-timeline-name:--listing-hero;
+      view-timeline-axis:block;
+    }
+    .compact-bar{
+      display:flex;
+      position:fixed;
+      inset-block-start:0;
+      inset-inline:0;
+      z-index:24;
+      max-inline-size:620px;
+      margin-inline:auto;
+      align-items:center;
+      gap:.8rem;
+      padding:.55rem var(--gut);
+      padding-block-start:calc(.55rem + env(safe-area-inset-top));
+      background:var(--plaster);
+      border-block-end:1px solid var(--stone);
+      opacity:0;
+      transform:translateY(-110%);
+      pointer-events:none;
+      animation:compact-enter linear both;
+      animation-timeline:--listing-hero;
+      animation-range:exit 0% exit 35%;
+    }
+    @keyframes compact-enter{
+      from{opacity:0;transform:translateY(-110%);pointer-events:none}
+      to{opacity:1;transform:none;pointer-events:auto}
+    }
   }
 }
 
@@ -679,15 +735,6 @@ footer a{
   .tour-card{transform:none;opacity:1}
 }
 
-/* M7 — compact bar after the hero. Hidden until the hero leaves, so it does
-   not sit on the first screen under the dock. Browsers without view() keep
-   only the dock (one WhatsApp, thumb-reach). */
-/* Compact bar waits for P9 (M7). On the first screen it stole space from
-   the price and sat under the dock. The dock is the thumb WhatsApp; the
-   PriceBar is the dominant price. */
-.compact-bar{
-  display:none;
-}
 .compact-price{
   font-family:'Frank Ruhl Libre',serif;
   font-weight:700;
