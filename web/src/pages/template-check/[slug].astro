@@ -10,15 +10,15 @@ import {
   withNamedRooms,
 } from '../../lib/listings';
 
-function applyTemplate(listing: Listing, id: TemplateId): Listing {
-  const next: Listing = { ...listing, template: id };
-  if (id === 'walkFirst' && listing.slug === propertyListing.slug) {
-    return withNamedRooms(next);
-  }
-  return next;
-}
-
 export function getStaticPaths() {
+  const applyTemplate = (listing: Listing, id: TemplateId): Listing => {
+    const next: Listing = { ...listing, template: id };
+    if (id === 'walkFirst' && listing.slug === propertyListing.slug) {
+      return withNamedRooms(next);
+    }
+    return next;
+  };
+
   const demos = listings.map((listing) => ({ params: { slug: listing.slug }, props: { listing } }));
   const templates = TEMPLATE_IDS.map((id) => ({
     params: { slug: id },
