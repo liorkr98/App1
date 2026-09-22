@@ -2,6 +2,7 @@ import { orderForAudience } from '@/features/listings/audience-order';
 import type { Fact, ListingAudience } from '@/types/listing';
 import { factDefinition, factShown, schemaFor, type ListingCategory } from '@/features/listings/schemas';
 
+import { pairedCellText } from '@/features/listings/monthly-cost';
 import { factValue, needsBdi } from './format';
 
 /**
@@ -27,15 +28,19 @@ export interface FactCell {
    */
   value: string;
 
-  /** Second value for a paired cell, e.g. floor 3 / 5. */
-  pairedValue?: string;
-  /** Wrap value (and pairedValue) in <bdi>. */
+  /**
+   * What the cell actually paints. For a paired floor this is `3 / 5` as one
+   * string, so a single `<bdi>` can isolate the whole run. Two sibling `<bdi>`s
+   * reorder to `5 / 3` in RTL (DESIGN-CONTRACT §7 case 2).
+   */
+  displayValue: string;
+  /** Wrap displayValue in <bdi>. */
   bdi: boolean;
   /** Confirmed absent — renders in --absent, showing אין. */
   absent: boolean;
   /**
-   * Numeric value to count up (M3). The formatted `value` stays in the HTML.
-   * Only rooms and m²; never the price.
+   * Numeric value to count up (M3). The formatted `displayValue` stays in the
+   * HTML. m² only — never the price, never rooms, never a floor ratio.
    */
   countFrom?: number;
 
@@ -103,6 +108,7 @@ export function toCells(
         key: fact.key,
         label: unitLabel(definition?.gridLabel ?? fact.label, fact.unit),
         value: 'אין',
+        displayValue: 'אין',
         bdi: false,
         absent: true,
         // A register does not record the absence of a balcony. Absence is
@@ -129,18 +135,17 @@ export function toCells(
     // renders as an ordinary cell rather than as an unbacked badge.
     const cited = fact.source === 'verified' && Boolean(fact.sourceName && fact.sourceDate);
 
+    const value = factValue(fact.value, definition?.grouped);
     cells.push({
       key: fact.key,
       label: unitLabel(definition?.gridLabel ?? fact.label, fact.unit),
-      value: factValue(fact.value, definition?.grouped),
-      ...(partnerValue === undefined ? {} : { pairedValue: partnerValue }),
-      bdi: needsBdi(fact.value),
+      value,
+      displayValue: pairedCellText(value, partnerValue),
+      bdi: needsBdi(fact.value) || partnerValue !== undefined,
       absent: false,
       verified: cited,
       ...(cited ? { sourceName: fact.sourceName, sourceDate: fact.sourceDate } : {}),
-      ...(typeof fact.value === 'number' && (fact.key === 'rooms' || fact.key === 'area_sqm')
-        ? { countFrom: fact.value }
-        : {}),
+      ...(typeof fact.value === 'number' && fact.key === 'area_sqm' ? { countFrom: fact.value } : {}),
     });
   }
 

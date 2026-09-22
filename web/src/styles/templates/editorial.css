@@ -25,5 +25,9 @@ html[data-template='editorial'] .price {
 }
 
 html[data-template='editorial'] .facts {
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+html[data-template='editorial'] .fact {
+  text-align: start;
 }

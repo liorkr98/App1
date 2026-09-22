@@ -2,8 +2,8 @@
  * Listing-page enhancement. Vanilla. No framework.
  *
  * Two jobs, and only these two (redesign plan §3.1, DESIGN-CONTRACT §6.4):
- *   M3  in-view counters on m² and rooms — the HTML already holds the final
- *       value, so no-JS, SEO and screen readers stay correct.
+ *   M3  in-view counters on m² only — the HTML already holds the final
+ *       value, so no-JS, SEO and screen readers stay correct. Never the price.
  *   M4  gallery → lightbox morph via same-document View Transitions, with
  *       a <dialog> fallback (focus trap + Escape for free).
  *
