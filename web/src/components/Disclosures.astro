@@ -1,5 +1,6 @@
 ---
 import Prose from './Prose.astro';
+import { t } from '../lib/i18n';
 
 interface Props {
   items: string[];
@@ -15,18 +16,18 @@ const { items } = Astro.props;
    * Its own framed block, deliberately not folded into the description: the
    * whole value is that a buyer can find the bad news without reading prose.
    * (DESIGN-CONTRACT §5.3)
+   *
+   * Each disclosure is a labelled row (index + text), not an olive-dot list
+   * and not a hazard colour. These are things a seller chose to say.
    */
 }
 <section class="flaws reveal">
-  <h2>מה שכדאי <span class="h2-num">לדעת</span></h2>
+  <h2>{t('listing.section.disclosures')}</h2>
   <ul>
-    {items.map((item) => (
+    {items.map((item, index) => (
       <li>
-        {/* An olive dot, not a warning glyph. These are disclosures a seller
-            chose to make, and marking them with a hazard sign would punish
-            the honesty the block exists to reward. */}
-        <span class="mark" aria-hidden="true"></span>
-        <span><Prose text={item} /></span>
+        <span class="flaw-n"><bdi>{index + 1}</bdi></span>
+        <span class="flaw-text"><Prose text={item} /></span>
       </li>
     ))}
   </ul>
