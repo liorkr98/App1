@@ -71,6 +71,9 @@ export default defineConfig({
   output: 'static',
   build: { format: 'directory' },
   session: false,
+  redirects: {
+    '/accessibility': '/legal/accessibility/',
+  },
 
   adapter: cloudflare({
     imageService: 'passthrough',

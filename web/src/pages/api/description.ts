@@ -24,7 +24,7 @@ import {
 import { LISTING_CATEGORIES, type ListingCategory } from '@/features/listings/schemas';
 import type { Fact } from '@/types/listing';
 
-import { deepseekParagraph } from '../../lib/deepseek';
+import { deepseekParagraph, deepseekParagraphStreaming } from '../../lib/deepseek';
 import { addressForQuery, areaPlaces } from '../../lib/overpass';
 import { walkMinutes } from '../../lib/routing';
 import { supabaseAsUser, supabaseConfigured } from '../../lib/supabase';
@@ -74,6 +74,68 @@ const json = (body: unknown, status: number) =>
     status,
     headers: { 'Content-Type': 'application/json; charset=utf-8' },
   });
+
+function wantsStream(request: Request): boolean {
+  return (request.headers.get('accept') ?? '').includes('text/event-stream');
+}
+
+type Send = (event: string, data: unknown) => void;
+
+function sse(run: (send: Send) => Promise<void>): Response {
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      const send: Send = (event, data) => {
+        controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
+      };
+      try {
+        await run(send);
+      } catch {
+        send('done', { error: 'unavailable' });
+      } finally {
+        controller.close();
+      }
+    },
+  });
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-store',
+    },
+  });
+}
+
+async function modelText(
+  apiKey: string | undefined,
+  system: string,
+  user: string,
+  accept: (raw: string) => string | undefined,
+  fallback: Record<string, unknown>,
+  successSource: string,
+  stream: boolean,
+): Promise<Response> {
+  const succeed = (text: string) => ({ ...fallback, text, source: successSource });
+
+  if (!apiKey) {
+    return stream ? sse(async (send) => send('done', fallback)) : json(fallback, 200);
+  }
+
+  if (stream) {
+    return sse(async (send) => {
+      send('status', { phase: 'model' });
+      const raw = await deepseekParagraphStreaming({ apiKey, system, user }, (token) =>
+        send('token', { t: token }),
+      );
+      const accepted = raw ? accept(raw) : undefined;
+      send('done', accepted ? succeed(accepted) : fallback);
+    });
+  }
+
+  const raw = await deepseekParagraph({ apiKey, system, user });
+  const accepted = raw ? accept(raw) : undefined;
+  if (accepted) return json(succeed(accepted), 200);
+  return json(fallback, 200);
+}
 
 function isCategory(value: unknown): value is ListingCategory {
   return typeof value === 'string' && (LISTING_CATEGORIES as string[]).includes(value);
@@ -190,6 +252,7 @@ export const POST: APIRoute = async ({ request }) => {
   const street = asString(location.street);
 
   const apiKey = env.DEEPSEEK_API_KEY;
+  const stream = wantsStream(request);
 
   // ---------------------------------------------------------------- the area
   //
@@ -219,25 +282,18 @@ export const POST: APIRoute = async ({ request }) => {
           .eq('id', listingId);
       }
 
-      if (apiKey) {
-        const raw = await deepseekParagraph({
-          apiKey,
-          system: AREA_SYSTEM_PROMPT,
-          user: buildAreaPrompt(places),
-        });
-        const accepted = raw ? acceptAreaNote(raw, places) : undefined;
-        if (accepted) {
-          return json({ text: accepted, source: 'area', attribution: OSM_ATTRIBUTION }, 200);
-        }
-      }
-
-      return json(
+      return modelText(
+        apiKey,
+        AREA_SYSTEM_PROMPT,
+        buildAreaPrompt(places),
+        (raw) => acceptAreaNote(raw, places),
         {
           text: areaNoteFromPlaces(places),
           source: 'places',
           attribution: OSM_ATTRIBUTION,
         },
-        200,
+        'area',
+        stream,
       );
     }
   }
@@ -257,18 +313,16 @@ export const POST: APIRoute = async ({ request }) => {
     ...(city ? { city } : {}),
   };
 
-  if (apiKey) {
-    const raw = await deepseekParagraph({
-      apiKey,
-      system: DESCRIPTION_SYSTEM_PROMPT,
-      user: descriptionPrompt(input),
-    });
-    const accepted = raw ? acceptDescription(raw, input) : undefined;
-    if (accepted) return json({ text: accepted, source: 'model', areaPending }, 200);
-  }
-
   const grounded = groundedDescription(input);
   if (!grounded.trim()) return json({ error: 'no_facts' }, 409);
 
-  return json({ text: grounded, source: 'facts', areaPending }, 200);
+  return modelText(
+    apiKey,
+    DESCRIPTION_SYSTEM_PROMPT,
+    descriptionPrompt(input),
+    (raw) => acceptDescription(raw, input),
+    { text: grounded, source: 'facts', areaPending },
+    'model',
+    stream,
+  );
 };

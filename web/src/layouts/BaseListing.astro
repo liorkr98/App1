@@ -167,5 +167,12 @@ const showBarLogo =
   <slot />
 </main>
 <slot name="after" />
+
+<dialog id="listing-lightbox" class="lightbox" aria-label={t('listing.openPhoto')}>
+  <button type="button" class="lightbox-close">{t('listing.closeLightbox')}</button>
+  <div class="lightbox-track"></div>
+</dialog>
+
+<script src="../scripts/listing-enhance.ts"></script>
 </body>
 </html>

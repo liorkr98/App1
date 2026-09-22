@@ -145,7 +145,19 @@
       "park_ride": ""
     },
     "tourCta": "",
-    "newWindow": ""
+    "newWindow": "",
+    "section": {
+      "home": "",
+      "vehicle": "",
+      "gallery": "",
+      "around": "",
+      "verified": "",
+      "map": "",
+      "seller": ""
+    },
+    "licenceVerified": "",
+    "closeLightbox": "",
+    "openPhoto": ""
   },
   "notFound": {
     "title": "",
@@ -195,6 +207,9 @@
       "consentMissing": "",
       "cityMissing": ""
     },
+    "peek": "",
+    "peekClose": "",
+    "facsimile": "",
     "fixLater": "",
     "stepOf": "",
     "coverPhoto": "",
@@ -228,6 +243,7 @@
       "suggest": "",
       "suggestAgain": "",
       "suggesting": "",
+      "streaming": "",
       "suggestWhy": "",
       "suggestFailed": ""
     },
@@ -367,7 +383,30 @@
     "templatesBody": "",
     "dashTitle": "",
     "dashBody": "",
-    "dashCta": ""
+    "dashCta": "",
+    "taglineLine1": "",
+    "taglineLine2": "",
+    "proofLabel": "",
+    "proofTitle": "",
+    "proof1": "",
+    "proof1Body": "",
+    "proof2": "",
+    "proof2Body": "",
+    "proof3": "",
+    "proof3Body": "",
+    "proof4": "",
+    "proof4Body": "",
+    "compareLabel": "",
+    "compareTitle": "",
+    "compareBefore": "",
+    "compareAfter": "",
+    "compareHint": "",
+    "aroundTitle": "",
+    "aroundBody": "",
+    "verifiedTitle": "",
+    "verifiedBody": "",
+    "pricingTitle": "",
+    "phoneCaption": ""
   },
   "agent": {
     "title": "",
@@ -473,6 +512,8 @@
     "home": "",
     "accessibility": "",
     "accessibilityTitle": "",
+    "draftNote": "",
+    "odbl": "",
     "about": "",
     "aboutTitle": "",
     "contact": "",
@@ -567,5 +608,21 @@
     "statusPublished": "",
     "statusSold": "",
     "statusArchived": ""
+  },
+  "lab": {
+    "title": "",
+    "lead": "",
+    "m1": "",
+    "m2": "",
+    "m3": "",
+    "m3Note": "",
+    "m4": "",
+    "m5": "",
+    "m5Note": "",
+    "m7": "",
+    "m8": "",
+    "press": "",
+    "m9": "",
+    "m9Note": ""
   }
 }

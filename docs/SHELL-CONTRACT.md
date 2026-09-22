@@ -1,32 +1,47 @@
-# Shell contract — homepage, dashboard, editor
+# Shell contract — surfaces that are not the listing page
 
-The listing page keeps its templates. The **product chrome** — `/`, `/mine`, `/new`, `/pricing`, `/me` — is plaster ground and olive action.
+The listing page is governed by `docs/DESIGN-CONTRACT.md`. This file is the
+same kind of record for the **shell**: homepage, editor, dashboard, pricing,
+legal. Tokens live in `web/src/styles/tokens.css`. Do not declare a second
+type scale or a second olive.
 
-## Colour
+## Tokens the shell must use
 
-| Token | Role on the shell |
-|---|---|
-| `--plaster` `#FBFAF7` | Page ground |
-| `--olive` `#4A5D3A` | The only chromatic colour. Buttons, focus, visited emphasis |
-| `--ink` `#191A15` | Type |
-| `--ink-deep` `#111208` | **One** dark band (dashboard proof on the homepage, or the footer), so plaster-on-plaster does not flatten in sunlight |
+Colour, type, motion and `--dir` are the listing tokens. Marketing display
+type is `--t-display`. Body on `--stone-warm` uses `--muted-warm`, not
+`--muted`. Confirmed-absent UI uses `--absent`, never opacity.
 
-`theme-color` on these surfaces is plaster, not `#111208`.
+## Parenthetical section labels
 
-Default listing template for new drafts is **`agency`** (white, labelled facts). Agents who want theatre pick `dark` or `brochure`; agents whose photos *are* the sale pick `walkFirst`.
+`(הדירה)` · `(מסביב)` · `(גלריה)` · `(המתווך)` — and the same device on
+marketing sections. Component: `web/src/components/SectionLabel.astro`.
 
-## Homepage
+## Two budgets
 
-One headline, one CTA, five template miniatures (the same listing), a price strip, a closing line. Mini-screens are links, not decoration.
+| Surface | JS | Motion |
+|---|---|---|
+| Listing `/a/[slug]` | ≤ 12 KB gz vanilla. Counters + lightbox only. | CSS-first. M1–M8. |
+| Marketing | GSAP + ScrollTrigger allowed, not required. This pass uses CSS sticky for the four-minute proof so we do not add a ~70 KB library until pinning earns it. | Richer. Still one easing family. |
 
-## Dashboard
+## What the shell must not do
 
-Cards: cover, title, status, views, WhatsApp taps, days live. Filters are a radio group. Empty state is a sentence and a button, not a blank table.
+- Physical `left`/`right` in CSS.
+- `translateX()` without `var(--dir)`.
+- Gradient text, glass hero, blue, bounce easing.
+- A third-party tracker or pixel (Amendment 13).
+- Entitlement decisions (CLAUDE.md §8). Displaying remaining listings is UX;
+  the Postgres trigger is the law.
+- Invented metrics, stock “happy agent with laptop”, generative imagery of a
+  **real** listing.
 
-## Editor
+## Pages
 
-Same plaster column as a listing, olive primary, no inverted enrichment block. Progress rail already exists.
-
-## Out of this contract
-
-Purple, Compare, Spline, Matterport iframe, overlay accessibility widgets, Stripe, CRM.
+| Route | Mode | Notes |
+|---|---|---|
+| `/` | Brand | Narrative in the redesign plan §6.2 |
+| `/new` | Product | Step flow, facsimile, M8 |
+| `/mine` | Product | Dense cards, not a portal |
+| `/pricing` | Brand | Three paid shapes + the free mark. Checkout disabled. |
+| `/legal/*` | Document | Owner supplies legal prose; placeholders stay marked |
+| `/lab` | Internal | Motion primitives M1–M9. Noindex. |
+| `/accessibility` | Redirect | 301 to `/legal/accessibility/` |

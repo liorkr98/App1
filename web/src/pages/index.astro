@@ -8,6 +8,8 @@ import { HERO_WIDTHS, largest } from '../lib/images';
 import MiniScreen from '../components/MiniScreen.astro';
 import BrandMark from '../components/BrandMark.astro';
 import Prose from '../components/Prose.astro';
+import PriceTiers from '../components/PriceTiers.astro';
+import SectionLabel from '../components/SectionLabel.astro';
 import { TEMPLATE_IDS } from '@/types/listing';
 import { propertyListing, vehicleListing, withNamedRooms } from '../lib/listings';
 import '../styles/tokens.css';
@@ -50,6 +52,13 @@ import '../styles/tokens.css';
 const cells = toCells('property', propertyListing.facts).slice(0, 3);
 const perUnit = perUnitPrice('property', propertyListing.facts, propertyListing.price);
 const propertyShowcase = withNamedRooms(propertyListing);
+const enrich = propertyListing.enrichment;
+const sampleSchool = enrich.category === 'property' ? enrich.schools[0] : undefined;
+const sampleBus =
+  enrich.category === 'property' ? enrich.transit.find((item) => item.mode === 'bus') : undefined;
+const sampleGrocery = enrich.category === 'property' ? enrich.summary.nearestGrocery : undefined;
+const odblLine =
+  enrich.category === 'property' ? (enrich.attributions[0] ?? t('legal.odbl')) : t('legal.odbl');
 
 /*
   The WhatsApp card, built by the SAME two functions the real one is.
@@ -102,16 +111,15 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
 
     <style is:global>
       :root {
-        --display: clamp(2.5rem, 5.8vw, 4.2rem);
-        --lead: clamp(1.12rem, 2.1vw, 1.34rem);
-        --heading: clamp(1.45rem, 2.6vw, 1.9rem);
-        --body: 1.0625rem;
-        --meta: 0.82rem;
+        --display: var(--t-display);
+        --lead: var(--t-lead);
+        --heading: var(--t-heading);
+        --body: var(--t-body);
+        --meta: var(--t-meta);
 
         --gutter: clamp(1.25rem, 5vw, 3rem);
         --rule: 1px solid var(--stone);
         --rule-dark: 1px solid rgba(251, 250, 247, 0.14);
-        --on-dark: #fbfaf7;
         --dim: #9c9d93;
       }
 
@@ -168,21 +176,6 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
           radial-gradient(90% 70% at 10% 95%, rgba(126, 154, 98, 0.09), transparent 62%),
           var(--ink-deep);
         color: var(--on-dark);
-      }
-
-      /* The grid sits under the content and over the wash. `mask` fades it out
-         before it reaches an edge, so it reads as texture rather than as a
-         table someone left on. */
-      .dark::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background-image:
-          linear-gradient(rgba(251, 250, 247, 0.045) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(251, 250, 247, 0.045) 1px, transparent 1px);
-        background-size: 68px 68px;
-        mask-image: radial-gradient(115% 85% at 50% 25%, #000 35%, transparent 78%);
-        pointer-events: none;
       }
 
       .dark > * {
@@ -1244,6 +1237,145 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         color: var(--olive);
       }
 
+      .hero-title {
+        font-family: 'Frank Ruhl Libre', serif;
+        font-weight: 700;
+        font-size: var(--display);
+        line-height: 1.08;
+        letter-spacing: -0.03em;
+      }
+      .hero-line {
+        display: block;
+        overflow: hidden;
+      }
+      .hero-line > span {
+        display: block;
+      }
+      .phone {
+        inline-size: min(100%, 320px);
+        margin-inline: auto;
+        padding: 0.7rem;
+        background: #1a1b16;
+        border-radius: 28px;
+        box-shadow: 0 24px 50px -24px rgba(0, 0, 0, 0.55);
+      }
+      .phone .screen {
+        display: block;
+        overflow: hidden;
+        border-radius: 20px;
+        background: var(--plaster);
+      }
+      .phone-caption {
+        margin-block-start: 0.7rem;
+        text-align: center;
+        color: var(--dim);
+        font-size: var(--meta);
+      }
+
+      .proof-track {
+        display: grid;
+        gap: 0;
+      }
+      .proof-chapter {
+        min-block-size: 85svh;
+      }
+      .proof-sticky {
+        position: sticky;
+        inset-block-start: 0;
+        padding-block: 2.5rem;
+        background: var(--plaster);
+      }
+      .proof-sticky h3 {
+        font-family: 'Frank Ruhl Libre', serif;
+        font-size: var(--heading);
+        margin-block: 0.35rem 0.4rem;
+      }
+      .proof-sticky p {
+        color: var(--muted);
+        max-inline-size: 46ch;
+      }
+      .proof-index {
+        font-variant-numeric: tabular-nums;
+        color: var(--olive);
+        font-weight: 700;
+      }
+
+      .compare {
+        position: relative;
+        isolation: isolate;
+        max-inline-size: 320px;
+        margin-inline: auto;
+        aspect-ratio: 9 / 16;
+        background: var(--stone-warm);
+        overflow: hidden;
+        --split: 50%;
+      }
+      .compare-layer {
+        position: absolute;
+        inset: 0;
+      }
+      .compare-dump {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2px;
+        padding: 0.4rem;
+        background: #d9d4c8;
+      }
+      .compare-dump img {
+        inline-size: 100%;
+        aspect-ratio: 1;
+        object-fit: cover;
+      }
+      .compare-reveal {
+        clip-path: inset(0 0 0 calc(100% - var(--split)));
+      }
+      .compare input[type='range'] {
+        position: absolute;
+        inset-inline: 0.6rem;
+        inset-block-end: 0.6rem;
+        z-index: 2;
+        inline-size: calc(100% - 1.2rem);
+        min-block-size: 44px;
+      }
+      .compare-hint {
+        color: var(--muted);
+        font-size: var(--meta);
+        margin-block-start: 0.7rem;
+        max-inline-size: 46ch;
+      }
+
+      .around-list,
+      .verified-list {
+        list-style: none;
+        padding: 0;
+        margin: 1rem 0 0;
+        display: grid;
+        gap: 0.7rem;
+      }
+      .around-list li,
+      .verified-list li {
+        padding-block: 0.6rem;
+        border-block-end: var(--rule);
+      }
+      .around-list strong {
+        font-family: 'Frank Ruhl Libre', serif;
+        font-weight: 500;
+      }
+      .cite {
+        display: block;
+        color: var(--muted);
+        font-size: var(--meta);
+        margin-block-start: 0.2rem;
+      }
+      .verified-list .verified {
+        font-size: 0.62rem;
+        font-weight: 600;
+        color: var(--olive);
+        border: 1px solid var(--olive);
+        border-radius: 2px;
+        padding: 0.02rem 0.28rem;
+      }
+
       /* ---------- Motion ----------
          ONE authored entrance, capped at three steps, and nothing below the
          fold animates. The content is visible by default — animation only ever
@@ -1266,8 +1398,23 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
 
       @media (prefers-reduced-motion: no-preference) {
         .hero-copy,
-        .hero .stage {
+        .hero .phone {
           animation: arrive 0.62s both cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .hero-line > span {
+          animation: line-rise var(--dur-reveal) var(--ease-out) both;
+        }
+        .hero-line:nth-child(2) > span {
+          animation-delay: 80ms;
+        }
+        @keyframes line-rise {
+          from {
+            transform: translateY(110%);
+          }
+          to {
+            transform: none;
+          }
         }
 
         .hero .stage {
@@ -1360,8 +1507,14 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
 
       @media (prefers-reduced-motion: reduce) {
         .hero-copy,
-        .hero .stage {
+        .hero .phone {
           animation: fade 0.4s both;
+        }
+        .hero-line > span {
+          animation: none;
+        }
+        .proof-sticky {
+          position: static;
         }
 
         @keyframes fade {
@@ -1398,7 +1551,10 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
       <div class="shell">
         <div class="hero">
           <div class="hero-copy">
-            <h1>{t('home.tagline')}</h1>
+            <h1 class="hero-title">
+              <span class="hero-line"><span>{t('home.taglineLine1')}</span></span>
+              <span class="hero-line"><span>{t('home.taglineLine2')}</span></span>
+            </h1>
             <p class="hero-sub">{t('home.subTagline')}</p>
             <p class="hero-lead">{t('home.lead')}</p>
 
@@ -1408,37 +1564,9 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
             </div>
           </div>
 
-          <div class="stage">
-            {/*
-              THE HERO CYCLES THROUGH THE FIVE TEMPLATES.
-
-              This is the page's one piece of real motion and it is not
-              decoration: the offer is "a few options, all professional", and a
-              hero that shows the same listing becoming each of them in turn
-              makes that argument while the reader is still reading the
-              headline. It is also the honest demo — these are the real
-              templates, not drawings of them.
-
-              CSS only, on a 22.5s loop. Stacked in one grid cell rather than
-              absolutely positioned, so the container still sizes itself to the
-              tallest screen and nothing has to be measured.
-
-              Under prefers-reduced-motion the animation is simply never
-              applied and the first screen stays visible — the content is in
-              the markup and on screen by default, so nothing here can leave
-              the hero blank.
-            */}
-            {TEMPLATE_IDS.map((tpl, index) => (
-              <div class="device cycling" data-tpl={tpl} style={`--i:${index}`}>
-                <MiniScreen
-                  listing={{ ...propertyShowcase, template: tpl }}
-                  cells={cells}
-                  perUnit={perUnit}
-                  eager={index === 0}
-                />
-                <span class="cycle-name">{t(`editor.templates.${tpl}`)}</span>
-              </div>
-            ))}
+          <div class="phone">
+            <MiniScreen listing={propertyShowcase} cells={cells} perUnit={perUnit} eager />
+            <p class="phone-caption">{t('home.phoneCaption')}</p>
           </div>
         </div>
       </div>
@@ -1514,26 +1642,147 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
       </div>
     </section>
 
-    <section class="steps-band">
+    <section class="proof">
       <div class="shell">
         <div class="section-head">
-          <h2>{t('home.howTitle')}</h2>
+          <SectionLabel text={t('home.proofLabel')} />
+          <h2>{t('home.proofTitle')}</h2>
         </div>
+        <div class="proof-track">
+          <article class="proof-chapter">
+            <div class="proof-sticky">
+              <p class="proof-index"><bdi>1</bdi> / <bdi>4</bdi></p>
+              <h3>{t('home.proof1')}</h3>
+              <p>{t('home.proof1Body')}</p>
+            </div>
+          </article>
+          <article class="proof-chapter">
+            <div class="proof-sticky">
+              <p class="proof-index"><bdi>2</bdi> / <bdi>4</bdi></p>
+              <h3>{t('home.proof2')}</h3>
+              <p>{t('home.proof2Body')}</p>
+            </div>
+          </article>
+          <article class="proof-chapter">
+            <div class="proof-sticky">
+              <p class="proof-index"><bdi>3</bdi> / <bdi>4</bdi></p>
+              <h3>{t('home.proof3')}</h3>
+              <p>{t('home.proof3Body')}</p>
+            </div>
+          </article>
+          <article class="proof-chapter">
+            <div class="proof-sticky">
+              <p class="proof-index"><bdi>4</bdi> / <bdi>4</bdi></p>
+              <h3>{t('home.proof4')}</h3>
+              <p>{t('home.proof4Body')}</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
 
-        <ol class="steps">
+    <section>
+      <div class="shell">
+        <div class="section-head">
+          <SectionLabel text={t('home.compareLabel')} />
+          <h2>{t('home.compareTitle')}</h2>
+          <p>{t('home.compareAfter')}</p>
+        </div>
+        <div class="compare" style="--split: 50%">
+          <div class="compare-layer compare-dump" aria-hidden="true">
+            <img src={largest(propertyListing.media.cover, HERO_WIDTHS)} alt="" />
+            {propertyListing.media.gallery.map((image) => (
+              <img src={largest(image, HERO_WIDTHS)} alt="" />
+            ))}
+          </div>
+          <div class="compare-layer compare-reveal">
+            <MiniScreen listing={propertyShowcase} cells={cells} perUnit={perUnit} />
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value="50"
+            dir="ltr"
+            aria-label={t('home.compareHint')}
+          />
+        </div>
+        <p class="compare-hint">{t('home.compareBefore')} {t('home.compareHint')}</p>
+      </div>
+    </section>
+
+    <section>
+      <div class="shell">
+        <div class="section-head">
+          <SectionLabel text={t('listing.section.around')} />
+          <h2>{t('home.aroundTitle')}</h2>
+          <p>{t('home.aroundBody')}</p>
+        </div>
+        <ul class="around-list">
+          {sampleSchool && (
+            <li>
+              <strong>{sampleSchool.name}</strong>
+              {' · '}
+              <bdi>{sampleSchool.walkMinutes}</bdi>
+              {' '}
+              {t('listing.mapNearbyMin')}
+              <span class="cite">
+                {sampleSchool.sourceName} · {t('source.asOf')}
+                <bdi>{sampleSchool.sourceDate}</bdi>
+              </span>
+            </li>
+          )}
+          {sampleBus && (
+            <li>
+              <strong>{sampleBus.name}</strong>
+              {' · '}
+              <bdi>{sampleBus.walkMinutes}</bdi>
+              {' '}
+              {t('listing.mapNearbyMin')}
+              <span class="cite">
+                {sampleBus.sourceName} · {t('source.asOf')}
+                <bdi>{sampleBus.sourceDate}</bdi>
+              </span>
+            </li>
+          )}
+          {sampleGrocery && (
+            <li>
+              <strong>{sampleGrocery.name}</strong>
+              {' · '}
+              <bdi>{sampleGrocery.walkMinutes}</bdi>
+              {' '}
+              {t('listing.mapNearbyMin')}
+            </li>
+          )}
+        </ul>
+        <p class="compare-hint">{odblLine}</p>
+      </div>
+    </section>
+
+    <section>
+      <div class="shell">
+        <div class="section-head">
+          <SectionLabel text={t('listing.section.verified')} />
+          <h2>{t('home.verifiedTitle')}</h2>
+          <p>{t('home.verifiedBody')}</p>
+        </div>
+        <ul class="verified-list">
           <li>
-            <h3>{t('home.step1')}</h3>
-            <p>{t('home.step1Body')}</p>
+            <span class="verified">{t('source.verified')}</span>
+            {' '}
+            {t('listing.licenceVerified')}
           </li>
-          <li>
-            <h3>{t('home.step2')}</h3>
-            <p>{t('home.step2Body')}</p>
-          </li>
-          <li>
-            <h3>{t('home.step3')}</h3>
-            <p>{t('home.step3Body')}</p>
-          </li>
-        </ol>
+          <li>{t('source.seller')}</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="pricing-band">
+      <div class="shell">
+        <div class="section-head">
+          <h2>{t('home.pricingTitle')}</h2>
+        </div>
+        <PriceTiers compact />
       </div>
     </section>
 
@@ -1633,6 +1882,12 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         void paint();
         client.auth.onAuthStateChange(() => void paint());
       }
+
+      const compare = document.querySelector<HTMLElement>('.compare');
+      const slider = compare?.querySelector<HTMLInputElement>('input[type="range"]');
+      slider?.addEventListener('input', () => {
+        compare?.style.setProperty('--split', `${slider.value}%`);
+      });
     </script>
   </body>
 </html>

@@ -592,6 +592,12 @@ export interface Seller {
    */
   licenceNumber?: string;
   /**
+   * True only when this product matched the number against the Justice
+   * Ministry broker register. Until that check exists, this stays unset and
+   * the verified badge does not render.
+   */
+  licenceVerified?: boolean;
+  /**
    * Where the agency mark sits. Copied from the profile at publish, same
    * rule as the accent: changing /me next year must not repaint old pages.
    */

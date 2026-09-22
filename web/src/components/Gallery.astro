@@ -35,16 +35,24 @@ const groups = grouped ? groupByRoom(images) : [{ items: images }];
         <div class="gallery reveal">
           {group.items.map((image) => (
             <figure>
+              <button
+                type="button"
+                class="gallery-open"
+                data-lightbox={largest(image, GALLERY_WIDTHS)}
+                data-alt={image.alt ?? (group.room ? t(`editor.rooms.${group.room}`) : '')}
+              >
               <img
                 src={largest(image, GALLERY_WIDTHS)}
                 srcset={srcset(image, GALLERY_WIDTHS) || undefined}
                 sizes="(max-width: 620px) 50vw, 310px"
                 width={image.width}
                 height={image.height}
-                alt={image.alt ?? ''}
+                alt={image.alt ?? (group.room ? t(`editor.rooms.${group.room}`) : '')}
                 loading="lazy"
                 decoding="async"
+                class="clip-reveal"
               >
+              </button>
               {(image.caption || group.room) && (
                 <figcaption>{image.caption || (group.room ? t(`editor.rooms.${group.room}`) : '')}</figcaption>
               )}
@@ -58,6 +66,12 @@ const groups = grouped ? groupByRoom(images) : [{ items: images }];
     <div id="listing-gallery" class="gallery reveal">
       {images.map((image) => (
         <figure>
+          <button
+            type="button"
+            class="gallery-open"
+            data-lightbox={largest(image, GALLERY_WIDTHS)}
+            data-alt={image.alt ?? ''}
+          >
           <img
             src={largest(image, GALLERY_WIDTHS)}
             srcset={srcset(image, GALLERY_WIDTHS) || undefined}
@@ -67,7 +81,9 @@ const groups = grouped ? groupByRoom(images) : [{ items: images }];
             alt={image.alt ?? ''}
             loading="lazy"
             decoding="async"
+            class="clip-reveal"
           >
+          </button>
           {image.caption && <figcaption>{image.caption}</figcaption>}
         </figure>
       ))}

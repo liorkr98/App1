@@ -3,6 +3,7 @@ import type { Image } from '@/types/listing';
 import { groupByRoom, hasRoomLabels, type PhotoRoom } from '@/features/listings/photo-rooms';
 import { GALLERY_WIDTHS, largest, srcset } from '../lib/images';
 import { t } from '../lib/i18n';
+import SectionLabel from './SectionLabel.astro';
 
 interface Props {
   images: Image[];
@@ -39,7 +40,8 @@ slides.forEach((slide, index) => {
   seller did not write.
 */}
 {slides.length > 0 && (
-  <section class="walk reveal">
+<section class="walk reveal">
+    <SectionLabel text={t('listing.section.gallery')} />
     <h2>{t('listing.walkTitle')}</h2>
     <p class="walk-lead">{t('listing.walkLead')}</p>
     <div class="walk-viewer">

@@ -126,6 +126,15 @@ jobs:
       - name: Verify the motion degrades correctly
         run: node scripts/verify-motion-fallbacks.mjs
 
+      - name: Verify translateX uses --dir
+        run: node scripts/verify-translate-dir.mjs
+
+      - name: Verify the translateX/--dir rule actually fires
+        run: bash scripts/verify-translate-dir-fires.sh
+
+      - name: Verify listing JS stays within 12 KB gz
+        run: node scripts/verify-listing-js-budget.mjs
+
       - name: Report built page weight
         run: node scripts/report-page-weight.mjs
 

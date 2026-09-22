@@ -32,8 +32,13 @@ export interface FactCell {
   pairedValue?: string;
   /** Wrap value (and pairedValue) in <bdi>. */
   bdi: boolean;
-  /** Confirmed absent — renders at 35% opacity showing אין. */
+  /** Confirmed absent — renders in --absent, showing אין. */
   absent: boolean;
+  /**
+   * Numeric value to count up (M3). The formatted `value` stays in the HTML.
+   * Only rooms and m²; never the price.
+   */
+  countFrom?: number;
 
   /**
    * True when a public register supplied this value, so the cell can carry
@@ -48,7 +53,7 @@ export interface FactCell {
 }
 
 /**
- * present:false  → a cell showing אין at 35% opacity. The seller said no.
+ * present:false  → a cell showing אין in --absent. The seller said no.
  * value:null     → NO cell at all. The seller never answered.
  *
  * Collapsing these would turn "we do not know" into "no", which is the
@@ -133,6 +138,9 @@ export function toCells(
       absent: false,
       verified: cited,
       ...(cited ? { sourceName: fact.sourceName, sourceDate: fact.sourceDate } : {}),
+      ...(typeof fact.value === 'number' && (fact.key === 'rooms' || fact.key === 'area_sqm')
+        ? { countFrom: fact.value }
+        : {}),
     });
   }
 

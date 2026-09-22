@@ -6,6 +6,7 @@ import { wazeNavigateUrl } from '@/features/listings/map-card';
 import { t } from '../lib/i18n';
 import AreaMap from './AreaMap.astro';
 import Prose from './Prose.astro';
+import SectionLabel from './SectionLabel.astro';
 
 interface Props {
   location: ListingLocation;
@@ -42,6 +43,7 @@ const navigate =
    */
 }
 <section class="map reveal">
+  <SectionLabel text={t('listing.section.map')} />
   <h2>{t('listing.mapTitle')}</h2>
 
   {areaMap && areaAttribution ? (

@@ -15,9 +15,11 @@ import Walk from './Walk.astro';
 import { CATEGORY_PRESENTATION } from '../lib/category-presentation';
 import { t } from '../lib/i18n';
 import { perUnitPrice } from '../lib/price';
+import { ils } from '../lib/format';
 import { mapCardSrc } from '@/features/listings/map-card';
 import { areaMap } from '@/features/listings/area-map';
 import { isWalkItem, labeledWalkItems } from '@/features/listings/photo-rooms';
+import SectionLabel from './SectionLabel.astro';
 
 interface Props {
   listing: Listing;
@@ -84,6 +86,8 @@ const walkImages = [listing.media.cover, ...listing.media.gallery];
 const walkItems = labeledWalkItems(walkImages);
 const galleryImages = listing.media.gallery.filter((image) => !isWalkItem(image, walkItems));
 const hasWalk = walkItems.length > 0;
+const waHref = `/a/${listing.slug}/wa?text=${encodeURIComponent(presentation.whatsappMessage)}`;
+const homeLabel = listing.category === 'property' ? t('listing.section.home') : t('listing.section.vehicle');
 ---
 <BaseListing
   listing={listing}
@@ -100,6 +104,13 @@ const hasWalk = walkItems.length > 0;
       listing.seller.logoPlacement === 'watermark' ? listing.seller.agencyLogoUrl : undefined
     }
   />
+
+  {!sold && (
+    <div class="compact-bar">
+      <span class="compact-price"><bdi>{ils(listing.price)}</bdi></span>
+      <a class="compact-wa" href={waHref}>{t('listing.whatsappCta')}</a>
+    </div>
+  )}
 
   <PriceBar
     price={listing.price}
@@ -122,6 +133,7 @@ const hasWalk = walkItems.length > 0;
   <FactsGrid category={listing.category} facts={listing.facts} audience={listing.audience} />
 
   <section class="reveal">
+    <SectionLabel text={homeLabel} />
     <h2>{heading}</h2>
     {paragraphs.map((paragraph, index) => (
       <p style={index > 0 ? 'margin-top:.8rem' : undefined}><Prose text={paragraph} /></p>
