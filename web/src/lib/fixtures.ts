@@ -300,6 +300,7 @@ export const golfListing: Listing = {
   price: 62000,
   currency: 'ILS',
   listPrice: 68000,
+  priceDisplay: 'from',
   facts: answer(
     vehicleSchema,
     {
@@ -348,6 +349,7 @@ export const poloListing: Listing = {
   description: 'הלוח לא החזיר רשומה, אז כל המספרים כאן לפי המוכר. הרכב אצלי שנתיים, טסט בתוקף, שמור.',
   price: 41000,
   currency: 'ILS',
+  priceDisplay: 'on_request',
   facts: answer(vehicleSchema, {
     make: 'פולקסווגן',
     model: 'פולו',

@@ -596,6 +596,13 @@ export interface ListingLocation {
   city: string;
   /** Hebrew street name. Omitted from the page when the seller opts out. */
   street?: string;
+  /**
+   * How precisely the page may name the place.
+   *
+   * Absent is inferred: coords+street → exact, street → street, city → area.
+   * `area` never prints the street, even if the row still holds it for routing.
+   */
+  precision?: 'exact' | 'street' | 'area';
   /** Never rendered on the page. Used only to render the static map. */
   lat?: number;
   lng?: number;
@@ -706,6 +713,11 @@ export interface Listing {
   listPrice?: number;
   /** Free text beside the price when there is no listPrice, e.g. פינוי גמיש. */
   priceNote?: string;
+  /**
+   * How the asking price is shown. Absent means exact.
+   * `from` prefixes החל מ־. `on_request` prints לפי פנייה and hides the number.
+   */
+  priceDisplay?: 'exact' | 'from' | 'on_request';
 
   /**
    * Up to three first-screen chips. Agent-chosen from HIGHLIGHT_LABELS plus

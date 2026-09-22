@@ -33,6 +33,7 @@
     "../src/features/listings/enrichment-view.ts",
     "../src/features/listings/phone.ts",
     "../src/features/listings/share-message.ts",
+    "../src/features/listings/control-surface.ts",
     "../src/features/listings/schemas/**/*"
   ],
   "exclude": ["dist", "node_modules"]
