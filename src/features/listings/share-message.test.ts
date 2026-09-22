@@ -18,6 +18,12 @@ describe('the message an agent pastes', () => {
     assert.equal(first, 'דירת 4 חדרים, משופצת מהיסוד · ₪1,850,000');
   });
 
+  it('omits the price when nobody set one', () => {
+    const first = shareMessage({ ...base, price: '' }).split('\n')[0];
+    assert.equal(first, 'דירת 4 חדרים, משופצת מהיסוד');
+    assert.ok(!first?.includes('₪'));
+  });
+
   it('flattens the title, because a two-line title reads as two messages', () => {
     assert.ok(!shareMessage(base).split('\n')[0]?.includes('\n'));
     assert.ok(shareMessage(base).includes('דירת 4 חדרים, משופצת מהיסוד'));

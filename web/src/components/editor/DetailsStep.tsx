@@ -108,11 +108,12 @@ export function DetailsStep({
             onChange({ price: digits === '' ? 0 : Number(digits) });
           }}
           aria-invalid={priceError || undefined}
-          aria-describedby={priceError ? 'd-price-err' : undefined}
+          aria-describedby={priceError ? 'd-price-err' : 'd-price-hint'}
         />
+        <p className="field-hint" id="d-price-hint">{t('editor.details.priceHint')}</p>
         {priceError ? (
           <p className="field-error" id="d-price-err" role="alert">
-            {t('editor.blockers.priceMissing')}
+            {t('editor.details.priceHint')}
           </p>
         ) : null}
       </div>

@@ -1,5 +1,10 @@
 import { answer, clear, markAbsent } from '@/features/listings/fact-entry';
-import { factDefinition, schemaFor, type ListingCategory } from '@/features/listings/schemas';
+import {
+  factDefinition,
+  factShown,
+  schemaFor,
+  type ListingCategory,
+} from '@/features/listings/schemas';
 import type { Fact, ListingAudience } from '@/types/listing';
 
 import { t } from '../../lib/i18n';
@@ -86,7 +91,9 @@ export function FactsStep({ category, facts, onChange, audience, onAudience }: P
       <p className="hint">{t('editor.factsHint')}</p>
 
       <ul className="facts-entry">
-        {facts.map((fact) => (
+        {facts
+          .filter((fact) => factShown(factDefinition(category, fact.key), audience, facts))
+          .map((fact) => (
           <li key={fact.key} className={fact.present ? 'fact-row' : 'fact-row absent'}>
             <div className="fact-head">
               <label htmlFor={`fact-${fact.key}`}>

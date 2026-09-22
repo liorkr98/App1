@@ -10,7 +10,7 @@ Sources:
 - `listing-page-vehicle.html` — vehicle reference, **NOT updated by B2**
 - `rtl-test.html` — RTL fixture, unchanged
 
-Visual templates (`agency`, `editorial`, `dark`, `walkFirst`, `brochure`) each
+Visual templates (`agency`, `editorial`, `dark`, `walkFirst`, `brochure`, `linen`, `studio`) each
 have a Hebrew RTL file `listing-page-{id}.html`. Those files are the gate for
 adding a template (`scripts/verify-template-ids.mjs`). They do **not** rewrite
 §1–§7: property vs vehicle still differ in exactly four ways (§5), and all

@@ -45,7 +45,7 @@ export function shareMessage(input: ShareInput): string {
   // become one line, because a two-line title reads as two messages.
   const title = input.title.replace(/\s*\n\s*/g, ' ').trim();
 
-  lines.push(`${title} · ${input.price}`);
+  lines.push(input.price ? `${title} · ${input.price}` : title);
 
   if (input.facts.length > 0) {
     // A middle dot rather than a comma: the facts are already comma-shaped

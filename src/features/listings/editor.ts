@@ -72,13 +72,21 @@ export interface EditorState {
    * draft an agent made sat in the database titled nothing, priced nothing,
    * and the dashboard card that showed `—` and `₪0` was reporting the truth.
    *
-   * They are the first step now, before photographs, because they are the
-   * only fields the row cannot be published without and because an agent who
-   * knows the price knows it before they start uploading.
+   * They are the first step now, before photographs, because the title and
+   * (for a property) the city are what the row cannot be published without.
+   * Price is optional: 0 means unanswered, and the page omits the number
+   * rather than printing ₪0.
    */
   title: string;
   /** Shekels. 0 means unanswered — the column is NOT NULL and has no other way to say so. */
   price: number;
+  /**
+   * The accent this listing will publish with.
+   *
+   * Defaults to the agent's /me choice. Choosing another colour here stamps
+   * this listing only — already-published pages keep the colour they shipped.
+   */
+  accent?: string;
   /** Hebrew city. Required for a property, absent for a vehicle (§7). */
   city?: string;
   /** Hebrew street. Optional even for a property — the seller may withhold it. */
@@ -204,7 +212,6 @@ export function stepsFor(category: ListingCategory | undefined): Step[] {
 export const BLOCKER_CODES = [
   'categoryMissing',
   'titleMissing',
-  'priceMissing',
   'cityMissing',
   'photosTooFew',
   'photosTooMany',
@@ -256,11 +263,8 @@ export function blockers(state: EditorState): Blocker[] {
     found.push({ step: 'details', code: 'titleMissing' });
   }
 
-  // 0 is the unanswered value, not a free listing. A NOT NULL column with no
-  // nullable option has to encode "nobody said" as something, and this is it.
-  if (!Number.isFinite(state.price) || state.price <= 0) {
-    found.push({ step: 'details', code: 'priceMissing' });
-  }
+  // Price is optional. 0 is unanswered, not free, and the page omits it.
+  // NaN from an empty number input is treated the same as 0.
 
   // A property without a city cannot be found; a vehicle deliberately carries
   // no location at all, because pinning a car for sale to an address is the

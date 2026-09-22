@@ -1,7 +1,6 @@
 import { orderForAudience } from '@/features/listings/audience-order';
 import type { Fact, ListingAudience } from '@/types/listing';
-import { factDefinition, schemaFor } from '@/features/listings/schemas';
-import type { ListingCategory } from '@/features/listings/schemas';
+import { factDefinition, factShown, schemaFor, type ListingCategory } from '@/features/listings/schemas';
 
 import { factValue, needsBdi } from './format';
 
@@ -97,6 +96,7 @@ export function toCells(
 
     const definition = factDefinition(category, fact.key);
     if (definition?.showInGrid === false) continue;
+    if (!factShown(definition, audience, facts)) continue;
 
     if (fact.present === false) {
       cells.push({

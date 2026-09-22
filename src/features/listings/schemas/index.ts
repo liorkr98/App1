@@ -1,4 +1,9 @@
-import type { CategorySchema, FactDefinition } from '@/types/listing.js';
+import type {
+  CategorySchema,
+  Fact,
+  FactDefinition,
+  ListingAudience,
+} from '@/types/listing.js';
 
 import { propertySchema } from './property.js';
 import { vehicleSchema } from './vehicle.js';
@@ -41,6 +46,46 @@ export function requiredFactKeys(category: ListingCategory): string[] {
   return CATEGORY_SCHEMAS[category].facts
     .filter((fact) => fact.required === true)
     .map((fact) => fact.key);
+}
+
+/**
+ * Whether this field is a question for this buyer.
+ *
+ * An unanswered audience is treated as resident: that is the default path,
+ * not a third kind of listing. `both` sees every field that names it.
+ */
+export function factVisibleFor(
+  definition: FactDefinition | undefined,
+  audience: ListingAudience | undefined,
+): boolean {
+  const allowed = definition?.forAudience;
+  if (!allowed || allowed.length === 0) return true;
+  const current = audience ?? 'resident';
+  return (allowed as readonly string[]).includes(current);
+}
+
+/**
+ * Whether a dependent field has the parent answer it needs.
+ *
+ * Rent amount waits on "there are tenants". A missing parent is unanswered,
+ * which is not yes — so the child stays hidden.
+ */
+export function factUnlocked(
+  definition: FactDefinition | undefined,
+  facts: readonly Fact[],
+): boolean {
+  const parentKey = definition?.requires;
+  if (!parentKey) return true;
+  return facts.find((fact) => fact.key === parentKey)?.value === true;
+}
+
+/** Show this fact in the editor and on the page, for this audience. */
+export function factShown(
+  definition: FactDefinition | undefined,
+  audience: ListingAudience | undefined,
+  facts: readonly Fact[],
+): boolean {
+  return factVisibleFor(definition, audience) && factUnlocked(definition, facts);
 }
 
 export { propertySchema } from './property.js';

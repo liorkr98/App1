@@ -72,7 +72,7 @@ const place = listing.location?.street
 
 const message = shareMessage({
   title: listing.title,
-  price: ils(listing.price),
+  price: listing.price > 0 ? ils(listing.price) : '',
   facts: teaser,
   ...(place ? { place } : {}),
   ...(listing.prePortal ? { prePortalLine: t('listing.prePortal') } : {}),
@@ -115,7 +115,7 @@ const messageLines = message.split('\n').map(isolate);
 // out of the DOM.
 const card = {
   cover: listing.media.cover.url,
-  price: ils(listing.price),
+  price: listing.price > 0 ? ils(listing.price) : '',
   title: flatTitle,
   place: place ?? '',
   facts: teaser.slice(0, 3),

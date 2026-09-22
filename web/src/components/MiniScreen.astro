@@ -121,7 +121,9 @@ const walkThumbs = walkPhotos.slice(0, 4);
   ) : null}
 
   <span class="s-price-bar">
-    <span class="s-price"><bdi>{ils(listing.price)}</bdi></span>
+    {listing.price > 0 ? (
+      <span class="s-price"><bdi>{ils(listing.price)}</bdi></span>
+    ) : null}
     {perUnit && (
       <span class="s-price-note">
         <bdi>{perUnit.amount}</bdi> {perUnit.per}

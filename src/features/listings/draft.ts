@@ -1,3 +1,4 @@
+import { isAccentId } from '../agents/accents.js';
 import {
   TEMPLATE_IDS,
   type Fact,
@@ -85,6 +86,7 @@ export function toDraft(
       ? {}
       : { generatedDescription: state.generatedDescription }),
     ...(state.template === undefined ? {} : { template: state.template }),
+    ...(state.accent === undefined ? {} : { accent: state.accent }),
     ...(state.audience === undefined ? {} : { audience: state.audience }),
     ...(state.ownerConsentDeclaredAt === undefined
       ? {}
@@ -140,6 +142,11 @@ export function fromDraft(raw: unknown): Draft | null {
 
   const template = parsed.template;
   if (template !== undefined && !(TEMPLATE_IDS as readonly string[]).includes(template as string)) {
+    return null;
+  }
+
+  const accent = parsed.accent;
+  if (accent !== undefined && !isAccentId(accent)) {
     return null;
   }
 
@@ -201,6 +208,7 @@ export function fromDraft(raw: unknown): Draft | null {
     description,
     ...(generated === undefined ? {} : { generatedDescription: generated }),
     ...(template === undefined ? {} : { template: template as TemplateId }),
+    ...(accent === undefined ? {} : { accent: String(accent) }),
     ...(audience === undefined ? {} : { audience: audience as ListingAudience }),
     ...(ownerConsentDeclaredAt === undefined ? {} : { ownerConsentDeclaredAt }),
     ...(ownerConsentName === undefined || ownerConsentName.trim() === ''

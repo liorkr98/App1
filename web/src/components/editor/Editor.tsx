@@ -9,11 +9,12 @@ import {
   type EditorState,
   type Step,
 } from '@/features/listings/editor';
-import { blankFacts } from '@/features/listings/fact-entry';
+import { blankFacts, reconcileFacts } from '@/features/listings/fact-entry';
 import { isPhotoRoom } from '@/features/listings/photo-rooms';
 import { LISTING_CATEGORIES, schemaFor } from '@/features/listings/schemas';
 
 import { isProfileComplete } from '@/features/agents/profile';
+import { isAccentId } from '@/features/agents/accents';
 
 import { t } from '../../lib/i18n';
 import { loadEntitlement } from '../../lib/entitlement';
@@ -194,8 +195,18 @@ export default function Editor() {
       .then((result) => {
         if (!live) return;
         const ready = 'profile' in result && isProfileComplete(result.profile);
-        if ('profile' in result) setProfile(result.profile);
-        setState((current) => ({ ...current, sellerReady: ready }));
+        if ('profile' in result) {
+          setProfile(result.profile);
+          setState((current) => ({
+            ...current,
+            sellerReady: ready,
+            ...(current.accent || !isAccentId(result.profile.accent)
+              ? {}
+              : { accent: result.profile.accent }),
+          }));
+        } else {
+          setState((current) => ({ ...current, sellerReady: ready }));
+        }
       })
       .catch(() => {
         if (live) setState((current) => ({ ...current, sellerReady: false }));
@@ -568,7 +579,12 @@ export default function Editor() {
             ...(location.street ? { street: location.street } : {}),
             ...(row.price_note ? { priceNote: String(row.price_note) } : {}),
             description: String(row.description ?? ''),
-            facts: Array.isArray(row.facts) ? row.facts : current.facts,
+            facts: Array.isArray(row.facts)
+              ? reconcileFacts(
+                  row.category === 'vehicle' ? 'vehicle' : 'property',
+                  row.facts,
+                )
+              : current.facts,
             photoCount: stored.length,
             indexable: row.indexable === true,
             prePortal: row.pre_portal === true,
@@ -579,6 +595,7 @@ export default function Editor() {
               ? { ownerConsentName: String(row.owner_consent_name) }
               : {}),
             ...(row.template ? { template: row.template as EditorState['template'] } : {}),
+            ...(isAccentId(row.accent) ? { accent: row.accent } : {}),
             ...(row.audience === 'resident'
               ? { audience: 'resident' as const }
               : row.audience === 'investor'
@@ -825,7 +842,6 @@ export default function Editor() {
             street={state.street ?? ''}
             priceNote={state.priceNote ?? ''}
             titleError={here.some((blocker) => blocker.code === 'titleMissing')}
-            priceError={here.some((blocker) => blocker.code === 'priceMissing')}
             cityError={here.some((blocker) => blocker.code === 'cityMissing')}
             onChange={(patch) => setState((current) => ({ ...current, ...patch }))}
           />
@@ -909,7 +925,7 @@ export default function Editor() {
             photos={photos}
             agency={profile.agencyName ?? undefined}
             sellerName={profile.displayName ?? undefined}
-            accent={profile.accent ?? undefined}
+            accent={state.accent ?? profile.accent ?? undefined}
             agencyLogoUrl={profile.agencyLogoUrl?.trim() || undefined}
           />
         ) : null}
@@ -933,6 +949,8 @@ export default function Editor() {
           <TemplateStep
             chosen={state.template}
             onChoose={(template) => setState((current) => ({ ...current, template }))}
+            accent={state.accent ?? profile.accent ?? undefined}
+            onAccent={(accent) => setState((current) => ({ ...current, accent }))}
           />
         ) : null}
 
@@ -1020,7 +1038,7 @@ export default function Editor() {
           photos={photos}
           agency={profile.agencyName ?? undefined}
           sellerName={profile.displayName ?? undefined}
-          accent={profile.accent ?? undefined}
+          accent={state.accent ?? profile.accent ?? undefined}
           agencyLogoUrl={profile.agencyLogoUrl?.trim() || undefined}
         />
       </aside>

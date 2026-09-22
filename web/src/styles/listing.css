@@ -1089,6 +1089,118 @@ html[data-template='brochure'] .gallery figure:not(:first-child) img{
   aspect-ratio:1;
 }
 
+/* פשתן — נייר חם, מספרים גדולים */
+html[data-template='linen']{
+  --plaster:#f4e6cf;
+  --stone:#e2ccab;
+  --stone-warm:#efe0c4;
+  --ink:#2a1d12;
+  --ink-deep:#23180f;
+  --muted:#6d5844;
+  --muted-warm:#6d5844;
+  --heroH:70svh;
+}
+html[data-template='linen'] .hero-title{
+  font-weight:700;
+  font-size:calc(var(--t-hero) * 1.18);
+  max-inline-size:9ch;
+  line-height:1.08;
+}
+html[data-template='linen'] .price{
+  color:var(--olive);
+  font-size:calc(var(--t-price) * 1.1);
+}
+html[data-template='linen'] .price-bar{
+  padding-block:1.7rem 1.1rem;
+  border-block-end:1px solid var(--stone);
+}
+html[data-template='linen'] .facts{
+  grid-template-columns:1fr 1fr;
+  gap:.85rem;
+  background:transparent;
+  border-block:0;
+  padding-block:.4rem 1rem;
+}
+html[data-template='linen'] .fact{
+  background:var(--stone-warm);
+  border-radius:12px;
+  padding:1.1rem .9rem;
+  text-align:start;
+}
+html[data-template='linen'] .gallery img{
+  border-radius:14px;
+}
+
+/* סטודיו — מסגרת כהה, תצלום במרכז, פרטים כשבבים */
+html[data-template='studio']{
+  --plaster:#f7f3ea;
+  --ink:#1a1916;
+  --ink-deep:#141310;
+  --stone:#d9d2c4;
+  --stone-warm:#ece6d8;
+  --heroH:80svh;
+}
+html[data-template='studio'] .agent-bar{
+  padding-block:1rem;
+}
+html[data-template='studio'] .hero{
+  margin-inline:var(--gut);
+  margin-block:.75rem 0;
+  border-radius:18px;
+  min-block-size:420px;
+  overflow:hidden;
+}
+html[data-template='studio'] .hero-title{
+  font-weight:700;
+  font-size:calc(var(--t-hero) * .92);
+  max-inline-size:14ch;
+}
+html[data-template='studio'] .price-bar{
+  align-items:center;
+  border-inline-start:6px solid var(--olive);
+  margin-inline:var(--gut);
+  padding-inline-start:1.1rem;
+}
+html[data-template='studio'] .facts{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.45rem;
+  background:transparent;
+  border-block:0;
+  padding-inline:var(--gut);
+}
+html[data-template='studio'] .fact{
+  flex:0 1 auto;
+  background:var(--ink-deep);
+  color:var(--on-dark);
+  border-radius:999px;
+  padding:.45rem .9rem .5rem;
+  min-inline-size:0;
+}
+html[data-template='studio'] .fact-lbl{
+  color:rgba(251,250,247,.72);
+}
+html[data-template='studio'] .fact.off{
+  background:var(--stone-warm);
+  color:var(--ink);
+}
+html[data-template='studio'] .fact.off .fact-lbl{
+  color:var(--muted);
+}
+html[data-template='studio'] .gallery{
+  gap:.75rem;
+}
+html[data-template='studio'] .gallery img{
+  border-radius:10px;
+}
+
+html[data-template='editorial'] .price{
+  color:var(--olive);
+}
+html[data-template='agency'] .price-bar{
+  border-inline-start:6px solid var(--olive);
+}
+
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,

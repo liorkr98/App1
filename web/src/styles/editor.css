@@ -395,6 +395,91 @@
   display: none;
 }
 
+.thumb-linen {
+  background: #f4e6cf;
+}
+
+.thumb-linen .thumb-hero {
+  block-size: 50%;
+  background: linear-gradient(to top, #6e2639 18%, #c17a55 100%);
+}
+
+.thumb-linen .thumb-price {
+  background: #8c4a2f;
+  inline-size: 55%;
+}
+
+.thumb-linen .thumb-facts {
+  gap: 0.25rem;
+  background: transparent;
+}
+
+.thumb-studio {
+  background: #141310;
+}
+
+.thumb-studio .thumb-hero {
+  block-size: 52%;
+  border-radius: 8px;
+  background: linear-gradient(to top, #1a1916 10%, #8c4a2f 100%);
+}
+
+.thumb-studio .thumb-price {
+  background: #8c4a2f;
+  border-radius: 99px;
+  inline-size: 48%;
+}
+
+.thumb-studio .thumb-facts > span {
+  border-radius: 99px;
+  background: #2a2924;
+}
+
+.palette-picker {
+  border: 0;
+  margin: 0 0 1.4rem;
+  padding: 0;
+}
+
+.palette-picker legend {
+  font-weight: 700;
+  margin-block-end: 0.25rem;
+}
+
+.palette-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.palette-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-block-size: 44px;
+  padding: 0.3rem 0.7rem 0.3rem 0.45rem;
+  border: 1px solid var(--stone);
+  border-radius: 999px;
+  background: var(--plaster);
+  color: inherit;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.palette-chip.chosen {
+  border-color: var(--chip, var(--olive));
+  box-shadow: 0 0 0 1px var(--chip, var(--olive));
+}
+
+.palette-dot {
+  inline-size: 1.05rem;
+  block-size: 1.05rem;
+  border-radius: 50%;
+  background: var(--chip, var(--olive));
+  flex: 0 0 auto;
+}
+
 @media (max-width: 28rem) {
   .template-grid {
     grid-template-columns: 1fr 1fr;
@@ -1101,6 +1186,8 @@ textarea {
 }
 
 .preview-page {
+  display: flex;
+  flex-direction: column;
   inline-size: 100%;
   overflow: hidden;
   background: var(--plaster);
@@ -1331,6 +1418,180 @@ textarea {
   color: var(--plaster);
   background: var(--olive);
   border-radius: 6px;
+}
+
+/* The preview used to ignore data-template. These rules are the listing
+   template shapes, scoped so they cannot restyle the editor chrome. */
+.preview-page[data-template='editorial'] {
+  --plaster: #f3eee4;
+  --heroH: min(48svh, 380px);
+}
+.preview-page[data-template='editorial'] .hero-title {
+  font-size: calc(var(--t-hero) * 1.12);
+  max-inline-size: 11ch;
+}
+.preview-page[data-template='editorial'] .price {
+  color: var(--olive);
+}
+.preview-page[data-template='editorial'] .facts {
+  grid-template-columns: 1fr;
+}
+
+.preview-page[data-template='agency'] {
+  --plaster: #ffffff;
+  --stone-warm: #faf6f0;
+  --heroH: min(38svh, 300px);
+}
+.preview-page[data-template='agency'] .hero-title {
+  font-weight: 700;
+  font-size: calc(var(--t-hero) * 0.72);
+}
+.preview-page[data-template='agency'] .price-bar {
+  background: var(--stone-warm);
+  border-inline-start: 6px solid var(--olive);
+  align-items: center;
+}
+.preview-page[data-template='agency'] .facts {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+  background: transparent;
+  border-block: 0;
+  padding: 0.4rem var(--gut);
+}
+.preview-page[data-template='agency'] .fact {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  text-align: start;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--stone);
+  border-radius: 10px;
+}
+.preview-page[data-template='agency'] .fact-val {
+  order: 2;
+}
+.preview-page[data-template='agency'] .fact-lbl {
+  margin-block-start: 0;
+  order: 1;
+}
+
+.preview-page[data-template='dark'] {
+  --plaster: #14150f;
+  --ink: #f3f1ea;
+  --ink-deep: #0a0b06;
+  --stone: #2c2e24;
+  --stone-warm: #1d1f16;
+  --muted: #a3a498;
+  --heroH: min(62svh, 520px);
+  color: var(--ink);
+  background: var(--plaster);
+}
+.preview-page[data-template='dark'] .hero-title {
+  font-size: calc(var(--t-hero) * 1.08);
+}
+.preview-page[data-template='dark'] .facts {
+  gap: 0;
+  background: transparent;
+}
+.preview-page[data-template='dark'] .fact {
+  background: transparent;
+}
+.preview-page[data-template='dark'] .fact + .fact {
+  border-inline-start: 1px solid var(--stone);
+}
+.preview-page[data-template='dark'] .prev-cta,
+.preview-page[data-template='dark'] .s-cta {
+  background: var(--ink);
+  color: var(--plaster);
+}
+
+.preview-page[data-template='walkFirst'][data-has-walk='1'] .hero {
+  display: none;
+}
+.preview-page[data-template='walkFirst'][data-has-walk='1'] .walk {
+  order: -2;
+}
+
+.preview-page[data-template='brochure'] {
+  --heroH: min(58svh, 480px);
+}
+.preview-page[data-template='brochure'] .hero-title {
+  font-weight: 700;
+  max-inline-size: 16ch;
+}
+.preview-page[data-template='brochure'] .facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  background: transparent;
+  border-block: 0;
+}
+.preview-page[data-template='brochure'] .fact {
+  flex: 1 1 6rem;
+  background: transparent;
+}
+
+.preview-page[data-template='linen'] {
+  --plaster: #f4e6cf;
+  --stone: #e2ccab;
+  --stone-warm: #efe0c4;
+  --ink: #2a1d12;
+  --heroH: min(48svh, 400px);
+  background: var(--plaster);
+}
+.preview-page[data-template='linen'] .hero-title {
+  font-weight: 700;
+  font-size: calc(var(--t-hero) * 1.18);
+  max-inline-size: 9ch;
+}
+.preview-page[data-template='linen'] .price {
+  color: var(--olive);
+}
+.preview-page[data-template='linen'] .facts {
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+  background: transparent;
+  border-block: 0;
+  padding: 0.4rem var(--gut) 1rem;
+}
+.preview-page[data-template='linen'] .fact {
+  background: var(--stone-warm);
+  border-radius: 12px;
+  text-align: start;
+}
+
+.preview-page[data-template='studio'] {
+  --plaster: #f7f3ea;
+  --ink-deep: #141310;
+  --heroH: min(52svh, 440px);
+}
+.preview-page[data-template='studio'] .hero {
+  margin-inline: var(--gut);
+  margin-block: 0.75rem 0;
+  border-radius: 18px;
+}
+.preview-page[data-template='studio'] .price-bar {
+  border-inline-start: 6px solid var(--olive);
+  margin-inline: var(--gut);
+  padding-inline-start: 1.1rem;
+}
+.preview-page[data-template='studio'] .facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  background: transparent;
+  border-block: 0;
+  padding-inline: var(--gut);
+}
+.preview-page[data-template='studio'] .fact {
+  background: var(--ink-deep);
+  color: var(--on-dark);
+  border-radius: 999px;
+  padding: 0.45rem 0.9rem;
+}
+.preview-page[data-template='studio'] .fact-lbl {
+  color: rgba(251, 250, 247, 0.72);
 }
 
 /* ============================================================

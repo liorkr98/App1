@@ -1,3 +1,6 @@
+import type { CSSProperties } from 'react';
+
+import { ACCENTS, type AccentId, isAccentId } from '@/features/agents/accents';
 import { TEMPLATE_IDS, type TemplateId } from '@/types/listing';
 
 import { t } from '../../lib/i18n';
@@ -5,23 +8,42 @@ import { t } from '../../lib/i18n';
 interface Props {
   chosen?: TemplateId;
   onChoose: (template: TemplateId) => void;
+  accent?: string | undefined;
+  onAccent: (accent: AccentId) => void;
 }
 
 /**
- * Choosing how the page looks.
+ * Choosing how the page looks — template shape AND the agent's colour.
  *
- * The copy says the data is identical in all five and only the appearance
- * changes. Each option is a miniature of that page, not a name and a note:
- * a seller who cannot tell משרד from סיור is a seller guessing. The notes
- * still say when NOT to pick a template (dark is wasted on poor photos).
- *
- * Driven from TEMPLATE_IDS rather than a list written out here, so a new
- * template appears by existing — and its two strings are then missing from
- * locales/he.json, which is visible rather than silent.
+ * The facsimile beside this step restyles from `data-template` and
+ * `--accent`. These cards are the picker; that preview is the proof.
  */
-export function TemplateStep({ chosen, onChoose }: Props) {
+export function TemplateStep({ chosen, onChoose, accent, onAccent }: Props) {
+  const palette = isAccentId(accent) ? accent : 'olive';
+
   return (
     <div className="template-step">
+      <fieldset className="palette-picker">
+        <legend>{t('editor.templates.palette')}</legend>
+        <p className="hint">{t('editor.templates.paletteHint')}</p>
+        <div className="palette-row">
+          {ACCENTS.map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              className={option.id === palette ? 'palette-chip chosen' : 'palette-chip'}
+              aria-pressed={option.id === palette}
+              aria-label={t(`agent.accents.${option.id}`)}
+              style={{ ['--chip']: option.base } as CSSProperties}
+              onClick={() => onAccent(option.id)}
+            >
+              <span className="palette-dot" aria-hidden="true" />
+              <span>{t(`agent.accents.${option.id}`)}</span>
+            </button>
+          ))}
+        </div>
+      </fieldset>
+
       <p className="hint">{t('editor.templates.hint')}</p>
 
       <ul className="template-grid">
@@ -33,7 +55,12 @@ export function TemplateStep({ chosen, onChoose }: Props) {
               aria-pressed={template === chosen}
               onClick={() => onChoose(template)}
             >
-              <span className={`template-thumb thumb-${template}`} aria-hidden="true">
+              <span
+                className={`template-thumb thumb-${template}`}
+                data-template={template}
+                aria-hidden="true"
+                style={{ ['--accent']: ACCENTS.find((item) => item.id === palette)?.base } as CSSProperties}
+              >
                 {template === 'walkFirst' ? (
                   <span className="thumb-film">
                     <span />

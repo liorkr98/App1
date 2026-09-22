@@ -40,6 +40,7 @@ export function perUnitPrice(
     // Neither can divide anything, and nor can zero.
     if (fact.present === false) return undefined;
     if (typeof fact.value !== 'number' || fact.value <= 0) return undefined;
+    if (!Number.isFinite(price) || price <= 0) return undefined;
 
     const unit = definition.unit ?? fact.unit ?? fact.label;
 

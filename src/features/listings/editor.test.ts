@@ -51,30 +51,30 @@ const ready = (): EditorState => ({
 });
 
 describe('the details gate', () => {
-  it('blocks on a missing title and a missing price', () => {
+  it('blocks on a missing title, not on a missing price', () => {
     // `listings` has NOT NULL title and price columns that createDraft fills
-    // with '' and 0. Nothing updated them, so every draft in the database was
-    // titled nothing and priced nothing — and the dashboard card showing
-    // "—" and "₪0" was reporting that correctly.
+    // with '' and 0. Title is still required. Price is not: 0 means
+    // unanswered, and the page omits the number rather than printing ₪0.
     const found = blockers({ ...ready(), title: '  ', price: 0 });
     const codes = found.map((blocker) => blocker.code);
 
     assert.ok(codes.includes('titleMissing'));
-    assert.ok(codes.includes('priceMissing'));
+    assert.equal(found.some((blocker) => blocker.step === 'details' && blocker.code !== 'titleMissing' && blocker.code !== 'cityMissing'), false);
   });
 
-  it('treats price 0 as unanswered, not as free', () => {
-    // A NOT NULL column with no nullable option has to encode "nobody said"
-    // as something, and 0 is it. A listing priced 0 is a listing nobody
-    // priced.
-    assert.ok(blockers({ ...ready(), price: 0 }).some((b) => b.code === 'priceMissing'));
-    assert.equal(blockers({ ...ready(), price: 1 }).some((b) => b.code === 'priceMissing'), false);
+  it('lets a listing publish without a price', () => {
+    assert.deepEqual(
+      blockers({ ...ready(), price: 0 }).filter((b) => b.step === 'details'),
+      [],
+    );
   });
 
-  it('refuses a price that is not a number', () => {
-    // An empty <input type="number"> gives NaN, which passes `> 0` never but
-    // would pass a naive truthiness check.
-    assert.ok(blockers({ ...ready(), price: Number.NaN }).some((b) => b.code === 'priceMissing'));
+  it('treats a non-number price as unanswered, not as a blocker', () => {
+    // An empty <input type="number"> gives NaN. Optional means optional.
+    assert.deepEqual(
+      blockers({ ...ready(), price: Number.NaN }).filter((b) => b.step === 'details'),
+      [],
+    );
   });
 
   it('requires a city for a property and NOT for a vehicle', () => {
@@ -89,11 +89,12 @@ describe('the details gate', () => {
     assert.equal(blockers(vehicle).some((b) => b.code === 'cityMissing'), false);
   });
 
-  it('puts all three on the details step, so one screen fixes them', () => {
+  it('puts title and city on the details step, so one screen fixes them', () => {
     const found = blockers({ ...ready(), title: '', price: 0, city: '' });
-    for (const code of ['titleMissing', 'priceMissing', 'cityMissing']) {
+    for (const code of ['titleMissing', 'cityMissing']) {
       assert.equal(found.find((b) => b.code === code)?.step, 'details', code);
     }
+    assert.equal(found.filter((b) => b.step === 'details').length, 2);
   });
 });
 
