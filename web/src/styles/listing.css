@@ -481,6 +481,50 @@ p + p{margin-top:.9rem}
 .avatar img{inline-size:100%;block-size:100%;object-fit:cover;border-radius:50%;display:block}
 .seller-name{font-family:'Frank Ruhl Libre',serif;font-size:1.25rem;font-weight:500}
 .seller-role{font-size:.87rem;color:var(--muted-warm)}
+.seller-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:.55rem;
+  margin-block-start:1rem;
+}
+.seller-action{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-block-size:44px;
+  padding:.7rem .8rem;
+  border-radius:6px;
+  border:1px solid var(--stone);
+  background:var(--plaster);
+  color:var(--ink);
+  font-family:'Assistant',sans-serif;
+  font-size:.95rem;
+  font-weight:700;
+  text-decoration:none;
+  text-align:center;
+  transition:transform var(--press) var(--ease-out),background var(--press) var(--ease-out);
+}
+.seller-action-wa{
+  background:var(--olive);
+  border-color:var(--olive);
+  color:var(--plaster);
+}
+.seller-action:active,.seller-share:active{transform:scale(.97)}
+.seller-share{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-block-size:44px;
+  margin-block-start:.35rem;
+  font-size:.87rem;
+  font-weight:600;
+  color:var(--olive);
+  text-decoration:none;
+}
+.seller-action:focus-visible,.seller-share:focus-visible{
+  outline:3px solid var(--ink);
+  outline-offset:3px;
+}
 
 /* ============================================================
    CTA — עגינה תחתונה
@@ -519,7 +563,8 @@ footer a{
 .attribution{font-size:.8rem;color:var(--muted);line-height:1.6}
 
 /* Sold — a record, not a live offer. Lives here so property and vehicle CSS
-   stay byte-identical (verify-template-divergences.mjs). */
+   stay byte-identical (verify-template-divergences.mjs). The dock stays:
+   it swaps to נכסים נוספים instead of vanishing. */
 .sold-banner{
   margin:0;
   padding:.85rem var(--gut);
@@ -530,7 +575,6 @@ footer a{
   text-align:center;
   border-block-end:1px solid var(--stone);
 }
-body:has(.sold-banner){padding-bottom:2rem}
 
 /* Pre-portal — seller declaration, same CSS on both templates.
    Omitted from the markup when sold or when the agent did not tick it. */
@@ -799,7 +843,10 @@ body:has(.sold-banner){padding-bottom:2rem}
   transform:scale(.97);
 }
 
-@view-transition { navigation: auto; }
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition { navigation: auto; }
+}
+.hero-img{view-transition-name:listing-cover}
 
 /* ============================================================
    התבניות — token sets, one component tree

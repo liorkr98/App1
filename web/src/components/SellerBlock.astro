@@ -1,13 +1,32 @@
 ---
 import type { Seller } from '@/types/listing';
+import { displayPhone, telHref } from '@/features/listings/phone';
 import { t } from '../lib/i18n';
 import SectionLabel from './SectionLabel.astro';
 
 interface Props {
   seller: Seller;
+  /** WhatsApp to the agent. Omitted when the listing is sold. */
+  whatsappHref?: string;
+  /** Pre-composed forward message. Buyer sharing, not contacting. */
+  shareHref?: string;
+  sold?: boolean;
 }
 
-const { seller } = Astro.props;
+const { seller, whatsappHref, shareHref, sold = false } = Astro.props;
+
+/**
+ * A person photo, or the agency mark when the profile put the logo only
+ * in this card (footerOnly). Bar / watermark placements already show the
+ * mark elsewhere — repeating it here as an empty-looking disc is the
+ * P0 tell. No photo and no footer logo → no disc.
+ */
+const photo =
+  seller.avatarUrl ??
+  (seller.logoPlacement === 'footerOnly' ? seller.agencyLogoUrl : undefined);
+
+const callHref = telHref(seller.phone);
+const phoneLabel = displayPhone(seller.phone);
 ---
 {/*
   Agents are the primary audience (CLAUDE.md §1), so their name appears at
@@ -18,9 +37,11 @@ const { seller } = Astro.props;
 <section class="seller">
   <SectionLabel text={t('listing.section.seller')} />
   <div class="seller-row">
-    <div class="avatar" aria-hidden="true">
-      {seller.agencyLogoUrl ? <img src={seller.agencyLogoUrl} alt="" /> : null}
-    </div>
+    {photo ? (
+      <div class="avatar" aria-hidden="true">
+        <img src={photo} alt="" />
+      </div>
+    ) : null}
     <div>
       <div class="seller-name">{seller.name}</div>
       {/*
@@ -56,6 +77,23 @@ const { seller } = Astro.props;
       {seller.licenceVerified && (
         <div class="verified">{t('listing.licenceVerified')}</div>
       )}
+      {phoneLabel && (
+        <div class="seller-role"><bdi>{phoneLabel}</bdi></div>
+      )}
     </div>
   </div>
+
+  {!sold && (
+    <div class="seller-actions">
+      {callHref && (
+        <a class="seller-action" href={callHref}>{t('listing.callCta')}</a>
+      )}
+      {whatsappHref && (
+        <a class="seller-action seller-action-wa" href={whatsappHref}>{t('listing.whatsappShort')}</a>
+      )}
+    </div>
+  )}
+  {shareHref && !sold && (
+    <a class="seller-share" href={shareHref}>{t('listing.share')}</a>
+  )}
 </section>

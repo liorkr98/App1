@@ -109,6 +109,9 @@
   "listing": {
     "create": "מודעה חדשה",
     "whatsappCta": "שליחת הודעה בוואטסאפ",
+    "whatsappShort": "וואטסאפ",
+    "callCta": "התקשרות",
+    "moreListings": "נכסים נוספים",
     "empty": "עדיין לא יצרת מודעה",
     "publish": "פרסום המודעה",
     "share": "שיתוף בוואטסאפ",
