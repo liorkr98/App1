@@ -1,0 +1,9 @@
+---
+description: Project rules — always apply
+alwaysApply: true
+---
+Read CLAUDE.md, RESEARCH.md, PRD.md and docs/DESIGN-CONTRACT.md before any
+change. They are binding. Where this plan and CLAUDE.md conflict, stop and ask.
+Hebrew-first, RTL, logical CSS properties only, every number in <bdi>.
+Never add a dependency without stating size, last publish date and why.
+Never claim done without typecheck, lint, and the verify scripts passing.
