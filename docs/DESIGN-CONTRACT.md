@@ -11,10 +11,11 @@ Sources:
 - `rtl-test.html` — RTL fixture, unchanged
 
 Visual templates (`agency`, `editorial`, `dark`, `walkFirst`, `brochure`, `linen`, `studio`) each
-have a Hebrew RTL file `listing-page-{id}.html`. Those files are the gate for
-adding a template (`scripts/verify-template-ids.mjs`). They do **not** rewrite
-§1–§7: property vs vehicle still differ in exactly four ways (§5), and all
-template CSS lives in `listing.css` so both category pages stay byte-identical.
+have a Hebrew RTL file `listing-page-{id}.html` and a token set at
+`web/src/styles/templates/{id}.css`. Those files are the gate for adding a
+template (`scripts/verify-template-ids.mjs`). They do **not** rewrite §1–§7:
+property vs vehicle still differ in exactly four ways (§5). Template CSS is
+`@import`ed into `listing.css` so both category pages stay byte-identical.
 
 ## The vehicle reference is stale, deliberately
 

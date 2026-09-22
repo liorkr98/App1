@@ -32,7 +32,19 @@ function tokenHex(source: string, name: string): string {
   return `#${match[1]!.toLowerCase()}`;
 }
 
+function scopedTokenHex(source: string, scope: string, name: string): string {
+  const block = source.match(new RegExp(`${scope}\\s*\\{([\\s\\S]*?)\\}`));
+  assert.ok(block, `missing ${scope} block`);
+  const match = block[1]!.match(new RegExp(`${name}:\\s*#([0-9a-fA-F]{6})`));
+  assert.ok(match, `missing ${name} hex in ${scope}`);
+  return `#${match[1]!.toLowerCase()}`;
+}
+
 const TOKENS = readFileSync(new URL('../../../web/src/styles/tokens.css', import.meta.url), 'utf8');
+const DARK = readFileSync(new URL('../../../web/src/styles/templates/dark.css', import.meta.url), 'utf8');
+const AGENCY = readFileSync(new URL('../../../web/src/styles/templates/agency.css', import.meta.url), 'utf8');
+const LINEN = readFileSync(new URL('../../../web/src/styles/templates/linen.css', import.meta.url), 'utf8');
+const MUTED_ON_DARK = tokenHex(TOKENS, '--muted-on-dark');
 
 const PLASTER = tokenHex(TOKENS, '--plaster');
 const STONE_WARM = tokenHex(TOKENS, '--stone-warm');
@@ -64,5 +76,30 @@ describe('absent and muted tokens meet WCAG AA body', () => {
   it('--muted still clears 4.5:1 on plaster', () => {
     const ratio = contrast(MUTED, PLASTER);
     assert.ok(ratio >= 4.5, `--muted is ${ratio.toFixed(2)}:1 on plaster`);
+  });
+
+  it('dark --absent clears 4.5:1 on dark plaster', () => {
+    const ground = scopedTokenHex(DARK, "html\\[data-template='dark'\\]", '--plaster');
+    const absent = scopedTokenHex(DARK, "html\\[data-template='dark'\\]", '--absent');
+    const ratio = contrast(absent, ground);
+    assert.ok(ratio >= 4.5, `dark --absent is ${ratio.toFixed(2)}:1 on ${ground}`);
+  });
+
+  it('agency --muted clears 4.5:1 on white plaster', () => {
+    const ground = scopedTokenHex(AGENCY, "html\\[data-template='agency'\\]", '--plaster');
+    const muted = scopedTokenHex(AGENCY, "html\\[data-template='agency'\\]", '--muted');
+    const ratio = contrast(muted, ground);
+    assert.ok(ratio >= 4.5, `agency --muted is ${ratio.toFixed(2)}:1 on ${ground}`);
+  });
+
+  it('linen --absent (shared stop) clears 4.5:1 on linen plaster', () => {
+    const ground = scopedTokenHex(LINEN, "html\\[data-template='linen'\\]", '--plaster');
+    const ratio = contrast(ABSENT, ground);
+    assert.ok(ratio >= 4.5, `--absent is ${ratio.toFixed(2)}:1 on linen ${ground}`);
+  });
+
+  it('--muted-on-dark clears 4.5:1 on studio ink-deep', () => {
+    const ratio = contrast(MUTED_ON_DARK, '#141310');
+    assert.ok(ratio >= 4.5, `--muted-on-dark is ${ratio.toFixed(2)}:1 on #141310`);
   });
 });

@@ -13,11 +13,18 @@
   <style>, so moving this out of the layout does not weaken the check that the
   property and vehicle pages carry byte-identical CSS.
 
-  Everything below is unchanged from the layout, including the template layer
-  at the end.
+  Everything below is unchanged from the layout, including the template
+  layer @imported at the top so PostCSS will actually emit it.
 */
 
 @import './walk.css';
+@import './templates/agency.css';
+@import './templates/editorial.css';
+@import './templates/dark.css';
+@import './templates/walkFirst.css';
+@import './templates/brochure.css';
+@import './templates/linen.css';
+@import './templates/studio.css';
 
 /* ============================================================
    היעד — עמוד מודעה
@@ -181,7 +188,8 @@ body{
 /* ============================================================
    סקשנים — ריתמוס משתנה, לא אותו קו מפריד כל פעם
    ============================================================ */
-section{padding:2.4rem var(--gut)}
+section{padding:var(--pad-section) var(--gut)}
+section:not(.hero):not(.enrich){padding-block-start:var(--pad-tight)}
 h2{
   font-family:'Frank Ruhl Libre',serif;
   font-weight:500;font-size:var(--t-h2);
@@ -212,7 +220,7 @@ p + p{margin-top:.9rem}
 /* ============================================================
    העשרה — הלב של המוצר. מספר הדקות הוא העוגן הוויזואלי.
    ============================================================ */
-.enrich{background:var(--ink-deep);color:var(--on-dark);padding-block:2.8rem}
+.enrich{background:var(--ink-deep);color:var(--on-dark);padding-block:var(--pad-open)}
 .enrich h2{color:var(--on-dark)}
 .enrich-sub{color:#9C9D93;font-size:.88rem;margin-bottom:1.9rem}
 
@@ -425,7 +433,7 @@ p + p{margin-top:.9rem}
 }
 
 /* ---------- סוכן ---------- */
-.seller{background:var(--stone-warm)}
+.seller{background:var(--stone-warm);padding-block:var(--pad-tight)}
 .seller-row{display:flex;align-items:center;gap:1rem}
 .avatar{width:58px;height:58px;border-radius:50%;background:var(--stone);flex:0 0 auto;overflow:hidden}
 .avatar img{inline-size:100%;block-size:100%;object-fit:cover;border-radius:50%;display:block}
@@ -738,67 +746,27 @@ body:has(.sold-banner){padding-bottom:2rem}
 @view-transition { navigation: auto; }
 
 /* ============================================================
-   התבניות — שלוש, ואותם נתונים בדיוק בכל אחת
+   התבניות — token sets, one component tree
    ============================================================
 
-   HOW A TEMPLATE WORKS, AND WHY IT IS A PALETTE AND NOT A LAYOUT.
+   Each template redefines the base tokens rather than a parallel palette.
+   Inside a template the names are ROLES: --plaster is the page ground, even
+   when dark.css makes that ground nearly black.
 
-   `listings.template` used to be written by the editor, stored in Postgres,
-   and READ BY NOTHING. All three names produced one identical page. This is
-   what makes them real.
-
-   Each template REDEFINES THE BASE TOKENS rather than adding a parallel set of
-   rules. Every selector below already reads --plaster, --ink, --olive and the
-   rest, so swapping those swaps the whole page and no rule has to know a
-   template exists. The consequence worth stating plainly: inside a template
-   the token names are ROLES, not colours. --plaster means "the page ground",
-   and under [data-template='dark'] that ground is nearly black.
-
-   The alternative — three parallel stylesheets, or a second token layer with
-   names like --page-bg — was rejected for one concrete reason. CI asserts the
-   two built listing pages carry BYTE-IDENTICAL CSS (verify-template-
-   divergences.mjs), which is what stops a fifth divergence appearing between
-   property and vehicle. One stylesheet carrying all three templates keeps that
-   guarantee exactly as it was. Three stylesheets would not.
-
-   Both sample listings are therefore on the SAME template. If one were moved
-   to another, that check would stop comparing like with like and would start
-   reporting a difference that is not a bug.
-
-   CONTRAST WAS MEASURED FOR EACH, not eyeballed. See docs/DESIGN.md. */
-
-/* ---------- משרדי — בהיר, מסודר, כתום ----------
-   The Quarter reference: the busiest of the three, closest to an agency's own
-   site. Orange rather than olive, and still not blue — CLAUDE.md §2's
-   exclusion is of blue specifically, because every Israeli property brand is
-   blue, and orange breaks from both. */
-/*
-  TYPE ON A DARK SURFACE, IN EVERY TEMPLATE.
-
-  The agent bar, the hero veil and the enrichment block sit on a dark ground
-  in all three templates — that is what those elements ARE. They used
-  var(--plaster), which reads correctly right up until a template redefines
-  --plaster as the page ground and that ground is nearly black: the hero title
-  then renders near-black over the photograph and the agent's name disappears
-  out of the bar. Caught on the running page, not in review.
-
-  So the three of them take a token that is a ROLE and not a palette entry. It
-  is deliberately not overridden below.
+   Files live in templates/*.css so agency / editorial / dark (the three
+   named in the listing brief) and the four later ids are each a complete
+   set. They are @imported at the top of this file so the built listing CSS
+   stays ONE stylesheet. Template selectors are more specific than the shared
+   rules, so hoisting the imports does not flatten identity.
+   verify-template-divergences.mjs asserts property and vehicle pages carry
+   byte-identical CSS; three linked stylesheets would break that.
 */
-/*
-  THE ACCENT, MAPPED ONTO THE TOKENS EVERY RULE ALREADY READS.
 
-  --accent and --accent-lift arrive inline from the agent's profile. Rather
-  than rewriting every selector that says var(--olive), the two tokens are
-  redefined in terms of them — so an accent change repaints the whole page and
-  no rule has to know the feature exists.
+.listing-flow{
+  display:flex;
+  flex-direction:column;
+}
 
-  The fallbacks are olive, so a page rendered without the inline properties
-  (an older listing, a test fixture) is the brand colour rather than nothing.
-
-  [data-template] rather than :root, deliberately: it has to outrank the
-  :root declarations in tokens.css whichever order the bundler emits them in.
-*/
 html[data-template] {
   --olive: var(--accent, #4a5d3a);
   --olive-lift: var(--accent-lift, #7e9a62);
@@ -806,399 +774,7 @@ html[data-template] {
 
 html {
   --on-dark: #fbfaf7;
-
-  /*
-    --muted on --stone-warm measures 4.35:1 — the same failure the homepage
-    hit, and it fails for the same reason: a token that clears AA on the
-    reading ground does not clear it on the tinted one. Carried down until it
-    does (4.83:1). Overridden by the dark template, where --stone-warm is a
-    dark surface and this would be dark-on-dark.
-  */
   --muted-warm: #67685f;
-}
-
-html[data-template='editorial'] {
-  --plaster: #f3eee4;
-  --heroH: 72svh;
-}
-html[data-template='editorial'] .hero-title {
-  font-size: calc(var(--t-hero) * 1.12);
-  max-inline-size: 11ch;
-  line-height: 1.12;
-}
-html[data-template='editorial'] .price {
-  font-size: calc(var(--t-price) * 1.08);
-}
-html[data-template='editorial'] .facts {
-  grid-template-columns: 1fr;
-}
-
-/*
-  AGENCY IS A DIFFERENT SHAPE, NOT A DIFFERENT COLOUR.
-
-  The first version of these templates changed only the palette, and the
-  verdict on seeing them side by side was that they looked the same. They did.
-  A colour swap is not a template.
-
-  So agency is the information-dense one: a shorter hero because the
-  photograph is not the argument here, facts as a LABELLED TWO-COLUMN LIST
-  rather than three centred cells, a price band that fills rather than sits on
-  a hairline, and a rounded carded surface throughout. It reads like an
-  agency's own site, which is the reference it was drawn from.
-*/
-html[data-template='agency'] {
-  --ink-deep: #1c1917;
-  --stone: #e7e2da;
-  --stone-warm: #faf6f0;
-  --plaster: #ffffff;
-  --muted: #6b6259;
-  /* The photograph shares the first screen rather than owning it. */
-  --heroH: 54svh;
-}
-
-html[data-template='agency'] .hero {
-  min-height: 320px;
-}
-
-html[data-template='agency'] .hero-title {
-  font-weight: 700;
-  font-size: calc(var(--t-hero) * .72);
-}
-
-/* A filled band, so the number is the loudest thing above the fold. */
-html[data-template='agency'] .price-bar {
-  background: var(--stone-warm);
-  border-block-end: 1px solid var(--stone);
-  align-items: center;
-}
-
-html[data-template='agency'] .price {
-  font-size: calc(var(--t-price) * .82);
-}
-
-/* Two columns, label beside value, left as a list rather than three cells of
-   centred display type. Density is the point of this template. */
-html[data-template='agency'] .facts {
-  grid-template-columns: repeat(2, 1fr);
-  gap: .5rem;
-  background: transparent;
-  border-block: 0;
-  padding: var(--gut) var(--gut) .4rem;
-}
-
-html[data-template='agency'] .fact {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: .6rem;
-  text-align: start;
-  padding: .7rem .85rem;
-  border: 1px solid var(--stone);
-  border-radius: 10px;
-}
-
-html[data-template='agency'] .fact-val {
-  font-size: calc(var(--t-num) * .78);
-  order: 2;
-}
-
-html[data-template='agency'] .fact-lbl {
-  margin-top: 0;
-  order: 1;
-}
-
-/* The provenance chip has nowhere to sit in a single-line cell. */
-html[data-template='agency'] .fact-src {
-  display: none;
-}
-
-html[data-template='agency'] .gallery {
-  grid-template-columns: repeat(3, 1fr);
-}
-
-html[data-template='agency'] .gallery figure:first-child {
-  grid-column: 1 / -1;
-}
-
-html[data-template='agency'] .cta {
-  border-radius: 999px;
-}
-
-/* ---------- כהה — התמונות נושאות את העמוד ----------
-   Inverted. The enrichment block, which is --ink-deep on the other two, has to
-   become the LIGHT band here or it disappears into the page: a section that
-   exists to stand out cannot be the same value as its surroundings. */
-/* On this ground the base stop is too close in value to read as accent, so
-   the lift becomes the accent and the base is not used at all. */
-html[data-template='dark'] {
-  --olive: var(--accent-lift, #7e9a62);
-  --plaster: #14150f;
-  --ink: #f3f1ea;
-  --ink-deep: #0a0b06;
-  --stone: #2c2e24;
-  --stone-warm: #1d1f16;
-  --muted: #a3a498;
-}
-
-html[data-template='dark'] {
-  --muted-warm: #a3a498;
-  --absent: #a3a498;
-}
-
-html[data-template='dark'] .enrich {
-  background: var(--stone-warm);
-}
-
-/* #83847B is a literal in the base, chosen against --ink-deep. Against this
-   template's lighter dark surface it falls to 4.41:1, just under the bar. */
-html[data-template='dark'] .source {
-  color: var(--muted);
-}
-
-/* --olive is the ACCENT on a dark ground and the CTA fill on a light one.
-   Filling a button with it here would put pale-on-pale; the button inverts
-   instead, which is also the only element on the page that should. */
-html[data-template='dark'] .cta {
-  background: var(--ink);
-  color: var(--plaster);
-}
-html[data-template='dark'] .cta:hover,
-html[data-template='dark'] .cta:active {
-  background: var(--olive-lift);
-  color: var(--ink-deep);
-}
-
-/* A photograph on a near-black page needs no veil to carry white type, and
-   the heavy gradient the light templates use reads as dirt here. */
-html[data-template='dark'] .hero-veil {
-  background: linear-gradient(to top, rgba(10, 11, 6, .92) 10%, rgba(10, 11, 6, .45) 45%, transparent);
-}
-
-/*
-  DARK IS THE PHOTOGRAPH-LED SHAPE. The hero takes the whole first screen, the
-  facts lose their boxes and become a row of bare numbers, and the gallery runs
-  edge to edge. Nothing competes with the pictures, which is the only reason to
-  choose this template — and why its own copy in the picker says it is worth it
-  only if the photographs are good.
-*/
-html[data-template='dark'] {
-  --heroH: 94svh;
-}
-
-html[data-template='dark'] .hero-title {
-  font-size: calc(var(--t-hero) * 1.08);
-}
-
-html[data-template='dark'] .price {
-  font-size: calc(var(--t-price) * 1.12);
-}
-
-/* No cells, no hairlines: three numbers on the page itself. */
-html[data-template='dark'] .facts {
-  gap: 0;
-  background: transparent;
-  border-block: 1px solid var(--stone);
-}
-
-html[data-template='dark'] .fact {
-  background: transparent;
-  padding-block: 1.4rem;
-}
-
-html[data-template='dark'] .fact + .fact {
-  border-inline-start: 1px solid var(--stone);
-}
-
-html[data-template='dark'] .fact.off {
-  background: transparent;
-}
-
-/* Full bleed. The 620px column is the editorial shape, not this one. */
-html[data-template='dark'] .gallery {
-  padding-inline: 0;
-  gap: .25rem;
-}
-
-html[data-template='dark'] .gallery img {
-  border-radius: 0;
-}
-
-/* ============================================================
-   סיור ראשון / ברושור — תבניות 4 ו-5. אותו CSS על דירה ועל רכב.
-   ============================================================ */
-
-.listing-flow{
-  display:flex;
-  flex-direction:column;
-}
-
-html[data-template='walkFirst'][data-has-walk='1'] .hero{
-  display:none;
-}
-html[data-template='walkFirst'][data-has-walk='1'] .walk{
-  order:-2;
-  padding-block:0 1.6rem;
-}
-html[data-template='walkFirst'][data-has-walk='1'] .price-bar{
-  order:-1;
-}
-html[data-template='walkFirst'] .walk{
-  padding-block-start:1.1rem;
-}
-html[data-template='walkFirst'][data-has-walk='1'] .walk-main img{
-  min-block-size:min(72svh, 40rem);
-  aspect-ratio:4/5;
-}
-html[data-template='walkFirst'][data-has-walk='1'] .walk-viewer{
-  grid-template-columns:5.75rem minmax(0,1fr);
-}
-html[data-template='walkFirst'][data-has-walk='1'] .walk h2{
-  font-size:var(--t-h2);
-  margin-block-end:.2rem;
-}
-
-html[data-template='brochure']{
-  --heroH:92svh;
-}
-html[data-template='brochure'] .hero{
-  min-block-size:560px;
-}
-html[data-template='brochure'] .hero-title{
-  font-weight:700;
-  font-size:var(--t-hero);
-  max-inline-size:16ch;
-}
-html[data-template='brochure'] .price-bar{
-  padding-block:1.5rem .35rem;
-}
-html[data-template='brochure'] .facts{
-  display:flex;
-  flex-wrap:wrap;
-  gap:0;
-  background:transparent;
-  border-block:0;
-  padding-block-end:.4rem;
-}
-html[data-template='brochure'] .fact{
-  flex:1 1 6rem;
-  background:transparent;
-  padding:1.15rem .6rem .2rem;
-}
-html[data-template='brochure'] .gallery figure:not(:first-child) img{
-  border-radius:50%;
-  aspect-ratio:1;
-}
-
-/* פשתן — נייר חם, מספרים גדולים */
-html[data-template='linen']{
-  --plaster:#f4e6cf;
-  --stone:#e2ccab;
-  --stone-warm:#efe0c4;
-  --ink:#2a1d12;
-  --ink-deep:#23180f;
-  --muted:#6d5844;
-  --muted-warm:#6d5844;
-  --heroH:70svh;
-}
-html[data-template='linen'] .hero-title{
-  font-weight:700;
-  font-size:calc(var(--t-hero) * 1.18);
-  max-inline-size:9ch;
-  line-height:1.08;
-}
-html[data-template='linen'] .price{
-  color:var(--olive);
-  font-size:calc(var(--t-price) * 1.1);
-}
-html[data-template='linen'] .price-bar{
-  padding-block:1.7rem 1.1rem;
-  border-block-end:1px solid var(--stone);
-}
-html[data-template='linen'] .facts{
-  grid-template-columns:1fr 1fr;
-  gap:.85rem;
-  background:transparent;
-  border-block:0;
-  padding-block:.4rem 1rem;
-}
-html[data-template='linen'] .fact{
-  background:var(--stone-warm);
-  border-radius:12px;
-  padding:1.1rem .9rem;
-  text-align:start;
-}
-html[data-template='linen'] .gallery img{
-  border-radius:14px;
-}
-
-/* סטודיו — מסגרת כהה, תצלום במרכז, פרטים כשבבים */
-html[data-template='studio']{
-  --plaster:#f7f3ea;
-  --ink:#1a1916;
-  --ink-deep:#141310;
-  --stone:#d9d2c4;
-  --stone-warm:#ece6d8;
-  --heroH:80svh;
-}
-html[data-template='studio'] .agent-bar{
-  padding-block:1rem;
-}
-html[data-template='studio'] .hero{
-  margin-inline:var(--gut);
-  margin-block:.75rem 0;
-  border-radius:18px;
-  min-block-size:420px;
-  overflow:hidden;
-}
-html[data-template='studio'] .hero-title{
-  font-weight:700;
-  font-size:calc(var(--t-hero) * .92);
-  max-inline-size:14ch;
-}
-html[data-template='studio'] .price-bar{
-  align-items:center;
-  border-inline-start:6px solid var(--olive);
-  margin-inline:var(--gut);
-  padding-inline-start:1.1rem;
-}
-html[data-template='studio'] .facts{
-  display:flex;
-  flex-wrap:wrap;
-  gap:.45rem;
-  background:transparent;
-  border-block:0;
-  padding-inline:var(--gut);
-}
-html[data-template='studio'] .fact{
-  flex:0 1 auto;
-  background:var(--ink-deep);
-  color:var(--on-dark);
-  border-radius:999px;
-  padding:.45rem .9rem .5rem;
-  min-inline-size:0;
-}
-html[data-template='studio'] .fact-lbl{
-  color:rgba(251,250,247,.72);
-}
-html[data-template='studio'] .fact.off{
-  background:var(--stone-warm);
-  color:var(--ink);
-}
-html[data-template='studio'] .fact.off .fact-lbl{
-  color:var(--muted);
-}
-html[data-template='studio'] .gallery{
-  gap:.75rem;
-}
-html[data-template='studio'] .gallery img{
-  border-radius:10px;
-}
-
-html[data-template='editorial'] .price{
-  color:var(--olive);
-}
-html[data-template='agency'] .price-bar{
-  border-inline-start:6px solid var(--olive);
 }
 
 a:focus-visible,
