@@ -6,6 +6,9 @@
  * and is ignored. Template-check HTML is the listing document the CI can
  * see (the real /a/{slug} route is SSR).
  *
+ * Counts every file the entry script imports, because Astro splits the
+ * listing enhance module into a chunk the HTML does not mention.
+ *
  * Run after the web build: node scripts/verify-listing-js-budget.mjs
  */
 
@@ -15,6 +18,7 @@ import { gzipSync } from 'node:zlib';
 
 const DIST = process.argv[2] ?? 'web/dist';
 const LIMIT = 12 * 1024;
+const IMPORT = /(?:import|export)\s+(?:[^'"\n]+from\s+)?["'](\.[^"']+)["']/g;
 
 function findPage(...parts) {
   const candidates = [
@@ -24,6 +28,17 @@ function findPage(...parts) {
   return candidates.find((file) => fs.existsSync(file));
 }
 
+function clientRoot(htmlPath) {
+  return path.dirname(htmlPath).includes(`${path.sep}client`)
+    ? path.join(DIST, 'client')
+    : DIST;
+}
+
+function resolveSrc(src, htmlPath, fromFile) {
+  if (src.startsWith('/')) return path.join(clientRoot(htmlPath), src.replace(/^\//, ''));
+  return path.join(path.dirname(fromFile ?? htmlPath), src);
+}
+
 const htmlPath = findPage('template-check', 'A7K2M');
 if (!htmlPath) {
   console.error('listing JS budget: no built template-check/A7K2M HTML');
@@ -31,30 +46,38 @@ if (!htmlPath) {
 }
 
 const html = fs.readFileSync(htmlPath, 'utf8');
-const dir = path.dirname(htmlPath);
-const srcs = new Set();
+const pending = [];
 
 for (const match of html.matchAll(/<script\b([^>]*)>/gi)) {
   const attrs = match[1] ?? '';
   if (/\btype\s*=\s*["']application\/ld\+json["']/i.test(attrs)) continue;
   const src = attrs.match(/\bsrc\s*=\s*["']([^"']+)["']/i);
-  if (src) srcs.add(src[1]);
+  if (src) pending.push(resolveSrc(src[1], htmlPath));
 }
 
-let total = 0;
+const seen = new Set();
 const rows = [];
+let total = 0;
 
-for (const src of srcs) {
-  const file = src.startsWith('/')
-    ? path.join(path.dirname(htmlPath).includes(`${path.sep}client`) ? path.join(DIST, 'client') : DIST, src.replace(/^\//, ''))
-    : path.join(dir, src);
+while (pending.length > 0) {
+  const file = pending.pop();
+  if (!file || seen.has(file)) continue;
+  seen.add(file);
   if (!fs.existsSync(file)) {
-    console.error(`listing JS budget: missing ${src} (resolved ${file})`);
+    console.error(`listing JS budget: missing ${file}`);
     process.exit(1);
   }
-  const gz = gzipSync(fs.readFileSync(file)).byteLength;
+  const source = fs.readFileSync(file);
+  const gz = gzipSync(source).byteLength;
   total += gz;
-  rows.push({ src, gz });
+  rows.push({ src: path.relative(clientRoot(htmlPath), file), gz });
+
+  IMPORT.lastIndex = 0;
+  const text = source.toString('utf8');
+  let match;
+  while ((match = IMPORT.exec(text))) {
+    pending.push(path.normalize(path.join(path.dirname(file), match[1])));
+  }
 }
 
 const inline = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)].filter((match) => {
