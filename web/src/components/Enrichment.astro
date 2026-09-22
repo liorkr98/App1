@@ -1,7 +1,15 @@
 ---
 import type { EnrichmentBlock } from '@/types/listing';
 
-import { citations, groupCivic, groupPlaces, modeLabel, orderTransit } from '../lib/enrichment';
+import {
+  citations,
+  enrichmentHasContent,
+  groupCivic,
+  groupPlaces,
+  leftoverCount,
+  modeLabel,
+  orderTransit,
+} from '../lib/enrichment';
 import { t } from '../lib/i18n';
 import Prose from './Prose.astro';
 import SectionLabel from './SectionLabel.astro';
@@ -11,6 +19,7 @@ interface Props {
 }
 
 const { enrichment } = Astro.props;
+const hasContent = enrichmentHasContent(enrichment);
 
 /**
  * The centrepiece (Stage B2 §4).
@@ -31,8 +40,12 @@ const { enrichment } = Astro.props;
  * divergences are permitted (DESIGN-CONTRACT §5) and a section present on one
  * page but absent from the other is a fifth —
  * scripts/verify-template-divergences.mjs fails the build on it. So
- * `section.enrich` renders on both and the CONTENT differs, exactly as the
- * price-note divergence already does.
+ * `section.enrich` renders on both templates when there is something to
+ * paint, and the CONTENT differs — exactly as the price-note divergence
+ * already does. A listing whose every group is empty omits the section
+ * (CLAUDE.md §7). That is per-row honesty, not a fifth template split:
+ * the two CI demos both have content, so verify-template-divergences
+ * still sees the pair.
  */
 
 const isProperty = enrichment.category === 'property';
@@ -87,6 +100,8 @@ const yearsBetween = (from: string, to: string): number => {
 /** Hebrew has a singular. שנה for one, שנים for the rest. */
 const yearsLabel = (years: number): string => (years === 1 ? 'שנה' : 'שנים');
 
+const leftover = (total: number) => leftoverCount(total, MAX_ROWS);
+
 const sources = isProperty
   ? citations([...transit, ...schools, ...enrichment.places, ...(enrichment.civic ?? [])])
   : citations([
@@ -102,7 +117,8 @@ const sources = isProperty
   does not work — an iframe fragment does not scroll the embedded document,
   measured both ways. index.astro records the attempt so nobody repeats it.
 */}
-<section class="enrich reveal" id="enrich">
+{hasContent && (
+<section class="enrich" id="enrich">
   <SectionLabel text={isProperty ? t('listing.section.around') : t('listing.section.verified')} />
   <h2>{isProperty ? <Fragment>מה יש <span class="h2-num">מסביב</span></Fragment> : <Fragment>מה <span class="h2-num">מאומת</span></Fragment>}</h2>
   <p class="enrich-sub">
@@ -110,11 +126,11 @@ const sources = isProperty
   </p>
 
   {transit.length > 0 && (
-    <div class="egroup">
+    <div class="egroup clip-reveal">
       <div class="egroup-head">
         <h3>תחבורה</h3>
-        {transit.length > MAX_ROWS && (
-          <span class="count">ועוד <bdi>{transit.length - MAX_ROWS}</bdi></span>
+        {leftover(transit.length) > 0 && (
+          <span class="count">ועוד <bdi>{leftover(transit.length)}</bdi></span>
         )}
       </div>
       {transit.slice(0, MAX_ROWS).map((stop) => (
@@ -133,11 +149,11 @@ const sources = isProperty
   )}
 
   {schools.length > 0 && (
-    <div class="egroup">
+    <div class="egroup clip-reveal">
       <div class="egroup-head">
         <h3>חינוך</h3>
-        {schools.length > MAX_ROWS && (
-          <span class="count">ועוד <bdi>{schools.length - MAX_ROWS}</bdi></span>
+        {leftover(schools.length) > 0 && (
+          <span class="count">ועוד <bdi>{leftover(schools.length)}</bdi></span>
         )}
       </div>
       {schools.slice(0, MAX_ROWS).map((school) => (
@@ -153,11 +169,11 @@ const sources = isProperty
   )}
 
   {placeGroups.map((group) => (
-    <div class="egroup">
+    <div class="egroup clip-reveal">
       <div class="egroup-head">
         <h3>{group.label}</h3>
-        {group.places.length > MAX_ROWS && (
-          <span class="count">ועוד <bdi>{group.places.length - MAX_ROWS}</bdi></span>
+        {leftover(group.places.length) > 0 && (
+          <span class="count">ועוד <bdi>{leftover(group.places.length)}</bdi></span>
         )}
       </div>
       {group.places.slice(0, MAX_ROWS).map((place) => (
@@ -170,11 +186,11 @@ const sources = isProperty
   ))}
 
   {civicGroups.map((group) => (
-    <div class="egroup">
+    <div class="egroup clip-reveal">
       <div class="egroup-head">
         <h3>{t(`listing.civicKind.${group.kind}`)}</h3>
-        {group.items.length > MAX_ROWS && (
-          <span class="count">ועוד <bdi>{group.items.length - MAX_ROWS}</bdi></span>
+        {leftover(group.items.length) > 0 && (
+          <span class="count">ועוד <bdi>{leftover(group.items.length)}</bdi></span>
         )}
       </div>
       {group.items.slice(0, MAX_ROWS).map((site) => (
@@ -187,7 +203,7 @@ const sources = isProperty
   ))}
 
   {!isProperty && enrichment.testValidUntil && (
-    <div class="egroup">
+    <div class="egroup clip-reveal">
       <div class="egroup-head"><h3>טסט</h3></div>
       <div class="erow">
         <div class="mins"><bdi>{yearOf(enrichment.testValidUntil)}</bdi><small>עד</small></div>
@@ -200,11 +216,11 @@ const sources = isProperty
   )}
 
   {ownership.length > 0 && (
-    <div class="egroup">
+    <div class="egroup clip-reveal">
       <div class="egroup-head">
         <h3>בעלות</h3>
-        {ownership.length > MAX_ROWS && (
-          <span class="count">ועוד <bdi>{ownership.length - MAX_ROWS}</bdi></span>
+        {leftover(ownership.length) > 0 && (
+          <span class="count">ועוד <bdi>{leftover(ownership.length)}</bdi></span>
         )}
       </div>
       {ownership.slice(0, MAX_ROWS).map((period) => (
@@ -222,8 +238,11 @@ const sources = isProperty
           <div class="who">
             <b>{period.type}</b>
             <em>
-              <bdi>{asMonth(period.fromMonth)}</bdi>
-              {period.toMonth ? <Fragment> – <bdi>{asMonth(period.toMonth)}</bdi></Fragment> : ' – היום'}
+              {period.toMonth ? (
+                <bdi>{asMonth(period.fromMonth)} – {asMonth(period.toMonth)}</bdi>
+              ) : (
+                <Fragment><bdi>{asMonth(period.fromMonth)}</bdi> – היום</Fragment>
+              )}
             </em>
           </div>
         </div>
@@ -249,3 +268,4 @@ const sources = isProperty
     </p>
   )}
 </section>
+)}
