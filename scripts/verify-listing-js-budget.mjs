@@ -18,7 +18,7 @@ import { gzipSync } from 'node:zlib';
 
 const DIST = process.argv[2] ?? 'web/dist';
 const LIMIT = 12 * 1024;
-const IMPORT = /(?:import|export)\s+(?:[^'"\n]+from\s+)?["'](\.[^"']+)["']/g;
+const IMPORT = /(?:import|export)\s*(?:[^'"\n]+from\s*)?["'](\.[^"']+)["']/g;
 
 function findPage(...parts) {
   const candidates = [
