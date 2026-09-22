@@ -22,7 +22,7 @@ This document is the gate for P1. It does not propose a rebuild.
 | Hallmark `audit` (no edits) | **Ran**, below. |
 | `scripts/verify-listing-js-budget.mjs` | **Ran.** 1043 B gz. |
 | axe-core / Lighthouse mobile | **Not run** (no Playwright, no DevTools MCP). |
-| `prefers-reduced-motion: reduce` pass | **Not captured.** Geometry is from the default motion path. |
+| `prefers-reduced-motion: reduce` first screens | **Captured** at 390 for A7K2M, V3M9Q, walkFirst. Title is static (M1 reduced path). Geometry in `fold.json` is still the default motion path. |
 
 Israeli traffic is iPhone-heavy. Chromium-only screenshots **cannot** certify Safari flex, `animation-timeline: view(inline)`, or RTL scroll-snap. Those wait for a machine with Playwright MCP.
 
@@ -124,7 +124,7 @@ Severity: **critical** ships broken or illegal; **major** misses the brief or re
 
 - Serif numerals, `--absent` solid colour (not opacity), `value: null` omitted. `אין` / מחסן visible in `A7K2M-390-description.png`. This part of §7 already ships.
 - Editorial template sets `.facts { grid-template-columns: 1fr }`, so the Holon demo is a **long centred column**, not a 3-up scan. Israeli scan order (rooms → m² → floor → lift → parking → mamad) becomes a scroll. **Major.**
-- Floor cell `3 / 5` paints as **`5 / 3`**. DESIGN-CONTRACT §7 case 2. Markup is `<bdi>3</bdi> / <bdi>5</bdi>` inside an RTL cell; two separate `bdi` runs reorder. **Critical.** Seen on the in-flow facts screenshot before later recaptures.
+- Floor cell `3 / 5` paints as **`5 / 3`**. DESIGN-CONTRACT §7 case 2. Markup is `<bdi>3</bdi> / <bdi>5</bdi>` inside an RTL cell; two separate `bdi` runs reorder. **Critical.** `A7K2M-390-facts.png`.
 - Agency hides `.fact-src` (`display: none`), so `מאומת` citations vanish on that template. An unbacked badge is forbidden; **hiding a backed one** is the other failure. **Major.**
 - M3 counts up `data-count` via JS. Mid-animation screenshots showed `53` / `56` m² instead of `95`. HTML still holds the final value; visual lie lasts 700 ms. Price is not counted (correct). Reduced-motion / no-JS not captured this pass. **Major** until those two paths are screenshotted in P4.
 - No monthly-cost line under the grid. **Major** (P4).
@@ -154,7 +154,7 @@ Severity: **critical** ships broken or illegal; **major** misses the brief or re
 
 - Property only, static image / area map, omitted without a street. Vehicle has city only — correct.
 - Location precision (`exact` / `street` / `area`) is **not in the listing render path**. **Major** (P8).
-- Section screenshots of the map were unreliable under the sticky bar; do not trust `A7K2M-390-map.png` filenames from the second capture pass. Geometry in `fold.json` still lists a `section.map` in the page.
+- Static pin card with walk-minute chips (4 / 7 / 5) and a nearby list. `(מיקום)` label present. No live tiles. `A7K2M-390-map.png`. Location precision is still not a data field.
 
 ### Agent card
 
@@ -361,14 +361,26 @@ First screens (the contract shots):
 - `V3M9Q-{390,375,360}-first.png` — vehicle; price in view; two WhatsApp buttons
 - `{agency,editorial,dark,brochure,linen,studio,walk,walkFirst}-{390,375,360}-first.png`
 
-Section / supporting (Chromium, 390):
+Section shots (Chromium, 390×844, sticky compact-bar forced `static` and dock hidden so the section is not covered):
 
-- `walk-390-walk.png` — labelled photo tour, RTL thumbs
-- `A7K2M-390-description.png` — `(הדירה)`, `אין` מחסן, generated area copy
-- `A7K2M-390-{hero,agent-bar,compact-bar,cta,footer}.png`
-- `V3M9Q-390-{hero,gallery,flaws,description,agent-bar}.png`
+- `A7K2M-390-price.png` — in-flow compact bar sitting on top of the dominant PriceBar
+- `A7K2M-390-facts.png` — 1-col editorial grid; floor **`5 / 3`**; `אין` מחסן in `--absent`
+- `A7K2M-390-enrich.png` — dark block, minutes as the row anchor
+- `A7K2M-390-map.png` — static pin card, `(מיקום)`
+- `A7K2M-390-seller.png` — empty avatar, no `tel:`, ODbL in the footer
+- `A7K2M-390-gallery.png` — asymmetric 1+2 grid
+- `V3M9Q-390-facts.png` — `מאומת` citations; 1-col
+- `V3M9Q-390-flaws.png` — olive-dot list
+- `V3M9Q-390-enrich.png` — טסט / בעלות, source line
+- `walk-390-walk.png` — filmstrip on the inline-start (right)
 
-`*-full.png` files are present but roughly viewport-tall; do not treat them as full-page captures. A later recapture of enrich/map/seller scrolled incorrectly and some of those filenames now repeat the first screen — trust the first-pass description shots and `fold.json` over those names.
+Reduced motion (390, first screen only):
+
+- `A7K2M-390-reduced-first.png`
+- `V3M9Q-390-reduced-first.png`
+- `walkFirst-390-reduced-first.png`
+
+`*-full.png` files are roughly viewport-tall; do not treat them as full-page captures. Fold geometry remains in `fold.json`.
 
 ---
 
