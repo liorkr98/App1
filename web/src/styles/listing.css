@@ -219,6 +219,7 @@ body{
   font-size:.92rem;line-height:1.5;color:var(--ink);
   border-block-end:1px solid var(--stone);
 }
+.monthly-cost bdi{unicode-bidi:isolate}
 .monthly-src{
   display:inline-block;margin-inline-start:.55rem;
   font-size:.62rem;font-weight:600;color:var(--muted);

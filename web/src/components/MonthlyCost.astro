@@ -19,9 +19,10 @@ const slots: Record<string, string> = cost
       'text' in part ? (
         part.text
       ) : (
-        <bdi>{slots[part.slot] ?? ''}</bdi>
+        <bdi dir="ltr">{slots[part.slot] ?? ''}</bdi>
       ),
     )}
+    {' '}
     <span class="monthly-src">{t('source.seller')}</span>
   </p>
 ) : null}
