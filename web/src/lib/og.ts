@@ -1,7 +1,9 @@
 import type { Fact, Listing } from '@/types/listing';
 import { factDefinition } from '@/features/listings/schemas';
 
+import { ogPriceFragment } from '@/features/listings/control-surface';
 import { factValue, ils, num } from './format';
+import { t } from './i18n';
 import { supabaseUrl } from './supabase';
 
 /**
@@ -23,7 +25,12 @@ function get(facts: Fact[], key: string): Fact | undefined {
  * one line differ. This is content generation, not a template divergence.
  */
 export function ogTitle(listing: Listing): string {
-  const price = listing.price > 0 ? ` · ${ils(listing.price)}` : '';
+  const price = ogPriceFragment(
+    listing.price,
+    listing.priceDisplay,
+    ils(listing.price),
+    t('listing.priceFrom'),
+  );
 
   if (listing.category === 'property') {
     const rooms = get(listing.facts, 'rooms');

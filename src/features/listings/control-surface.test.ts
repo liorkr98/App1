@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 
 import {
   locationPrecision,
+  ogPriceFragment,
   priceHeadline,
   publicPlace,
   showListingMap,
@@ -25,6 +26,24 @@ describe('priceHeadline', () => {
 
   it('hides the number when the price is on request', () => {
     assert.deepEqual(priceHeadline('on_request'), { showAmount: false });
+  });
+});
+
+describe('ogPriceFragment', () => {
+  it('omits לפי פנייה amounts from the WhatsApp title', () => {
+    assert.equal(ogPriceFragment(41000, 'on_request', '₪41,000', 'החל מ־'), '');
+  });
+
+  it('prefixes a floor price', () => {
+    assert.equal(ogPriceFragment(62000, 'from', '₪62,000', 'החל מ־'), ' · החל מ־₪62,000');
+  });
+
+  it('prints an exact figure', () => {
+    assert.equal(ogPriceFragment(1_850_000, undefined, '₪1,850,000', 'החל מ־'), ' · ₪1,850,000');
+  });
+
+  it('omits a missing or zero price', () => {
+    assert.equal(ogPriceFragment(0, 'exact', '₪0', 'החל מ־'), '');
   });
 });
 
