@@ -52,13 +52,13 @@ import '../styles/tokens.css';
 const cells = toCells('property', propertyListing.facts).slice(0, 3);
 const perUnit = perUnitPrice('property', propertyListing.facts, propertyListing.price);
 const propertyShowcase = withNamedRooms(propertyListing);
-const enrich = propertyListing.enrichment;
-const sampleSchool = enrich.category === 'property' ? enrich.schools[0] : undefined;
-const sampleBus =
-  enrich.category === 'property' ? enrich.transit.find((item) => item.mode === 'bus') : undefined;
-const sampleGrocery = enrich.category === 'property' ? enrich.summary.nearestGrocery : undefined;
-const odblLine =
-  enrich.category === 'property' ? (enrich.attributions[0] ?? t('legal.odbl')) : t('legal.odbl');
+const propertyEnrich = propertyListing.enrichment?.category === 'property'
+  ? propertyListing.enrichment
+  : undefined;
+const sampleSchool = propertyEnrich?.schools[0];
+const sampleBus = propertyEnrich?.transit.find((item) => item.mode === 'bus');
+const sampleGrocery = propertyEnrich?.summary.nearestGrocery;
+const odblLine = propertyEnrich?.attributions[0] ?? t('legal.odbl');
 
 /*
   The WhatsApp card, built by the SAME two functions the real one is.
