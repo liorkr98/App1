@@ -1,5 +1,7 @@
 ---
 import type { Seller } from '@/types/listing';
+import { t } from '../lib/i18n';
+import SectionLabel from './SectionLabel.astro';
 
 interface Props {
   seller: Seller;
@@ -14,6 +16,7 @@ const { seller } = Astro.props;
   own content above without another hairline.
 */}
 <section class="seller">
+  <SectionLabel text={t('listing.section.seller')} />
   <div class="seller-row">
     <div class="avatar" aria-hidden="true">
       {seller.agencyLogoUrl ? <img src={seller.agencyLogoUrl} alt="" /> : null}
@@ -44,6 +47,14 @@ const { seller } = Astro.props;
       */}
       {seller.licenceNumber && (
         <div class="seller-role">רישיון מס׳ <bdi>{seller.licenceNumber}</bdi></div>
+      )}
+      {/*
+        מאומת · פנקס המתווכים only when the register matched at signup.
+        licenceVerified is never inferred from the presence of a number — an
+        unbacked badge is worse than none (CLAUDE.md §7).
+      */}
+      {seller.licenceVerified && (
+        <div class="verified">{t('listing.licenceVerified')}</div>
       )}
     </div>
   </div>

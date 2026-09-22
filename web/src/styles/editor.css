@@ -1460,3 +1460,116 @@ textarea {
   background: none;
   color: var(--ink);
 }
+
+@view-transition {
+  navigation: auto;
+}
+
+.editor-shell {
+  position: relative;
+}
+
+.facsimile {
+  display: none;
+  background: var(--plaster);
+  border-inline-start: 1px solid var(--stone);
+  padding: 1rem var(--gut) 2rem;
+}
+
+.facsimile .hint {
+  display: none;
+}
+
+.peek-open,
+.peek-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 44px;
+  min-inline-size: 44px;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--stone);
+  background: var(--plaster);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform var(--dur-press) var(--ease-out);
+}
+
+.peek-open:active,
+.peek-close:active {
+  transform: scale(0.97);
+}
+
+.peek-open {
+  position: fixed;
+  inset-block-end: calc(8.5rem + env(safe-area-inset-bottom));
+  inset-inline-end: var(--gut);
+  z-index: 30;
+  background: var(--ink);
+  color: var(--plaster);
+  border-color: var(--ink);
+}
+
+.facsimile.is-open {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  overflow: auto;
+  padding-block-start: 3.5rem;
+}
+
+.peek-close {
+  position: sticky;
+  inset-block-start: 0.6rem;
+  margin-inline-start: auto;
+  display: flex;
+}
+
+@media (min-width: 960px) {
+  .editor-shell {
+    display: grid;
+    grid-template-columns: minmax(0, 28rem) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .facsimile {
+    display: block;
+    position: sticky;
+    inset-block-start: 0;
+    max-block-size: 100dvh;
+    overflow: auto;
+  }
+
+  .facsimile.is-open {
+    position: sticky;
+    inset: auto;
+    padding-block-start: 1rem;
+  }
+
+  .peek-open,
+  .peek-close {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .clip-reveal {
+      animation: clip-expand linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 42%;
+    }
+    @keyframes clip-expand {
+      from {
+        clip-path: inset(10% 10% round 4px);
+      }
+      to {
+        clip-path: inset(0);
+      }
+    }
+  }
+}

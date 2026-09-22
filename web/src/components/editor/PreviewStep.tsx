@@ -98,14 +98,14 @@ export function PreviewStep({ state, photos, agency, sellerName, accent, agencyL
             )}
             <div className="hero-veil">
               {place ? <div className="hero-place">{place}</div> : null}
-              <h1 className="hero-title">
+              <p className="hero-title">
                 {titleLines.map((line, index) => (
                   <span key={index}>
                     {index > 0 ? <br /> : null}
                     {line}
                   </span>
                 ))}
-              </h1>
+              </p>
             </div>
           </header>
 

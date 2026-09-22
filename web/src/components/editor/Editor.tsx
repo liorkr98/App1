@@ -23,6 +23,7 @@ import { stripAndResize, uploadDerived } from '../../lib/listing-photo';
 import { loadListing, publishListing, saveListing } from '../../lib/listing-save';
 import { loadProfile } from '../../lib/profile';
 import { recordEditorEvent } from '../../lib/editor-events';
+import { splitSse } from '@/features/listings/sse';
 import type { AgentProfile } from '@/features/agents/profile';
 import { supabase, supabaseConfigured } from '../../lib/supabase';
 import { ConsentStep } from './ConsentStep';
@@ -155,6 +156,7 @@ export default function Editor() {
   const [failure, setFailure] = useState<string | undefined>(undefined);
   const [suggesting, setSuggesting] = useState(false);
   const [suggestFailed, setSuggestFailed] = useState(false);
+  const [peekOpen, setPeekOpen] = useState(false);
 
   useEffect(() => {
     if (!supabaseConfigured) return;
@@ -334,13 +336,66 @@ export default function Editor() {
 
         const response = await fetch('/api/description', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+            Accept: 'text/event-stream',
+          },
           body: JSON.stringify({ listingId: id }),
         });
         if (!response.ok) throw new Error(String(response.status));
 
-        const body = (await response.json()) as { text?: unknown; areaPending?: unknown };
-        const text = typeof body.text === 'string' ? body.text.trim() : '';
+        const streamed = (response.headers.get('content-type') ?? '').includes(
+          'text/event-stream',
+        );
+
+        let text = '';
+        let areaPending = false;
+
+        if (streamed && response.body) {
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = '';
+          let draft = '';
+          setState((current) => ({ ...current, description: '' }));
+
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const split = splitSse(buffer);
+            buffer = split.rest;
+            for (const event of split.events) {
+              if (event.event === 'token') {
+                try {
+                  const body = JSON.parse(event.data) as { t?: unknown };
+                  if (typeof body.t === 'string') {
+                    draft += body.t;
+                    const snapshot = draft;
+                    setState((current) => ({ ...current, description: snapshot }));
+                  }
+                } catch {
+                  /* a truncated JSON line waits in rest */
+                }
+              }
+              if (event.event === 'done') {
+                const body = JSON.parse(event.data) as {
+                  text?: unknown;
+                  areaPending?: unknown;
+                  error?: unknown;
+                };
+                if (typeof body.error === 'string') throw new Error(body.error);
+                text = typeof body.text === 'string' ? body.text.trim() : draft.trim();
+                areaPending = body.areaPending === true;
+              }
+            }
+          }
+        } else {
+          const body = (await response.json()) as { text?: unknown; areaPending?: unknown };
+          text = typeof body.text === 'string' ? body.text.trim() : '';
+          areaPending = body.areaPending === true;
+        }
+
         if (!text) throw new Error('empty');
 
         setState((current) => ({
@@ -361,7 +416,7 @@ export default function Editor() {
          * ONE retry. Anything more would queue requests against a service run
          * on donations for a paragraph the seller can also just write.
          */
-        if (body.areaPending === true && retriesLeft > 0) {
+        if (areaPending && retriesLeft > 0) {
           setSuggesting(false);
           window.setTimeout(() => suggest(retriesLeft - 1), 4000);
           return;
@@ -722,6 +777,7 @@ export default function Editor() {
   };
 
   return (
+    <div className="editor-shell">
     <div className="editor">
       <header className="rail">
         <p className="rail-count">
@@ -950,6 +1006,31 @@ export default function Editor() {
           {t('common.next')}
         </button>
       </footer>
+    </div>
+
+    {step !== 'preview' ? (
+      <aside className={peekOpen ? 'facsimile is-open' : 'facsimile'} aria-label={t('editor.facsimile')}>
+        {peekOpen ? (
+          <button type="button" className="peek-close" onClick={() => setPeekOpen(false)}>
+            {t('editor.peekClose')}
+          </button>
+        ) : null}
+        <PreviewStep
+          state={state}
+          photos={photos}
+          agency={profile.agencyName ?? undefined}
+          sellerName={profile.displayName ?? undefined}
+          accent={profile.accent ?? undefined}
+          agencyLogoUrl={profile.agencyLogoUrl?.trim() || undefined}
+        />
+      </aside>
+    ) : null}
+
+    {step !== 'preview' ? (
+      <button type="button" className="peek-open" onClick={() => setPeekOpen(true)}>
+        {t('editor.peek')}
+      </button>
+    ) : null}
     </div>
   );
 }

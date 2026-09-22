@@ -4,6 +4,7 @@ import type { EnrichmentBlock } from '@/types/listing';
 import { citations, groupCivic, groupPlaces, modeLabel, orderTransit } from '../lib/enrichment';
 import { t } from '../lib/i18n';
 import Prose from './Prose.astro';
+import SectionLabel from './SectionLabel.astro';
 
 interface Props {
   enrichment: EnrichmentBlock;
@@ -102,6 +103,7 @@ const sources = isProperty
   measured both ways. index.astro records the attempt so nobody repeats it.
 */}
 <section class="enrich reveal" id="enrich">
+  <SectionLabel text={isProperty ? t('listing.section.around') : t('listing.section.verified')} />
   <h2>{isProperty ? <Fragment>מה יש <span class="h2-num">מסביב</span></Fragment> : <Fragment>מה <span class="h2-num">מאומת</span></Fragment>}</h2>
   <p class="enrich-sub">
     {isProperty ? 'מרחקי הליכה אמיתיים, לא מרחק אווירי.' : 'מה שרשום במרשם הציבורי, עם התאריך שבו היה נכון.'}

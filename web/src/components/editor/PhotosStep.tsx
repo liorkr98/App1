@@ -184,7 +184,11 @@ export function PhotosStep({
                 setDragging(null);
               }}
             >
-              <img src={photo.url} alt={photo.alt?.trim() ?? ''} />
+              <img
+                className={photo.status === 'uploaded' ? 'clip-reveal' : undefined}
+                src={photo.url}
+                alt={photo.alt?.trim() ?? ''}
+              />
 
               {index === 0 ? <span className="cover">{t('editor.coverPhoto')}</span> : null}
 

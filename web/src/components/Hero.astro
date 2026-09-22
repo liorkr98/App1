@@ -51,11 +51,10 @@ const lines = title.split('\n');
   <div class="hero-veil">
     {place && <div class="hero-place"><Prose text={place} /></div>}
     <h1 class="hero-title">
-      {lines.map((line, index) => (
-        <Fragment>
-          {index > 0 && <br />}
-          <Prose text={line} />
-        </Fragment>
+      {lines.map((line) => (
+        <span class="hero-line">
+          <span><Prose text={line} /></span>
+        </span>
       ))}
     </h1>
   </div>

@@ -269,11 +269,17 @@ proves it still matches. `/a/_rtltest` is the single exemption and §7 says why.
 | Progress line | `animation-timeline: scroll(root block)`, `scaleX(0)` → `scaleX(1)` |
 | Hero veil | a plain `.55s` `cubic-bezier(.2,.7,.3,1)` entrance, no timeline |
 
-**No animation library, and this is a constraint rather than a preference.**
-GSAP is free now, and it is still ~70KB running on the main thread against a
-page with a hard performance budget and an INP target. Native scroll-driven
-animations run on the compositor. If a visual effect here seems to need
-JavaScript, stop and ask.
+**Listing JS is capped, not absent.** The previous rule was zero executable
+JavaScript. The redesign amends it: **≤ 12 KB gzipped of vanilla JS**, for
+exactly two things — in-view counters (m² and rooms, never the price) and the
+gallery lightbox. Everything else stays CSS. `window.addEventListener('scroll')`
+is still banned. GSAP is still forbidden on `/a/[slug]`.
+
+`scripts/verify-listing-js-budget.mjs` fails the build above 12 KB gz.
+
+Marketing surfaces may use GSAP + ScrollTrigger. This pass implements the
+homepage's pinned sequence with CSS `position: sticky` so we do not add a
+~70 KB library until a scrubbed timeline earns it. See `docs/SHELL-CONTRACT.md`.
 
 Everything is wrapped in **both** `@media (prefers-reduced-motion:
 no-preference)` and `@supports (animation-timeline: view())`. Support is

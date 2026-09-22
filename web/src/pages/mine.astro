@@ -66,6 +66,10 @@ import '../styles/tokens.css';
         -webkit-tap-highlight-color: rgba(74, 93, 58, 0.18);
       }
 
+      @view-transition {
+        navigation: auto;
+      }
+
       body {
         font-family: 'Assistant', system-ui, sans-serif;
         background: var(--plaster);
@@ -268,7 +272,7 @@ import '../styles/tokens.css';
       .grid {
         list-style: none;
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
         gap: clamp(1rem, 2vw, 1.5rem);
         padding: 0;
         margin: 0;
@@ -803,6 +807,7 @@ import '../styles/tokens.css';
           image.alt = row.media?.cover?.alt ?? '';
           image.loading = 'lazy';
           image.decoding = 'async';
+          image.style.viewTransitionName = `cover-${row.slug}`;
           shot.append(image);
         } else {
           const none = document.createElement('div');

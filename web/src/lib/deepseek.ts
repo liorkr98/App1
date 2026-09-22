@@ -22,6 +22,8 @@
  * transport is duplicated, which is the part that has to differ.
  */
 
+import { deepseekDelta } from '@/features/listings/sse';
+
 const DEFAULT_URL = 'https://api.deepseek.com/v1/chat/completions';
 
 /**
@@ -78,6 +80,70 @@ export async function deepseekParagraph(
     const content = body.choices?.[0]?.message?.content;
 
     return typeof content === 'string' && content.trim() !== '' ? content : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Same call, streamed. Tokens are forwarded as they arrive so the editor can
+ * type the paragraph in; the returned string is the full draft to run through
+ * acceptDescription / acceptAreaNote. A stream that dies mid-sentence is
+ * undefined — the caller uses the grounded paragraph.
+ */
+export async function deepseekParagraphStreaming(
+  request: ParagraphRequest,
+  onToken: (token: string) => void,
+): Promise<string | undefined> {
+  try {
+    const response = await fetch(request.baseUrl ?? DEFAULT_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${request.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        temperature: 0.4,
+        max_tokens: 400,
+        stream: true,
+        messages: [
+          { role: 'system', content: request.system },
+          { role: 'user', content: request.user },
+        ],
+      }),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+
+    if (!response.ok || !response.body) return undefined;
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let full = '';
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() ?? '';
+      for (const line of lines) {
+        if (!line.startsWith('data:')) continue;
+        const token = deepseekDelta(line.slice(5));
+        if (!token) continue;
+        full += token;
+        onToken(token);
+      }
+    }
+
+    const tail = buffer.startsWith('data:') ? deepseekDelta(buffer.slice(5)) : deepseekDelta(buffer);
+    if (tail) {
+      full += tail;
+      onToken(tail);
+    }
+
+    return full.trim() === '' ? undefined : full;
   } catch {
     return undefined;
   }
