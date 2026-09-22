@@ -23,13 +23,13 @@ function get(facts: Fact[], key: string): Fact | undefined {
  * one line differ. This is content generation, not a template divergence.
  */
 export function ogTitle(listing: Listing): string {
-  const price = ils(listing.price);
+  const price = listing.price > 0 ? ` · ${ils(listing.price)}` : '';
 
   if (listing.category === 'property') {
     const rooms = get(listing.facts, 'rooms');
     const city = listing.location?.city;
     const head = rooms ? `דירת ${num(Number(rooms.value))} חדרים` : 'דירה';
-    return city ? `${head} ב${city} · ${price}` : `${head} · ${price}`;
+    return city ? `${head} ב${city}${price}` : `${head}${price}`;
   }
 
   const make = get(listing.facts, 'make');
@@ -39,7 +39,7 @@ export function ogTitle(listing: Listing): string {
   // Not num(): a year is an identifier, not a quantity, and grouping it
   // put "2,021" on the card that decides whether anyone taps at all (§6).
   const head = year ? `${name}, ${String(year.value)}` : name;
-  return `${head} · ${price}`;
+  return `${head}${price}`;
 }
 
 /**

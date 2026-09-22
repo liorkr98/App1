@@ -23,11 +23,17 @@ const { price, listPrice, priceNote, perUnit } = Astro.props;
  * them: the branches below ask what the listing HAS, not what it IS. That is
  * what keeps this one component instead of two, and what stops the note
  * becoming a fifth divergence.
+ *
+ * Price is optional. 0 means unanswered, not free — printing ₪0 would claim
+ * the opposite of what the seller meant.
  */
+const priced = Number.isFinite(price) && price > 0;
 const note = listPrice !== undefined ? `מחיר מחירון: ` : priceNote;
+const showBar = priced || Boolean(note) || Boolean(perUnit);
 ---
+{showBar ? (
 <div class="price-bar">
-  <div class="price"><bdi>{ils(price)}</bdi></div>
+  {priced ? <div class="price"><bdi>{ils(price)}</bdi></div> : null}
 
   {(note || perUnit) && (
     <div class="price-note label">
@@ -45,3 +51,4 @@ const note = listPrice !== undefined ? `מחיר מחירון: ` : priceNote;
     </div>
   )}
 </div>
+) : null}

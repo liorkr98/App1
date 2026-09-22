@@ -11,6 +11,7 @@ import Prose from '../components/Prose.astro';
 import PriceTiers from '../components/PriceTiers.astro';
 import SectionLabel from '../components/SectionLabel.astro';
 import { TEMPLATE_IDS } from '@/types/listing';
+import { ACCENTS } from '@/features/agents/accents';
 import { propertyListing, vehicleListing, withNamedRooms } from '../lib/listings';
 import '../styles/tokens.css';
 
@@ -482,14 +483,14 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         repeated rather than imported. A fourth template needs both.
       */
       .device[data-tpl='editorial'] {
-        --s-ground: #fbfaf7;
+        --s-ground: #f3eee4;
         --s-ink: #191a15;
         --s-deep: #111208;
         --s-line: #e4e0d6;
         --s-warm: #f1ede3;
         --s-muted: #67685f;
-        --s-accent: #4a5d3a;
-        --s-lift: #5f7749;
+        --s-accent: #2f5340;
+        --s-lift: #6e9b80;
       }
 
       .device[data-tpl='agency'] {
@@ -499,10 +500,6 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         --s-line: #e7e2da;
         --s-warm: #faf6f0;
         --s-muted: #6b6259;
-        /* Olive, like the other two. Orange lived here and gave the product a
-           second brand colour depending on which template a listing used. The
-           accent is the AGENT's choice now (migration 0011) and it is the same
-           across all three, so these miniatures differ by SHAPE only. */
         --s-accent: #4a5d3a;
         --s-lift: #7e9a62;
       }
@@ -514,8 +511,8 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         --s-line: #2c2e24;
         --s-warm: #1d1f16;
         --s-muted: #a3a498;
-        --s-accent: #93ab73;
-        --s-lift: #aac28c;
+        --s-accent: #c7a24e;
+        --s-lift: #c7a24e;
       }
 
       .device[data-tpl='walkFirst'] {
@@ -525,19 +522,41 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         --s-line: #e4e0d6;
         --s-warm: #f1ede3;
         --s-muted: #67685f;
-        --s-accent: #4a5d3a;
-        --s-lift: #5f7749;
+        --s-accent: #8c4a2f;
+        --s-lift: #c17a55;
       }
 
       .device[data-tpl='brochure'] {
-        --s-ground: #fbfaf7;
+        --s-ground: #f7f1e4;
         --s-ink: #191a15;
         --s-deep: #111208;
         --s-line: #e4e0d6;
         --s-warm: #f1ede3;
         --s-muted: #67685f;
-        --s-accent: #4a5d3a;
-        --s-lift: #5f7749;
+        --s-accent: #6e2639;
+        --s-lift: #b06b80;
+      }
+
+      .device[data-tpl='linen'] {
+        --s-ground: #f4e6cf;
+        --s-ink: #2a1d12;
+        --s-deep: #23180f;
+        --s-line: #e2ccab;
+        --s-warm: #efe0c4;
+        --s-muted: #6d5844;
+        --s-accent: #8c4a2f;
+        --s-lift: #c17a55;
+      }
+
+      .device[data-tpl='studio'] {
+        --s-ground: #f7f3ea;
+        --s-ink: #1a1916;
+        --s-deep: #141310;
+        --s-line: #d9d2c4;
+        --s-warm: #ece6d8;
+        --s-muted: #67685f;
+        --s-accent: #3a3a34;
+        --s-lift: #9a9a90;
       }
 
       .s-agent {
@@ -633,6 +652,8 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         line-height: 1.05;
         letter-spacing: -0.015em;
         margin-block-start: 0.15em;
+        overflow-wrap: anywhere;
+        max-inline-size: 100%;
       }
 
       .s-price-bar {
@@ -856,6 +877,68 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
 
       .device[data-tpl='brochure'] .s-cta {
         display: none;
+      }
+
+      .device[data-tpl='linen'] .s-hero {
+        aspect-ratio: 4 / 5;
+      }
+
+      .device[data-tpl='linen'] .s-title {
+        font-size: 1.05em;
+        font-weight: 700;
+      }
+
+      .device[data-tpl='linen'] .s-price {
+        color: var(--s-accent);
+      }
+
+      .device[data-tpl='linen'] .s-facts {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.28em;
+        background: transparent;
+        padding: 0.35em;
+      }
+
+      .device[data-tpl='linen'] .s-fact {
+        background: var(--s-warm);
+        border-radius: 0.45em;
+        text-align: start;
+        min-block-size: 0;
+        padding: 0.45em 0.5em;
+      }
+
+      .device[data-tpl='studio'] .s-hero {
+        aspect-ratio: 1;
+        margin: 0.4em;
+        border-radius: 0.55em;
+        overflow: hidden;
+      }
+
+      .device[data-tpl='studio'] .s-price-bar {
+        border-inline-start: 0.28em solid var(--s-accent);
+        margin-inline: 0.5em;
+        padding-inline-start: 0.55em;
+      }
+
+      .device[data-tpl='studio'] .s-facts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.22em;
+        background: transparent;
+        border-block-start: 0;
+        padding: 0.35em 0.5em 0.6em;
+      }
+
+      .device[data-tpl='studio'] .s-fact {
+        background: var(--s-deep);
+        color: #fbfaf7;
+        border-radius: 999px;
+        min-block-size: 0;
+        padding: 0.28em 0.55em;
+      }
+
+      .device[data-tpl='studio'] .s-fact-lbl {
+        color: rgba(251, 250, 247, 0.7);
       }
 
       .device-label {
@@ -1258,12 +1341,25 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         background: #1a1b16;
         border-radius: 28px;
         box-shadow: 0 24px 50px -24px rgba(0, 0, 0, 0.55);
+        container-type: inline-size;
+      }
+      .phone .stage {
+        aspect-ratio: 9 / 16;
+        max-block-size: none;
+        inline-size: 100%;
+        --n: 7;
+      }
+      .phone .device {
+        max-inline-size: none;
+        min-inline-size: 0;
+        gap: 0;
       }
       .phone .screen {
         display: block;
         overflow: hidden;
         border-radius: 20px;
-        background: var(--plaster);
+        background: var(--s-ground, var(--plaster));
+        box-shadow: none;
       }
       .phone-caption {
         margin-block-start: 0.7rem;
@@ -1309,6 +1405,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         background: var(--stone-warm);
         overflow: hidden;
         --split: 50%;
+        container-type: inline-size;
       }
       .compare-layer {
         position: absolute;
@@ -1328,6 +1425,16 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
       }
       .compare-reveal {
         clip-path: inset(0 0 0 calc(100% - var(--split)));
+      }
+      .compare-reveal .device {
+        max-inline-size: none;
+        min-inline-size: 0;
+        inline-size: 100%;
+        gap: 0;
+      }
+      .compare-reveal .screen {
+        border-radius: 0;
+        box-shadow: none;
       }
       .compare input[type='range'] {
         position: absolute;
@@ -1350,22 +1457,36 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         padding: 0;
         margin: 1rem 0 0;
         display: grid;
-        gap: 0.7rem;
+        grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+        gap: 0.8rem;
       }
       .around-list li,
       .verified-list li {
-        padding-block: 0.6rem;
-        border-block-end: var(--rule);
+        padding: 1.05rem 1.15rem;
+        background: var(--stone-warm);
+        border-radius: 16px;
+        border-block-end: 0;
       }
       .around-list strong {
         font-family: 'Frank Ruhl Libre', serif;
         font-weight: 500;
+        display: block;
+        font-size: 1.05rem;
+      }
+      .around-walk {
+        display: block;
+        font-family: 'Frank Ruhl Libre', serif;
+        font-weight: 700;
+        font-size: 2rem;
+        line-height: 1.1;
+        color: var(--olive);
+        margin-block-start: 0.35rem;
       }
       .cite {
         display: block;
         color: var(--muted);
         font-size: var(--meta);
-        margin-block-start: 0.2rem;
+        margin-block-start: 0.35rem;
       }
       .verified-list .verified {
         font-size: 0.62rem;
@@ -1374,6 +1495,33 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         border: 1px solid var(--olive);
         border-radius: 2px;
         padding: 0.02rem 0.28rem;
+      }
+
+      .palette-band {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+        gap: 0.7rem;
+        margin-block-start: 1.2rem;
+      }
+      .palette-swatch {
+        display: grid;
+        gap: 0.45rem;
+        padding: 0.9rem 0.85rem 1rem;
+        border-radius: 16px;
+        background: var(--stone-warm);
+        text-decoration: none;
+        color: inherit;
+      }
+      .palette-swatch .chip {
+        display: block;
+        inline-size: 2.4rem;
+        block-size: 2.4rem;
+        border-radius: 50%;
+        background: var(--chip);
+        box-shadow: 0 8px 18px -10px var(--chip);
+      }
+      .palette-swatch strong {
+        font-size: 0.92rem;
       }
 
       /* ---------- Motion ----------
@@ -1438,7 +1586,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
           to a press.
         */
         .stage > .device {
-          animation: cycle 22.5s calc(var(--i) * 4.5s) infinite both;
+          animation: cycle calc(var(--n, 5) * 4.5s) calc(var(--i) * 4.5s) infinite both;
         }
 
         @keyframes cycle {
@@ -1565,7 +1713,20 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
           </div>
 
           <div class="phone">
-            <MiniScreen listing={propertyShowcase} cells={cells} perUnit={perUnit} eager />
+            <div class="stage">
+              {
+                TEMPLATE_IDS.map((tpl, index) => (
+                  <div class="device" data-tpl={tpl} style={`--i: ${index}`}>
+                    <MiniScreen
+                      listing={{ ...propertyShowcase, template: tpl }}
+                      cells={cells}
+                      perUnit={perUnit}
+                      eager={index === 0}
+                    />
+                  </div>
+                ))
+              }
+            </div>
             <p class="phone-caption">{t('home.phoneCaption')}</p>
           </div>
         </div>
@@ -1593,6 +1754,25 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
                   perUnit={perUnit}
                 />
                 <span class="device-label">{t(`editor.templates.${tpl}`)}</span>
+              </a>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="shell">
+        <div class="section-head">
+          <h2>{t('home.paletteTitle')}</h2>
+          <p>{t('home.paletteBody')}</p>
+        </div>
+        <div class="palette-band">
+          {
+            ACCENTS.map((accent) => (
+              <a class="palette-swatch" href="/new/?fresh=1" style={`--chip: ${accent.base}`}>
+                <span class="chip" />
+                <strong>{t(`agent.accents.${accent.id}`)}</strong>
               </a>
             ))
           }
@@ -1696,7 +1876,9 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
             ))}
           </div>
           <div class="compare-layer compare-reveal">
-            <MiniScreen listing={propertyShowcase} cells={cells} perUnit={perUnit} />
+            <div class="device" data-tpl="editorial">
+              <MiniScreen listing={propertyShowcase} cells={cells} perUnit={perUnit} />
+            </div>
           </div>
           <input
             type="range"
@@ -1722,10 +1904,11 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
           {sampleSchool && (
             <li>
               <strong>{sampleSchool.name}</strong>
-              {' · '}
-              <bdi>{sampleSchool.walkMinutes}</bdi>
-              {' '}
-              {t('listing.mapNearbyMin')}
+              <span class="around-walk">
+                <bdi>{sampleSchool.walkMinutes}</bdi>
+                {' '}
+                {t('listing.mapNearbyMin')}
+              </span>
               <span class="cite">
                 {sampleSchool.sourceName} · {t('source.asOf')}
                 <bdi>{sampleSchool.sourceDate}</bdi>
@@ -1735,10 +1918,11 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
           {sampleBus && (
             <li>
               <strong>{sampleBus.name}</strong>
-              {' · '}
-              <bdi>{sampleBus.walkMinutes}</bdi>
-              {' '}
-              {t('listing.mapNearbyMin')}
+              <span class="around-walk">
+                <bdi>{sampleBus.walkMinutes}</bdi>
+                {' '}
+                {t('listing.mapNearbyMin')}
+              </span>
               <span class="cite">
                 {sampleBus.sourceName} · {t('source.asOf')}
                 <bdi>{sampleBus.sourceDate}</bdi>
@@ -1748,10 +1932,11 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
           {sampleGrocery && (
             <li>
               <strong>{sampleGrocery.name}</strong>
-              {' · '}
-              <bdi>{sampleGrocery.walkMinutes}</bdi>
-              {' '}
-              {t('listing.mapNearbyMin')}
+              <span class="around-walk">
+                <bdi>{sampleGrocery.walkMinutes}</bdi>
+                {' '}
+                {t('listing.mapNearbyMin')}
+              </span>
             </li>
           )}
         </ul>

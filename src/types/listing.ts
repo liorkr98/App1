@@ -218,6 +218,24 @@ export interface FactDefinition {
   showInGrid?: boolean;
 
   /**
+   * Who this question is for. Absent means everyone.
+   *
+   * Entry date is a resident question; renters, rent and lease-end are
+   * investor questions. `both` sees both sets. An unanswered audience is
+   * treated as resident — the default path, not an empty one.
+   */
+  forAudience?: readonly ListingAudience[];
+
+  /**
+   * Only show this field when another fact's value is `true`.
+   *
+   * Rent amount and lease-end wait on "are there tenants?". Without this
+   * a form would ask how much the tenants pay before asking whether any
+   * exist.
+   */
+  requires?: string;
+
+  /**
    * How this fact reads inside a Hebrew SENTENCE, with `{value}` where the
    * answer goes — `'{value} חדרים'`, `'קומה {value}'`.
    *
@@ -631,7 +649,15 @@ export type ListingStatus = 'draft' | 'published' | 'sold' | 'archived';
  * carried its own hand-written copy of this list, which is exactly the kind
  * of second definition that agrees right up until someone adds a template.
  */
-export const TEMPLATE_IDS = ['agency', 'editorial', 'dark', 'walkFirst', 'brochure'] as const;
+export const TEMPLATE_IDS = [
+  'agency',
+  'editorial',
+  'dark',
+  'walkFirst',
+  'brochure',
+  'linen',
+  'studio',
+] as const;
 
 export type TemplateId = (typeof TEMPLATE_IDS)[number];
 

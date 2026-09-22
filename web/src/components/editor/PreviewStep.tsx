@@ -3,7 +3,7 @@ import type { CSSProperties } from 'react';
 import { accentFor } from '@/features/agents/accents';
 import type { EditorState } from '@/features/listings/editor';
 import { groupByRoom, hasRoomLabels, isWalkItem, labeledWalkItems, type PhotoRoom } from '@/features/listings/photo-rooms';
-import { schemaFor } from '@/features/listings/schemas';
+import { factDefinition, factShown, schemaFor } from '@/features/listings/schemas';
 import { factsFromSchema, type Fact } from '@/types/listing';
 
 import { factValue, ils, needsBdi } from '../../lib/format';
@@ -45,6 +45,7 @@ export function PreviewStep({ state, photos, agency, sellerName, accent, agencyL
   const byKey = new Map(state.facts.map((fact) => [fact.key, fact]));
   const cells = factsFromSchema(schema)
     .map((blank): Fact => byKey.get(blank.key) ?? blank)
+    .filter((fact) => factShown(factDefinition(category, fact.key), state.audience, state.facts))
     .filter((fact) => fact.present === false || (fact.value !== null && fact.value !== ''));
 
   const paragraphs = state.description.split('\n\n').filter((line) => line.trim() !== '');
@@ -71,6 +72,7 @@ export function PreviewStep({ state, photos, agency, sellerName, accent, agencyL
         <div
           className="preview-page"
           data-template={state.template ?? 'editorial'}
+          data-has-walk={walkSlides.length > 0 ? '1' : undefined}
           style={
             {
               ['--accent']: palette.base,
@@ -109,12 +111,16 @@ export function PreviewStep({ state, photos, agency, sellerName, accent, agencyL
             </div>
           </header>
 
+          {(state.price > 0 || state.priceNote) && (
           <div className="price-bar">
-            <div className="price">
-              <bdi>{state.price > 0 ? ils(state.price) : '—'}</bdi>
-            </div>
+            {state.price > 0 ? (
+              <div className="price">
+                <bdi>{ils(state.price)}</bdi>
+              </div>
+            ) : null}
             {state.priceNote ? <div className="price-note label">{state.priceNote}</div> : null}
           </div>
+          )}
 
           {cells.length > 0 && (
             <div className="facts">

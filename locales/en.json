@@ -195,7 +195,6 @@
     "blockers": {
       "categoryMissing": "",
       "titleMissing": "",
-      "priceMissing": "",
       "photosTooFew": "",
       "photosTooMany": "",
       "factMissing": "",
@@ -256,6 +255,8 @@
     },
     "templates": {
       "hint": "",
+      "palette": "",
+      "paletteHint": "",
       "agency": "",
       "agencyNote": "",
       "editorial": "",
@@ -265,7 +266,11 @@
       "walkFirst": "",
       "walkFirstNote": "",
       "brochure": "",
-      "brochureNote": ""
+      "brochureNote": "",
+      "linen": "",
+      "linenNote": "",
+      "studio": "",
+      "studioNote": ""
     },
     "photosHint": "",
     "photosUploading": "",
@@ -314,6 +319,7 @@
       "title": "",
       "titleHint": "",
       "price": "",
+      "priceHint": "",
       "priceNote": "",
       "priceNoteHint": "",
       "city": "",
@@ -381,6 +387,8 @@
     "ctaSecond": "",
     "templatesTitle": "",
     "templatesBody": "",
+    "paletteTitle": "",
+    "paletteBody": "",
     "dashTitle": "",
     "dashBody": "",
     "dashCta": "",

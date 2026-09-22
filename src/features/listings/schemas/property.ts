@@ -25,7 +25,14 @@ export const propertySchema: CategorySchema = {
    * that decide what the yield actually is — they sit near the bottom of the
    * schema for a resident, who reads them last if at all.
    */
-  investorLead: ['area_sqm', 'property_tax', 'building_fee'],
+  investorLead: [
+    'area_sqm',
+    'property_tax',
+    'building_fee',
+    'has_tenants',
+    'rent_amount',
+    'rent_end',
+  ],
   facts: [
     { key: 'rooms', label: 'חדרים', type: 'number', required: true, phrase: '{value} חדרים' },
     {
@@ -89,6 +96,34 @@ export const propertySchema: CategorySchema = {
       // date, and forcing one produces a made-up answer.
       options: ['מיידי', 'גמיש'],
       phrase: 'כניסה {value}',
+      // Residents need a move-in date. Investors need to know about the
+      // current lease instead — asking both on an investment listing is how
+      // the form starts answering the wrong buyer.
+      forAudience: ['resident', 'both'],
+    },
+    {
+      key: 'has_tenants',
+      label: 'יש שוכרים',
+      type: 'boolean',
+      phrase: 'מושכרת',
+      forAudience: ['investor', 'both'],
+    },
+    {
+      key: 'rent_amount',
+      label: 'שכר דירה',
+      type: 'number',
+      unit: '₪ לחודש',
+      phrase: 'שכר דירה {value} ₪ לחודש',
+      forAudience: ['investor', 'both'],
+      requires: 'has_tenants',
+    },
+    {
+      key: 'rent_end',
+      label: 'תום השכירות',
+      type: 'date',
+      phrase: 'השכירות עד {value}',
+      forAudience: ['investor', 'both'],
+      requires: 'has_tenants',
     },
   ],
 };

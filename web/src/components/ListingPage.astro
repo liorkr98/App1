@@ -107,7 +107,11 @@ const homeLabel = listing.category === 'property' ? t('listing.section.home') : 
 
   {!sold && (
     <div class="compact-bar">
-      <span class="compact-price"><bdi>{ils(listing.price)}</bdi></span>
+      {listing.price > 0 ? (
+        <span class="compact-price"><bdi>{ils(listing.price)}</bdi></span>
+      ) : (
+        <span class="compact-price"></span>
+      )}
       <a class="compact-wa" href={waHref}>{t('listing.whatsappCta')}</a>
     </div>
   )}

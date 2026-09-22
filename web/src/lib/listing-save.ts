@@ -101,6 +101,7 @@ function editorColumns(state: EditorState) {
         : null,
     price_note: state.priceNote?.trim() ? state.priceNote.trim() : null,
     ...(state.template ? { template: state.template } : {}),
+    ...(state.accent && isAccentId(state.accent) ? { accent: state.accent } : {}),
     ...(state.audience ? { audience: state.audience } : {}),
     ...(state.disclosures ? { disclosures: state.disclosures } : {}),
     indexable: state.indexable === true,
@@ -151,7 +152,8 @@ export async function saveListing(
       if ('profile' in profile) {
         const stamped = toSeller(profile.profile, schemaFor(category).ownerRole);
         if (stamped) seller = { ...stamped };
-        if (isAccentId(profile.profile.accent)) accent = profile.profile.accent;
+        if (isAccentId(state.accent)) accent = state.accent;
+        else if (isAccentId(profile.profile.accent)) accent = profile.profile.accent;
       }
     } catch {
       // Keep whatever was stamped last rather than failing a draft save
@@ -235,14 +237,16 @@ export async function publishListing(
   if (!media) return { error: 'no_photos' };
 
   let seller: Record<string, unknown> | undefined;
-  let accent: string = DEFAULT_ACCENT;
+  let accent: string = isAccentId(state.accent) ? state.accent : DEFAULT_ACCENT;
 
   try {
     const profile = await loadProfile();
     if ('profile' in profile) {
       const stamped = toSeller(profile.profile, schemaFor(category).ownerRole);
       if (stamped) seller = { ...stamped };
-      if (isAccentId(profile.profile.accent)) accent = profile.profile.accent;
+      if (!isAccentId(state.accent) && isAccentId(profile.profile.accent)) {
+        accent = profile.profile.accent;
+      }
     }
   } catch {
     // Keep whatever was stamped at draft time rather than failing publish
@@ -263,7 +267,8 @@ export async function publishListing(
       pre_portal: state.prePortal === true,
       owner_consent_declared_at: state.ownerConsentDeclaredAt ?? null,
       owner_consent_name: state.ownerConsentName?.trim() ? state.ownerConsentName.trim() : null,
-      ...(seller ? { seller, accent } : {}),
+      accent,
+      ...(seller ? { seller } : {}),
     })
     .eq('id', listingId)
     .select('slug')
@@ -284,7 +289,7 @@ export async function loadListing(
 ): Promise<{ row: Record<string, unknown> } | { error: string }> {
   const { data, error } = await supabase()
     .from('listings')
-    .select('id, slug, category, title, price, price_note, description, facts, media, location, template, audience, disclosures, indexable, pre_portal, owner_consent_declared_at, owner_consent_name, status')
+    .select('id, slug, category, title, price, price_note, description, facts, media, location, template, accent, audience, disclosures, indexable, pre_portal, owner_consent_declared_at, owner_consent_name, status')
     .eq('slug', slug)
     .maybeSingle();
 
