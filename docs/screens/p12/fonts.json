@@ -1,0 +1,48 @@
+{
+  "t4v7a": {
+    "slug": "T4V7A",
+    "price": "₪4,250,000",
+    "sqm": "108",
+    "titleFont": "\"Frank Ruhl Libre\", serif",
+    "compactDisplay": "none",
+    "google": [],
+    "local": [
+      "http://127.0.0.1:4173/fonts/frank-ruhl-hebrew.woff2",
+      "http://127.0.0.1:4173/fonts/assistant-hebrew.woff2",
+      "http://127.0.0.1:4173/fonts/assistant-latin.woff2",
+      "http://127.0.0.1:4173/fonts/frank-ruhl-latin.woff2",
+      "http://127.0.0.1:4173/fonts/frank-ruhl-latin-ext.woff2",
+      "http://127.0.0.1:4173/fonts/assistant-latin-ext.woff2"
+    ]
+  },
+  "p5x1r": {
+    "slug": "P5X1R",
+    "price": "לפי פנייה",
+    "sqm": null,
+    "titleFont": "\"Frank Ruhl Libre\", serif",
+    "compactDisplay": "none",
+    "google": [],
+    "local": [
+      "http://127.0.0.1:4173/fonts/frank-ruhl-hebrew.woff2",
+      "http://127.0.0.1:4173/fonts/assistant-hebrew.woff2",
+      "http://127.0.0.1:4173/fonts/frank-ruhl-latin.woff2",
+      "http://127.0.0.1:4173/fonts/assistant-latin.woff2"
+    ]
+  },
+  "g7f2k": {
+    "slug": "G7F2K",
+    "price": "החל מ־₪62,000",
+    "sqm": null,
+    "titleFont": "\"Frank Ruhl Libre\", serif",
+    "compactDisplay": "none",
+    "google": [],
+    "local": [
+      "http://127.0.0.1:4173/fonts/frank-ruhl-hebrew.woff2",
+      "http://127.0.0.1:4173/fonts/assistant-hebrew.woff2",
+      "http://127.0.0.1:4173/fonts/frank-ruhl-latin.woff2",
+      "http://127.0.0.1:4173/fonts/assistant-latin-ext.woff2",
+      "http://127.0.0.1:4173/fonts/assistant-latin.woff2",
+      "http://127.0.0.1:4173/fonts/frank-ruhl-latin-ext.woff2"
+    ]
+  }
+}
