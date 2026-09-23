@@ -109,6 +109,11 @@
   "listing": {
     "create": "מודעה חדשה",
     "whatsappCta": "שליחת הודעה בוואטסאפ",
+    "whatsappShort": "וואטסאפ",
+    "priceFrom": "החל מ־",
+    "priceOnRequest": "לפי פנייה",
+    "callCta": "התקשרות",
+    "moreListings": "נכסים נוספים",
     "empty": "עדיין לא יצרת מודעה",
     "publish": "פרסום המודעה",
     "share": "שיתוף בוואטסאפ",
@@ -145,6 +150,8 @@
       "park_ride": "חניון חנה וסע"
     },
     "tourCta": "סיור תלת־ממד",
+    "floorPlan": "תשריט",
+    "lightboxCount": "{current} / {total}",
     "newWindow": "נפתח בחלון חדש",
     "section": {
       "home": "הדירה",
@@ -153,9 +160,12 @@
       "around": "מסביב",
       "verified": "מאומת",
       "map": "מיקום",
-      "seller": "המתווך"
+      "seller": "המתווך",
+      "disclosures": "מה שכדאי לדעת"
     },
     "licenceVerified": "מאומת · פנקס המתווכים",
+    "highlights": "יתרונות",
+    "monthlyCost": "עלות חודשית משוערת: ארנונה {arnona} · ועד בית {vaad}",
     "closeLightbox": "סגירה",
     "openPhoto": "פתיחת תמונה"
   },

@@ -91,6 +91,7 @@ const showBarLogo =
   lang="he"
   dir="rtl"
   data-template={listing.template}
+  data-category={listing.category}
   data-logo={logoPlacement}
   data-has-walk={hasWalk ? '1' : undefined}
   style={`--heroH:${heroHeight};--accent:${accent.base};--accent-lift:${accent.lift}`}
@@ -117,9 +118,11 @@ const showBarLogo =
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Assistant:wght@400;600;700&display=swap" rel="stylesheet">
+{/* Hebrew faces first. Latin subsets load on unicode-range. No Google Fonts
+    request — a listing is forwarded, and that CDN call is a third-party
+    connection on every buyer (DESIGN-CONTRACT §2). */}
+<link rel="preload" href="/fonts/frank-ruhl-hebrew.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/assistant-hebrew.woff2" as="font" type="font/woff2" crossorigin>
 
 {jsonLd && (
   <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
@@ -143,14 +146,17 @@ const showBarLogo =
 <div class="progress" aria-hidden="true"></div>
 
 <header class="agent-bar">
-  <div class="dot" aria-hidden="true">
-    {showBarLogo ? (
+  {showBarLogo ? (
+    <div class="dot" aria-hidden="true">
       <img src={listing.seller.agencyLogoUrl} alt="" />
-    ) : null}
-  </div>
+    </div>
+  ) : null}
   {agency ? (
     <Fragment>
       <strong>{listing.seller.name}</strong>
+      {listing.seller.licenceVerified ? (
+        <span class="agent-verified">{t('listing.licenceVerified')}</span>
+      ) : null}
       <span>{agency}</span>
     </Fragment>
   ) : (
@@ -170,6 +176,7 @@ const showBarLogo =
 
 <dialog id="listing-lightbox" class="lightbox" aria-label={t('listing.openPhoto')}>
   <button type="button" class="lightbox-close">{t('listing.closeLightbox')}</button>
+  <p class="lightbox-count"><bdi data-lightbox-count></bdi></p>
   <div class="lightbox-track"></div>
 </dialog>
 

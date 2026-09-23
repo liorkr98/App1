@@ -355,6 +355,14 @@ export interface Image {
    * The failure mode of forgetting is a larger download, not a broken image.
    */
   variants?: boolean;
+
+  /**
+   * Cover crop, percent from the physical left and top (CSS object-position).
+   * Absent means centre. Copied onto the image at publish so the page does
+   * not read the agent's profile.
+   */
+  focalX?: number;
+  focalY?: number;
 }
 
 export interface Media {
@@ -366,10 +374,15 @@ export interface Media {
    */
   pdfUrl?: string;
   /**
-   * Optional outbound 3D / Matterport URL. Rendered as a poster that opens
-   * a new tab. Never an iframe, never a player — listing pages stay zero JS.
+   * Optional outbound 3D / Matterport URL. Rendered as a chip inside the
+   * photo tour that opens a new tab. Never an iframe, never a player.
    */
   tourUrl?: string;
+  /**
+   * Floor plan photograph. Rendered as a תשריט chip inside the tour — not a
+   * fifth section (DESIGN-CONTRACT §5).
+   */
+  floorPlan?: Image;
 }
 
 // ---------------------------------------------------------------------------
@@ -583,6 +596,13 @@ export interface ListingLocation {
   city: string;
   /** Hebrew street name. Omitted from the page when the seller opts out. */
   street?: string;
+  /**
+   * How precisely the page may name the place.
+   *
+   * Absent is inferred: coords+street → exact, street → street, city → area.
+   * `area` never prints the street, even if the row still holds it for routing.
+   */
+  precision?: 'exact' | 'street' | 'area';
   /** Never rendered on the page. Used only to render the static map. */
   lat?: number;
   lng?: number;
@@ -693,6 +713,17 @@ export interface Listing {
   listPrice?: number;
   /** Free text beside the price when there is no listPrice, e.g. פינוי גמיש. */
   priceNote?: string;
+  /**
+   * How the asking price is shown. Absent means exact.
+   * `from` prefixes החל מ־. `on_request` prints לפי פנייה and hides the number.
+   */
+  priceDisplay?: 'exact' | 'from' | 'on_request';
+
+  /**
+   * Up to three first-screen chips. Agent-chosen from HIGHLIGHT_LABELS plus
+   * one custom. Absent means none — "up to three" is a maximum, not a quota.
+   */
+  highlights?: string[];
 
   facts: Fact[];
   media: Media;

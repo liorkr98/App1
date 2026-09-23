@@ -33,6 +33,10 @@ for (const id of ids) {
   if (!fs.existsSync(file)) {
     problems.push(`missing reference HTML listing-page-${id}.html`);
   }
+  const tokens = path.join(root, 'web/src/styles/templates', `${id}.css`);
+  if (!fs.existsSync(tokens)) {
+    problems.push(`missing template token set web/src/styles/templates/${id}.css`);
+  }
   if (!home.includes(id) && !home.includes('TEMPLATE_IDS')) {
     problems.push(`homepage does not mention ${id}`);
   }

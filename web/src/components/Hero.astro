@@ -14,21 +14,22 @@ interface Props {
 
 const { cover, title, location, watermarkUrl } = Astro.props;
 
-/**
- * Street only when the seller supplied one.
- *
- * A vehicle deliberately carries no street: its location is an approximate
- * meeting area, and pinning a private car for sale to a home address on a
- * public page is a theft risk (DESIGN-CONTRACT §5.4). The same expression
- * serves both categories — the data differs, not the template.
- */
 const place = location?.street ? `${location.street}, ${location.city}` : (location?.city ?? '');
 
 const lines = title.split('\n');
+
+function focalPercent(value: number | undefined): number | undefined {
+  if (value == null || !Number.isFinite(value)) return undefined;
+  return Math.min(100, Math.max(0, value));
+}
+
+const focalX = focalPercent(cover.focalX);
+const focalY = focalPercent(cover.focalY);
+const objectPosition =
+  focalX != null || focalY != null ? `${focalX ?? 50}% ${focalY ?? 50}%` : undefined;
 ---
 {/*
-  The LCP element. It is 84svh of the first screen, so it carries
-  fetchpriority="high" and explicit dimensions, and it is never lazy.
+  The LCP element. fetchpriority="high", explicit dimensions, never lazy.
 
   The parallax lives entirely in CSS (.hero-img, behind @supports
   animation-timeline). Nothing here knows the image moves.
@@ -42,6 +43,7 @@ const lines = title.split('\n');
     width={cover.width}
     height={cover.height}
     alt={cover.alt ?? ''}
+    style={objectPosition ? `object-position:${objectPosition}` : undefined}
     fetchpriority="high"
     decoding="async"
   >

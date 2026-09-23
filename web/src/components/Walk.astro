@@ -1,5 +1,6 @@
 ---
 import type { Image } from '@/types/listing';
+import { photoAlt } from '@/features/listings/photo-alt';
 import { groupByRoom, hasRoomLabels, type PhotoRoom } from '@/features/listings/photo-rooms';
 import { GALLERY_WIDTHS, largest, srcset } from '../lib/images';
 import { t } from '../lib/i18n';
@@ -9,9 +10,11 @@ interface Props {
   images: Image[];
   /** Jump target for "כל התמונות". Absent when the gallery below is empty. */
   allPhotosHref?: string;
+  floorPlan?: Image;
+  tourUrl?: string;
 }
 
-const { images, allPhotosHref } = Astro.props;
+const { images, allPhotosHref, floorPlan, tourUrl } = Astro.props;
 const groups = hasRoomLabels(images)
   ? groupByRoom(images).filter(
       (group): group is { room: PhotoRoom; items: Image[] } => group.room !== undefined,
@@ -19,39 +22,59 @@ const groups = hasRoomLabels(images)
   : [];
 
 const slides = groups.flatMap((group) =>
-  group.items.map((image) => ({ image, room: group.room })),
+  group.items.map((image) => ({
+    image,
+    room: group.room,
+    label: t(`editor.rooms.${group.room}`),
+  })),
 );
 
-const firstIndexByRoom = new Map<PhotoRoom, number>();
+if (floorPlan) {
+  slides.push({ image: floorPlan, room: 'other' as PhotoRoom, label: t('listing.floorPlan') });
+}
+
+const firstIndexByRoom = new Map<string, number>();
 slides.forEach((slide, index) => {
-  if (!firstIndexByRoom.has(slide.room)) firstIndexByRoom.set(slide.room, index);
+  if (!firstIndexByRoom.has(slide.label)) firstIndexByRoom.set(slide.label, index);
 });
+
+const show = slides.length > 0 || Boolean(tourUrl);
 ---
 {/*
   A walk through the apartment, from the photographs the seller already took.
 
-  Not Matterport and not a 360. The listing page has no JavaScript: the large
-  photograph switches with radio buttons, the filmstrip is labels, and
-  "התמונה הבאה" checks the next radio. Hash :target used to scroll the whole
-  page so the picture landed on the editor's Back/Next dock.
+  M5 is the centre-active snap track on .walk-main. Radios still pick a frame
+  without a hash jump; a few bytes of listing-enhance scroll the track into
+  line. Floor plan and 3D-tour URL are chips here, not new sections.
 
-  Omitted when nobody named a room — the same omit-empty rule as disclosures
-  and the map. Inventing a tour from unlabeled photos would be a caption the
-  seller did not write.
+  Omitted when nobody named a room and there is no plan or tour URL.
 */}
-{slides.length > 0 && (
+{show && (
 <section class="walk reveal">
     <SectionLabel text={t('listing.section.gallery')} />
     <h2>{t('listing.walkTitle')}</h2>
     <p class="walk-lead">{t('listing.walkLead')}</p>
+    <nav class="tour-chips" aria-label={t('listing.walkTitle')}>
+      {groups.map((group) => (
+        <label for={`walk-p${firstIndexByRoom.get(t(`editor.rooms.${group.room}`)) ?? 0}`}>
+          {t(`editor.rooms.${group.room}`)}
+        </label>
+      ))}
+      {floorPlan ? (
+        <label for={`walk-p${slides.length - 1}`}>{t('listing.floorPlan')}</label>
+      ) : null}
+      {tourUrl ? (
+        <a href={tourUrl} target="_blank" rel="noopener noreferrer">
+          {t('listing.tourCta')}
+          <span class="visually-hidden"> ({t('listing.newWindow')})</span>
+        </a>
+      ) : null}
+    </nav>
+    {slides.length > 0 && (
     <div class="walk-viewer">
       <nav class="walk-film" aria-label={t('listing.filmstrip')}>
         {slides.map((slide, index) => (
-          <label for={`walk-p${index}`} aria-label={t(`editor.rooms.${slide.room}`)}>
-            {/*
-              Radio lives inside the thumb it selects. A 1px radio at the
-              top of the viewer used to steal focus-scroll and jump the page.
-            */}
+          <label for={`walk-p${index}`} aria-label={slide.label}>
             <input
               class="walk-pick"
               type="radio"
@@ -73,27 +96,30 @@ slides.forEach((slide, index) => {
           </label>
         ))}
       </nav>
-      <div class="walk-main">
+      <div class="walk-main tour-track">
         {slides.map((slide, index) => {
           const next = (index + 1) % slides.length;
+          const alt = photoAlt(slide.image, slide.label);
           return (
-            <figure>
+            <figure class="tour-card" id={`walk-frame-${index}`}>
               <div class="walk-frame">
-                <img
-                  src={largest(slide.image, GALLERY_WIDTHS)}
-                  srcset={srcset(slide.image, GALLERY_WIDTHS) || undefined}
-                  sizes="(max-width: 620px) 80vw, 480px"
-                  width={slide.image.width}
-                  height={slide.image.height}
-                  alt={slide.image.alt ?? ''}
-                  loading={index === 0 ? undefined : 'lazy'}
-                  decoding="async"
+                <button
+                  type="button"
+                  class="gallery-open"
+                  data-lightbox={largest(slide.image, GALLERY_WIDTHS)}
+                  data-alt={alt}
                 >
-                <nav class="walk-chips" aria-label={t('listing.walkTitle')}>
-                  {groups.map((group) => (
-                    <label for={`walk-p${firstIndexByRoom.get(group.room) ?? 0}`}>{t(`editor.rooms.${group.room}`)}</label>
-                  ))}
-                </nav>
+                  <img
+                    src={largest(slide.image, GALLERY_WIDTHS)}
+                    srcset={srcset(slide.image, GALLERY_WIDTHS) || undefined}
+                    sizes="(max-width: 620px) 80vw, 480px"
+                    width={slide.image.width}
+                    height={slide.image.height}
+                    alt={alt}
+                    loading={index === 0 ? undefined : 'lazy'}
+                    decoding="async"
+                  >
+                </button>
                 {allPhotosHref && (
                   <a class="walk-all" href={allPhotosHref}>{t('listing.showAllPhotos')}</a>
                 )}
@@ -101,11 +127,12 @@ slides.forEach((slide, index) => {
                   <label class="walk-next" for={`walk-p${next}`}>{t('listing.nextPhoto')}</label>
                 )}
               </div>
-              <figcaption>{t(`editor.rooms.${slide.room}`)}</figcaption>
+              <figcaption>{slide.label}</figcaption>
             </figure>
           );
         })}
       </div>
     </div>
+    )}
   </section>
 )}

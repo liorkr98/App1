@@ -15,11 +15,16 @@ export async function enqueuePublishJobs(input: {
   originalPaths: readonly string[];
   coverPath?: string;
   price: number;
+  priceDisplay?: 'exact' | 'from' | 'on_request';
 }): Promise<void> {
   const hash = await sha256(
-    [input.listingId, ...input.originalPaths, input.coverPath ?? '', String(input.price)].join(
-      '\0',
-    ),
+    [
+      input.listingId,
+      ...input.originalPaths,
+      input.coverPath ?? '',
+      String(input.price),
+      input.priceDisplay ?? '',
+    ].join('\0'),
   );
 
   if (input.originalPaths.length > 0) {
@@ -32,6 +37,7 @@ export async function enqueuePublishJobs(input: {
     await enqueue(input.listingId, 'generate_og', `${hash}:og`, {
       cover: input.coverPath,
       price: input.price,
+      ...(input.priceDisplay ? { priceDisplay: input.priceDisplay } : {}),
     });
   }
 }

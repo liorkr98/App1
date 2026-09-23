@@ -89,3 +89,8 @@ design, and the fetch script that produced them is not in the repository —
 it was a one-off. To swap an image, drop a WebP into `web/public/sample/` and
 point the matching entry in `PHOTO` (`web/src/lib/listings.ts`) at it, with
 its true width and height so the browser can reserve the box.
+
+The six P1 fixtures use a separate set in `web/public/fixtures/`, with srcset
+variants and credits in `docs/CREDITS.md`. A7K2M and V3M9Q stay on this
+Commons set so the divergence and page-weight gates keep reading the same two
+pages.

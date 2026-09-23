@@ -135,6 +135,23 @@ jobs:
       - name: Verify listing JS stays within 12 KB gz
         run: node scripts/verify-listing-js-budget.mjs
 
+      # CLAUDE.md §7: a licence plate is a lookup key, never published.
+      - name: Verify listing pages never publish a licence plate
+        run: node scripts/verify-no-plates.mjs
+
+      - name: Verify the plate rule actually fires
+        run: bash scripts/verify-no-plates-fires.sh
+
+      - name: Verify WhatsApp og:title honors price mode
+        run: node scripts/verify-og-title.mjs
+
+      # Amendment 13: a listing page must not phone home to Google Fonts.
+      - name: Verify listing pages do not request Google Fonts
+        run: node scripts/verify-no-google-fonts.mjs
+
+      - name: Verify the Google Fonts rule actually fires
+        run: bash scripts/verify-no-google-fonts-fires.sh
+
       - name: Report built page weight
         run: node scripts/report-page-weight.mjs
 

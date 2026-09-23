@@ -6,7 +6,9 @@ import Disclosures from './Disclosures.astro';
 import Enrichment from './Enrichment.astro';
 import FactsGrid from './FactsGrid.astro';
 import Gallery from './Gallery.astro';
+import HighlightChips from './HighlightChips.astro';
 import Hero from './Hero.astro';
+import MonthlyCost from './MonthlyCost.astro';
 import MapSection from './MapSection.astro';
 import PriceBar from './PriceBar.astro';
 import Prose from './Prose.astro';
@@ -19,6 +21,14 @@ import { ils } from '../lib/format';
 import { mapCardSrc } from '@/features/listings/map-card';
 import { areaMap } from '@/features/listings/area-map';
 import { isWalkItem, labeledWalkItems } from '@/features/listings/photo-rooms';
+import { enrichmentHasContent } from '@/features/listings/enrichment-view';
+import { shareMessage, whatsappShareUrl } from '@/features/listings/share-message';
+import {
+  publicPlace,
+  showListingMap,
+  whatsappPrefill,
+} from '@/features/listings/control-surface';
+import { toCells } from '../lib/facts';
 import SectionLabel from './SectionLabel.astro';
 
 interface Props {
@@ -50,7 +60,7 @@ const paragraphs = listing.description.split('\n\n');
 const heading = listing.category === 'property' ? 'על הדירה' : 'על הרכב';
 
 // A vehicle has no street, so no map. See DESIGN-CONTRACT §5.4.
-const showMap = Boolean(listing.location?.street);
+const showMap = showListingMap(listing.location);
 const mapImageUrl = mapCardSrc();
 
 /**
@@ -86,8 +96,38 @@ const walkImages = [listing.media.cover, ...listing.media.gallery];
 const walkItems = labeledWalkItems(walkImages);
 const galleryImages = listing.media.gallery.filter((image) => !isWalkItem(image, walkItems));
 const hasWalk = walkItems.length > 0;
-const waHref = `/a/${listing.slug}/wa?text=${encodeURIComponent(presentation.whatsappMessage)}`;
+const waMessage = whatsappPrefill(
+  listing.category,
+  listing.location ? publicPlace(listing.location) : undefined,
+);
+const waHref = `/a/${listing.slug}/wa?text=${encodeURIComponent(waMessage)}`;
 const homeLabel = listing.category === 'property' ? t('listing.section.home') : t('listing.section.vehicle');
+
+const shareCells = toCells(listing.category, listing.facts, listing.audience);
+const flatTitle = listing.title.replace(/\s*\n\s*/g, ' ');
+const shareFacts = shareCells
+  .filter((cell) => !cell.absent && cell.value !== 'אין')
+  .filter((cell) => !(flatTitle.includes(cell.value) && flatTitle.includes(cell.label)))
+  .slice(0, 4)
+  .map((cell) => {
+    if (cell.value === 'יש') return cell.label;
+    if (cell.displayValue !== cell.value) return `${cell.label} ${cell.displayValue}`;
+    return `${cell.value} ${cell.label}`;
+  });
+const sharePlace = listing.location?.street
+  ? `${listing.location.street}, ${listing.location.city}`
+  : listing.location?.city;
+const pageUrl = new URL(`/a/${listing.slug}/`, Astro.site).href;
+const shareHref = whatsappShareUrl(
+  shareMessage({
+    title: listing.title,
+    price: listing.price > 0 && listing.priceDisplay !== 'on_request' ? ils(listing.price) : '',
+    facts: shareFacts,
+    ...(sharePlace ? { place: sharePlace } : {}),
+    ...(listing.prePortal ? { prePortalLine: t('listing.prePortal') } : {}),
+    url: pageUrl,
+  }),
+);
 ---
 <BaseListing
   listing={listing}
@@ -105,9 +145,12 @@ const homeLabel = listing.category === 'property' ? t('listing.section.home') : 
     }
   />
 
+  {/* M7: CSS view-timeline reveals this after the hero (or walkFirst
+      tour) leaves. Until then it is display:none / opacity:0, so it
+      cannot sit under the dock on the first screen. */}
   {!sold && (
     <div class="compact-bar">
-      {listing.price > 0 ? (
+      {listing.price > 0 && listing.priceDisplay !== 'on_request' ? (
         <span class="compact-price"><bdi>{ils(listing.price)}</bdi></span>
       ) : (
         <span class="compact-price"></span>
@@ -120,8 +163,11 @@ const homeLabel = listing.category === 'property' ? t('listing.section.home') : 
     price={listing.price}
     listPrice={listing.listPrice}
     priceNote={listing.priceNote}
+    priceDisplay={listing.priceDisplay}
     perUnit={perUnit}
   />
+
+  <HighlightChips highlights={listing.highlights} />
 
   {/* Seller declaration, omitted when sold — urgency that the thing is
       gone is a different claim than "not yet on the portals". Never
@@ -135,6 +181,7 @@ const homeLabel = listing.category === 'property' ? t('listing.section.home') : 
   ) : null}
 
   <FactsGrid category={listing.category} facts={listing.facts} audience={listing.audience} />
+  <MonthlyCost facts={listing.facts} />
 
   <section class="reveal">
     <SectionLabel text={homeLabel} />
@@ -151,6 +198,8 @@ const homeLabel = listing.category === 'property' ? t('listing.section.home') : 
   <Walk
     images={walkImages}
     allPhotosHref={galleryImages.length > 0 ? '#listing-gallery' : undefined}
+    floorPlan={listing.media.floorPlan}
+    tourUrl={listing.media.tourUrl}
   />
 
   <Gallery images={galleryImages} />
@@ -158,7 +207,9 @@ const homeLabel = listing.category === 'property' ? t('listing.section.home') : 
   {/* Below the seller's own content, deliberately: what they came to publish
       comes first, and the enrichment is what makes the page worth forwarding
       (RESEARCH.md §5). */}
-  {listing.enrichment && <Enrichment enrichment={listing.enrichment} />}
+  {listing.enrichment && enrichmentHasContent(listing.enrichment) && (
+    <Enrichment enrichment={listing.enrichment} />
+  )}
 
   {showMap && listing.location && (
     <MapSection
@@ -170,18 +221,22 @@ const homeLabel = listing.category === 'property' ? t('listing.section.home') : 
     />
   )}
 
-  <SellerBlock seller={listing.seller} />
+  <SellerBlock
+    seller={listing.seller}
+    whatsappHref={waHref}
+    shareHref={shareHref}
+    sold={sold}
+  />
 
   <Fragment slot="after">
     {/* A sold listing is a record, not a live offer. The WhatsApp dock would
         invite a message about something that is gone. */}
-    {sold ? null : (
       <CtaDock
         phone={listing.seller.phone}
-        message={presentation.whatsappMessage}
+        message={waMessage}
         slug={listing.slug}
+        sold={sold}
       />
-    )}
 
     {/* נבנה בהיעד is the viral loop (CLAUDE.md §8). Free listings keep it;
         a paid grant sets listing.hyadMark false and the mark comes off.

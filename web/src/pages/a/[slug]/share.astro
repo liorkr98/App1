@@ -5,6 +5,7 @@ import { ils } from '../../../lib/format';
 import { t } from '../../../lib/i18n';
 import { publishedListing } from '../../../lib/listing-from-row';
 import '../../../styles/tokens.css';
+import '../../../styles/fonts.css';
 
 /**
  * The share kit. AN AGENT TOOL, not a buyer page.
@@ -62,7 +63,7 @@ const teaser = cells
   .slice(0, 4)
   .map((cell) => {
     if (cell.value === 'יש') return cell.label;
-    if (cell.pairedValue !== undefined) return `${cell.label} ${cell.value} / ${cell.pairedValue}`;
+    if (cell.displayValue !== cell.value) return `${cell.label} ${cell.displayValue}`;
     return `${cell.value} ${cell.label}`;
   });
 
@@ -137,12 +138,8 @@ const card = {
     <meta name="robots" content="noindex,nofollow" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Assistant:wght@400;600;700&display=swap"
-      rel="stylesheet"
-    />
+    <link rel="preload" href="/fonts/frank-ruhl-hebrew.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/assistant-hebrew.woff2" as="font" type="font/woff2" crossorigin />
 
     <style is:global>
       html {

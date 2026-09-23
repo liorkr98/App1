@@ -1,0 +1,83 @@
+/*
+  Dark — the third existing template, inverted.
+
+  Keep its photograph-led identity; share the type ramps. Confirmed-absent
+  uses a light --absent stop that still clears 4.5:1 on this ground.
+*/
+
+html[data-template='dark'] {
+  --olive: var(--accent-lift, #7e9a62);
+  --plaster: #14150f;
+  --ink: #f3f1ea;
+  --ink-deep: #0a0b06;
+  --stone: #2c2e24;
+  --stone-warm: #1d1f16;
+  --muted: #a3a498;
+  --muted-warm: #a3a498;
+  --absent: #a3a498;
+  --heroWant: 94svh;
+}
+
+html[data-template='dark'] .enrich {
+  background: var(--stone-warm);
+}
+
+html[data-template='dark'] .source {
+  color: var(--muted);
+}
+
+html[data-template='dark'] .cta {
+  background: var(--ink);
+  color: var(--plaster);
+}
+
+html[data-template='dark'] .cta:hover,
+html[data-template='dark'] .cta:active {
+  background: var(--olive-lift);
+  color: var(--ink-deep);
+}
+
+html[data-template='dark'] .hero-veil {
+  background: linear-gradient(
+    to top,
+    rgba(10, 11, 6, 0.92) 10%,
+    rgba(10, 11, 6, 0.45) 45%,
+    transparent
+  );
+}
+
+html[data-template='dark'] .hero-title {
+  font-size: calc(var(--t-hero) * 1.08);
+}
+
+html[data-template='dark'] .price {
+  font-size: calc(var(--t-price) * 1.12);
+}
+
+html[data-template='dark'] .facts {
+  gap: 0;
+  background: transparent;
+  border-block: 1px solid var(--stone);
+}
+
+html[data-template='dark'] .fact {
+  background: transparent;
+  padding-block: 1.4rem;
+}
+
+html[data-template='dark'] .fact + .fact {
+  border-inline-start: 1px solid var(--stone);
+}
+
+html[data-template='dark'] .fact.off {
+  background: transparent;
+}
+
+html[data-template='dark'] .gallery {
+  padding-inline: 0;
+  gap: 0.25rem;
+}
+
+html[data-template='dark'] .gallery img {
+  border-radius: 0;
+}

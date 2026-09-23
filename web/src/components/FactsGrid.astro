@@ -37,11 +37,10 @@ const cells = toCells(category, facts, audience);
     <div class={cell.absent ? 'fact off' : 'fact'}>
       <div class="fact-val">
         {cell.bdi ? (
-          <bdi data-count={cell.countFrom}>{cell.value}</bdi>
+          <bdi data-count={cell.countFrom}>{cell.displayValue}</bdi>
         ) : (
-          cell.value
+          cell.displayValue
         )}
-        {cell.pairedValue !== undefined && <Fragment> / <bdi>{cell.pairedValue}</bdi></Fragment>}
       </div>
       <div class="fact-lbl">{cell.label}</div>
       {cell.verified && (

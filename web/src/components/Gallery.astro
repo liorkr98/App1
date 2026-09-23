@@ -1,5 +1,6 @@
 ---
 import type { Image } from '@/types/listing';
+import { photoAlt } from '@/features/listings/photo-alt';
 import { groupByRoom, hasRoomLabels } from '@/features/listings/photo-rooms';
 import { GALLERY_WIDTHS, largest, srcset } from '../lib/images';
 import { t } from '../lib/i18n';
@@ -39,7 +40,7 @@ const groups = grouped ? groupByRoom(images) : [{ items: images }];
                 type="button"
                 class="gallery-open"
                 data-lightbox={largest(image, GALLERY_WIDTHS)}
-                data-alt={image.alt ?? (group.room ? t(`editor.rooms.${group.room}`) : '')}
+                data-alt={photoAlt(image, group.room ? t(`editor.rooms.${group.room}`) : undefined)}
               >
               <img
                 src={largest(image, GALLERY_WIDTHS)}
@@ -47,7 +48,7 @@ const groups = grouped ? groupByRoom(images) : [{ items: images }];
                 sizes="(max-width: 620px) 50vw, 310px"
                 width={image.width}
                 height={image.height}
-                alt={image.alt ?? (group.room ? t(`editor.rooms.${group.room}`) : '')}
+                alt={photoAlt(image, group.room ? t(`editor.rooms.${group.room}`) : undefined)}
                 loading="lazy"
                 decoding="async"
                 class="clip-reveal"
@@ -70,7 +71,7 @@ const groups = grouped ? groupByRoom(images) : [{ items: images }];
             type="button"
             class="gallery-open"
             data-lightbox={largest(image, GALLERY_WIDTHS)}
-            data-alt={image.alt ?? ''}
+            data-alt={photoAlt(image)}
           >
           <img
             src={largest(image, GALLERY_WIDTHS)}
@@ -78,7 +79,7 @@ const groups = grouped ? groupByRoom(images) : [{ items: images }];
             sizes="(max-width: 620px) 50vw, 310px"
             width={image.width}
             height={image.height}
-            alt={image.alt ?? ''}
+            alt={photoAlt(image)}
             loading="lazy"
             decoding="async"
             class="clip-reveal"

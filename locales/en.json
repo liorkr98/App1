@@ -109,6 +109,11 @@
   "listing": {
     "create": "",
     "whatsappCta": "",
+    "whatsappShort": "",
+    "priceFrom": "",
+    "priceOnRequest": "",
+    "callCta": "",
+    "moreListings": "",
     "empty": "",
     "publish": "",
     "share": "",
@@ -145,6 +150,8 @@
       "park_ride": ""
     },
     "tourCta": "",
+    "floorPlan": "",
+    "lightboxCount": "",
     "newWindow": "",
     "section": {
       "home": "",
@@ -153,9 +160,12 @@
       "around": "",
       "verified": "",
       "map": "",
-      "seller": ""
+      "seller": "",
+      "disclosures": ""
     },
     "licenceVerified": "",
+    "highlights": "",
+    "monthlyCost": "",
     "closeLightbox": "",
     "openPhoto": ""
   },

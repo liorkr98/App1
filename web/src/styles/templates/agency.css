@@ -1,0 +1,85 @@
+/*
+  Agency — white ground, information-dense.
+
+  §8: professional default. White plaster, stone dividers, dark enrichment
+  (the enrichment block is already --ink-deep in the shared sheet). Accent
+  comes from the inline preset, not a second olive.
+*/
+
+html[data-template='agency'] {
+  --ink-deep: #1c1917;
+  --stone: #e7e2da;
+  --stone-warm: #faf6f0;
+  --plaster: #ffffff;
+  --muted: #6b6259;
+  --heroWant: 54svh;
+}
+
+html[data-template='agency'] .hero {
+  min-height: 0;
+}
+
+html[data-template='agency'] .hero-title {
+  font-weight: 700;
+  font-size: calc(var(--t-hero) * 0.72);
+}
+
+html[data-template='agency'] .price-bar {
+  background: var(--stone-warm);
+  border-block-end: 1px solid var(--stone);
+  border-inline-start: var(--accent-mark) solid var(--olive);
+  align-items: center;
+}
+
+html[data-template='agency'] .price {
+  font-size: calc(var(--t-price) * 0.82);
+}
+
+html[data-template='agency'] .facts {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+  background: transparent;
+  border-block: 0;
+  padding: var(--gut) var(--gut) 0.4rem;
+}
+
+html[data-template='agency'] .fact {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  text-align: start;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--stone);
+  border-radius: 10px;
+}
+
+html[data-template='agency'] .fact-val {
+  font-size: calc(var(--t-num) * 0.78);
+  order: 2;
+}
+
+html[data-template='agency'] .fact-lbl {
+  margin-top: 0;
+  order: 1;
+}
+
+/* Provenance is legal, not a density knob. Sit it under the pair. */
+html[data-template='agency'] .fact-src {
+  flex: 1 0 100%;
+  align-items: flex-start;
+  order: 3;
+}
+
+html[data-template='agency'] .gallery {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+html[data-template='agency'] .gallery figure:first-child {
+  grid-column: 1 / -1;
+}
+
+html[data-template='agency'] .cta {
+  border-radius: 999px;
+}

@@ -1,11 +1,9 @@
 /**
  * Listing-page enhancement. Vanilla. No framework.
  *
- * Two jobs, and only these two (redesign plan §3.1, DESIGN-CONTRACT §6.4):
- *   M3  in-view counters on m² and rooms — the HTML already holds the final
- *       value, so no-JS, SEO and screen readers stay correct.
- *   M4  gallery → lightbox morph via same-document View Transitions, with
- *       a <dialog> fallback (focus trap + Escape for free).
+ *   M3  in-view counters on m² only — the HTML already holds the final value.
+ *   M4  gallery → lightbox morph via View Transitions, <dialog> fallback.
+ *   M5  radio → snap the matching tour card (the track itself is CSS).
  *
  * Budget: ≤ 12 KB gz, enforced by scripts/verify-listing-js-budget.mjs.
  * window.addEventListener('scroll') is banned. IntersectionObserver only.
@@ -64,10 +62,12 @@ function fillTrack(dialog: HTMLDialogElement, startSrc: string): void {
   if (!track) return;
   track.replaceChildren();
   const buttons = allGalleryButtons();
+  const seen = new Set<string>();
   for (const button of buttons) {
     const src = button.getAttribute('data-lightbox');
     const alt = button.getAttribute('data-alt') ?? '';
-    if (!src) continue;
+    if (!src || seen.has(src)) continue;
+    seen.add(src);
     const figure = document.createElement('figure');
     figure.className = 'lightbox-slide';
     const img = document.createElement('img');
@@ -80,20 +80,45 @@ function fillTrack(dialog: HTMLDialogElement, startSrc: string): void {
       queueMicrotask(() => figure.scrollIntoView({ inline: 'center', block: 'nearest' }));
     }
   }
+  updateLightboxCount(dialog, track);
+}
+
+function updateLightboxCount(dialog: HTMLDialogElement, track: HTMLElement): void {
+  const label = dialog.querySelector<HTMLElement>('[data-lightbox-count]');
+  const slides = [...track.querySelectorAll<HTMLElement>('.lightbox-slide')];
+  if (!label || slides.length === 0) return;
+  const mid = track.getBoundingClientRect().left + track.clientWidth / 2;
+  let index = 0;
+  for (const [i, slide] of slides.entries()) {
+    const box = slide.getBoundingClientRect();
+    if (box.left <= mid && box.right >= mid) {
+      index = i;
+      break;
+    }
+  }
+  label.textContent = `${index + 1} / ${slides.length}`;
 }
 
 function bindLightbox(): void {
   const dialog = document.getElementById('listing-lightbox');
   if (!(dialog instanceof HTMLDialogElement)) return;
   const close = dialog.querySelector<HTMLButtonElement>('.lightbox-close');
+  const track = dialog.querySelector<HTMLElement>('.lightbox-track');
   let lastFocus: HTMLElement | null = null;
+  let pushed = false;
 
   const open = (button: HTMLButtonElement) => {
     const src = button.getAttribute('data-lightbox');
     if (!src) return;
     lastFocus = button;
     fillTrack(dialog, src);
-    const run = () => dialog.showModal();
+    const run = () => {
+      dialog.showModal();
+      if (!pushed) {
+        history.pushState({ listingLightbox: true }, '');
+        pushed = true;
+      }
+    };
     const startTransition = (
       document as Document & {
         startViewTransition?: (update: () => void) => { finished: Promise<unknown> };
@@ -110,10 +135,16 @@ function bindLightbox(): void {
     }
   };
 
-  const hide = () => {
+  const hide = (fromPop = false) => {
     if (!dialog.open) return;
     dialog.close();
     lastFocus?.focus();
+    if (pushed && !fromPop) {
+      pushed = false;
+      history.back();
+      return;
+    }
+    pushed = false;
   };
 
   document.addEventListener('click', (event) => {
@@ -126,12 +157,36 @@ function bindLightbox(): void {
     }
   });
 
-  close?.addEventListener('click', hide);
+  close?.addEventListener('click', () => hide());
   dialog.addEventListener('cancel', (event) => {
     event.preventDefault();
     hide();
+  });
+  track?.addEventListener('scroll', () => {
+    if (track) updateLightboxCount(dialog, track);
+  }, { passive: true });
+  window.addEventListener('popstate', () => {
+    if (dialog.open) hide(true);
+  });
+}
+
+function bindWalk(): void {
+  const viewer = document.querySelector('.walk-viewer');
+  const track = document.querySelector('.walk-main.tour-track');
+  if (!viewer || !track) return;
+  viewer.addEventListener('change', (event) => {
+    const input = event.target;
+    if (!(input instanceof HTMLInputElement) || !input.classList.contains('walk-pick')) return;
+    const picks = [...viewer.querySelectorAll('.walk-pick')];
+    const card = track.querySelectorAll(':scope > figure')[picks.indexOf(input)];
+    card?.scrollIntoView({
+      inline: 'center',
+      block: 'nearest',
+      behavior: reduced ? 'instant' : 'smooth',
+    });
   });
 }
 
 observeCounts();
 bindLightbox();
+bindWalk();
