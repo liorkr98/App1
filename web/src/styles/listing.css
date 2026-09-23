@@ -97,6 +97,10 @@ body{
 .agent-bar .dot img{inline-size:100%;block-size:100%;object-fit:cover;border-radius:50%;display:block}
 .agent-bar strong{font-weight:600}
 .agent-bar span{color:#9C9D93;margin-inline-start:auto;font-size:.8rem}
+.agent-bar .agent-role,.agent-bar .agent-actions{margin-inline-start:0;color:inherit}
+.agent-actions{display:flex;gap:.3rem;flex:0 0 auto}
+.agent-actions a{color:var(--on-dark);justify-content:center;border:1px solid currentColor;border-radius:50%}
+.agent-actions svg{inline-size:16px;block-size:16px;display:block}
 .agent-verified{
   flex:0 0 auto;
   font-size:.62rem;
@@ -1017,6 +1021,7 @@ footer a{
 .cta{
   transition:transform var(--dur-press) var(--ease-out);
 }
+.agent-actions a:active,
 .gallery-open:active,
 .compact-wa:active,
 .tour-chips a:active,
