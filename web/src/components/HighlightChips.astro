@@ -1,17 +1,20 @@
 ---
-import { listingHighlights } from '@/features/listings/highlights';
+import type { Fact } from '@/types/listing';
+import { resolveHighlights } from '@/features/listings/highlights';
 import { t } from '../lib/i18n';
+import Prose from './Prose.astro';
 
 interface Props {
   highlights?: string[];
+  facts?: Fact[];
 }
 
-const chips = listingHighlights(Astro.props.highlights);
+const chips = resolveHighlights(Astro.props.highlights, Astro.props.facts ?? []);
 ---
 {chips.length > 0 ? (
   <ul class="highlights" aria-label={t('listing.highlights')}>
     {chips.map((chip) => (
-      <li>{chip}</li>
+      <li><Prose text={chip} /></li>
     ))}
   </ul>
 ) : null}

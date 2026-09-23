@@ -165,6 +165,8 @@
     },
     "licenceVerified": "מאומת · פנקס המתווכים",
     "highlights": "יתרונות",
+    "factsMore": "הצגת כל הפרטים",
+    "factsAbsent": "אין",
     "monthlyCost": "עלות חודשית משוערת: ארנונה {arnona} לחודש ({arnonaBill} לחודשיים) · ועד בית {vaad}",
     "closeLightbox": "סגירה",
     "openPhoto": "פתיחת תמונה"

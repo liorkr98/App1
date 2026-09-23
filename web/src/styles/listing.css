@@ -187,13 +187,45 @@ body{
   margin:0;
 }
 .highlights li{
-  border:1px solid var(--stone);
+  border:1px solid var(--olive);
   border-radius:999px;
   padding:.28rem .75rem;
   font-size:var(--t-label);
   font-weight:600;
   color:var(--ink);
   line-height:1.3;
+  background:transparent;
+}
+.absent-line{
+  margin:0;
+  padding:.75rem var(--gut) .2rem;
+  color:var(--absent);
+  font-size:.92rem;
+  line-height:1.5;
+}
+.facts-more{
+  margin:0;
+  padding:.4rem var(--gut) .9rem;
+}
+.facts-more summary{
+  cursor:pointer;
+  font-weight:600;
+  font-size:.92rem;
+  color:var(--ink);
+}
+.spec-list{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:.65rem 1.2rem;
+  margin:.8rem 0 0;
+}
+.spec-list div{display:flex;flex-direction:column;gap:.1rem}
+.spec-list dt{font-size:var(--t-label);color:var(--muted)}
+.spec-list dd{
+  margin:0;
+  font-family:'Frank Ruhl Libre',serif;
+  font-size:1.15rem;
+  font-weight:500;
 }
 
 /* ============================================================
@@ -665,19 +697,17 @@ footer a{
     @keyframes fill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
   }
 
-  .hero-veil{animation:rise var(--dur-reveal) .08s both var(--ease-out)}
-
-  .hero-line > span{
-    animation:line-rise var(--dur-reveal) var(--ease-out) both;
-  }
-  .hero-line:nth-child(2) > span{animation-delay:80ms}
-  .hero-line:nth-child(3) > span{animation-delay:140ms}
-  @keyframes line-rise{
-    from{transform:translateY(110%)}
-    to{transform:none}
-  }
-
   @supports (animation-timeline:view()){
+    .hero-line > span{
+      animation:line-rise var(--dur-reveal) var(--ease-out) both;
+    }
+    .hero-line:nth-child(2) > span{animation-delay:80ms}
+    .hero-line:nth-child(3) > span{animation-delay:140ms}
+    @keyframes line-rise{
+      from{clip-path:inset(0 0 100% 0);transform:translateY(110%)}
+      to{clip-path:inset(0);transform:none}
+    }
+
     .clip-reveal{
       animation:clip-expand linear both;
       animation-timeline:view();
