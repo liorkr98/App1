@@ -21,6 +21,7 @@ import { ils } from '../lib/format';
 import { mapCardSrc } from '@/features/listings/map-card';
 import { areaMap } from '@/features/listings/area-map';
 import { isWalkItem, labeledWalkItems } from '@/features/listings/photo-rooms';
+import { enrichmentHasContent } from '@/features/listings/enrichment-view';
 import SectionLabel from './SectionLabel.astro';
 
 interface Props {
@@ -165,7 +166,9 @@ const homeLabel = listing.category === 'property' ? t('listing.section.home') : 
   {/* Below the seller's own content, deliberately: what they came to publish
       comes first, and the enrichment is what makes the page worth forwarding
       (RESEARCH.md §5). */}
-  {listing.enrichment && <Enrichment enrichment={listing.enrichment} />}
+  {listing.enrichment && enrichmentHasContent(listing.enrichment) && (
+    <Enrichment enrichment={listing.enrichment} />
+  )}
 
   {showMap && listing.location && (
     <MapSection

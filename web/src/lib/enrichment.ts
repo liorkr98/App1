@@ -2,7 +2,6 @@ import type {
   CivicKind,
   NearbyCivic,
   NearbyPlace,
-  NearbyTransit,
   PlaceCategory,
   TransitMode,
 } from '@/types/listing';
@@ -118,21 +117,11 @@ export function groupCivic(civic: NearbyCivic[]): CivicGroup[] {
   return groups;
 }
 
-/**
- * Rail-type stops before buses, each set sorted by walking time.
- *
- * The payload is already capped and ordered this way by the ingestion, but the
- * page must not depend on that: a payload written by an older build, or by a
- * future one, still has to render sensibly.
- */
-export function orderTransit(transit: NearbyTransit[]): NearbyTransit[] {
-  const byWalk = (a: NearbyTransit, b: NearbyTransit) => a.walkMinutes - b.walkMinutes;
-
-  return [
-    ...transit.filter((stop) => stop.mode !== 'bus').sort(byWalk),
-    ...transit.filter((stop) => stop.mode === 'bus').sort(byWalk),
-  ];
-}
+export {
+  enrichmentHasContent,
+  leftoverCount,
+  orderTransit,
+} from '@/features/listings/enrichment-view';
 
 /**
  * One citation line per source, deduplicated.

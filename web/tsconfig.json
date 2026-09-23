@@ -30,6 +30,7 @@
     "../src/features/listings/highlights.ts",
     "../src/features/listings/monthly-cost.ts",
     "../src/features/listings/photo-alt.ts",
+    "../src/features/listings/enrichment-view.ts",
     "../src/features/listings/schemas/**/*"
   ],
   "exclude": ["dist", "node_modules"]
