@@ -177,6 +177,7 @@ body{
   margin-inline-end:.35rem;
 }
 .price-note{text-align:end;padding-block-end:.2rem}
+.price-note bdi{font-family:'Frank Ruhl Libre',serif;font-weight:500}
 
 .hero-thumbs{
   display:flex;
@@ -306,7 +307,11 @@ body{
    סקשנים — ריתמוס משתנה, לא אותו קו מפריד כל פעם
    ============================================================ */
 section{padding:var(--pad-section) var(--gut)}
+/* Tight under the hero, open before the neighbourhood, tight again
+   on the agent card. Identical padding is what made the page read flat. */
 section:not(.hero):not(.enrich){padding-block-start:var(--pad-tight)}
+.enrich{padding-block:var(--pad-open)}
+.seller{padding-block:var(--pad-tight)}
 h2{
   font-family:'Frank Ruhl Libre',serif;
   font-weight:500;font-size:var(--t-h2);
@@ -966,6 +971,10 @@ footer a{
 .tour-chips label,
 .walk-next,
 .walk-all,
+.hero-thumb,
+.map-nav,
+.facts-more summary,
+.seller-action,
 .cta{
   transition:transform var(--dur-press) var(--ease-out);
 }
@@ -974,7 +983,12 @@ footer a{
 .tour-chips a:active,
 .tour-chips label:active,
 .walk-next:active,
-.walk-all:active{
+.walk-all:active,
+.hero-thumb:active,
+.map-nav:active,
+.facts-more summary:active,
+.seller-action:active,
+.cta:active{
   transform:scale(.97);
 }
 
