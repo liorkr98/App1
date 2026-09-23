@@ -17,6 +17,22 @@ export function priceHeadline(display: PriceDisplay | undefined): PriceHeadline 
 }
 
 /**
+ * The price fragment of og:title. לפי פנייה hides the number — the card
+ * is what a buyer sees in WhatsApp before they tap, and a figure the
+ * page then refuses to print is a lie on that card.
+ */
+export function ogPriceFragment(
+  price: number,
+  display: PriceDisplay | undefined,
+  formatted: string,
+  fromPrefix: string,
+): string {
+  const headline = priceHeadline(display);
+  if (!headline.showAmount || price <= 0) return '';
+  return headline.prefix === 'from' ? ` · ${fromPrefix}${formatted}` : ` · ${formatted}`;
+}
+
+/**
  * How publicly the address may be named.
  *
  * An explicit precision always wins. Otherwise coords+street is a pin,

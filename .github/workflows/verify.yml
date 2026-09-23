@@ -142,6 +142,9 @@ jobs:
       - name: Verify the plate rule actually fires
         run: bash scripts/verify-no-plates-fires.sh
 
+      - name: Verify WhatsApp og:title honors price mode
+        run: node scripts/verify-og-title.mjs
+
       - name: Report built page weight
         run: node scripts/report-page-weight.mjs
 

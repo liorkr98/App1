@@ -28,10 +28,12 @@ interface OgPayload {
   /** Path in `originals` of the cover photo. */
   cover?: string;
   price?: number;
+  /** When לפי פנייה the visible card has no figure — hash that mode, not the hidden number. */
+  priceDisplay?: 'exact' | 'from' | 'on_request';
 }
 
 export async function generateOg({ job, progress }: JobContext): Promise<Record<string, unknown>> {
-  const { cover, price } = job.payload as OgPayload;
+  const { cover, price, priceDisplay } = job.payload as OgPayload;
 
   if (!cover) {
     throw new JobFailure('no_cover', false);
@@ -43,9 +45,10 @@ export async function generateOg({ job, progress }: JobContext): Promise<Record<
   // Content hash over what a viewer would notice changing. Cover and price are
   // exactly what the card shows, so a change to either must produce a new
   // filename.
+  const shownPrice = priceDisplay === 'on_request' ? 'on_request' : String(price ?? '');
   const hash = createHash('sha256')
     .update(original)
-    .update(String(price ?? ''))
+    .update(shownPrice)
     .digest('hex')
     .slice(0, 8);
 
