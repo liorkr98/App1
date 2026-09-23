@@ -1,0 +1,116 @@
+[
+  {
+    "fixture": "A7K2M",
+    "motion": "default",
+    "before": {
+      "floorText": "3 / 5",
+      "sqmText": "95",
+      "roomsText": "4",
+      "roomsHasCount": false,
+      "counted": [
+        {
+          "count": "95",
+          "text": "95",
+          "label": "מ״ר"
+        }
+      ],
+      "monthly": "עלות חודשית משוערת: ארנונה ₪320 · ועד בית ₪250לפי המוכר",
+      "cols": "129.328px 129.328px 129.328px",
+      "factAlign": "start"
+    },
+    "after": {
+      "floorText": "3 / 5",
+      "sqmText": "95",
+      "roomsText": "4",
+      "roomsHasCount": false,
+      "counted": [
+        {
+          "count": "95",
+          "text": "95",
+          "label": "מ״ר"
+        }
+      ],
+      "monthly": "עלות חודשית משוערת: ארנונה ₪320 · ועד בית ₪250לפי המוכר",
+      "cols": "129.328px 129.328px 129.328px",
+      "factAlign": "start"
+    }
+  },
+  {
+    "fixture": "A7K2M",
+    "motion": "reduce",
+    "reduced": {
+      "floorText": "3 / 5",
+      "sqmText": "95",
+      "roomsText": "4",
+      "roomsHasCount": false,
+      "counted": [
+        {
+          "count": "95",
+          "text": "95",
+          "label": "מ״ר"
+        }
+      ],
+      "monthly": "עלות חודשית משוערת: ארנונה ₪320 · ועד בית ₪250לפי המוכר",
+      "cols": "129.328px 129.328px 129.328px",
+      "factAlign": "start"
+    }
+  },
+  {
+    "fixture": "A7K2M",
+    "motion": "no-js",
+    "nojs": {
+      "floorText": "3 / 5",
+      "sqmText": "95",
+      "roomsText": "4",
+      "roomsHasCount": false,
+      "counted": [
+        {
+          "count": "95",
+          "text": "95",
+          "label": "מ״ר"
+        }
+      ],
+      "monthly": "עלות חודשית משוערת: ארנונה ₪320 · ועד בית ₪250לפי המוכר",
+      "cols": "129.328px 129.328px 129.328px",
+      "factAlign": "start"
+    }
+  },
+  {
+    "fixture": "T4V7A",
+    "tlv": {
+      "floorText": "5 / 12",
+      "sqmText": "107",
+      "roomsText": "4",
+      "roomsHasCount": false,
+      "counted": [
+        {
+          "count": "108",
+          "text": "107",
+          "label": "מ״ר"
+        }
+      ],
+      "monthly": "עלות חודשית משוערת: ארנונה ₪410 · ועד בית ₪380לפי המוכר",
+      "cols": "168.609px 168.609px",
+      "factAlign": "start"
+    }
+  },
+  {
+    "fixture": "M9S3W",
+    "moshav": {
+      "floorText": null,
+      "sqmText": "140",
+      "roomsText": "5",
+      "roomsHasCount": false,
+      "counted": [
+        {
+          "count": "142",
+          "text": "140",
+          "label": "מ״ר"
+        }
+      ],
+      "monthly": null,
+      "cols": "188.203px 188.203px",
+      "factAlign": "start"
+    }
+  }
+]

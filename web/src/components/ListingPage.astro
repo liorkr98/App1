@@ -8,6 +8,7 @@ import FactsGrid from './FactsGrid.astro';
 import Gallery from './Gallery.astro';
 import HighlightChips from './HighlightChips.astro';
 import Hero from './Hero.astro';
+import MonthlyCost from './MonthlyCost.astro';
 import MapSection from './MapSection.astro';
 import PriceBar from './PriceBar.astro';
 import Prose from './Prose.astro';
@@ -138,6 +139,7 @@ const homeLabel = listing.category === 'property' ? t('listing.section.home') : 
   ) : null}
 
   <FactsGrid category={listing.category} facts={listing.facts} audience={listing.audience} />
+  <MonthlyCost facts={listing.facts} />
 
   <section class="reveal">
     <SectionLabel text={homeLabel} />

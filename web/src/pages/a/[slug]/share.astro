@@ -62,7 +62,7 @@ const teaser = cells
   .slice(0, 4)
   .map((cell) => {
     if (cell.value === 'יש') return cell.label;
-    if (cell.pairedValue !== undefined) return `${cell.label} ${cell.value} / ${cell.pairedValue}`;
+    if (cell.displayValue !== cell.value) return `${cell.label} ${cell.displayValue}`;
     return `${cell.value} ${cell.label}`;
   });
 

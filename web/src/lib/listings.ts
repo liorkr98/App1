@@ -121,9 +121,9 @@ export const propertyListing: Listing = {
     shelter: true,
     balcony_sqm: 12,
     aspect: 'דרום־מזרח',
-    // Confirmed absent — renders greyed showing אין, rather than vanishing.
     storage: { absent: true },
-    // Everything below is simply unanswered, so no cell appears at all.
+    property_tax: 640,
+    building_fee: 250,
   }),
 
   media: {

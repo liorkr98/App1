@@ -1434,7 +1434,10 @@ textarea {
   color: var(--olive);
 }
 .preview-page[data-template='editorial'] .facts {
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(3, 1fr);
+}
+.preview-page[data-template='editorial'] .fact {
+  text-align: start;
 }
 
 .preview-page[data-template='agency'] {
