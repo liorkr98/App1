@@ -86,7 +86,16 @@ export const propertySchema: CategorySchema = {
       options: ['חדש מקבלן', 'משופץ', 'שמור', 'דורש שיפוץ'],
       phrase: 'הנכס {value}',
     },
-    { key: 'property_tax', label: 'ארנונה', type: 'number', unit: '₪ לחודשיים' },
+    {
+      key: 'property_tax',
+      label: 'ארנונה',
+      type: 'number',
+      unit: '₪ לחודשיים',
+      // The monthly line states both the month and the bi-monthly bill,
+      // derived from this one stored figure. A grid cell would show 800
+      // beside a line that says 400.
+      showInGrid: false,
+    },
     { key: 'building_fee', label: 'ועד בית', type: 'number', unit: '₪ לחודש' },
     {
       key: 'entry_date',

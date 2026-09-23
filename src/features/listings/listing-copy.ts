@@ -1,5 +1,7 @@
 import type { Fact } from '../../types/listing.js';
 
+import { roomPhrase } from './hebrew-plural.js';
+
 import {
   buildPrompt,
   findBannedWords,
@@ -95,6 +97,11 @@ export function factFragments(input: ListingCopyInput): {
     const phrase = factDefinition(input.category, fact.key)?.phrase;
     if (!phrase) continue;
 
+    if (fact.key === 'rooms' && typeof fact.value === 'number') {
+      measured.push(roomPhrase(fact.value));
+      continue;
+    }
+
     if (fact.type === 'boolean') {
       // A boolean's phrase is the thing itself — 'מעלית'. A confirmed absence
       // never reaches here: usable() drops it, and a listing does not
@@ -138,8 +145,9 @@ export function groundedDescription(input: ListingCopyInput): string {
   const notes = input.sellerNotes?.trim();
   if (notes) sentences.push(notes.endsWith('.') ? notes : `${notes}.`);
 
-  const area = input.areaNote?.trim();
-  if (area) sentences.push(area);
+  // Surroundings stay in the enrichment block. A description that names
+  // the same schools and walk times as the map reads as machine output.
+  if (measured.length === 0 && features.length === 0 && !notes) return '';
 
   return sentences.join(' ');
 }
@@ -149,6 +157,8 @@ export function groundedDescription(input: ListingCopyInput): string {
  */
 export const DESCRIPTION_SYSTEM_PROMPT =
   'אתה כותב תיאור למודעת מכירה בעברית. פסקה אחת, שניים עד ארבעה משפטים. ' +
+  'התיאור על הנכס עצמו: חדרים, מצב, אור, תכנון, מה שופץ, איך המרפסת. ' +
+  'אסור לכתוב על הסביבה — בלי בתי ספר, בלי תחנות, בלי חנויות, בלי זמני הליכה. ' +
   'מותר לכתוב רק עובדות שמופיעות ברשימה שנמסרה לך. ' +
   'אסור להמציא מספר, מקום, שם מוסד או מרחק. ' +
   'רק מה שיש — מה שחסר לא נכתב, ואסור לכתוב שמשהו חסר. ' +
@@ -162,7 +172,6 @@ export function descriptionPrompt(input: ListingCopyInput): string {
     categoryLabel: schemaFor(input.category).label,
     facts: input.facts,
     ...(input.city ? { city: input.city } : {}),
-    ...(input.areaNote ? { areaNote: input.areaNote } : {}),
     ...(input.sellerNotes ? { sellerNotes: input.sellerNotes } : {}),
   });
 }
@@ -195,18 +204,12 @@ export function acceptDescription(
   if (findBannedWords(text).length > 0) return undefined;
   if (findReservedTopics(text).length > 0) return undefined;
 
-  /*
-   * Numbers are checked against the facts AND against the area paragraph.
-   *
-   * The area note carries routed walking minutes that no fact holds — "7
-   * דקות הליכה" — and those are grounded: neighborhood-note.ts built them
-   * from the proximity job's own output. Without this the guard would reject
-   * every reply that used the area data it was given.
-   */
-  const areaNumbers = new Set((input.areaNote?.match(/\d+/g) ?? []).map(String));
-  const unsupported = findUnsupportedNumbers(text, input.facts).filter(
-    (number) => !areaNumbers.has(number),
-  );
+  // Walking times and place names belong to the enrichment block. A
+  // description that repeats them is rejected, even when the area note
+  // was passed in by an older caller.
+  if (/דקות הליכה|דקה הליכה|תחנת |בית ספר|אוטובוס|רכבת/.test(text)) return undefined;
+
+  const unsupported = findUnsupportedNumbers(text, input.facts);
   if (unsupported.length > 0) return undefined;
 
   return text;

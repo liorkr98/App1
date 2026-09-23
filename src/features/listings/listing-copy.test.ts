@@ -109,16 +109,30 @@ describe('groundedDescription', () => {
     assert.ok(text.includes('הדירה פונה לגינה.'));
   });
 
-  it('appends the area paragraph when proximity ran', () => {
+  it('does not repeat the surroundings inside the description', () => {
     const text = groundedDescription({
       ...PROPERTY,
       areaNote: 'הרכבת הקלה אחוזה כ־7 דקות הליכה.',
     });
-    assert.ok(text.endsWith('הרכבת הקלה אחוזה כ־7 דקות הליכה.'));
+    assert.equal(text.includes('הרכבת'), false);
+    assert.equal(text.includes('דקות הליכה'), false);
   });
 
-  it('says only the category when nothing has been answered', () => {
-    assert.equal(groundedDescription({ category: 'property', facts: [] }), 'דירה.');
+  it('generates nothing when the property has nothing to say', () => {
+    assert.equal(groundedDescription({ category: 'property', facts: [] }), '');
+  });
+
+  it('agrees the room count', () => {
+    const one = factFragments({
+      category: 'property',
+      facts: [fact('rooms', 'חדרים', 1, { type: 'number' })],
+    });
+    const two = factFragments({
+      category: 'property',
+      facts: [fact('rooms', 'חדרים', 2, { type: 'number' })],
+    });
+    assert.deepEqual(one.measured, ['חדר אחד']);
+    assert.deepEqual(two.measured, ['שני חדרים']);
   });
 
   it('never invents a location for a vehicle', () => {
@@ -149,12 +163,14 @@ describe('acceptDescription', () => {
     );
   });
 
-  it('accepts a routed walking time that came from the area paragraph', () => {
-    const accepted = acceptDescription(
-      'דירה בתל אביב, 4 חדרים על 95 מ״ר בקומה 3. הרכבת הקלה במרחק 7 דקות הליכה.',
-      { ...PROPERTY, areaNote: 'הרכבת הקלה אחוזה כ־7 דקות הליכה.' },
+  it('rejects a description that repeats walking times from the map', () => {
+    assert.equal(
+      acceptDescription(
+        'דירה בתל אביב, 4 חדרים על 95 מ״ר בקומה 3. הרכבת הקלה במרחק 7 דקות הליכה.',
+        { ...PROPERTY, areaNote: 'הרכבת הקלה אחוזה כ־7 דקות הליכה.' },
+      ),
+      undefined,
     );
-    assert.ok(accepted);
   });
 
   it('rejects a superlative, a valuation and a model that names itself', () => {
@@ -174,7 +190,7 @@ describe('acceptDescription', () => {
 });
 
 describe('descriptionPrompt', () => {
-  it('states the city, the facts and the area note, and no coordinates', () => {
+  it('states the city and the facts, and never the surroundings', () => {
     const prompt = descriptionPrompt({
       ...PROPERTY,
       areaNote: 'הרכבת הקלה אחוזה כ־7 דקות הליכה.',
@@ -182,7 +198,8 @@ describe('descriptionPrompt', () => {
 
     assert.ok(prompt.includes('עיר: תל אביב'));
     assert.ok(prompt.includes('חדרים: 4'));
-    assert.ok(prompt.includes('הרכבת הקלה אחוזה'));
+    assert.equal(prompt.includes('הרכבת הקלה אחוזה'), false);
+    assert.equal(prompt.includes('דקות הליכה'), false);
     assert.ok(!/\d+\.\d{4,}/.test(prompt));
   });
 });

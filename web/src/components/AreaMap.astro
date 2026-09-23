@@ -1,8 +1,8 @@
 ---
 import type { AreaMap } from '@/features/listings/area-map';
 import { osmTileUrl } from '@/features/listings/area-map';
-import { t } from '../lib/i18n';
 import Prose from './Prose.astro';
+import WalkMinutes from './WalkMinutes.astro';
 
 interface Props {
   map: AreaMap;
@@ -79,7 +79,7 @@ const tiles = Array.from({ length: map.rows }, (_, row) =>
           <span class="area-map-walk"></span>
         ) : (
           <span class="area-map-walk">
-            <bdi>{pin.walkMinutes}</bdi> {t('listing.mapNearbyMinutes')}
+            <WalkMinutes minutes={pin.walkMinutes} walking />
           </span>
         )}
       </li>

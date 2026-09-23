@@ -437,6 +437,8 @@
     "agencyHint": "",
     "role": "",
     "roleHint": "",
+    "roleAgent": "",
+    "roleOwner": "",
     "licence": "",
     "licenceHint": "",
     "logo": "",

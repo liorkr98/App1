@@ -7,6 +7,7 @@ import {
   type Seller,
   type TemplateId,
 } from '@/types/listing';
+import { canonicalSellerRole } from '@/features/agents/profile';
 import { parseEnrichmentBlock } from '@/features/listings/enrichment-payload';
 import { descriptionOrArea } from '@/features/listings/neighborhood-note';
 import { OSM_ATTRIBUTION, type AreaPlace, type AreaPlaces } from '@/features/listings/area-note';
@@ -144,7 +145,7 @@ function asSeller(value: unknown): Seller | undefined {
   return {
     name,
     phone,
-    ...(typeof value.role === 'string' ? { role: value.role } : {}),
+    role: canonicalSellerRole(typeof value.role === 'string' ? value.role : undefined),
     ...(typeof value.agencyName === 'string' ? { agencyName: value.agencyName } : {}),
     ...(typeof value.licenceNumber === 'string' ? { licenceNumber: value.licenceNumber } : {}),
     ...(typeof value.agencyLogoUrl === 'string' && value.agencyLogoUrl.trim() !== ''

@@ -1,4 +1,5 @@
 import { orderForAudience } from '@/features/listings/audience-order';
+import { absenceIsStated } from '@/features/listings/fact-absence';
 import type { Fact, ListingAudience } from '@/types/listing';
 import { factDefinition, factShown, schemaFor, type ListingCategory } from '@/features/listings/schemas';
 
@@ -104,6 +105,9 @@ export function toCells(
     if (!factShown(definition, audience, facts)) continue;
 
     if (fact.present === false) {
+      // Dates, numbers, text and enums are omitted when empty. Only a
+      // boolean may be negated — "תאריך כניסה: אין" is a false claim.
+      if (!absenceIsStated(definition?.type ?? fact.type)) continue;
       cells.push({
         key: fact.key,
         label: unitLabel(definition?.gridLabel ?? fact.label, fact.unit),

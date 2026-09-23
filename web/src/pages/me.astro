@@ -574,8 +574,13 @@ import '../styles/tokens.css';
             </div>
 
             <div class="field" id="f-role">
-              <label for="role">{t('agent.role')}</label>
-              <input id="role" name="role" type="text" />
+              <span class="label">{t('agent.role')}</span>
+              <div class="swatches">
+                <input type="radio" name="role" id="role-agent" value="מתווך" />
+                <label for="role-agent">{t('agent.roleAgent')}</label>
+                <input type="radio" name="role" id="role-owner" value="בעל הנכס" checked />
+                <label for="role-owner">{t('agent.roleOwner')}</label>
+              </div>
               <p class="hint">{t('agent.roleHint')}</p>
             </div>
 
@@ -632,7 +637,9 @@ import '../styles/tokens.css';
       const name = $<HTMLInputElement>('name');
       const phone = $<HTMLInputElement>('phone');
       const agency = $<HTMLInputElement>('agency');
-      const role = $<HTMLInputElement>('role');
+      const chosenRole = () =>
+        (document.querySelector('input[name="role"]:checked') as HTMLInputElement | null)?.value ??
+        'בעל הנכס';
       const licence = $<HTMLInputElement>('licence');
       const logo = $<HTMLInputElement>('logo');
       const logoRemove = $<HTMLButtonElement>('logo-remove');
@@ -669,7 +676,7 @@ import '../styles/tokens.css';
         displayName: name.value,
         phone: phone.value,
         agencyName: agency.value,
-        role: role.value,
+        role: chosenRole(),
         licenceNumber: licence.value,
         accent: chosenAccent(),
         agencyLogoUrl: logoUrl || null,
@@ -743,11 +750,13 @@ import '../styles/tokens.css';
         return found.length === 0;
       };
 
-      for (const swatch of document.querySelectorAll('input[name="accent"], input[name="logoPlacement"]')) {
+      for (const swatch of document.querySelectorAll(
+        'input[name="accent"], input[name="logoPlacement"], input[name="role"]',
+      )) {
         swatch.addEventListener('change', paint);
       }
 
-      for (const input of [name, phone, agency, role, licence]) {
+      for (const input of [name, phone, agency, licence]) {
         input.addEventListener('input', () => {
           paint();
           validate();
@@ -827,7 +836,9 @@ import '../styles/tokens.css';
         name.value = profile.displayName ?? '';
         phone.value = profile.phone ?? '';
         agency.value = profile.agencyName ?? '';
-        role.value = profile.role ?? '';
+        const broker = /מתווך|מתווכת|סוכן|סוכנת/.test(profile.role ?? '');
+        const roleInput = document.getElementById(broker ? 'role-agent' : 'role-owner') as HTMLInputElement | null;
+        if (roleInput) roleInput.checked = true;
         licence.value = profile.licenceNumber ?? '';
         logoUrl = profile.agencyLogoUrl?.trim() ?? '';
 

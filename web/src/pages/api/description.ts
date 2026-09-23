@@ -4,13 +4,8 @@ import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 
 import {
-  acceptAreaNote,
   allPlaces,
-  areaNoteFromPlaces,
-  AREA_SYSTEM_PROMPT,
-  buildAreaPrompt,
   hasPlaces,
-  OSM_ATTRIBUTION,
   type AreaPlace,
   type AreaPlaces,
 } from '@/features/listings/area-note';
@@ -282,19 +277,8 @@ export const POST: APIRoute = async ({ request }) => {
           .eq('id', listingId);
       }
 
-      return modelText(
-        apiKey,
-        AREA_SYSTEM_PROMPT,
-        buildAreaPrompt(places),
-        (raw) => acceptAreaNote(raw, places),
-        {
-          text: areaNoteFromPlaces(places),
-          source: 'places',
-          attribution: OSM_ATTRIBUTION,
-        },
-        'area',
-        stream,
-      );
+      // The places stay on the row for the map. They do not become the
+      // description — that paragraph is about the property (§1.7).
     }
   }
 
@@ -314,7 +298,12 @@ export const POST: APIRoute = async ({ request }) => {
   };
 
   const grounded = groundedDescription(input);
-  if (!grounded.trim()) return json({ error: 'no_facts' }, 409);
+  // Nothing to say about the property: leave the box empty so the agent writes.
+  if (!grounded.trim()) {
+    return stream
+      ? sse(async (send) => send('done', { text: '', source: 'none' }))
+      : json({ text: '', source: 'none' }, 200);
+  }
 
   return modelText(
     apiKey,

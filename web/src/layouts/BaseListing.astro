@@ -54,7 +54,7 @@ const canonical = new URL(`/a/${listing.slug}/`, Astro.site).href;
 
 // noindex unless the seller opted in. A private seller usually does not want
 // their home address permanently searchable; an agent does. Not our call.
-const robots = robotsOverride ?? (listing.indexable ? 'index,follow' : 'noindex');
+const robots = robotsOverride ?? (listing.indexable === true ? 'index,follow' : 'noindex, nofollow');
 
 // Structured data only when Google is invited. A noindex page with JSON-LD
 // still puts the address in a crawl report.
@@ -154,6 +154,7 @@ const showBarLogo =
   {agency ? (
     <Fragment>
       <strong>{listing.seller.name}</strong>
+      {listing.seller.role ? <span class="agent-role">{listing.seller.role}</span> : null}
       {listing.seller.licenceVerified ? (
         <span class="agent-verified">{t('listing.licenceVerified')}</span>
       ) : null}
@@ -162,6 +163,7 @@ const showBarLogo =
   ) : (
     <Fragment>
       <strong>{listing.seller.name}</strong>
+      {listing.seller.role ? <span class="agent-role">{listing.seller.role}</span> : null}
       <span>{t('common.builtByPrefix')}<a href="/">{t('common.brand')}</a></span>
     </Fragment>
   )}

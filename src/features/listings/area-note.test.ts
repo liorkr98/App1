@@ -190,7 +190,7 @@ describe('routed minutes', () => {
   it('writes the time into the plain paragraph when it has one', () => {
     const text = areaNoteFromPlaces(HOLON_ROUTED);
     assert.ok(text.includes('אורט חולון (7 דקות הליכה)'));
-    assert.ok(text.includes('תחנת האוטובוס הקרובה היא סוקולוב/שדרות קוגל (2 דקות הליכה)'));
+    assert.ok(text.includes('תחנת האוטובוס הקרובה היא סוקולוב/שדרות קוגל (שתי דקות הליכה)'));
     assert.equal(isGrounded(text, HOLON_ROUTED), true);
   });
 });
@@ -255,7 +255,7 @@ describe('areaNoteFromPlaces', () => {
       ],
     });
 
-    assert.ok(text.includes('תחנת האוטובוס הקרובה היא סוקולוב/שדרות קוגל (2 דקות הליכה)'));
+    assert.ok(text.includes('תחנת האוטובוס הקרובה היא סוקולוב/שדרות קוגל (שתי דקות הליכה)'));
     assert.ok(text.includes('תחנת הרכבת הקרובה היא חולון וולפסון (11 דקות הליכה)'));
   });
 
