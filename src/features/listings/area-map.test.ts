@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import type { AreaPlaces } from '../../types/listing.js';
-import { areaMap, hasWalkTimes } from './area-map.js';
+import { areaMap, composedMapSrc, hasWalkTimes } from './area-map.js';
 
 const at = (name: string, lat: number, lon: number, walkMinutes?: number) => ({
   name,
@@ -102,15 +102,24 @@ describe('areaMap', () => {
     assert.ok(tight.height <= 1024, 'a phone should not get a map and nothing else');
   });
 
-  it('keys the pins with Hebrew letters, never digits', () => {
+  it('composes one picture with no text node and a 16:10 frame', () => {
+    const map = areaMap(HOLON);
+    assert.ok(map);
+    const src = decodeURIComponent(composedMapSrc(map));
+    assert.match(src, /width="1600"/);
+    assert.match(src, /height="1000"/);
+    assert.equal(src.includes('<text'), false);
+    assert.equal(src.includes('tile.openstreetmap.org'), false);
+  });
+
+  it('keys the pins with numerals, not Hebrew letters', () => {
     const map = areaMap(HOLON);
     assert.ok(map);
 
-    // A digit here would be a number outside <bdi> in the built page, which
-    // §4.2 forbids and the build gate rejects.
-    for (const pin of map.pins) {
-      assert.match(pin.key, /^[\u05D0-\u05EA]$/);
-    }
+    // א as a marker reads as a word. The page prints the numeral inside <bdi>.
+    map.pins.forEach((pin, index) => {
+      assert.equal(pin.key, String(index + 1));
+    });
   });
 
   it('spreads across the groups before taking a second from any', () => {

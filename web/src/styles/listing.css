@@ -483,24 +483,13 @@ p + p{margin-top:.9rem}
   overflow:hidden;
   border-radius:4px;
   border:1px solid var(--stone);
+  aspect-ratio:16/10;
 }
-.area-map-tiles{
-  display:grid;
-  grid-template-columns:repeat(var(--map-cols),minmax(0,1fr));
-}
-.area-map-tiles img{
-  display:block;
-  inline-size:100%;
-  block-size:auto;
-}
-.area-map-svg{
-  position:absolute;
-  inset:0;
+.area-map-stage img{
   display:block;
   inline-size:100%;
   block-size:100%;
-  background:none;
-  pointer-events:none;
+  object-fit:cover;
 }
 .area-map-list{
   list-style:none;
@@ -521,8 +510,7 @@ p + p{margin-top:.9rem}
   border-block-start:1px solid var(--stone);
 }
 .area-map-list li:first-child{border-block-start:0;padding-block-start:0}
-/* The key that ties a line of the list to a pin in the drawing. A Hebrew
-   letter and not a digit, so no number sits outside <bdi> (§4.2). */
+/* The key that ties a line of the list to a pin. A numeral, inside <bdi>. */
 .area-map-key{
   display:inline-flex;
   align-items:center;
@@ -536,9 +524,14 @@ p + p{margin-top:.9rem}
   font-weight:700;
   font-size:.86rem;
 }
-.area-map-walk{
-  color:var(--muted);
+.area-map-walk,
+.map-nearby-walk{
+  font-family:'Frank Ruhl Libre',serif;
+  font-size:1.45rem;
+  font-weight:700;
+  color:var(--olive);
   font-variant-numeric:tabular-nums;
+  line-height:1.1;
 }
 /* ODbL. A licence condition, so it is not styled to disappear. */
 .area-map-credit{
