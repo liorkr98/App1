@@ -1,0 +1,77 @@
+/*
+  Studio — inset photograph, chip facts, same ramps.
+  Chip labels are a solid --muted-on-dark stop, not opacity over plaster.
+*/
+
+html[data-template='studio'] {
+  --plaster: #f7f3ea;
+  --ink: #1a1916;
+  --ink-deep: #141310;
+  --stone: #d9d2c4;
+  --stone-warm: #ece6d8;
+  --heroH: 80svh;
+}
+
+html[data-template='studio'] .agent-bar {
+  padding-block: 1rem;
+}
+
+html[data-template='studio'] .hero {
+  margin-inline: var(--gut);
+  margin-block: 0.75rem 0;
+  border-radius: 18px;
+  min-block-size: 420px;
+  overflow: hidden;
+}
+
+html[data-template='studio'] .hero-title {
+  font-weight: 700;
+  font-size: calc(var(--t-hero) * 0.92);
+  max-inline-size: 14ch;
+}
+
+html[data-template='studio'] .price-bar {
+  align-items: center;
+  border-inline-start: var(--accent-mark) solid var(--olive);
+  margin-inline: var(--gut);
+  padding-inline-start: 1.1rem;
+}
+
+html[data-template='studio'] .facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  background: transparent;
+  border-block: 0;
+  padding-inline: var(--gut);
+}
+
+html[data-template='studio'] .fact {
+  flex: 0 1 auto;
+  background: var(--ink-deep);
+  color: var(--on-dark);
+  border-radius: 999px;
+  padding: 0.45rem 0.9rem 0.5rem;
+  min-inline-size: 0;
+}
+
+html[data-template='studio'] .fact-lbl {
+  color: var(--muted-on-dark);
+}
+
+html[data-template='studio'] .fact.off {
+  background: var(--stone-warm);
+  color: var(--ink);
+}
+
+html[data-template='studio'] .fact.off .fact-lbl {
+  color: var(--muted);
+}
+
+html[data-template='studio'] .gallery {
+  gap: 0.75rem;
+}
+
+html[data-template='studio'] .gallery img {
+  border-radius: 10px;
+}

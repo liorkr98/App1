@@ -1,0 +1,29 @@
+/*
+  Editorial — the reading default.
+
+  The listing brief's "three token sets" names this one as the premium
+  display scale. It stays a LIGHT page: ink-deep is the inverted third
+  template (`dark.css`), not a second copy of editorial. Shared ramps from
+  tokens.css; display type is stepped up from those ramps, not a parallel
+  scale.
+*/
+
+html[data-template='editorial'] {
+  --plaster: #f3eee4;
+  --heroH: 72svh;
+}
+
+html[data-template='editorial'] .hero-title {
+  font-size: calc(var(--t-hero) * 1.12);
+  max-inline-size: 11ch;
+  line-height: 1.12;
+}
+
+html[data-template='editorial'] .price {
+  font-size: calc(var(--t-price) * 1.08);
+  color: var(--olive);
+}
+
+html[data-template='editorial'] .facts {
+  grid-template-columns: 1fr;
+}

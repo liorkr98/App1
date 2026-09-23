@@ -1,0 +1,41 @@
+/*
+  Brochure — tall hero, wrap-facts, same ramps.
+*/
+
+html[data-template='brochure'] {
+  --heroH: 92svh;
+}
+
+html[data-template='brochure'] .hero {
+  min-block-size: 560px;
+}
+
+html[data-template='brochure'] .hero-title {
+  font-weight: 700;
+  font-size: var(--t-hero);
+  max-inline-size: 16ch;
+}
+
+html[data-template='brochure'] .price-bar {
+  padding-block: 1.5rem 0.35rem;
+}
+
+html[data-template='brochure'] .facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  background: transparent;
+  border-block: 0;
+  padding-block-end: 0.4rem;
+}
+
+html[data-template='brochure'] .fact {
+  flex: 1 1 6rem;
+  background: transparent;
+  padding: 1.15rem 0.6rem 0.2rem;
+}
+
+html[data-template='brochure'] .gallery figure:not(:first-child) img {
+  border-radius: 50%;
+  aspect-ratio: 1;
+}

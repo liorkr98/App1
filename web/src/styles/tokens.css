@@ -62,6 +62,21 @@
   --gut: 1.4rem;
 
   /*
+    Section rhythm. Identical padding on every block is why the page reads
+    as one flat stack. Tight after the hero, open before enrichment, tight
+    in the agent card (listing redesign §8).
+  */
+  --pad-tight: 1.35rem;
+  --pad-section: 2.4rem;
+  --pad-open: 3.4rem;
+
+  /* Hairline accent mark. Replaces the 6px side-tab rails Impeccable flags. */
+  --accent-mark: 2px;
+
+  /* Secondary type on inverted surfaces (agent bar, enrichment, studio chips). */
+  --muted-on-dark: #b8b7ae;
+
+  /*
     Type on inverted surfaces, and secondary type on tinted blocks.
     --muted on --stone-warm is 4.35:1; --muted-warm is the AA stop (4.83:1).
   */
@@ -73,7 +88,7 @@
 
     #5C5D54 on plaster 6.39:1, on stone-warm 5.70:1, on white 6.67:1.
     The plan's published #7A7B72 was 4.10:1 on plaster and did not ship.
-    Dark templates override this to a light stop (see listing.css).
+    Dark templates override this to a light stop (see templates/dark.css).
   */
   --absent: #5c5d54;
 
