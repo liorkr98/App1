@@ -3,6 +3,7 @@ import type { ListingLocation, PropertyEnrichment } from '@/types/listing';
 import type { AreaMap as AreaMapData } from '@/features/listings/area-map';
 import { mapNearbyItems } from '@/features/listings/nearby-map';
 import { wazeNavigateUrl } from '@/features/listings/map-card';
+import { locationPrecision, publicPlace } from '@/features/listings/control-surface';
 import { t } from '../lib/i18n';
 import AreaMap from './AreaMap.astro';
 import Prose from './Prose.astro';
@@ -23,10 +24,11 @@ interface Props {
 
 const { location, mapImageUrl, enrichment, areaMap, areaAttribution } = Astro.props;
 
-const address = location.street ? `${location.street}, ${location.city}` : location.city;
+const address = publicPlace(location);
 const nearby = enrichment ? mapNearbyItems(enrichment) : [];
+const precision = locationPrecision(location);
 const navigate =
-  location.lat !== undefined && location.lng !== undefined
+  precision === 'exact' && location.lat !== undefined && location.lng !== undefined
     ? wazeNavigateUrl(location.lat, location.lng)
     : undefined;
 ---

@@ -23,6 +23,11 @@ import { areaMap } from '@/features/listings/area-map';
 import { isWalkItem, labeledWalkItems } from '@/features/listings/photo-rooms';
 import { enrichmentHasContent } from '@/features/listings/enrichment-view';
 import { shareMessage, whatsappShareUrl } from '@/features/listings/share-message';
+import {
+  publicPlace,
+  showListingMap,
+  whatsappPrefill,
+} from '@/features/listings/control-surface';
 import { toCells } from '../lib/facts';
 import SectionLabel from './SectionLabel.astro';
 
@@ -55,7 +60,7 @@ const paragraphs = listing.description.split('\n\n');
 const heading = listing.category === 'property' ? 'על הדירה' : 'על הרכב';
 
 // A vehicle has no street, so no map. See DESIGN-CONTRACT §5.4.
-const showMap = Boolean(listing.location?.street);
+const showMap = showListingMap(listing.location);
 const mapImageUrl = mapCardSrc();
 
 /**
@@ -91,7 +96,11 @@ const walkImages = [listing.media.cover, ...listing.media.gallery];
 const walkItems = labeledWalkItems(walkImages);
 const galleryImages = listing.media.gallery.filter((image) => !isWalkItem(image, walkItems));
 const hasWalk = walkItems.length > 0;
-const waHref = `/a/${listing.slug}/wa?text=${encodeURIComponent(presentation.whatsappMessage)}`;
+const waMessage = whatsappPrefill(
+  listing.category,
+  listing.location ? publicPlace(listing.location) : undefined,
+);
+const waHref = `/a/${listing.slug}/wa?text=${encodeURIComponent(waMessage)}`;
 const homeLabel = listing.category === 'property' ? t('listing.section.home') : t('listing.section.vehicle');
 
 const shareCells = toCells(listing.category, listing.facts, listing.audience);
@@ -112,7 +121,7 @@ const pageUrl = new URL(`/a/${listing.slug}/`, Astro.site).href;
 const shareHref = whatsappShareUrl(
   shareMessage({
     title: listing.title,
-    price: listing.price > 0 ? ils(listing.price) : '',
+    price: listing.price > 0 && listing.priceDisplay !== 'on_request' ? ils(listing.price) : '',
     facts: shareFacts,
     ...(sharePlace ? { place: sharePlace } : {}),
     ...(listing.prePortal ? { prePortalLine: t('listing.prePortal') } : {}),
@@ -138,7 +147,7 @@ const shareHref = whatsappShareUrl(
 
   {!sold && (
     <div class="compact-bar">
-      {listing.price > 0 ? (
+      {listing.price > 0 && listing.priceDisplay !== 'on_request' ? (
         <span class="compact-price"><bdi>{ils(listing.price)}</bdi></span>
       ) : (
         <span class="compact-price"></span>
@@ -151,6 +160,7 @@ const shareHref = whatsappShareUrl(
     price={listing.price}
     listPrice={listing.listPrice}
     priceNote={listing.priceNote}
+    priceDisplay={listing.priceDisplay}
     perUnit={perUnit}
   />
 
@@ -220,7 +230,7 @@ const shareHref = whatsappShareUrl(
         invite a message about something that is gone. */}
       <CtaDock
         phone={listing.seller.phone}
-        message={presentation.whatsappMessage}
+        message={waMessage}
         slug={listing.slug}
         sold={sold}
       />

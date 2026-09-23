@@ -165,6 +165,13 @@ body{
   line-height:1;letter-spacing:-.02em;
   font-variant-numeric:tabular-nums;
 }
+.price-from{
+  font-family:'Assistant',sans-serif;
+  font-size:1rem;
+  font-weight:600;
+  letter-spacing:0;
+  margin-inline-end:.35rem;
+}
 .price-note{text-align:end;padding-block-end:.2rem}
 
 .highlights{
