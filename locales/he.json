@@ -134,6 +134,7 @@
     "mapTitle": "מיקום",
     "mapAlt": "מפת האזור",
     "mapNavigate": "ניווט בוויז",
+    "mapGoogle": "פתיחה בגוגל מפות",
     "mapNearby": {
       "transit": "תחבורה",
       "school": "חינוך",

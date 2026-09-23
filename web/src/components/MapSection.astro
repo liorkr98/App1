@@ -2,8 +2,9 @@
 import type { ListingLocation, PropertyEnrichment } from '@/types/listing';
 import type { AreaMap as AreaMapData } from '@/features/listings/area-map';
 import { mapNearbyItems } from '@/features/listings/nearby-map';
-import { wazeNavigateUrl } from '@/features/listings/map-card';
-import { locationPrecision, publicPlace } from '@/features/listings/control-surface';
+import { composedMapSrc } from '@/features/listings/area-map';
+import { googleMapsUrl, navigationTarget, wazeNavigateUrl } from '@/features/listings/map-card';
+import { publicPlace } from '@/features/listings/control-surface';
 import { walkPhrase } from '@/features/listings/hebrew-plural';
 import { t } from '../lib/i18n';
 import AreaMap from './AreaMap.astro';
@@ -28,11 +29,10 @@ const { location, mapImageUrl, enrichment, areaMap, areaAttribution } = Astro.pr
 
 const address = publicPlace(location);
 const nearby = enrichment ? mapNearbyItems(enrichment) : [];
-const precision = locationPrecision(location);
-const navigate =
-  precision === 'exact' && location.lat !== undefined && location.lng !== undefined
-    ? wazeNavigateUrl(location.lat, location.lng)
-    : undefined;
+const point = navigationTarget(location);
+const waze = point ? wazeNavigateUrl(point.lat, point.lng) : undefined;
+const google = point ? googleMapsUrl(point.lat, point.lng) : undefined;
+const zoomSrc = areaMap ? composedMapSrc(areaMap) : mapImageUrl;
 ---
 {
   /**
@@ -54,7 +54,9 @@ const navigate =
     <AreaMap map={areaMap} attribution={areaAttribution} />
   ) : (
   <div class="map-stage">
-    <img src={mapImageUrl} alt={t('listing.mapAlt')} loading="lazy" decoding="async" width="800" height="400">
+    <button type="button" class="map-open" data-map-open>
+      <img src={mapImageUrl} alt={t('listing.mapAlt')} loading="lazy" decoding="async" width="800" height="400" />
+    </button>
     {nearby.map((item) => (
       <span
         class={`map-pin map-pin--${item.kind}`}
@@ -68,9 +70,23 @@ const navigate =
   )}
 
   <div class="addr"><Prose text={address} /></div>
-  {navigate && (
-    <a class="map-nav" href={navigate} rel="noopener noreferrer">{t('listing.mapNavigate')}</a>
+  {(waze || google) && (
+    <div class="map-links">
+      {waze && (
+        <a class="map-nav" href={waze} rel="noopener noreferrer">{t('listing.mapNavigate')}</a>
+      )}
+      {google && (
+        <a class="map-nav" href={google} rel="noopener noreferrer">{t('listing.mapGoogle')}</a>
+      )}
+    </div>
   )}
+
+  <dialog id="listing-map" class="map-dialog" aria-label={t('listing.mapTitle')}>
+    <button type="button" class="lightbox-close" data-map-close>{t('listing.closeLightbox')}</button>
+    <div class="map-zoom">
+      <img src={zoomSrc} alt="" width="4800" height="3000" />
+    </div>
+  </dialog>
   {nearby.length > 0 && (
     <ul class="map-nearby">
       {nearby.map((item) => (

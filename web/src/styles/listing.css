@@ -496,6 +496,43 @@ p + p{margin-top:.9rem}
   block-size:100%;
   object-fit:cover;
 }
+.map-open{
+  display:block;
+  width:100%;
+  padding:0;
+  border:0;
+  background:none;
+  cursor:pointer;
+}
+.map-links{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.5rem;
+  margin-block-start:.8rem;
+}
+.map-dialog{
+  inset:0;
+  width:100%;
+  max-width:none;
+  height:100%;
+  max-height:none;
+  margin:0;
+  padding:0;
+  border:0;
+  background:var(--ink-deep);
+}
+.map-zoom{
+  overflow:auto;
+  touch-action:pinch-zoom;
+  overscroll-behavior:contain;
+  block-size:100%;
+}
+.map-zoom img{
+  max-width:none;
+  width:300%;
+  height:auto;
+  display:block;
+}
 .area-map-list{
   list-style:none;
   margin:0;

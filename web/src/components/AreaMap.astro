@@ -15,13 +15,15 @@ const src = composedMapSrc(map);
 
 <figure class="area-map">
   <div class="area-map-stage">
-    <img
-      src={src}
-      alt={t('listing.mapAlt')}
-      width="1600"
-      height="1000"
-      decoding="async"
-    />
+    <button type="button" class="map-open" data-map-open>
+      <img
+        src={src}
+        alt={t('listing.mapAlt')}
+        width="1600"
+        height="1000"
+        decoding="async"
+      />
+    </button>
   </div>
 
   <ol class="area-map-list">

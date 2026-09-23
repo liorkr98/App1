@@ -7,6 +7,10 @@
  * chips overlaid in MapSection and the named facts listed underneath.
  */
 
+import type { ListingLocation } from '../../types/listing.js';
+
+import { locationPrecision } from './control-surface.js';
+
 const SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" aria-hidden="true">
   <rect width="800" height="400" fill="#f1ede3"/>
   <g fill="none" stroke="#e4e0d6" stroke-width="8">
@@ -30,4 +34,25 @@ export function mapCardSrc(): string {
 export function wazeNavigateUrl(lat: number, lng: number): string | undefined {
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) return undefined;
   return `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;
+}
+
+export function googleMapsUrl(lat: number, lng: number): string | undefined {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return undefined;
+  return `https://maps.google.com/?q=${lat},${lng}`;
+}
+
+/**
+ * Where the navigation links point.
+ *
+ * `area` sends nothing — a neighbourhood is not a pin. `street` and `exact`
+ * use the stored coordinate. That coordinate is the street midpoint unless
+ * the agent chose exact; we do not keep a second, more precise point.
+ */
+export function navigationTarget(
+  location: ListingLocation,
+): { lat: number; lng: number } | undefined {
+  if (locationPrecision(location) === 'area') return undefined;
+  if (typeof location.lat !== 'number' || typeof location.lng !== 'number') return undefined;
+  if (!Number.isFinite(location.lat) || !Number.isFinite(location.lng)) return undefined;
+  return { lat: location.lat, lng: location.lng };
 }

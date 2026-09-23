@@ -231,6 +231,45 @@ function bindWalk(): void {
   });
 }
 
+function bindMapDialog(): void {
+  const dialog = document.getElementById('listing-map');
+  if (!(dialog instanceof HTMLDialogElement)) return;
+  let pushed = false;
+
+  const hide = (fromPop = false) => {
+    if (!dialog.open) return;
+    dialog.close();
+    if (pushed && !fromPop) {
+      pushed = false;
+      history.back();
+      return;
+    }
+    pushed = false;
+  };
+
+  document.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    if (target.closest('[data-map-open]')) {
+      event.preventDefault();
+      dialog.showModal();
+      if (!pushed) {
+        history.pushState({ listingMap: true }, '');
+        pushed = true;
+      }
+    }
+    if (target.closest('[data-map-close]')) hide();
+  });
+  dialog.addEventListener('cancel', (event) => {
+    event.preventDefault();
+    hide();
+  });
+  window.addEventListener('popstate', () => {
+    if (dialog.open) hide(true);
+  });
+}
+
 observeCounts();
 bindLightbox();
 bindWalk();
+bindMapDialog();
