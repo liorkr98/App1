@@ -8,12 +8,18 @@ interface Props {
   message: string;
   /** Public slug, so the tap is counted at /a/{slug}/wa before wa.me. */
   slug: string;
+  /**
+   * A sold listing is a record. The dock stops inviting a message about
+   * something that is gone and points at more listings instead.
+   */
+  sold?: boolean;
 }
 
-const { message, slug } = Astro.props;
+const { message, slug, sold = false } = Astro.props;
 
-const href = `/a/${slug}/wa?text=${encodeURIComponent(message)}`;
+const href = sold ? '/' : `/a/${slug}/wa?text=${encodeURIComponent(message)}`;
+const label = sold ? t('listing.moreListings') : t('listing.whatsappCta');
 ---
 <div class="cta-dock">
-  <a class="cta" href={href}>{t('listing.whatsappCta')}</a>
+  <a class="cta" href={href}>{label}</a>
 </div>

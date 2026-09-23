@@ -22,6 +22,8 @@ import { mapCardSrc } from '@/features/listings/map-card';
 import { areaMap } from '@/features/listings/area-map';
 import { isWalkItem, labeledWalkItems } from '@/features/listings/photo-rooms';
 import { enrichmentHasContent } from '@/features/listings/enrichment-view';
+import { shareMessage, whatsappShareUrl } from '@/features/listings/share-message';
+import { toCells } from '../lib/facts';
 import SectionLabel from './SectionLabel.astro';
 
 interface Props {
@@ -91,6 +93,32 @@ const galleryImages = listing.media.gallery.filter((image) => !isWalkItem(image,
 const hasWalk = walkItems.length > 0;
 const waHref = `/a/${listing.slug}/wa?text=${encodeURIComponent(presentation.whatsappMessage)}`;
 const homeLabel = listing.category === 'property' ? t('listing.section.home') : t('listing.section.vehicle');
+
+const shareCells = toCells(listing.category, listing.facts, listing.audience);
+const flatTitle = listing.title.replace(/\s*\n\s*/g, ' ');
+const shareFacts = shareCells
+  .filter((cell) => !cell.absent && cell.value !== 'אין')
+  .filter((cell) => !(flatTitle.includes(cell.value) && flatTitle.includes(cell.label)))
+  .slice(0, 4)
+  .map((cell) => {
+    if (cell.value === 'יש') return cell.label;
+    if (cell.displayValue !== cell.value) return `${cell.label} ${cell.displayValue}`;
+    return `${cell.value} ${cell.label}`;
+  });
+const sharePlace = listing.location?.street
+  ? `${listing.location.street}, ${listing.location.city}`
+  : listing.location?.city;
+const pageUrl = new URL(`/a/${listing.slug}/`, Astro.site).href;
+const shareHref = whatsappShareUrl(
+  shareMessage({
+    title: listing.title,
+    price: listing.price > 0 ? ils(listing.price) : '',
+    facts: shareFacts,
+    ...(sharePlace ? { place: sharePlace } : {}),
+    ...(listing.prePortal ? { prePortalLine: t('listing.prePortal') } : {}),
+    url: pageUrl,
+  }),
+);
 ---
 <BaseListing
   listing={listing}
@@ -180,18 +208,22 @@ const homeLabel = listing.category === 'property' ? t('listing.section.home') : 
     />
   )}
 
-  <SellerBlock seller={listing.seller} />
+  <SellerBlock
+    seller={listing.seller}
+    whatsappHref={waHref}
+    shareHref={shareHref}
+    sold={sold}
+  />
 
   <Fragment slot="after">
     {/* A sold listing is a record, not a live offer. The WhatsApp dock would
         invite a message about something that is gone. */}
-    {sold ? null : (
       <CtaDock
         phone={listing.seller.phone}
         message={presentation.whatsappMessage}
         slug={listing.slug}
+        sold={sold}
       />
-    )}
 
     {/* נבנה בהיעד is the viral loop (CLAUDE.md §8). Free listings keep it;
         a paid grant sets listing.hyadMark false and the mark comes off.

@@ -109,6 +109,9 @@
   "listing": {
     "create": "",
     "whatsappCta": "",
+    "whatsappShort": "",
+    "callCta": "",
+    "moreListings": "",
     "empty": "",
     "publish": "",
     "share": "",
