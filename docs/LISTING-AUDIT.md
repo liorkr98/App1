@@ -157,19 +157,40 @@ names as one of the reasons the page reads flat.
 
 ## 5. What I would fix first, and it is not the redesign
 
-Ranked by harm per unit of work, all three are small:
+Ranked by harm per unit of work, all three are small — **and all three were
+fixed the same day, before any redesign work.** Measured after, with the same
+method that found them:
 
-1. **`.fact.off` at 1.70:1.** Replace the opacity with a solid `--absent`
-   token that measures ≥ 4.5:1, and assert the ratio in a test the way
-   `accents.test.ts` does. This is a legal requirement (IS 5568 / WCAG AA), a
-   doctrine requirement, and about an hour.
-2. **`.h2-num` at 2.69:1.** It is using a dark-ground colour on a light ground;
-   `--olive` is the right token and already measures 6.9:1 there.
-3. **`<main>`.** One element.
+| | before | after |
+|---|---|---|
+| `.fact.off` label (7 templates) | **1.70:1** | **5.44–6.69:1** |
+| `.h2-num` on `.flaws` | **2.69:1** | **6.16:1** |
+| `<main>` landmark | absent | present, footer outside it |
+| Lighthouse accessibility | 92 / 91 | **100 / 100**, zero failures |
 
-The hero-over-photograph failure (2.46:1) is a real defect but a larger fix,
-because the honest answer is a veil that adapts to the photograph rather than a
-darker constant — and that belongs with the P3 hero work.
+1. **`.fact.off`.** The opacity is gone; a solid `--absent` token carries it,
+   `#5f6058` on the five light templates and `#9c9d93` on the two that invert
+   the cell's ground. `scripts/verify-absent-contrast.mjs` asserts the ratio
+   per template against the **built** CSS on every CI run, and fails if an
+   opacity is ever applied to `.fact.off` again.
+2. **`.h2-num`.** Now `--olive`, with `--olive-lift` kept for the one place
+   that type really is on a dark ground (`.enrich`).
+3. **`<main>`.** Added, with the footer on its own slot so the `contentinfo`
+   landmark stays top level — a footer nested inside `main` is its own axe
+   finding, and this one carries the ODbL attribution.
+
+### Still open
+
+**The hero place line over a bright photograph — 2.46:1 on the vehicle
+fixture — is NOT fixed.** The honest answer is a veil that adapts to the
+photograph rather than a darker constant, and that belongs with the P3 hero
+work.
+
+Note what this means about the 100s above: **Lighthouse cannot see text over
+an image**, which is exactly why it scored 92 while a 2.46:1 failure sat on
+the hero, and why it scores 100 now while the same failure still sits there.
+A perfect Lighthouse accessibility score is not a claim that the page's
+contrast is fine.
 
 ---
 

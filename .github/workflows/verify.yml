@@ -106,6 +106,14 @@ jobs:
       - name: Verify the motion degrades correctly
         run: node scripts/verify-motion-fallbacks.mjs
 
+      # A fact the seller confirmed absent used to render at 1.70:1 — the
+      # cell applied an opacity on top of a colour that was already under the
+      # bar. It is the distinction the product calls the reason the page
+      # reads honestly, so it has to stay readable on all seven templates,
+      # two of which invert its background.
+      - name: Verify a confirmed absence is readable
+        run: node scripts/verify-absent-contrast.mjs
+
       - name: Report built page weight
         run: node scripts/report-page-weight.mjs
 

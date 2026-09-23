@@ -22,7 +22,17 @@ fails there because the Playwright CDN is blocked by the egress proxy. So:
     must say so rather than reporting a Chromium pass as Safari coverage.
   - Context7 is unreachable from the container (proxy returns 403 on CONNECT),
     so version-specific doc lookups also belong to the Mac.
-  - chrome-devtools-mcp works in both places; it drives the local Chromium.
+  - chrome-devtools-mcp connects in both places, but in the container it
+    cannot LAUNCH: it looks for Chrome stable at /opt/google/chrome/chrome
+    and only Playwright's Chromium is installed. On a Mac with Chrome it
+    works as the brief describes. In the container, drive Lighthouse through
+    the `lighthouse` package with CHROME_PATH pointed at
+    /opt/pw-browsers/chromium-1194/chrome-linux/chrome — same engine.
+
+Lighthouse cannot see text over an image. It scored this page 92 while the
+hero place line sat at 2.46:1 over a bright photograph, and scores it 100 now
+with that failure unchanged. Contrast over photography has to be measured by
+sampling the pixels under the glyphs; see docs/LISTING-AUDIT.md §2.2.
 
 Never report an unmeasured number (CLAUDE.md 11.5). "Verified on Chromium,
 WebKit not run here" is a complete and acceptable report. "Verified" alone,

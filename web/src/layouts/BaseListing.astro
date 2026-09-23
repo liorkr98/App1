@@ -209,8 +209,25 @@ body{
   font-variant-numeric:tabular-nums;
 }
 .fact-lbl{font-size:var(--t-label);color:var(--muted);margin-top:.2rem}
+/*
+  A CONFIRMED ABSENCE IS QUIETER, NOT FAINTER.
+
+  This used to be `opacity:.42` over --muted on --stone-warm. --muted is
+  already only 4.35:1 on that tint, and the opacity composited it toward the
+  background until אין rendered at 1.70:1 — measured, not estimated. Most
+  people cannot read that, which meant the product kept the distinction it
+  calls the reason the page reads as a description rather than an
+  advertisement (CLAUDE.md §7) at a contrast that effectively hid it.
+
+  --absent is a solid colour with a measured floor instead. It stays visibly
+  secondary to a present fact — 5.44:1 against --ink's 16.77:1 on the same
+  ground — while remaining readable. scripts/verify-absent-contrast.mjs
+  asserts it against every template's own .fact.off ground on each build,
+  because two templates invert that ground and a single value cannot serve
+  both.
+*/
 .fact.off{background:var(--stone-warm)}
-.fact.off .fact-val,.fact.off .fact-lbl{opacity:.42}
+.fact.off .fact-val,.fact.off .fact-lbl{color:var(--absent)}
 
 /* פרובננס — מי עומד מאחורי המספר. זית בקו, לא וי ירוק:
    וי נקרא "טוב", וזו אמירה על מי שרשם את הנתון ולא המלצה. */
@@ -232,7 +249,15 @@ h2{
   line-height:1.2;margin-bottom:.85rem;
   text-wrap:balance;
 }
-h2 .h2-num{color:var(--olive-lift);font-weight:700}
+/*
+  --olive, not --olive-lift. The lift is the accent carried up for type on a
+  DARK ground; on .flaws (--stone-warm) it measured 2.69:1 against a 3.0 bar
+  for display type. --olive is 6.16:1 there and clears it on every template.
+  The enrichment block is the one place this type really is on a dark ground,
+  and it takes the lift back below.
+*/
+h2 .h2-num{color:var(--olive);font-weight:700}
+.enrich h2 .h2-num{color:var(--olive-lift)}
 p{max-width:62ch}
 p + p{margin-top:.9rem}
 
@@ -460,6 +485,14 @@ html {
     dark surface and this would be dark-on-dark.
   */
   --muted-warm: #67685f;
+
+  /*
+    The colour of a fact the seller confirmed is absent. 5.44:1 at worst
+    across the five light templates' .fact.off grounds — the floor is
+    --stone-warm on editorial, and every other light template is lighter.
+    The two templates whose absent cell is DARK override it below.
+  */
+  --absent: #5f6058;
 }
 
 html[data-template='agency'] {
@@ -649,6 +682,12 @@ html[data-template='dark'] .facts {
   border-block: 1px solid var(--stone);
 }
 
+/* The absent cell here is transparent over this template's own near-black
+   ground, so the light dim value applies instead of the dark one. */
+html[data-template='dark'] {
+  --absent: #9c9d93;
+}
+
 html[data-template='dark'] .fact {
   background: transparent;
   padding-block: 1.4rem;
@@ -833,6 +872,12 @@ html[data-template='poster'] .fact-cite {
   color: #9c9d93;
 }
 
+/* Same inversion as the dark template: the absent cell's ground here is the
+   caption band, so the absent colour has to come up rather than down. */
+html[data-template='poster'] {
+  --absent: #9c9d93;
+}
+
 /* A confirmed absence still has to read as one on the dark band. */
 html[data-template='poster'] .fact.off {
   background: #1a1b10;
@@ -1006,6 +1051,19 @@ html[data-template='warm'] .avatar {
   )}
 </div>
 
+{/*
+  <main> so a screen-reader user can skip the agent bar and the hero and
+  reach the listing itself. Lighthouse flagged landmark-one-main; neither
+  built page had a main element at all.
+
+  The footer comes through its own slot so it stays OUTSIDE main. A
+  contentinfo landmark nested inside main is its own axe finding, and this
+  footer carries the ODbL attribution, which is a licence condition and
+  should be reachable as a landmark in its own right.
+*/}
+<main>
 <slot />
+</main>
+<slot name="footer" />
 </body>
 </html>
