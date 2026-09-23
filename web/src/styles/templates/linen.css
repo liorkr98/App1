@@ -11,7 +11,7 @@ html[data-template='linen'] {
   --ink-deep: #23180f;
   --muted: #6d5844;
   --muted-warm: #6d5844;
-  --heroH: 70svh;
+  --heroWant: 70svh;
 }
 
 html[data-template='linen'] .hero-title {

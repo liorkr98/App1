@@ -12,11 +12,11 @@ html[data-template='agency'] {
   --stone-warm: #faf6f0;
   --plaster: #ffffff;
   --muted: #6b6259;
-  --heroH: 54svh;
+  --heroWant: 54svh;
 }
 
 html[data-template='agency'] .hero {
-  min-height: 320px;
+  min-height: 0;
 }
 
 html[data-template='agency'] .hero-title {

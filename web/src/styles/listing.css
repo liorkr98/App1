@@ -93,6 +93,16 @@ body{
 .agent-bar .dot img{inline-size:100%;block-size:100%;object-fit:cover;border-radius:50%;display:block}
 .agent-bar strong{font-weight:600}
 .agent-bar span{color:#9C9D93;margin-inline-start:auto;font-size:.8rem}
+.agent-verified{
+  flex:0 0 auto;
+  font-size:.62rem;
+  font-weight:600;
+  color:var(--olive-lift);
+  border:1px solid var(--olive-lift);
+  border-radius:2px;
+  padding:.02rem .28rem;
+  line-height:1.4;
+}
 .agent-bar a{
   color:inherit;
   display:inline-flex;
@@ -104,7 +114,7 @@ body{
 /* ============================================================
    Hero — full bleed, פרלקסה נטיבית
    ============================================================ */
-.hero{position:relative;height:var(--heroH);min-height:440px;overflow:hidden;background:var(--stone)}
+.hero{position:relative;height:var(--heroH);min-height:0;overflow:hidden;background:var(--stone)}
 .hero-img{position:absolute;inset:0;width:100%;height:118%;object-fit:cover;display:block}
 
 .hero-veil{
@@ -147,7 +157,7 @@ body{
    ============================================================ */
 .price-bar{
   display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;
-  padding:1.5rem var(--gut) 1.35rem;
+  padding:1.05rem var(--gut) .7rem;
 }
 .price{
   font-family:'Frank Ruhl Libre',serif;
@@ -156,6 +166,24 @@ body{
   font-variant-numeric:tabular-nums;
 }
 .price-note{text-align:end;padding-block-end:.2rem}
+
+.highlights{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.4rem;
+  list-style:none;
+  padding:.1rem var(--gut) .55rem;
+  margin:0;
+}
+.highlights li{
+  border:1px solid var(--stone);
+  border-radius:999px;
+  padding:.28rem .75rem;
+  font-size:var(--t-label);
+  font-weight:600;
+  color:var(--ink);
+  line-height:1.3;
+}
 
 /* ============================================================
    עובדות — מספרים בסריף, לא טבלה
@@ -586,17 +614,14 @@ body:has(.sold-banner){padding-bottom:2rem}
   .tour-card{transform:none;opacity:1}
 }
 
-/* M7 — sticky compact bar. Sits in flow under the hero; sticks after it leaves. */
+/* M7 — compact bar after the hero. Hidden until the hero leaves, so it does
+   not sit on the first screen under the dock. Browsers without view() keep
+   only the dock (one WhatsApp, thumb-reach). */
+/* Compact bar waits for P9 (M7). On the first screen it stole space from
+   the price and sat under the dock. The dock is the thumb WhatsApp; the
+   PriceBar is the dominant price. */
 .compact-bar{
-  position:sticky;
-  inset-block-start:0;
-  z-index:24;
-  display:flex;
-  align-items:center;
-  gap:.8rem;
-  padding:.55rem var(--gut);
-  background:var(--plaster);
-  border-block-end:1px solid var(--stone);
+  display:none;
 }
 .compact-price{
   font-family:'Frank Ruhl Libre',serif;

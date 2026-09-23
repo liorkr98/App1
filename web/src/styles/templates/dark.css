@@ -15,7 +15,7 @@ html[data-template='dark'] {
   --muted: #a3a498;
   --muted-warm: #a3a498;
   --absent: #a3a498;
-  --heroH: 94svh;
+  --heroWant: 94svh;
 }
 
 html[data-template='dark'] .enrich {

@@ -91,6 +91,7 @@ const showBarLogo =
   lang="he"
   dir="rtl"
   data-template={listing.template}
+  data-category={listing.category}
   data-logo={logoPlacement}
   data-has-walk={hasWalk ? '1' : undefined}
   style={`--heroH:${heroHeight};--accent:${accent.base};--accent-lift:${accent.lift}`}
@@ -143,14 +144,17 @@ const showBarLogo =
 <div class="progress" aria-hidden="true"></div>
 
 <header class="agent-bar">
-  <div class="dot" aria-hidden="true">
-    {showBarLogo ? (
+  {showBarLogo ? (
+    <div class="dot" aria-hidden="true">
       <img src={listing.seller.agencyLogoUrl} alt="" />
-    ) : null}
-  </div>
+    </div>
+  ) : null}
   {agency ? (
     <Fragment>
       <strong>{listing.seller.name}</strong>
+      {listing.seller.licenceVerified ? (
+        <span class="agent-verified">{t('listing.licenceVerified')}</span>
+      ) : null}
       <span>{agency}</span>
     </Fragment>
   ) : (

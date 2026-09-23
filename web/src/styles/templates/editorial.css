@@ -10,7 +10,7 @@
 
 html[data-template='editorial'] {
   --plaster: #f3eee4;
-  --heroH: 72svh;
+  --heroWant: 72svh;
 }
 
 html[data-template='editorial'] .hero-title {

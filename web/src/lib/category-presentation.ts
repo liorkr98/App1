@@ -35,9 +35,10 @@ export interface CategoryPresentation {
 
 export const CATEGORY_PRESENTATION: Record<ListingCategory, CategoryPresentation> = {
   property: {
-    // A room rewards height: 84svh shows floor-to-ceiling and makes the
-    // photograph the whole first screen, which is the point of the revision.
-    heroHeight: '84svh',
+    // Capped so price + chips + the dock fit on a 375×667 first screen (§4).
+    // Templates set --heroWant; this min() lets a shorter template (agency)
+    // win and clips a taller one (dark 94svh) to the remaining viewport.
+    heroHeight: 'min(var(--heroWant, 72svh), calc(100svh - 16rem))',
     ogFactKeys: ['area_sqm', 'floor', 'elevator', 'balcony_sqm', 'parking', 'shelter'],
     whatsappMessage: 'היי, ראיתי את הדירה ואשמח לפרטים',
   },
@@ -45,7 +46,7 @@ export const CATEGORY_PRESENTATION: Record<ListingCategory, CategoryPresentation
     // A car is a wide object. The rationale is unchanged from the aspect-ratio
     // era — a tall frame either crops the car or fills the rest with asphalt —
     // and it now expresses itself as a shorter hero rather than a wider crop.
-    heroHeight: '64svh',
+    heroHeight: 'min(var(--heroWant, 58svh), calc(100svh - 16rem))',
     ogFactKeys: ['hand', 'mileage', 'gearbox', 'test_until'],
     whatsappMessage: 'היי, ראיתי את הרכב ואשמח לפרטים',
   },

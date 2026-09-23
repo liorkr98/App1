@@ -41,7 +41,7 @@ type Stem = keyof typeof DIM;
 function photo(
   stem: Stem,
   alt: string,
-  extra: { caption?: string; room?: Image['room'] } = {},
+  extra: { caption?: string; room?: Image['room']; focalX?: number; focalY?: number } = {},
 ): Image {
   const size = DIM[stem];
   return {
@@ -131,7 +131,7 @@ export const tlvListing: Listing = {
     entry_date: 'גמיש',
   }),
   media: {
-    cover: photo('tlv-living', 'סלון ומטבח פתוחים', { room: 'living' }),
+    cover: photo('tlv-living', 'סלון ומטבח פתוחים', { room: 'living', focalX: 48, focalY: 38 }),
     gallery: [
       photo('tlv-kitchen', 'מטבח עם אריחי משושה', { caption: 'מטבח', room: 'kitchen' }),
       photo('tlv-balcony', 'תריסים ומרפסת בחזית', { caption: 'מרפסת', room: 'balcony' }),
@@ -156,6 +156,7 @@ export const tlvListing: Listing = {
   publishedAt: '2026-09-18T00:00:00.000Z',
   indexable: false,
   hyadMark: false,
+  highlights: ['ממ״ד', 'מרפסת שמש', 'חניה'],
 };
 
 const holonPartial: PropertyEnrichment = {
