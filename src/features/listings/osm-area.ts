@@ -1,4 +1,5 @@
 import type { AreaPlace, AreaPlaces } from './area-note.js';
+import { rankEveryday, shopName } from './place-rank.js';
 
 /**
  * OpenStreetMap features → the five groups the area paragraph talks about.
@@ -292,7 +293,8 @@ export function placesFromOsm(
 
     if (!group) continue;
 
-    const name = nameFor(tags);
+    const namedShop = group === 'shop' ? shopName(tags) : undefined;
+    const name = namedShop ? ('name' in namedShop ? namedShop.name : undefined) : nameFor(tags);
     if (!name) continue;
 
     // The city's own boundary relation matches place=* and would otherwise
@@ -326,7 +328,7 @@ export function placesFromOsm(
     transit: nearestFirst(buckets.transit, origin).slice(0, KEEP),
     parks: nearestFirst(buckets.park, origin).slice(0, KEEP),
     community: nearestFirst(buckets.community, origin).slice(0, KEEP),
-    shops: nearestFirst(buckets.shop, origin).slice(0, KEEP),
+    shops: rankEveryday(nearestFirst(buckets.shop, origin)),
   };
 }
 

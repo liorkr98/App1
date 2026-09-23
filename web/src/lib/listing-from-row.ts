@@ -11,6 +11,7 @@ import { canonicalSellerRole } from '@/features/agents/profile';
 import { parseEnrichmentBlock } from '@/features/listings/enrichment-payload';
 import { descriptionOrArea } from '@/features/listings/neighborhood-note';
 import { OSM_ATTRIBUTION, type AreaPlace, type AreaPlaces } from '@/features/listings/area-note';
+import { applyPicks, rankEveryday } from '@/features/listings/place-rank';
 import { isPhotoRoom } from '@/features/listings/photo-rooms';
 
 import { listingBySlug } from './listings';
@@ -105,6 +106,10 @@ function asAreaPlaces(value: unknown): AreaPlaces | undefined {
     ? { lat: asCoord(value.origin.lat), lon: asCoord(value.origin.lon) }
     : undefined;
 
+  const picked = Array.isArray(value.picked)
+    ? value.picked.filter((name): name is string => typeof name === 'string').slice(0, 8)
+    : [];
+  const shops = group('shops');
   const places: AreaPlaces = {
     city: value.city,
     ...(typeof value.street === 'string' ? { street: value.street } : {}),
@@ -112,11 +117,11 @@ function asAreaPlaces(value: unknown): AreaPlaces | undefined {
       ? { origin: { lat: origin.lat, lon: origin.lon } }
       : {}),
     neighbourhoods: group('neighbourhoods'),
-    schools: group('schools'),
-    transit: group('transit'),
-    parks: group('parks'),
-    community: group('community'),
-    shops: group('shops'),
+    schools: picked.length > 0 ? applyPicks(group('schools'), picked) : group('schools'),
+    transit: picked.length > 0 ? applyPicks(group('transit'), picked) : group('transit'),
+    parks: picked.length > 0 ? applyPicks(group('parks'), picked) : group('parks'),
+    community: picked.length > 0 ? applyPicks(group('community'), picked) : group('community'),
+    shops: picked.length > 0 ? applyPicks(shops, picked) : rankEveryday(shops),
   };
 
   return AREA_GROUPS.some((key) => places[key].length > 0) ? places : undefined;
