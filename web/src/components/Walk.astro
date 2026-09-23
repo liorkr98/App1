@@ -56,12 +56,12 @@ const show = slides.length > 0 || Boolean(tourUrl);
     <p class="walk-lead">{t('listing.walkLead')}</p>
     <nav class="tour-chips" aria-label={t('listing.walkTitle')}>
       {groups.map((group) => (
-        <label for={`walk-p${firstIndexByRoom.get(t(`editor.rooms.${group.room}`)) ?? 0}`}>
+        <a href={`#walk-frame-${firstIndexByRoom.get(t(`editor.rooms.${group.room}`)) ?? 0}`}>
           {t(`editor.rooms.${group.room}`)}
-        </label>
+        </a>
       ))}
       {floorPlan ? (
-        <label for={`walk-p${slides.length - 1}`}>{t('listing.floorPlan')}</label>
+        <a href={`#walk-frame-${slides.length - 1}`}>{t('listing.floorPlan')}</a>
       ) : null}
       {tourUrl ? (
         <a href={tourUrl} target="_blank" rel="noopener noreferrer">
@@ -108,6 +108,7 @@ const show = slides.length > 0 || Boolean(tourUrl);
                   class="gallery-open"
                   data-lightbox={largest(slide.image, GALLERY_WIDTHS)}
                   data-alt={alt}
+                  data-room={slide.label}
                 >
                   <img
                     src={largest(slide.image, GALLERY_WIDTHS)}
