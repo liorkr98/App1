@@ -106,7 +106,8 @@ export const propertyListing: Listing = {
   category: 'property',
 
   title: 'דירת 4 חדרים,\nמשופצת מהיסוד',
-  description: SAMPLE_AREA,
+  description:
+    'דירת ארבעה חדרים ששופצה מהיסוד. הסלון נפתח למרפסת שמש של 12 מ״ר, לכיוון דרום־מזרח, והמטבח חודש עם שאר הדירה. יש מעלית, חניה וממ״ד.',
   price: 1850000,
   currency: 'ILS',
   priceNote: 'פינוי גמיש',
