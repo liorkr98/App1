@@ -77,7 +77,7 @@ these back to fixed rem values.**
 
 | Token | Value |
 |---|---|
-| `--gut` | `1.4rem` |
+| `--gut` | `1.7rem` |
 
 One gutter, used by every full-bleed block. Page width is `620px`.
 
@@ -199,7 +199,7 @@ stylesheet they link — to prove it.
 |---|---|
 | Page max width | `620px`, `margin-inline:auto` |
 | Body bottom padding | `padding-block-end: 7rem` (clears the fixed CTA dock) |
-| Section padding | `2.4rem var(--gut)` |
+| Section padding | `3rem var(--gut)` |
 | Facts grid | `repeat(3,1fr)`, `gap:1px` over a `--stone` ground — the hairlines ARE the gap |
 | Absent fact | `.fact.off` → `--stone-warm` ground, `opacity:.42` on value and label |
 | Gallery | first figure `grid-column:1 / -1` at `16/10`, the rest paired at `4/3`, `gap:.5rem`, radius `2px` |

@@ -222,7 +222,7 @@
   list-style: none;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.7rem;
+  gap: 1rem;
 }
 
 .template-card {
@@ -230,7 +230,7 @@
   flex-direction: column;
   inline-size: 100%;
   min-block-size: 0;
-  padding: 0.55rem;
+  padding: 0.75rem;
   font: inherit;
   text-align: start;
   color: var(--ink);
@@ -278,10 +278,18 @@
 }
 
 .thumb-hero,
+.thumb-hero-photo,
 .thumb-film,
 .thumb-price,
 .thumb-facts {
   display: block;
+}
+
+.thumb-hero-photo {
+  block-size: 42%;
+  inline-size: 100%;
+  object-fit: cover;
+  border-radius: 3px;
 }
 
 .thumb-hero {
@@ -296,10 +304,14 @@
   block-size: 38%;
 }
 
+.thumb-film img,
 .thumb-film > span {
   flex: 1;
   border-radius: 2px;
   background: #8a8d7c;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
 }
 
 .thumb-film > span:first-child {
@@ -333,7 +345,8 @@
   background: #fff;
 }
 
-.thumb-agency .thumb-hero {
+.thumb-agency .thumb-hero,
+.thumb-agency .thumb-hero-photo {
   block-size: 28%;
 }
 
@@ -349,7 +362,8 @@
   background: #f3eee4;
 }
 
-.thumb-editorial .thumb-hero {
+.thumb-editorial .thumb-hero,
+.thumb-editorial .thumb-hero-photo {
   block-size: 52%;
   background: linear-gradient(to top, #2a2924 30%, #c4bba8 100%);
 }
@@ -362,7 +376,8 @@
   background: #14150f;
 }
 
-.thumb-dark .thumb-hero {
+.thumb-dark .thumb-hero,
+.thumb-dark .thumb-hero-photo {
   block-size: 52%;
   background: linear-gradient(to top, #0a0b06 10%, #6a6d5c 100%);
 }
@@ -383,7 +398,8 @@
   background: #fff;
 }
 
-.thumb-brochure .thumb-hero {
+.thumb-brochure .thumb-hero,
+.thumb-brochure .thumb-hero-photo {
   block-size: 72%;
 }
 
@@ -399,7 +415,8 @@
   background: #f4e6cf;
 }
 
-.thumb-linen .thumb-hero {
+.thumb-linen .thumb-hero,
+.thumb-linen .thumb-hero-photo {
   block-size: 50%;
   background: linear-gradient(to top, #6e2639 18%, #c17a55 100%);
 }
@@ -418,7 +435,8 @@
   background: #141310;
 }
 
-.thumb-studio .thumb-hero {
+.thumb-studio .thumb-hero,
+.thumb-studio .thumb-hero-photo {
   block-size: 52%;
   border-radius: 8px;
   background: linear-gradient(to top, #1a1916 10%, #8c4a2f 100%);

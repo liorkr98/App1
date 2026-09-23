@@ -204,7 +204,7 @@ body{
   gap:1px;background:var(--stone);
   border-block:1px solid var(--stone);
 }
-.fact{background:var(--plaster);padding:1.05rem .75rem;text-align:start}
+.fact{background:var(--plaster);padding:1.3rem 0.95rem;text-align:start}
 .fact-val{
   font-family:'Frank Ruhl Libre',serif;font-weight:500;
   font-size:var(--t-num);line-height:1.1;letter-spacing:-.01em;

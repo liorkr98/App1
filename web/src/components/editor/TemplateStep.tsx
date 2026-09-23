@@ -10,6 +10,8 @@ interface Props {
   onChoose: (template: TemplateId) => void;
   accent?: string | undefined;
   onAccent: (accent: AccentId) => void;
+  /** The seller's own photos, so the picker is the page not a grey slab. */
+  photos?: readonly string[];
 }
 
 /**
@@ -18,8 +20,10 @@ interface Props {
  * The facsimile beside this step restyles from `data-template` and
  * `--accent`. These cards are the picker; that preview is the proof.
  */
-export function TemplateStep({ chosen, onChoose, accent, onAccent }: Props) {
+export function TemplateStep({ chosen, onChoose, accent, onAccent, photos = [] }: Props) {
   const palette = isAccentId(accent) ? accent : 'olive';
+  const cover = photos[0];
+  const film = [0, 1, 2, 3].map((index) => photos[index]);
 
   return (
     <div className="template-step">
@@ -63,11 +67,12 @@ export function TemplateStep({ chosen, onChoose, accent, onAccent }: Props) {
               >
                 {template === 'walkFirst' ? (
                   <span className="thumb-film">
-                    <span />
-                    <span />
-                    <span />
-                    <span />
+                    {film.map((src, index) =>
+                      src ? <img key={`${src}-${index}`} src={src} alt="" /> : <span key={index} />,
+                    )}
                   </span>
+                ) : cover ? (
+                  <img className="thumb-hero-photo" src={cover} alt="" />
                 ) : (
                   <span className="thumb-hero" />
                 )}

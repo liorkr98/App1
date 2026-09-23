@@ -4,9 +4,12 @@ import { describe, it } from 'node:test';
 import type { Fact } from '../../types/listing.js';
 import {
   acceptDescription,
+  appendRewrite,
   descriptionPrompt,
   factFragments,
   groundedDescription,
+  rewriteInstruction,
+  sameParagraph,
   type ListingCopyInput,
 } from './listing-copy.js';
 
@@ -184,5 +187,32 @@ describe('descriptionPrompt', () => {
     assert.ok(prompt.includes('חדרים: 4'));
     assert.ok(prompt.includes('הרכבת הקלה אחוזה'));
     assert.ok(!/\d+\.\d{4,}/.test(prompt));
+  });
+});
+
+describe('rewriteInstruction', () => {
+  it('asks for a different paragraph and quotes the previous one', () => {
+    const extra = rewriteInstruction('דירה בתל אביב, 4 חדרים.');
+    assert.ok(extra.includes('ניסוח אחר'));
+    assert.ok(extra.includes('דירה בתל אביב, 4 חדרים.'));
+  });
+
+  it('appends nothing when the box is empty', () => {
+    assert.equal(appendRewrite('base', ''), 'base');
+    assert.equal(appendRewrite('base', '   '), 'base');
+  });
+
+  it('treats whitespace-only differences as the same paragraph', () => {
+    assert.equal(sameParagraph('א  ב', 'א ב'), true);
+    assert.equal(sameParagraph('א', 'ב'), false);
+  });
+});
+
+describe('groundedDescription alternate', () => {
+  it('opens on the features so a second press is not a copy', () => {
+    const first = groundedDescription(PROPERTY);
+    const second = groundedDescription(PROPERTY, { alternate: true });
+    assert.notEqual(first, second);
+    assert.ok(second.startsWith('יש '));
   });
 });

@@ -11,7 +11,6 @@ import Prose from '../components/Prose.astro';
 import PriceTiers from '../components/PriceTiers.astro';
 import SectionLabel from '../components/SectionLabel.astro';
 import { TEMPLATE_IDS } from '@/types/listing';
-import { ACCENTS } from '@/features/agents/accents';
 import { propertyListing, vehicleListing, withNamedRooms } from '../lib/listings';
 import '../styles/tokens.css';
 
@@ -987,48 +986,54 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         bottom keeps the screens honest and the captions on one line.
       */
       .tpl-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: clamp(0.85rem, 2.2vw, 1.75rem);
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(11.5rem, 1fr));
+        gap: clamp(1.4rem, 3vw, 2.4rem);
         align-items: stretch;
         justify-content: center;
         inline-size: 100%;
+        padding-block: 0.6rem 0.2rem;
       }
 
       @media (max-width: 719px) {
         .tpl-row {
+          display: flex;
           flex-wrap: nowrap;
           justify-content: start;
           overflow-x: auto;
           overscroll-behavior-inline: contain;
           scroll-snap-type: inline mandatory;
           padding-block-end: 0.4rem;
+          gap: 1.1rem;
         }
         .tpl-row .device {
-          flex: 0 0 10.75rem;
+          flex: 0 0 13.5rem;
           max-inline-size: none;
-          min-inline-size: 10.75rem;
+          min-inline-size: 13.5rem;
           scroll-snap-align: start;
         }
       }
 
       .tpl-row .device {
         grid-template-rows: auto 1fr;
-        flex: 1 1 9.25rem;
-        max-inline-size: 13.75rem;
-        min-inline-size: 8.25rem;
+        max-inline-size: 16.5rem;
+        min-inline-size: 0;
+        padding: 0.45rem;
+        background: var(--stone-warm);
+        border: var(--rule);
+        border-radius: 22px;
       }
 
       .tpl-row .device[data-tpl='dark'] {
-        max-inline-size: 14.5rem;
+        max-inline-size: 17rem;
       }
 
       .tpl-row .device[data-tpl='walkFirst'] {
-        max-inline-size: 15rem;
+        max-inline-size: 17.5rem;
       }
 
       .tpl-row .device[data-tpl='brochure'] {
-        max-inline-size: 12rem;
+        max-inline-size: 15.5rem;
       }
 
       .tpl-row .device-label,
@@ -1370,30 +1375,94 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
 
       .proof-track {
         display: grid;
-        gap: 0;
+        gap: clamp(2.4rem, 5vw, 4rem);
       }
       .proof-chapter {
-        min-block-size: 85svh;
+        display: grid;
+        gap: clamp(1.2rem, 3vw, 2rem);
+        align-items: center;
       }
-      .proof-sticky {
-        position: sticky;
-        inset-block-start: 0;
-        padding-block: 2.5rem;
-        background: var(--plaster);
+      @media (min-width: 880px) {
+        .proof-chapter {
+          grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.15fr);
+        }
+        .proof-chapter:nth-child(even) .proof-copy {
+          order: 2;
+        }
       }
-      .proof-sticky h3 {
+      .proof-copy h3 {
         font-family: 'Frank Ruhl Libre', serif;
         font-size: var(--heading);
-        margin-block: 0.35rem 0.4rem;
+        margin-block: 0.35rem 0.5rem;
       }
-      .proof-sticky p {
+      .proof-copy p {
         color: var(--muted);
-        max-inline-size: 46ch;
+        max-inline-size: 42ch;
       }
       .proof-index {
         font-variant-numeric: tabular-nums;
         color: var(--olive);
         font-weight: 700;
+      }
+      .proof-visual {
+        border-radius: 18px;
+        overflow: hidden;
+        background: var(--stone-warm);
+        border: var(--rule);
+        min-block-size: 14rem;
+      }
+      .proof-mosaic {
+        display: grid;
+        grid-template-columns: 1.45fr 1fr;
+        grid-template-rows: 1fr 1fr;
+        gap: 0.28rem;
+        padding: 0.45rem;
+        min-block-size: 16rem;
+      }
+      .proof-mosaic img {
+        display: block;
+        inline-size: 100%;
+        block-size: 100%;
+        object-fit: cover;
+        border-radius: 10px;
+      }
+      .proof-mosaic img:first-child {
+        grid-row: 1 / -1;
+      }
+      .proof-form {
+        display: grid;
+        gap: 0.7rem;
+        padding: 1.1rem 1rem;
+      }
+      .proof-field {
+        display: grid;
+        gap: 0.28rem;
+        padding: 0.7rem 0.8rem;
+        background: var(--plaster);
+        border: var(--rule);
+        border-radius: 10px;
+      }
+      .proof-field span {
+        font-size: var(--meta);
+        color: var(--muted);
+      }
+      .proof-field strong {
+        font-size: 1.02rem;
+      }
+      .proof-phones {
+        display: flex;
+        gap: 0.7rem;
+        padding: 0.85rem 0.7rem;
+        overflow-x: auto;
+        overscroll-behavior-inline: contain;
+      }
+      .proof-phones .device {
+        flex: 0 0 8.4rem;
+        max-inline-size: 8.4rem;
+        min-inline-size: 8.4rem;
+      }
+      .proof-thread {
+        padding: 1rem;
       }
 
       .compare {
@@ -1451,8 +1520,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         max-inline-size: 46ch;
       }
 
-      .around-list,
-      .verified-list {
+      .around-list {
         list-style: none;
         padding: 0;
         margin: 1rem 0 0;
@@ -1460,8 +1528,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
         gap: 0.8rem;
       }
-      .around-list li,
-      .verified-list li {
+      .around-list li {
         padding: 1.05rem 1.15rem;
         background: var(--stone-warm);
         border-radius: 16px;
@@ -1487,41 +1554,6 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         color: var(--muted);
         font-size: var(--meta);
         margin-block-start: 0.35rem;
-      }
-      .verified-list .verified {
-        font-size: 0.62rem;
-        font-weight: 600;
-        color: var(--olive);
-        border: 1px solid var(--olive);
-        border-radius: 2px;
-        padding: 0.02rem 0.28rem;
-      }
-
-      .palette-band {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
-        gap: 0.7rem;
-        margin-block-start: 1.2rem;
-      }
-      .palette-swatch {
-        display: grid;
-        gap: 0.45rem;
-        padding: 0.9rem 0.85rem 1rem;
-        border-radius: 16px;
-        background: var(--stone-warm);
-        text-decoration: none;
-        color: inherit;
-      }
-      .palette-swatch .chip {
-        display: block;
-        inline-size: 2.4rem;
-        block-size: 2.4rem;
-        border-radius: 50%;
-        background: var(--chip);
-        box-shadow: 0 8px 18px -10px var(--chip);
-      }
-      .palette-swatch strong {
-        font-size: 0.92rem;
       }
 
       /* ---------- Motion ----------
@@ -1661,9 +1693,6 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         .hero-line > span {
           animation: none;
         }
-        .proof-sticky {
-          position: static;
-        }
 
         @keyframes fade {
           from {
@@ -1761,67 +1790,6 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
       </div>
     </section>
 
-    <section>
-      <div class="shell">
-        <div class="section-head">
-          <h2>{t('home.paletteTitle')}</h2>
-          <p>{t('home.paletteBody')}</p>
-        </div>
-        <div class="palette-band">
-          {
-            ACCENTS.map((accent) => (
-              <a class="palette-swatch" href="/new/?fresh=1" style={`--chip: ${accent.base}`}>
-                <span class="chip" />
-                <strong>{t(`agent.accents.${accent.id}`)}</strong>
-              </a>
-            ))
-          }
-        </div>
-      </div>
-    </section>
-
-    {/*
-      THE CARD THE LINK BECOMES.
-
-      The highest-leverage thing in the product (CLAUDE.md §6) and the homepage
-      never showed it — `home.linkTitle`, `home.linkBody` and
-      `home.linkCaption` were written for this block and nothing rendered them,
-      which is half the reason the page read as empty. An agent decides whether
-      this is worth four minutes by looking at what lands in the group chat.
-
-      OUTGOING, SO IT SITS AT THE INLINE END. In an RTL thread the message you
-      sent is on the left; `margin-inline-start: auto` puts it there without
-      naming a side (§4.1).
-    */}
-    <section class="link-band">
-      <div class="shell">
-        <div class="link-grid">
-          <div class="section-head">
-            <h2>{t('home.linkTitle')}</h2>
-            <p>{t('home.linkBody')}</p>
-          </div>
-
-          <div class="thread">
-            <div class="bubble">
-              <div class="card">
-                <img src={cardImage} alt="" loading="lazy" decoding="async" width="1200" height="630" />
-                <div class="card-text">
-                  <strong><Prose text={cardTitle} /></strong>
-                  <span><Prose text={cardFacts} /></span>
-                  <em dir="ltr">hasivuv.com</em>
-                </div>
-              </div>
-              {/* bdi, not only dir="ltr": the slug carries digits inside a
-                  Hebrew document, and §4.2 wants them isolated by the tag the
-                  build gate can see. */}
-              <span class="bubble-link"><bdi dir="ltr">hasivuv.com/a/A7K2M</bdi></span>
-            </div>
-            <p class="thread-note">{t('home.linkCaption')}</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
     <section class="proof">
       <div class="shell">
         <div class="section-head">
@@ -1830,31 +1798,74 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         </div>
         <div class="proof-track">
           <article class="proof-chapter">
-            <div class="proof-sticky">
+            <div class="proof-copy">
               <p class="proof-index"><bdi>1</bdi> / <bdi>4</bdi></p>
               <h3>{t('home.proof1')}</h3>
               <p>{t('home.proof1Body')}</p>
             </div>
+            <div class="proof-visual proof-mosaic" aria-hidden="true">
+              <img src={largest(propertyListing.media.cover, HERO_WIDTHS)} alt="" />
+              {propertyListing.media.gallery.slice(0, 2).map((image) => (
+                <img src={largest(image, HERO_WIDTHS)} alt="" />
+              ))}
+            </div>
           </article>
           <article class="proof-chapter">
-            <div class="proof-sticky">
+            <div class="proof-copy">
               <p class="proof-index"><bdi>2</bdi> / <bdi>4</bdi></p>
               <h3>{t('home.proof2')}</h3>
               <p>{t('home.proof2Body')}</p>
             </div>
+            <div class="proof-visual proof-form" aria-hidden="true">
+              {cells.map((cell) => (
+                <div class="proof-field">
+                  <span>{cell.label}</span>
+                  <strong>
+                    {cell.bdi ? <bdi>{cell.displayValue}</bdi> : cell.displayValue}
+                  </strong>
+                </div>
+              ))}
+            </div>
           </article>
           <article class="proof-chapter">
-            <div class="proof-sticky">
+            <div class="proof-copy">
               <p class="proof-index"><bdi>3</bdi> / <bdi>4</bdi></p>
               <h3>{t('home.proof3')}</h3>
               <p>{t('home.proof3Body')}</p>
             </div>
+            <div class="proof-visual proof-phones" aria-hidden="true">
+              {(['editorial', 'dark', 'walkFirst'] as const).map((tpl) => (
+                <div class="device" data-tpl={tpl}>
+                  <MiniScreen
+                    listing={{ ...propertyShowcase, template: tpl }}
+                    cells={cells}
+                    perUnit={perUnit}
+                  />
+                </div>
+              ))}
+            </div>
           </article>
           <article class="proof-chapter">
-            <div class="proof-sticky">
+            <div class="proof-copy">
               <p class="proof-index"><bdi>4</bdi> / <bdi>4</bdi></p>
               <h3>{t('home.proof4')}</h3>
               <p>{t('home.proof4Body')}</p>
+            </div>
+            <div class="proof-visual proof-thread">
+              <div class="thread">
+                <div class="bubble">
+                  <div class="card">
+                    <img src={cardImage} alt="" loading="lazy" decoding="async" width="1200" height="630" />
+                    <div class="card-text">
+                      <strong><Prose text={cardTitle} /></strong>
+                      <span><Prose text={cardFacts} /></span>
+                      <em dir="ltr">hasivuv.com</em>
+                    </div>
+                  </div>
+                  <span class="bubble-link"><bdi dir="ltr">hasivuv.com/a/A7K2M</bdi></span>
+                </div>
+                <p class="thread-note">{t('home.linkCaption')}</p>
+              </div>
             </div>
           </article>
         </div>
@@ -1941,24 +1952,6 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
           )}
         </ul>
         <p class="compare-hint">{odblLine}</p>
-      </div>
-    </section>
-
-    <section>
-      <div class="shell">
-        <div class="section-head">
-          <SectionLabel text={t('listing.section.verified')} />
-          <h2>{t('home.verifiedTitle')}</h2>
-          <p>{t('home.verifiedBody')}</p>
-        </div>
-        <ul class="verified-list">
-          <li>
-            <span class="verified">{t('source.verified')}</span>
-            {' '}
-            {t('listing.licenceVerified')}
-          </li>
-          <li>{t('source.seller')}</li>
-        </ul>
       </div>
     </section>
 
