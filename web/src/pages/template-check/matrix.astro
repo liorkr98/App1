@@ -1,0 +1,81 @@
+---
+import { TEMPLATE_IDS } from '@/types/listing';
+import { matrixListings } from '../../lib/listings';
+
+export const prerender = true;
+
+const LABELS: Record<string, string> = {
+  A7K2M: 'חולון · הדגמה',
+  V3M9Q: 'מאזדה · הדגמה',
+  T4V7A: 'תל אביב',
+  H2N6P: 'חולון · נמכר',
+  M9S3W: 'מושב',
+  G7F2K: 'גולף · מאומת',
+  P5X1R: 'פולו · לפי המוכר',
+  B3T8D: 'חיפושית · פגמים',
+};
+
+const rows = matrixListings.map((listing) => ({
+  listing,
+  label: LABELS[listing.slug] ?? listing.slug,
+  combos: TEMPLATE_IDS.map((id) => ({
+    id,
+    href: `/template-check/${listing.slug}-${id}/`,
+  })),
+}));
+---
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>מטריצת מודעות</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <style>
+    :root { --plaster: #fbfaf7; --ink: #191a15; --stone: #e4e0d6; --muted: #6e6f66; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Assistant, system-ui, sans-serif;
+      background: var(--plaster);
+      color: var(--ink);
+      line-height: 1.5;
+    }
+    header {
+      padding: 1.5rem 1.25rem 1rem;
+      border-block-end: 1px solid var(--stone);
+    }
+    h1 { font-family: 'Frank Ruhl Libre', serif; font-size: 1.6rem; font-weight: 700; margin: 0 0 .35rem; }
+    .sub { color: var(--muted); font-size: .9rem; }
+    .fixture { padding: 1.5rem 1.25rem; border-block-end: 1px solid var(--stone); }
+    .fixture h2 { font-size: 1.1rem; margin: 0 0 1rem; }
+    .combo { margin-block-end: 1.25rem; }
+    .combo h3 { font-size: .8rem; font-weight: 600; color: var(--muted); margin: 0 0 .4rem; }
+    iframe {
+      width: 100%;
+      max-inline-size: 420px;
+      height: 844px;
+      border: 1px solid var(--stone);
+      background: #fff;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>מטריצת מודעות</h1>
+    <p class="sub">כל מודעת הדגמה וכל מודעת הבדיקה, בכל תבנית. לא לאינדוקס.</p>
+  </header>
+  {rows.map((row) => (
+    <section class="fixture">
+      <h2>{row.label}</h2>
+      {row.combos.map((combo) => (
+        <div class="combo">
+          <h3>{combo.id}</h3>
+          <iframe src={combo.href} loading="lazy" title={`${row.label} ${combo.id}`}></iframe>
+        </div>
+      ))}
+    </section>
+  ))}
+</body>
+</html>

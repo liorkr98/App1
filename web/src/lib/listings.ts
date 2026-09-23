@@ -1,15 +1,8 @@
-import {
-  factsFromSchema,
-  type CategorySchema,
-  type Fact,
-  type FactValue,
-  type Listing,
-  type Provenance,
-  type PropertyEnrichment,
-  type VehicleEnrichment,
-} from '@/types/listing';
+import type { Listing, PropertyEnrichment, VehicleEnrichment } from '@/types/listing';
 import { propertySchema, vehicleSchema } from '@/features/listings/schemas';
 import { groundedAreaDescription } from '@/features/listings/neighborhood-note';
+import { fixtures } from './fixtures';
+import { answer } from './listing-facts';
 
 /**
  * Sample listings, with the content of the two reference pages.
@@ -19,42 +12,8 @@ import { groundedAreaDescription } from '@/features/listings/neighborhood-note';
  * gershayim and the fact-grid states are all exercised by the real templates.
  */
 
-/** `null` leaves a fact unanswered; `{ absent: true }` marks it confirmed absent. */
-type Answer = FactValue | { absent: true };
-
-/**
- * Builds a category's facts from answers, optionally marking the ones a
- * public register filled.
- *
- * `verifiedBy` stands in for a plate lookup having run. It promotes exactly
- * the facts the SCHEMA says are verifiable and that actually got a value —
- * never a field the seller typed, and never an empty one. Which fields those
- * are is read from the schema rather than listed here, so adding a verifiable
- * field is still a one-file change.
- */
-function answer(
-  schema: CategorySchema,
-  values: Record<string, Answer>,
-  verifiedBy?: Provenance,
-): Fact[] {
-  const verifiable = new Set(
-    schema.facts.filter((definition) => definition.source === 'verified').map((d) => d.key),
-  );
-
-  return factsFromSchema(schema).map((fact) => {
-    const promote = (next: Fact): Fact =>
-      verifiedBy && verifiable.has(next.key) && next.value !== null
-        ? { ...next, source: 'verified', ...verifiedBy }
-        : next;
-
-    if (!(fact.key in values)) return fact;
-    const given = values[fact.key];
-    if (given !== null && typeof given === 'object' && 'absent' in given) {
-      return { ...fact, present: false };
-    }
-    return promote({ ...fact, value: given ?? null });
-  });
-}
+export { fixtures } from './fixtures';
+export { answer } from './listing-facts';
 
 /**
  * Sample photographs, and where they came from.
@@ -282,6 +241,9 @@ export const vehicleListing: Listing = {
 
 export const listings: Listing[] = [propertyListing, vehicleListing];
 
+/** CI demos plus the six P1 fixtures. `/a/_matrix` iterates this. */
+export const matrixListings: Listing[] = [...listings, ...fixtures];
+
 /**
  * The same apartment, with rooms named so a walkFirst miniature and the
  * `/template-check/walkFirst` fixture can show the filmstrip.
@@ -307,5 +269,5 @@ export function withNamedRooms(listing: Listing): Listing {
 }
 
 export function listingBySlug(slug: string): Listing | undefined {
-  return listings.find((listing) => listing.slug === slug);
+  return matrixListings.find((listing) => listing.slug === slug);
 }
