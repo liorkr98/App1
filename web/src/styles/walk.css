@@ -177,7 +177,7 @@
   display:grid;
   min-inline-size:0;
 }
-.walk-main > figure{
+.walk-main:not(.tour-track) > figure{
   grid-area:1 / 1;
   margin:0;
   position:relative;
@@ -185,41 +185,41 @@
   visibility:hidden;
   pointer-events:none;
 }
-.walk-main > figure:first-child{
+.walk-main:not(.tour-track) > figure:first-child{
   visibility:visible;
   pointer-events:auto;
   z-index:1;
 }
-.walk-viewer:has(.walk-pick:checked) .walk-main > figure:first-child{
+.walk-viewer:has(.walk-pick:checked) .walk-main:not(.tour-track) > figure:first-child{
   visibility:hidden;
   pointer-events:none;
   z-index:0;
 }
-.walk-viewer:has(.walk-film > :nth-child(1) .walk-pick:checked) .walk-main > figure:nth-child(1),
-.walk-viewer:has(.walk-film > :nth-child(2) .walk-pick:checked) .walk-main > figure:nth-child(2),
-.walk-viewer:has(.walk-film > :nth-child(3) .walk-pick:checked) .walk-main > figure:nth-child(3),
-.walk-viewer:has(.walk-film > :nth-child(4) .walk-pick:checked) .walk-main > figure:nth-child(4),
-.walk-viewer:has(.walk-film > :nth-child(5) .walk-pick:checked) .walk-main > figure:nth-child(5),
-.walk-viewer:has(.walk-film > :nth-child(6) .walk-pick:checked) .walk-main > figure:nth-child(6),
-.walk-viewer:has(.walk-film > :nth-child(7) .walk-pick:checked) .walk-main > figure:nth-child(7),
-.walk-viewer:has(.walk-film > :nth-child(8) .walk-pick:checked) .walk-main > figure:nth-child(8),
-.walk-viewer:has(.walk-film > :nth-child(9) .walk-pick:checked) .walk-main > figure:nth-child(9),
-.walk-viewer:has(.walk-film > :nth-child(10) .walk-pick:checked) .walk-main > figure:nth-child(10),
-.walk-viewer:has(.walk-film > :nth-child(11) .walk-pick:checked) .walk-main > figure:nth-child(11),
-.walk-viewer:has(.walk-film > :nth-child(12) .walk-pick:checked) .walk-main > figure:nth-child(12),
-.walk-viewer:has(.walk-film > :nth-child(13) .walk-pick:checked) .walk-main > figure:nth-child(13),
-.walk-viewer:has(.walk-film > :nth-child(14) .walk-pick:checked) .walk-main > figure:nth-child(14),
-.walk-viewer:has(.walk-film > :nth-child(15) .walk-pick:checked) .walk-main > figure:nth-child(15),
-.walk-viewer:has(.walk-film > :nth-child(16) .walk-pick:checked) .walk-main > figure:nth-child(16),
-.walk-viewer:has(.walk-film > :nth-child(17) .walk-pick:checked) .walk-main > figure:nth-child(17),
-.walk-viewer:has(.walk-film > :nth-child(18) .walk-pick:checked) .walk-main > figure:nth-child(18),
-.walk-viewer:has(.walk-film > :nth-child(19) .walk-pick:checked) .walk-main > figure:nth-child(19),
-.walk-viewer:has(.walk-film > :nth-child(20) .walk-pick:checked) .walk-main > figure:nth-child(20),
-.walk-viewer:has(.walk-film > :nth-child(21) .walk-pick:checked) .walk-main > figure:nth-child(21),
-.walk-viewer:has(.walk-film > :nth-child(22) .walk-pick:checked) .walk-main > figure:nth-child(22),
-.walk-viewer:has(.walk-film > :nth-child(23) .walk-pick:checked) .walk-main > figure:nth-child(23),
-.walk-viewer:has(.walk-film > :nth-child(24) .walk-pick:checked) .walk-main > figure:nth-child(24),
-.walk-viewer:has(.walk-film > :nth-child(25) .walk-pick:checked) .walk-main > figure:nth-child(25){
+.walk-viewer:has(.walk-film > :nth-child(1) .walk-pick:checked) .walk-main:not(.tour-track) > figure:nth-child(1),
+.walk-viewer:has(.walk-film > :nth-child(2) .walk-pick:checked) .walk-main:not(.tour-track) > figure:nth-child(2),
+.walk-viewer:has(.walk-film > :nth-child(3) .walk-pick:checked) .walk-main:not(.tour-track) > figure:nth-child(3),
+.walk-viewer:has(.walk-film > :nth-child(4) .walk-pick:checked) .walk-main:not(.tour-track) > figure:nth-child(4),
+.walk-viewer:has(.walk-film > :nth-child(5) .walk-pick:checked) .walk-main:not(.tour-track) > figure:nth-child(5),
+.walk-viewer:has(.walk-film > :nth-child(6) .walk-pick:checked) .walk-main:not(.tour-track) > figure:nth-child(6),
+.walk-viewer:has(.walk-film > :nth-child(7) .walk-pick:checked) .walk-main:not(.tour-track) > figure:nth-child(7),
+.walk-viewer:has(.walk-film > :nth-child(8) .walk-pick:checked) .walk-main:not(.tour-track) > figure:nth-child(8),
+.walk-viewer:has(.walk-film > :nth-child(9) .walk-pick:checked) .walk-main:not(.tour-track) > figure:nth-child(9),
+.walk-viewer:has(.walk-film > :nth-child(10) .walk-pick:checked) .walk-main:not(.tour-track) > figure:nth-child(10),
+.walk-viewer:has(.walk-film > :nth-child(11) .walk-pick:checked) .walk-main:not(.tour-track) > figure:nth-child(11),
+.walk-viewer:has(.walk-film > :nth-child(12) .walk-pick:checked) .walk-main:not(.tour-track) > figure:nth-child(12),
+.walk-viewer:has(.walk-film > :nth-child(13) .walk-pick:checked) .walk-main:not(.tour-track) > figure:nth-child(13),
+.walk-viewer:has(.walk-film > :nth-child(14) .walk-pick:checked) .walk-main:not(.tour-track) > figure:nth-child(14),
+.walk-viewer:has(.walk-film > :nth-child(15) .walk-pick:checked) .walk-main:not(.tour-track) > figure:nth-child(15),
+.walk-viewer:has(.walk-film > :nth-child(16) .walk-pick:checked) .walk-main:not(.tour-track) > figure:nth-child(16),
+.walk-viewer:has(.walk-film > :nth-child(17) .walk-pick:checked) .walk-main:not(.tour-track) > figure:nth-child(17),
+.walk-viewer:has(.walk-film > :nth-child(18) .walk-pick:checked) .walk-main:not(.tour-track) > figure:nth-child(18),
+.walk-viewer:has(.walk-film > :nth-child(19) .walk-pick:checked) .walk-main:not(.tour-track) > figure:nth-child(19),
+.walk-viewer:has(.walk-film > :nth-child(20) .walk-pick:checked) .walk-main:not(.tour-track) > figure:nth-child(20),
+.walk-viewer:has(.walk-film > :nth-child(21) .walk-pick:checked) .walk-main:not(.tour-track) > figure:nth-child(21),
+.walk-viewer:has(.walk-film > :nth-child(22) .walk-pick:checked) .walk-main:not(.tour-track) > figure:nth-child(22),
+.walk-viewer:has(.walk-film > :nth-child(23) .walk-pick:checked) .walk-main:not(.tour-track) > figure:nth-child(23),
+.walk-viewer:has(.walk-film > :nth-child(24) .walk-pick:checked) .walk-main:not(.tour-track) > figure:nth-child(24),
+.walk-viewer:has(.walk-film > :nth-child(25) .walk-pick:checked) .walk-main:not(.tour-track) > figure:nth-child(25){
   visibility:visible;
   pointer-events:auto;
   z-index:2;
@@ -262,3 +262,22 @@
 }
 .walk-all{inset-inline-start:.7rem}
 .walk-next{inset-inline-end:.7rem}
+
+/* M5 — centre-active snap. Index 0 is inline-start (right in RTL). */
+.walk-main.tour-track{
+  display:flex;
+  overflow-x:auto;
+  scroll-snap-type:inline mandatory;
+  gap:.55rem;
+  margin-inline:0;
+  padding-inline:0;
+  scrollbar-width:thin;
+}
+.walk-main.tour-track > figure{
+  flex:0 0 82%;
+  scroll-snap-align:center;
+  scroll-snap-stop:always;
+  margin:0;
+  visibility:visible;
+  pointer-events:auto;
+}

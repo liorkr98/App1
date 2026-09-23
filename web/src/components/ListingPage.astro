@@ -156,6 +156,8 @@ const homeLabel = listing.category === 'property' ? t('listing.section.home') : 
   <Walk
     images={walkImages}
     allPhotosHref={galleryImages.length > 0 ? '#listing-gallery' : undefined}
+    floorPlan={listing.media.floorPlan}
+    tourUrl={listing.media.tourUrl}
   />
 
   <Gallery images={galleryImages} />

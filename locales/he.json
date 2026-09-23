@@ -145,6 +145,8 @@
       "park_ride": "חניון חנה וסע"
     },
     "tourCta": "סיור תלת־ממד",
+    "floorPlan": "תשריט",
+    "lightboxCount": "{current} / {total}",
     "newWindow": "נפתח בחלון חדש",
     "section": {
       "home": "הדירה",

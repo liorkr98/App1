@@ -374,10 +374,15 @@ export interface Media {
    */
   pdfUrl?: string;
   /**
-   * Optional outbound 3D / Matterport URL. Rendered as a poster that opens
-   * a new tab. Never an iframe, never a player — listing pages stay zero JS.
+   * Optional outbound 3D / Matterport URL. Rendered as a chip inside the
+   * photo tour that opens a new tab. Never an iframe, never a player.
    */
   tourUrl?: string;
+  /**
+   * Floor plan photograph. Rendered as a תשריט chip inside the tour — not a
+   * fifth section (DESIGN-CONTRACT §5).
+   */
+  floorPlan?: Image;
 }
 
 // ---------------------------------------------------------------------------

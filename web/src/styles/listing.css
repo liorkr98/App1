@@ -613,11 +613,11 @@ body:has(.sold-banner){padding-bottom:2rem}
     .tour-card{
       animation:tour-focus linear both;
       animation-timeline:view(inline);
-      animation-range:entry 20% cover 50%;
+      animation-range:cover;
     }
     @keyframes tour-focus{
-      from{transform:scale(.92);opacity:.55}
-      to{transform:none;opacity:1}
+      0%,100%{transform:scale(.92);opacity:.72}
+      50%{transform:none;opacity:1}
     }
   }
 }
@@ -688,7 +688,8 @@ body:has(.sold-banner){padding-bottom:2rem}
   gap:.4rem;
   margin-block-end:.6rem;
 }
-.tour-chips a{
+.tour-chips a,
+.tour-chips label{
   display:inline-flex;
   align-items:center;
   min-block-size:44px;
@@ -699,6 +700,8 @@ body:has(.sold-banner){padding-bottom:2rem}
   font-weight:600;
   font-size:.78rem;
   text-decoration:none;
+  cursor:pointer;
+  background:var(--plaster);
 }
 
 /* M4 — lightbox. Native <dialog> traps focus and closes on Escape. */
@@ -748,6 +751,18 @@ body:has(.sold-banner){padding-bottom:2rem}
   object-fit:contain;
   view-transition-name:listing-photo;
 }
+.lightbox-count{
+  position:fixed;
+  inset-block-end:1.1rem;
+  inset-inline:0;
+  z-index:2;
+  margin:0;
+  text-align:center;
+  font-family:'Frank Ruhl Libre',serif;
+  font-size:1.05rem;
+  color:var(--on-dark);
+}
+.lightbox-count:has(bdi:empty){display:none}
 .lightbox-close{
   position:fixed;
   inset-block-start:.7rem;
@@ -769,6 +784,7 @@ body:has(.sold-banner){padding-bottom:2rem}
 .gallery-open,
 .compact-wa,
 .tour-chips a,
+.tour-chips label,
 .walk-next,
 .walk-all,
 .cta{
@@ -777,6 +793,7 @@ body:has(.sold-banner){padding-bottom:2rem}
 .gallery-open:active,
 .compact-wa:active,
 .tour-chips a:active,
+.tour-chips label:active,
 .walk-next:active,
 .walk-all:active{
   transform:scale(.97);
