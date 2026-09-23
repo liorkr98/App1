@@ -29,6 +29,13 @@ produces. `scripts/verify-template-divergences.mjs` compares the two built
 pages against each other, so it keeps checking the thing that matters even
 though one of its sources is out of date.
 
+**P0–P12 (September 2026) is now what §1–§7 describe.** The listing page
+shipped in that pass — first-screen cap, compact bar, price modes, labelled
+flaws, WhatsApp title, self-hosted faces — is the contract. CI is the gate.
+The four divergences in §5 are still the only allowed split between property
+and vehicle. §9 records the control-surface rules that the old HTML
+references never had.
+
 ---
 
 ## 1. Design tokens
@@ -88,16 +95,24 @@ One gutter, used by every full-bleed block. Page width is `620px`.
 
 ## 2. Typography
 
-One stylesheet link, and the weights widened in B2:
+Self-hosted variable files, not a Google Fonts stylesheet. The listing page
+must not request `fonts.googleapis.com` or `fonts.gstatic.com` — that call
+is a third-party connection on every forwarded page (Amendment 13). Faces
+live in `web/public/fonts/`, SIL OFL, `font-display: swap`. Hebrew subsets
+are preloaded; Latin arrives on `unicode-range`.
 
 ```
-Frank+Ruhl+Libre:wght@400;500;700;900
-Assistant:wght@400;600;700
-display=swap
+Assistant          400–700
+Frank Ruhl Libre   400–900
 ```
 
-**Seven weights now, not four.** 900 exists for one selector — `.hero-title` —
-and that is the point of it.
+**Seven weights still, not four.** 900 exists for one selector — `.hero-title` —
+and that is the point of it. `font-synthesis: none` so the browser cannot
+invent the italic Hebrew does not have.
+
+`scripts/verify-no-google-fonts.mjs` fails the build if a listing page still
+calls the CDN, and `scripts/verify-no-google-fonts-fires.sh` plants a
+violation every run to prove the scan still matches.
 
 ### Hebrew cannot use the standard label trick
 
@@ -147,20 +162,26 @@ Top-level landmark sequence, read from `<body>`.
 | # | Property | Vehicle |
 |---|---|---|
 | 1 | `div.progress` | `div.progress` |
-| 2 | `div.agent-bar` | `div.agent-bar` |
-| 3 | `header.hero` | `header.hero` |
+| 2 | `header.agent-bar` | `header.agent-bar` |
+| 3 | `section.hero` | `section.hero` |
 | 4 | `div.price-bar` | `div.price-bar` |
-| 5 | `div.facts` | `div.facts` |
-| 6 | `section` — על הדירה | `section` — על הרכב |
-| 7 | `div.gallery` | **`section.flaws` — מה שכדאי לדעת** |
-| 8 | `section.enrich` | `div.gallery` |
-| 9 | `section.map` — מיקום | `section.enrich` |
-| 10 | `section.seller` | `section.seller` |
-| 11 | `div.cta-dock` | `div.cta-dock` |
-| 12 | `footer` | `footer` |
+| 5 | `ul.highlights` (≤3, omitted when empty) | same |
+| 6 | `div.facts` then `p.monthly-cost` | `div.facts` (no monthly line) |
+| 7 | `section` — על הדירה | `section` — על הרכב |
+| 8 | `section.walk` then `div.gallery` | **`section.flaws`**, then walk / gallery |
+| 9 | `section.enrich` | `section.enrich` |
+| 10 | `section.map` — מיקום | *(no map)* |
+| 11 | `section.seller` | `section.seller` |
+| 12 | `div.cta-dock` | `div.cta-dock` |
+| 13 | `footer` | `footer` |
 
 The vehicle inserts `.flaws` **between the description and the gallery** and
 has **no map section**.
+
+`.compact-bar` is `position: fixed` at the top. It is in the markup after the
+hero on unsold listings, but it occupies no first-screen space: opacity 0
+until the hero (or the walkFirst tour) exits, driven by a named view
+timeline. Browsers without `view()` keep only the dock.
 
 `figure.immersive` is gone from the new reference entirely. It is no longer a
 "deliberately not ported" exception — the design does not contain it.
@@ -177,7 +198,7 @@ stylesheet they link — to prove it.
 | | |
 |---|---|
 | Page max width | `620px`, `margin-inline:auto` |
-| Body bottom padding | `7rem` (clears the fixed CTA dock) |
+| Body bottom padding | `padding-block-end: 7rem` (clears the fixed CTA dock) |
 | Section padding | `2.4rem var(--gut)` |
 | Facts grid | `repeat(3,1fr)`, `gap:1px` over a `--stone` ground — the hairlines ARE the gap |
 | Absent fact | `.fact.off` → `--stone-warm` ground, `opacity:.42` on value and label |
@@ -187,6 +208,11 @@ stylesheet they link — to prove it.
 | CTA | `--olive`, radius `6px`, padding `1.02rem`, weight 700 |
 | Safe area | `calc(.8rem + env(safe-area-inset-bottom))` on `.cta-dock` |
 | Hero veil | `padding:7rem var(--gut) 1.6rem` — fixed for both categories now |
+| First-screen cap | `--heroH: min(var(--heroWant), calc(100svh - 16rem))` so price, chips and the dock fit on 375×667 |
+| Highlights | at most three chips under the price; omitted when the seller named none |
+| Monthly cost | `p.monthly-cost` under the facts grid, never a fifth `<section>` |
+| Compact bar | M7: fixed at the top after the hero leaves; dock is the thumb WhatsApp |
+| Faces | self-hosted under `/fonts`, Hebrew preloaded, no Google Fonts request |
 
 ---
 
@@ -194,14 +220,19 @@ stylesheet they link — to prove it.
 
 ### The allowed list — exactly four. A fifth is a porting bug.
 
-**5.1 Hero height.** `--heroH` on `<html>`: `84svh` for a property, `64svh` for
-a vehicle, both over `min-height:440px`.
+**5.1 Hero height.** `--heroH` on `<html>`:
 
-This replaced the old `--heroRatio` / `--heroVeilPad` pair. B2 made the hero
-full-bleed at a viewport height instead of a cropped aspect-ratio, so the veil
-padding no longer moves with it — the gradient runway is `7rem` for both. The
-rationale is unchanged: a car is a wide object, and a tall frame either crops
-it or fills the rest with asphalt.
+`min(var(--heroWant, 72svh), calc(100svh - 16rem))` for a property,
+`min(var(--heroWant, 58svh), calc(100svh - 16rem))` for a vehicle.
+
+`--heroWant` is the template's ask (agency shorter, dark taller). The `min()`
+with `100svh - 16rem` is the first-screen contract: cover, title, dominant
+price, up to three chips, one WhatsApp dock. Templates cannot blow that fold.
+
+This replaced the old `--heroRatio` / `--heroVeilPad` pair, then the raw
+`84svh` / `64svh` pair. The veil padding stays `7rem` for both. The rationale
+is unchanged: a car is a wide object, and a tall frame either crops it or
+fills the rest with asphalt.
 
 One custom property on `<html>` rather than a category class, so the stylesheet
 stays byte-identical and a fifth divergence cannot enter as a style override.
@@ -214,9 +245,9 @@ otherwise. The CSS is identical.
 **5.3 `section.flaws`.** Vehicle only in practice, though the component takes a
 list rather than a category. Its own tinted block, deliberately not folded into
 the description: the value is that a buyer can find the bad news without
-reading prose. An olive dot marks each item, never a warning glyph — these are
-disclosures a seller chose to make, and a hazard sign would punish the honesty
-the block exists to reward.
+reading prose. Each disclosure is a labelled row — a serif index in `<bdi>`
+plus the seller's sentence — never an olive dot and never a hazard colour.
+These are things a seller chose to say.
 
 **5.4 `section.map`.** Property only. A vehicle's location is an approximate
 meeting area, not an address, and pinning a private car for sale to a home
@@ -267,8 +298,16 @@ proves it still matches. `/a/_rtltest` is the single exemption and §7 says why.
 |---|---|
 | Hero parallax | `animation-timeline: view()`, range `entry 0% exit 100%`, `translateY(-7%)` → `7%` |
 | Section reveals | `animation-timeline: view()`, range `entry 4% entry 46%`, opacity + `translateY(22px)` |
+| Enrichment clip (M2) | `animation-timeline: view()`, range `entry 0% entry 42%`, `clip-path` on `.egroup` |
+| Photo-tour focus (M5) | `animation-timeline: view(inline)`, range `cover`, centre card at scale 1 |
+| Compact bar (M7) | named timeline `--listing-hero` on `.hero` (`.walk` on walkFirst), range `exit 0% exit 35%` |
 | Progress line | `animation-timeline: scroll(root block)`, `scaleX(0)` → `scaleX(1)` |
 | Hero veil | a plain `.55s` `cubic-bezier(.2,.7,.3,1)` entrance, no timeline |
+
+The compact bar starts `display: none`. Inside `@supports` it is `position:
+fixed` at the top with `opacity: 0` until the hero exits, so it cannot sit
+under the dock on the first screen. Browsers without `view()` and
+`prefers-reduced-motion: reduce` keep the dock only.
 
 **Listing JS is capped, not absent.** The previous rule was zero executable
 JavaScript. The redesign amends it: **≤ 12 KB gzipped of vanilla JS**, for
@@ -299,6 +338,21 @@ ways it breaks are silent:
 `html{scroll-behavior:smooth}` is set unconditionally in the reference. The
 port guards it under `prefers-reduced-motion: reduce`: smooth scrolling is
 motion too, and a reader who asked for less did not exclude it.
+
+### 6.4 WhatsApp card
+
+The page is distributed by link. The card is the first impression.
+
+| | |
+|---|---|
+| `og:title` | `"<summary> · <price>"`. Property: `דירת N חדרים ב{city}`. Vehicle: `{make} {model}, {year}` |
+| `og:description` | one line of facts, no marketing language |
+| `og:locale` | `he_IL` |
+| `og:image` | 1200×630 WebP, under 300 KB, **absolute** URL |
+| Hash | in the **filename**, never a query. `/og/{id}-{hash}.webp`. Some scrapers strip query strings; WhatsApp caches hard. `?v=2` busts nothing |
+| לפי פנייה | `ogPriceFragment` returns `''`. The hidden figure must not appear on the card. The worker hashes `on_request` as the mode, not the number |
+
+`scripts/verify-og-title.mjs` asserts Polo has no ₪41,000, Golf carries `החל מ־`, and T4V7A carries the exact price with `he_IL` and an absolute image and no query.
 
 ---
 
@@ -403,3 +457,48 @@ kept: the arrival still reads, it simply does not travel.
 Cards, and anything nested in a card. Gradient text. Decorative blur or glass.
 Emoji or Unicode characters standing in for icons. Eyebrows above headings.
 Invented statistics, and logos of companies that do not use this.
+
+---
+
+## 9. Control surface — not a fifth divergence
+
+These ride on the listing row. CSS is identical on property and vehicle.
+`src/features/listings/control-surface.ts` is the source.
+
+### Price display
+
+`exact` | `from` | `on_request`. Absent is exact.
+
+| Mode | Page | WhatsApp title |
+|---|---|---|
+| `exact` | `₪4,250,000` | ` · ₪4,250,000` |
+| `from` | `החל מ־₪62,000` | ` · החל מ־₪62,000` |
+| `on_request` | `לפי פנייה`, no figure | no fragment at all |
+
+`price === 0` is unanswered, not free. It is omitted the same way `on_request`
+hides a number the page then refuses to print.
+
+### Location precision
+
+`exact` | `street` | `area`. An explicit precision always wins. Otherwise
+coords+street is a pin, a street without coords is a street line, and a city
+is an area.
+
+Area never leaks the street. The map is omitted at area. Waze is offered only
+at exact. WhatsApp prefill interpolates `publicPlace`, so the agent does not
+type the address into every send.
+
+### Licence plates
+
+A plate is a lookup key, never published (CLAUDE.md §7).
+`scripts/verify-no-plates.mjs` greps listing HTML for dashed Israeli plates
+(`12-345-67`, `123-45-678`) and `מספר רישוי` followed by digits. The editor
+may show the plate the seller just typed; the public page may not.
+
+### Empty enrichment
+
+A group with no results is omitted. That is per-row honesty, not a fifth
+divergence: both categories still render `section.enrich` when any group has
+something to say. A page that dropped the section entirely would fail
+`verify-template-divergences.mjs`.
+

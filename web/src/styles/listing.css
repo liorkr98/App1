@@ -17,6 +17,7 @@
   layer @imported at the top so PostCSS will actually emit it.
 */
 
+@import './fonts.css';
 @import './walk.css';
 @import './templates/agency.css';
 @import './templates/editorial.css';
@@ -40,6 +41,9 @@ html{
   /* Light-only. Without it a browser in dark mode inverts native controls
      and scrollbars against a page that has no dark palette. */
   color-scheme:light;
+  /* Hebrew has no italic. Fake slant from the browser is the thing the
+     contract already forbids in copy. */
+  font-synthesis:none;
   /* Removes the 300ms double-tap delay. This is a page read on a phone. */
   touch-action:manipulation;
   -webkit-tap-highlight-color:rgba(74,93,58,.18);
@@ -66,7 +70,7 @@ body{
   line-height:1.62;
   max-width:620px;
   margin-inline:auto;
-  padding-bottom:7rem;
+  padding-block-end:7rem;
   -webkit-font-smoothing:antialiased;
   overflow-x:hidden;
 }
@@ -118,7 +122,7 @@ body{
 .hero-img{position:absolute;inset:0;width:100%;height:118%;object-fit:cover;display:block}
 
 .hero-veil{
-  position:absolute;inset-inline:0;bottom:0;
+  position:absolute;inset-inline:0;inset-block-end:0;
   padding:7rem var(--gut) 1.6rem;
   background:linear-gradient(to top,rgba(17,18,8,.9) 12%,rgba(17,18,8,.55) 48%,transparent);
   color:var(--on-dark);
@@ -549,7 +553,7 @@ p + p{margin-top:.9rem}
    CTA — עגינה תחתונה
    ============================================================ */
 .cta-dock{
-  position:fixed;inset-inline:0;bottom:0;z-index:20;
+  position:fixed;inset-inline:0;inset-block-end:0;z-index:20;
   max-width:620px;margin-inline:auto;
   padding:.8rem 1rem calc(.8rem + env(safe-area-inset-bottom));
   background:linear-gradient(to top,var(--plaster) 70%,rgba(251,250,247,0));
