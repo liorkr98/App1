@@ -39,3 +39,20 @@ html[data-template='brochure'] .gallery figure:not(:first-child) img {
   border-radius: 50%;
   aspect-ratio: 1;
 }
+
+@media print {
+  @page { size: A4; margin: 12mm; }
+  html[data-template='brochure'] .compact-bar,
+  html[data-template='brochure'] .progress,
+  html[data-template='brochure'] .cta-dock,
+  html[data-template='brochure'] .skip,
+  html[data-template='brochure'] .hero-line > span {
+    display: revert;
+    animation: none;
+  }
+  html[data-template='brochure'] .compact-bar,
+  html[data-template='brochure'] .progress,
+  html[data-template='brochure'] .cta-dock {
+    display: none;
+  }
+}

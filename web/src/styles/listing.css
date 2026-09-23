@@ -240,12 +240,14 @@ body{
   margin:0;
   padding:.4rem var(--gut) .9rem;
 }
-.facts-more summary{
+.facts-more summary,
+.read-more summary{
   cursor:pointer;
   font-weight:600;
   font-size:.92rem;
   color:var(--ink);
 }
+.read-more p{margin-block-start:.8rem}
 .spec-list{
   display:grid;
   grid-template-columns:1fr 1fr;

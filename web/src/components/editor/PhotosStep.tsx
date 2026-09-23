@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { MAX_IMAGES } from '@/features/listings/editor';
+import { photoWarnings } from '@/features/listings/photo-guidance';
 import { guessRoomFromName, type PhotoRoom } from '@/features/listings/photo-rooms';
 import { moveItem } from '@/features/listings/photo-order';
 import type { ListingCategory } from '@/features/listings/schemas';
@@ -114,6 +115,13 @@ export function PhotosStep({
   category,
 }: Props) {
   const [dragging, setDragging] = useState<number | null>(null);
+  const warnings = photoWarnings(photos);
+  const warningCopy: Record<(typeof warnings)[number], string> = {
+    few: t('editor.photosWarnFew'),
+    portraitCover: t('editor.photosWarnPortrait'),
+    narrow: t('editor.photosWarnNarrow'),
+    overCap: t('editor.photosWarnCap'),
+  };
 
   const add = (files: FileList | null) => {
     if (!files) return;
@@ -156,7 +164,32 @@ export function PhotosStep({
     <>
       <p className="hint">
         <Message path="editor.photosHint" values={{ max: MAX_IMAGES }} />
+        {' '}
+        <a href="/guide/photos/">{t('editor.photosGuide')}</a>
       </p>
+      <ul className="photo-rules">
+        <li>{t('guide.before1')}</li>
+        <li>{t('guide.before2')}</li>
+        <li>{t('guide.before3')}</li>
+        <li>{t('guide.before4')}</li>
+      </ul>
+      <details className="photo-rules-more">
+        <summary>{t('listing.readMore')}</summary>
+        <ul>
+          <li>{t('guide.shoot1')}</li>
+          <li>{t('guide.shoot2')}</li>
+          <li>{t('guide.shoot3')}</li>
+          <li>{t('guide.shoot4')}</li>
+          <li>{t('guide.cover1')}</li>
+        </ul>
+      </details>
+      {warnings.length > 0 && (
+        <ul className="photo-warn">
+          {warnings.map((warning) => (
+            <li key={warning}>{warningCopy[warning]}</li>
+          ))}
+        </ul>
+      )}
 
       {photos.length > 0 ? (
         <ul className="strip">

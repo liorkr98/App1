@@ -168,6 +168,7 @@
     "highlights": "",
     "factsMore": "",
     "factsAbsent": "",
+    "readMore": "",
     "monthlyCost": "",
     "closeLightbox": "",
     "openPhoto": ""
@@ -286,6 +287,11 @@
       "studioNote": ""
     },
     "photosHint": "",
+    "photosGuide": "",
+    "photosWarnFew": "",
+    "photosWarnPortrait": "",
+    "photosWarnNarrow": "",
+    "photosWarnCap": "",
     "photosUploading": "",
     "tourUrl": "",
     "tourUrlHint": "",
@@ -647,5 +653,30 @@
     "press": "",
     "m9": "",
     "m9Note": ""
+  },
+  "guide": {
+    "photosTitle": "",
+    "photosLead": "",
+    "beforeTitle": "",
+    "before1": "",
+    "before2": "",
+    "before3": "",
+    "before4": "",
+    "shootTitle": "",
+    "shoot1": "",
+    "shoot2": "",
+    "shoot3": "",
+    "shoot4": "",
+    "shoot5": "",
+    "orderTitle": "",
+    "order1": "",
+    "order2": "",
+    "order3": "",
+    "order4": "",
+    "order5": "",
+    "order6": "",
+    "coverTitle": "",
+    "cover1": "",
+    "cover2": ""
   }
 }

@@ -189,9 +189,15 @@ const shareHref = whatsappShareUrl(
   <section class="reveal">
     <SectionLabel text={homeLabel} />
     <h2>{heading}</h2>
-    {paragraphs.map((paragraph, index) => (
-      <p style={index > 0 ? 'margin-top:.8rem' : undefined}><Prose text={paragraph} /></p>
-    ))}
+    {paragraphs[0] ? <p><Prose text={paragraphs[0]} /></p> : null}
+    {paragraphs.length > 1 && (
+      <details class="read-more">
+        <summary>{t('listing.readMore')}</summary>
+        {paragraphs.slice(1).map((paragraph) => (
+          <p><Prose text={paragraph} /></p>
+        ))}
+      </details>
+    )}
   </section>
 
   {listing.disclosures && listing.disclosures.length > 0 && (
@@ -261,6 +267,8 @@ const shareHref = whatsappShareUrl(
       <a href="/legal/privacy/">{t('legal.privacy')}</a>
       {' · '}
       <a href="/legal/accessibility/">{t('legal.accessibility')}</a>
+      {' · '}
+      <a href="/guide/photos/">{t('guide.photosTitle')}</a>
     </footer>
   </Fragment>
 </BaseListing>
