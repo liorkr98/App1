@@ -1,0 +1,69 @@
+[
+  {
+    "has": true,
+    "heading": "מה שכדאי לדעת",
+    "rows": [
+      {
+        "n": "1",
+        "text": "שריטה בדלת נהג אחורית, כ־10 ס״מ",
+        "mark": false
+      },
+      {
+        "n": "2",
+        "text": "שפשוף קל בפגוש אחורי מחניה",
+        "mark": false
+      },
+      {
+        "n": "3",
+        "text": "בלמים קדמיים יצטרכו החלפה בטיפול הבא",
+        "mark": false
+      }
+    ],
+    "bg": "rgb(241, 237, 227)",
+    "clip": {
+      "x": 0,
+      "y": 1434.5859375,
+      "width": 390,
+      "height": 263.9609375
+    },
+    "fixture": "/template-check/V3M9Q/",
+    "filename": "v3m9q-390-flaws.png",
+    "pass": true
+  },
+  {
+    "has": true,
+    "heading": "מה שכדאי לדעת",
+    "rows": [
+      {
+        "n": "1",
+        "text": "חלודה בדלת הנהג ובכף האחורית",
+        "mark": false
+      },
+      {
+        "n": "2",
+        "text": "צבע מקורי עם תיקונים ישנים",
+        "mark": false
+      },
+      {
+        "n": "3",
+        "text": "מערכת חשמל חלקית, אין מזגן",
+        "mark": false
+      },
+      {
+        "n": "4",
+        "text": "צמיגים לשימוש קרוב, לא לנסיעה ארוכה",
+        "mark": false
+      }
+    ],
+    "bg": "rgb(29, 31, 22)",
+    "clip": {
+      "x": 0,
+      "y": 1296.0625,
+      "width": 390,
+      "height": 316.4453125
+    },
+    "fixture": "/template-check/B3T8D/",
+    "filename": "b3t8d-390-flaws.png",
+    "pass": true
+  }
+]
