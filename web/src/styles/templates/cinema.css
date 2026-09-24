@@ -1,0 +1,428 @@
+/*
+  Cinema — the cover full-bleed, a giant title over it, thin vertical rules,
+  and a dark panel carrying the key numbers and the plan.
+
+  The whole page is dark. Its palette is the dark template's, which is
+  already contrast-checked (tokens-contrast.test.ts): the confirmed-absent
+  stop clears 4.5:1 on this ground and it is a solid colour, never opacity.
+*/
+
+html[data-template='cinema'] {
+  --olive: var(--accent-lift, #7e9a62);
+  --plaster: #10110c;
+  --ink: #f3f1ea;
+  --ink-deep: #070805;
+  --stone: #2a2c22;
+  --stone-warm: #1a1b14;
+  --muted: #a3a498;
+  --muted-warm: #a3a498;
+  --absent: #a3a498;
+  --heroWant: 100svh;
+}
+
+html[data-template='cinema'] .agent-bar {
+  background: var(--ink-deep);
+}
+
+/* ---------- Frame ---------- */
+
+html[data-template='cinema'] section.stage-cinema {
+  padding: 0;
+  position: relative;
+}
+
+html[data-template='cinema'] .cine-frame {
+  position: relative;
+  overflow: hidden;
+  /* Short enough on a phone that the title clears the WhatsApp dock. */
+  min-block-size: min(70svh, 60rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background: var(--stone);
+  isolation: isolate;
+}
+
+html[data-template='cinema'] .cine-img {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  z-index: -2;
+}
+
+html[data-template='cinema'] .cine-frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(to top, rgba(7, 8, 5, 0.94) 4%, rgba(7, 8, 5, 0.35) 48%, rgba(7, 8, 5, 0.2) 70%, rgba(7, 8, 5, 0.55));
+}
+
+html[data-template='cinema'] .cine-rules {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  pointer-events: none;
+  z-index: -1;
+}
+
+html[data-template='cinema'] .cine-rules span {
+  border-inline-start: 1px solid rgba(243, 241, 234, 0.13);
+}
+
+html[data-template='cinema'] .cine-head {
+  padding: 5rem var(--gut) 1.6rem;
+  color: var(--on-dark);
+}
+
+html[data-template='cinema'] .cine-head .stage-place {
+  color: #d6d4cb;
+}
+
+html[data-template='cinema'] .cine-head .stage-title {
+  font-weight: 900;
+  font-size: clamp(3rem, 10.5vw, 8.4rem);
+  line-height: 0.94;
+  letter-spacing: -0.03em;
+  max-inline-size: 11ch;
+  text-shadow: 0 2px 40px rgba(0, 0, 0, 0.35);
+}
+
+/* ---------- Panel ---------- */
+
+html[data-template='cinema'] .cine-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1.2rem 1.4rem;
+  padding: 1.6rem var(--gut);
+  background: var(--ink-deep);
+  color: var(--on-dark);
+  border-block-end: 1px solid var(--stone);
+}
+
+html[data-template='cinema'] .cine-metrics {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.2rem 2rem;
+}
+
+html[data-template='cinema'] .cine-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+html[data-template='cinema'] .cine-metric-lbl {
+  font-size: var(--t-label);
+  font-weight: 700;
+  color: var(--muted);
+}
+
+html[data-template='cinema'] .cine-metric-val {
+  font-family: 'Frank Ruhl Libre', serif;
+  font-weight: 500;
+  font-size: clamp(2rem, 5vw, 2.8rem);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* With the script, one number at a time, as large as the title. */
+html[data-template='cinema'] .cine-panel.is-cycling .cine-metric:not(.is-on) {
+  display: none;
+}
+
+html[data-template='cinema'] .cine-panel.is-cycling .cine-metric-val {
+  font-size: clamp(3.4rem, 9vw, 6.2rem);
+}
+
+html[data-template='cinema'] .cine-steps {
+  display: none;
+  gap: 0.5rem;
+}
+
+html[data-template='cinema'] .cine-panel.is-cycling .cine-steps {
+  display: flex;
+  grid-column: 1;
+}
+
+html[data-template='cinema'] .cine-steps button {
+  inline-size: 46px;
+  block-size: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(243, 241, 234, 0.4);
+  background: transparent;
+  color: var(--on-dark);
+  cursor: pointer;
+  transition: background var(--press) var(--ease-out), color var(--press) var(--ease-out);
+}
+
+html[data-template='cinema'] .cine-steps button:hover {
+  background: var(--on-dark);
+  color: var(--ink-deep);
+}
+
+html[data-template='cinema'] .cine-steps button:focus-visible {
+  outline: 3px solid var(--olive);
+  outline-offset: 3px;
+}
+
+html[data-template='cinema'] .cine-steps svg {
+  inline-size: 20px;
+  block-size: 20px;
+}
+
+html[data-template='cinema'] .cine-plan {
+  grid-row: 1 / 3;
+  grid-column: 2;
+  inline-size: clamp(7rem, 22vw, 13rem);
+  aspect-ratio: 4 / 3;
+  border-radius: 8px;
+  background: #f3f1ea;
+}
+
+html[data-template='cinema'] .cine-plan img {
+  object-fit: contain;
+}
+
+html[data-template='cinema'] .cine-thumbs {
+  grid-row: 1 / 3;
+  grid-column: 2;
+  display: flex;
+}
+
+html[data-template='cinema'] .cine-thumbs button {
+  inline-size: 3.6rem;
+  block-size: 3.6rem;
+  border-radius: 50%;
+  border: 2px solid var(--ink-deep);
+}
+
+html[data-template='cinema'] .cine-thumbs button + button {
+  margin-inline-start: -0.9rem;
+}
+
+/* ---------- Price band ---------- */
+
+html[data-template='cinema'] .cine-band {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.1rem 1.6rem;
+  padding: 2.2rem var(--gut) 1rem;
+}
+
+html[data-template='cinema'] .cine-band .price-bar {
+  padding: 0;
+  flex: 1 1 18rem;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: baseline;
+  gap: 0.4rem 1.2rem;
+}
+
+html[data-template='cinema'] .cine-band .price {
+  font-size: clamp(2.6rem, 7vw, 5.2rem);
+  font-weight: 500;
+}
+
+html[data-template='cinema'] .cine-band .price-note {
+  text-align: start;
+}
+
+html[data-template='cinema'] .cine-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 52px;
+  padding: 0.7rem 1.6rem;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--ink-deep);
+  font-weight: 800;
+  text-decoration: none;
+  transition: background var(--press) var(--ease-out), transform var(--press) var(--ease-out);
+}
+
+html[data-template='cinema'] .cine-cta:hover {
+  background: var(--olive);
+}
+
+html[data-template='cinema'] .cine-cta:active {
+  transform: scale(0.97);
+}
+
+html[data-template='cinema'] .cine-band .highlights {
+  flex-basis: 100%;
+  padding: 0;
+}
+
+html[data-template='cinema'] .highlights li {
+  border-color: rgba(243, 241, 234, 0.35);
+}
+
+/* ---------- The rest of the page, on the dark ground ---------- */
+
+html[data-template='cinema'] .enrich {
+  background: var(--stone-warm);
+  margin-inline: var(--gut);
+  border-radius: 22px;
+}
+
+html[data-template='cinema'] .source {
+  color: var(--muted);
+}
+
+html[data-template='cinema'] .cta {
+  background: var(--ink);
+  color: var(--plaster);
+}
+
+html[data-template='cinema'] .cta:hover,
+html[data-template='cinema'] .cta:active {
+  background: var(--olive-lift);
+  color: var(--ink-deep);
+}
+
+html[data-template='cinema'] .cta-dock {
+  background: linear-gradient(to top, var(--plaster) 70%, rgba(16, 17, 12, 0));
+}
+
+html[data-template='cinema'] .facts {
+  gap: 0;
+  background: transparent;
+  border-block: 1px solid var(--stone);
+}
+
+html[data-template='cinema'] .fact {
+  background: transparent;
+  padding-block: 1.7rem;
+}
+
+html[data-template='cinema'] .fact + .fact {
+  border-inline-start: 1px solid var(--stone);
+}
+
+html[data-template='cinema'] .fact-val {
+  font-size: clamp(1.7rem, 3.4vw, 2.4rem);
+}
+
+html[data-template='cinema'] .gallery img {
+  border-radius: 10px;
+}
+
+@media (min-width: 960px) {
+  html[data-template='cinema'] .cine-frame {
+    min-block-size: min(88svh, 60rem);
+  }
+
+  html[data-template='cinema'] .cine-head {
+    padding-block-end: 3.2rem;
+    padding-inline: var(--gut) 34%;
+  }
+
+  /* The panel rides up into the photograph, on the end side: frame and
+     panel share one grid cell, and the panel sits on its bottom edge. */
+  html[data-template='cinema'] section.stage-cinema {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  html[data-template='cinema'] .cine-frame,
+  html[data-template='cinema'] .cine-panel {
+    grid-row: 1;
+    grid-column: 1;
+  }
+
+  html[data-template='cinema'] .cine-panel {
+    align-self: end;
+    justify-self: end;
+    inline-size: min(34rem, 42%);
+    border-block-end: 0;
+    padding: 2rem 2.2rem;
+    background: rgba(7, 8, 5, 0.92);
+    backdrop-filter: blur(6px);
+  }
+
+  /* .listing-flow is a flex column, so a width has to be given: auto
+     margins alone would shrink each block to its content. */
+  html[data-template='cinema'] .listing-flow > :not(.stage, .compact-bar) {
+    align-self: center;
+    inline-size: min(100%, 64rem);
+    max-width: none;
+    box-sizing: border-box;
+  }
+
+  html[data-template='cinema'] :is(.enrich, .seller, .facts, .monthly-cost) {
+    margin-inline: 0;
+  }
+
+  html[data-template='cinema'] .listing-flow {
+    max-inline-size: none;
+  }
+
+  html[data-template='cinema'] .cine-band {
+    max-inline-size: 64rem;
+    margin-inline: auto;
+    padding-block: 3rem 1.4rem;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* The photograph breathes: a slow push in and back, like a held shot. */
+  html[data-template='cinema'] .cine-img {
+    animation: cine-breathe 26s ease-in-out 1.6s infinite alternate;
+  }
+
+  html[data-template='cinema'] .cine-rules span {
+    animation: cine-rule 1.6s var(--ease-out) both;
+    transform-origin: top;
+  }
+
+  html[data-template='cinema'] .cine-rules span:nth-child(2) {
+    animation-delay: 120ms;
+  }
+
+  html[data-template='cinema'] .cine-rules span:nth-child(3) {
+    animation-delay: 240ms;
+  }
+
+  html[data-template='cinema'] .cine-panel {
+    animation: stage-fade 1s var(--ease-out) 520ms both;
+  }
+
+  html[data-template='cinema'] .cine-metric.is-on .cine-metric-val {
+    animation: cine-swap 0.6s var(--ease-out) both;
+  }
+
+  @keyframes cine-breathe {
+    from {
+      transform: scale(1.02);
+    }
+    to {
+      transform: scale(1.1) translateY(-1.5%);
+    }
+  }
+
+  @keyframes cine-rule {
+    from {
+      transform: scaleY(0);
+    }
+  }
+
+  @keyframes cine-swap {
+    from {
+      opacity: 0;
+      transform: translateY(35%);
+    }
+  }
+}

@@ -453,6 +453,69 @@
   background: #2a2924;
 }
 
+/* The three composed layouts: the thumb draws the first screen's SHAPE. */
+.thumb-gallery {
+  background: #fcfbf8;
+}
+
+.thumb-gallery .thumb-hero,
+.thumb-gallery .thumb-hero-photo {
+  block-size: 40%;
+  border-radius: 6px;
+}
+
+.thumb-gallery .thumb-price {
+  inline-size: 62%;
+  block-size: 0.9rem;
+}
+
+.thumb-gallery .thumb-facts > span {
+  background: transparent;
+  border-block: 1px solid var(--stone);
+  block-size: 1.3rem;
+}
+
+.thumb-cinema {
+  background: #070805;
+}
+
+.thumb-cinema .thumb-hero,
+.thumb-cinema .thumb-hero-photo {
+  block-size: 70%;
+  filter: brightness(0.6);
+}
+
+.thumb-cinema .thumb-price {
+  background: #f3f1ea;
+  inline-size: 70%;
+  block-size: 0.9rem;
+}
+
+.thumb-cinema .thumb-facts > span {
+  background: #2a2c22;
+}
+
+.thumb-showcase {
+  background: #f7f5f0;
+}
+
+.thumb-showcase .thumb-hero,
+.thumb-showcase .thumb-hero-photo {
+  block-size: 46%;
+  border-radius: 12px;
+}
+
+.thumb-showcase .thumb-price {
+  background: #111208;
+  border-radius: 99px;
+  inline-size: 58%;
+}
+
+.thumb-showcase .thumb-facts > span {
+  border-radius: 99px;
+  background: #fff;
+}
+
 .palette-picker {
   border: 0;
   margin: 0 0 1.4rem;

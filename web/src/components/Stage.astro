@@ -1,0 +1,274 @@
+---
+import type { Image, Listing } from '@/types/listing';
+import { GALLERY_WIDTHS, HERO_WIDTHS, largest, srcset } from '../lib/images';
+import type { FactCell } from '../lib/facts';
+import { t } from '../lib/i18n';
+import type { PerUnitPrice } from '../lib/price';
+import AgentCard from './AgentCard.astro';
+import HighlightChips from './HighlightChips.astro';
+import PriceBar from './PriceBar.astro';
+import Prose from './Prose.astro';
+
+interface Props {
+  listing: Listing;
+  /** Which of the three composed layouts. The other seven never reach here. */
+  layout: 'gallery' | 'cinema' | 'showcase';
+  /** Cover first, then the gallery — the same order the walk uses. */
+  photos: Image[];
+  /** The numerals, already chosen by ListingPage (so the grid can skip them). */
+  cells: FactCell[];
+  perUnit?: PerUnitPrice;
+  waHref: string;
+  sold: boolean;
+}
+
+const { listing, layout, photos, cells, perUnit, waHref, sold } = Astro.props;
+
+/**
+ * THE FIRST SCREEN, three ways.
+ *
+ * The seven token templates share one head — hero, thumbs, price bar — and
+ * restyle it, which is why agents said they all looked the same. These three
+ * compose a different head from the same data:
+ *
+ *   gallery   a photo mosaic, then title, price and big numerals beside a
+ *             sticky agent card (the card is rendered by ListingPage so it can
+ *             stick for the whole page, not just this section)
+ *   cinema    the cover full-bleed, a giant title, and a dark panel with the
+ *             key numbers and the plan
+ *   showcase  headline, a rounded photograph and a card beside it carrying
+ *             the numbers, the price and the agent
+ *
+ * Everything below the first screen is the shared flow — facts, provenance,
+ * enrichment, map, seller — so the rules those components enforce (absent vs
+ * unanswered, מאומת only with a source, bdi on every number) are enforced
+ * here by construction rather than re-implemented.
+ *
+ * Numerals count up only where the cell says so (countFrom: m² only). The
+ * formatted value is in the HTML; the script only animates towards it.
+ */
+
+const cover = listing.media.cover;
+const lines = listing.title.split('\n');
+const place = listing.location?.street
+  ? `${listing.location.street}, ${listing.location.city}`
+  : (listing.location?.city ?? '');
+
+const key = cells;
+const roomLabel = (image: Image) => (image.room ? t(`editor.rooms.${image.room}`) : undefined);
+const mosaic = photos.slice(0, 5);
+const floorPlan = listing.media.floorPlan;
+
+const objectPosition =
+  cover.focalX != null || cover.focalY != null
+    ? `object-position:${cover.focalX ?? 50}% ${cover.focalY ?? 50}%`
+    : undefined;
+
+const priceProps = {
+  price: listing.price,
+  listPrice: listing.listPrice,
+  priceNote: listing.priceNote,
+  priceDisplay: listing.priceDisplay,
+  perUnit,
+};
+---
+{layout === 'gallery' && (
+  <section class="stage stage-gallery">
+    <div class="mosaic" data-tiles={mosaic.length}>
+      {mosaic.map((image, index) => (
+        <button
+          type="button"
+          class="mosaic-tile"
+          data-lightbox={largest(image, HERO_WIDTHS)}
+          data-alt={image.alt ?? ''}
+          data-room={roomLabel(image)}
+          aria-label={t('listing.openPhoto')}
+        >
+          <img
+            src={largest(image, index === 0 ? HERO_WIDTHS : GALLERY_WIDTHS)}
+            srcset={srcset(image, index === 0 ? HERO_WIDTHS : GALLERY_WIDTHS) || undefined}
+            sizes={index === 0 ? '(min-width: 960px) 55vw, 100vw' : '(min-width: 960px) 22vw, 80vw'}
+            width={image.width}
+            height={image.height}
+            alt={image.alt ?? ''}
+            style={index === 0 ? objectPosition : undefined}
+            fetchpriority={index === 0 ? 'high' : undefined}
+            loading={index === 0 ? 'eager' : 'lazy'}
+            decoding="async"
+          />
+          {image.room && <span class="mosaic-room">{roomLabel(image)}</span>}
+        </button>
+      ))}
+      {photos.length > 1 && (
+        <a class="mosaic-all" href="#listing-gallery">
+          {t('listing.showAllPhotos')} <bdi>{photos.length}</bdi>
+        </a>
+      )}
+    </div>
+
+    <div class="stage-body">
+      {place && <p class="stage-place"><Prose text={place} /></p>}
+      <h1 class="stage-title">
+        {lines.map((line) => (
+          <span class="hero-line"><span><Prose text={line} /></span></span>
+        ))}
+      </h1>
+      <PriceBar {...priceProps} />
+      {key.length > 0 && (
+        <dl class="numerals" aria-label={t('listing.keyFacts')}>
+          {key.map((cell) => (
+            <div>
+              <dt>{cell.label}</dt>
+              <dd>
+                {cell.bdi ? (
+                  <bdi data-count={cell.countFrom}>{cell.displayValue}</bdi>
+                ) : (
+                  cell.displayValue
+                )}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      <HighlightChips highlights={listing.highlights} facts={listing.facts} />
+    </div>
+  </section>
+)}
+
+{layout === 'cinema' && (
+  <section class="stage stage-cinema">
+    <div class="cine-frame">
+      <img
+        class="cine-img"
+        src={largest(cover, HERO_WIDTHS)}
+        srcset={srcset(cover, HERO_WIDTHS) || undefined}
+        sizes="100vw"
+        width={cover.width}
+        height={cover.height}
+        alt={cover.alt ?? ''}
+        style={objectPosition}
+        fetchpriority="high"
+        decoding="async"
+      />
+      <span class="cine-rules" aria-hidden="true"><span></span><span></span><span></span></span>
+      <div class="cine-head">
+        {place && <p class="stage-place"><Prose text={place} /></p>}
+        <h1 class="stage-title">
+          {lines.map((line) => (
+            <span class="hero-line"><span><Prose text={line} /></span></span>
+          ))}
+        </h1>
+      </div>
+    </div>
+
+    {key.length > 0 && (
+      <div class="cine-panel" data-metric>
+        <ol class="cine-metrics" aria-label={t('listing.keyFacts')}>
+          {key.map((cell, index) => (
+            <li class:list={['cine-metric', { 'is-on': index === 0 }]}>
+              <span class="cine-metric-lbl">{cell.label}</span>
+              <span class="cine-metric-val">
+                {cell.bdi ? <bdi data-count={cell.countFrom}>{cell.displayValue}</bdi> : cell.displayValue}
+              </span>
+            </li>
+          ))}
+        </ol>
+        {key.length > 1 && (
+          <div class="cine-steps">
+            <button type="button" data-metric-step="-1" aria-label={t('listing.metricPrev')}>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <button type="button" data-metric-step="1" aria-label={t('listing.metricNext')}>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+        )}
+        {floorPlan ? (
+          <button
+            type="button"
+            class="cine-plan"
+            data-lightbox={largest(floorPlan, HERO_WIDTHS)}
+            data-alt={floorPlan.alt ?? t('listing.floorPlan')}
+            aria-label={t('listing.floorPlan')}
+          >
+            <img src={largest(floorPlan, GALLERY_WIDTHS)} alt="" width={floorPlan.width} height={floorPlan.height} loading="lazy" decoding="async" />
+          </button>
+        ) : photos.length > 1 ? (
+          <div class="cine-thumbs">
+            {photos.slice(1, 3).map((image) => (
+              <button
+                type="button"
+                data-lightbox={largest(image, HERO_WIDTHS)}
+                data-alt={image.alt ?? ''}
+                data-room={roomLabel(image)}
+                aria-label={t('listing.openPhoto')}
+              >
+                <img src={largest(image, GALLERY_WIDTHS)} alt="" width="120" height="120" loading="lazy" decoding="async" />
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    )}
+
+    <div class="cine-band">
+      <PriceBar {...priceProps} />
+      {!sold && (
+        <a class="cine-cta" href={waHref}>{t('listing.whatsappCta')}</a>
+      )}
+      <HighlightChips highlights={listing.highlights} facts={listing.facts} />
+    </div>
+  </section>
+)}
+
+{layout === 'showcase' && (
+  <section class="stage stage-showcase">
+    <div class="show-head">
+      {place && <p class="stage-place"><Prose text={place} /></p>}
+      <h1 class="stage-title">
+        {lines.map((line) => (
+          <span class="hero-line"><span><Prose text={line} /></span></span>
+        ))}
+      </h1>
+    </div>
+    <div class="show-grid">
+      <button
+        type="button"
+        class="show-photo"
+        data-lightbox={largest(cover, HERO_WIDTHS)}
+        data-alt={cover.alt ?? ''}
+        data-room={roomLabel(cover)}
+        aria-label={t('listing.openPhoto')}
+      >
+        <img
+          src={largest(cover, HERO_WIDTHS)}
+          srcset={srcset(cover, HERO_WIDTHS) || undefined}
+          sizes="(min-width: 960px) 60vw, 100vw"
+          width={cover.width}
+          height={cover.height}
+          alt={cover.alt ?? ''}
+          style={objectPosition}
+          fetchpriority="high"
+          decoding="async"
+        />
+      </button>
+      <div class="show-card">
+        {key.length > 0 && (
+          <dl class="numerals" aria-label={t('listing.keyFacts')}>
+            {key.map((cell) => (
+              <div>
+                <dt>{cell.label}</dt>
+                <dd>
+                  {cell.bdi ? <bdi data-count={cell.countFrom}>{cell.displayValue}</bdi> : cell.displayValue}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        )}
+        <PriceBar {...priceProps} />
+        <AgentCard seller={listing.seller} waHref={waHref} sold={sold} as="div" />
+      </div>
+    </div>
+    <HighlightChips highlights={listing.highlights} facts={listing.facts} />
+  </section>
+)}

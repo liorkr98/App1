@@ -14,6 +14,8 @@ import MapSection from './MapSection.astro';
 import PriceBar from './PriceBar.astro';
 import Prose from './Prose.astro';
 import SellerBlock from './SellerBlock.astro';
+import Stage from './Stage.astro';
+import AgentCard from './AgentCard.astro';
 import Walk from './Walk.astro';
 import { CATEGORY_PRESENTATION } from '../lib/category-presentation';
 import { t } from '../lib/i18n';
@@ -105,6 +107,32 @@ const waHref = `/a/${listing.slug}/wa?text=${encodeURIComponent(waMessage)}`;
 const homeLabel = listing.category === 'property' ? t('listing.section.home') : t('listing.section.vehicle');
 
 const shareCells = toCells(listing.category, listing.facts, listing.audience);
+
+/**
+ * gallery, cinema and showcase compose their own first screen (Stage) from
+ * the same data; the other seven keep the shared hero and restyle it. The
+ * choice rides on the TEMPLATE, never on the category, so the property and
+ * vehicle pages still differ only in the four allowed ways.
+ */
+const composed =
+  listing.template === 'gallery' || listing.template === 'cinema' || listing.template === 'showcase'
+    ? listing.template
+    : undefined;
+/*
+ * The stage's big numerals. Numbers first: a row of numerals reads as a spec
+ * sheet, and "יש" set at 3rem does not; word-valued cells only fill in when
+ * there are too few. The facts grid then skips them — the same number twice
+ * on one screen is filler — unless the cell is מאומת, because the citation
+ * lives in the grid and must not be lost.
+ */
+const presentCells = shareCells.filter((cell) => !cell.absent);
+const stageCells = composed
+  ? [...presentCells.filter((cell) => cell.bdi), ...presentCells.filter((cell) => !cell.bdi)].slice(
+      0,
+      composed === 'showcase' ? 3 : 4,
+    )
+  : [];
+const stageKeys = stageCells.filter((cell) => !cell.verified).map((cell) => cell.key);
 const flatTitle = listing.title.replace(/\s*\n\s*/g, ' ');
 const shareFacts = shareCells
   .filter((cell) => !cell.absent && cell.value !== 'אין')
@@ -137,16 +165,33 @@ const shareHref = whatsappShareUrl(
   robots={robots}
   hasWalk={hasWalk}
 >
-  <Hero
-    cover={listing.media.cover}
-    title={listing.title}
-    location={listing.location}
-    watermarkUrl={
-      listing.seller.logoPlacement === 'watermark' ? listing.seller.agencyLogoUrl : undefined
-    }
-  />
+  {composed ? (
+    <Fragment>
+      <Stage
+        listing={listing}
+        layout={composed}
+        photos={walkImages}
+        cells={stageCells}
+        perUnit={perUnit}
+        waHref={waHref}
+        sold={sold}
+      />
+      {composed === 'gallery' && <AgentCard seller={listing.seller} waHref={waHref} sold={sold} />}
+    </Fragment>
+  ) : (
+    <Fragment>
+      <Hero
+        cover={listing.media.cover}
+        title={listing.title}
+        location={listing.location}
+        watermarkUrl={
+          listing.seller.logoPlacement === 'watermark' ? listing.seller.agencyLogoUrl : undefined
+        }
+      />
 
-  <HeroThumbs images={walkImages} href={hasWalk ? '#walk-frame-0' : '#listing-gallery'} />
+      <HeroThumbs images={walkImages} href={hasWalk ? '#walk-frame-0' : '#listing-gallery'} />
+    </Fragment>
+  )}
 
   {/* M7: CSS view-timeline reveals this after the hero (or walkFirst
       tour) leaves. Until then it is display:none / opacity:0, so it
@@ -162,15 +207,19 @@ const shareHref = whatsappShareUrl(
     </div>
   )}
 
-  <PriceBar
-    price={listing.price}
-    listPrice={listing.listPrice}
-    priceNote={listing.priceNote}
-    priceDisplay={listing.priceDisplay}
-    perUnit={perUnit}
-  />
+  {!composed && (
+    <Fragment>
+      <PriceBar
+        price={listing.price}
+        listPrice={listing.listPrice}
+        priceNote={listing.priceNote}
+        priceDisplay={listing.priceDisplay}
+        perUnit={perUnit}
+      />
 
-  <HighlightChips highlights={listing.highlights} facts={listing.facts} />
+      <HighlightChips highlights={listing.highlights} facts={listing.facts} />
+    </Fragment>
+  )}
 
   {/* Seller declaration, omitted when sold — urgency that the thing is
       gone is a different claim than "not yet on the portals". Never
@@ -183,7 +232,12 @@ const shareHref = whatsappShareUrl(
     </p>
   ) : null}
 
-  <FactsGrid category={listing.category} facts={listing.facts} audience={listing.audience} />
+  <FactsGrid
+    category={listing.category}
+    facts={listing.facts}
+    audience={listing.audience}
+    omit={stageKeys}
+  />
   <MonthlyCost facts={listing.facts} />
 
   <section class="reveal">

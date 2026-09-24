@@ -559,6 +559,39 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         --s-lift: #9a9a90;
       }
 
+      .device[data-tpl='gallery'] {
+        --s-ground: #fcfbf8;
+        --s-ink: #191a15;
+        --s-deep: #111208;
+        --s-line: #e6e2d8;
+        --s-warm: #f3f0e8;
+        --s-muted: #67685f;
+        --s-accent: #4a5d3a;
+        --s-lift: #7e9a62;
+      }
+
+      .device[data-tpl='cinema'] {
+        --s-ground: #10110c;
+        --s-ink: #f3f1ea;
+        --s-deep: #070805;
+        --s-line: #2a2c22;
+        --s-warm: #1a1b14;
+        --s-muted: #a3a498;
+        --s-accent: #f3f1ea;
+        --s-lift: #7e9a62;
+      }
+
+      .device[data-tpl='showcase'] {
+        --s-ground: #f7f5f0;
+        --s-ink: #191a15;
+        --s-deep: #111208;
+        --s-line: #e3dfd5;
+        --s-warm: #efebe2;
+        --s-muted: #67685f;
+        --s-accent: #111208;
+        --s-lift: #4a5d3a;
+      }
+
       .s-agent {
         display: flex;
         align-items: center;
@@ -939,6 +972,104 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
 
       .device[data-tpl='studio'] .s-fact-lbl {
         color: rgba(251, 250, 247, 0.7);
+      }
+
+      .device[data-tpl='gallery'] .s-hero {
+        aspect-ratio: 4 / 3;
+        margin: 0.35em 0.35em 0;
+        border-radius: 0.45em;
+        overflow: hidden;
+      }
+
+      .device[data-tpl='gallery'] .s-price {
+        font-size: 1.25em;
+      }
+
+      .device[data-tpl='gallery'] .s-facts {
+        background: transparent;
+        gap: 0;
+        border-block: 1px solid var(--s-line);
+      }
+
+      .device[data-tpl='gallery'] .s-fact {
+        background: transparent;
+      }
+
+      .device[data-tpl='gallery'] .s-fact + .s-fact {
+        border-inline-start: 1px solid var(--s-line);
+      }
+
+      .device[data-tpl='cinema'] .s-agent {
+        background: var(--s-deep);
+      }
+
+      .device[data-tpl='cinema'] .s-hero {
+        aspect-ratio: 3 / 4;
+      }
+
+      .device[data-tpl='cinema'] .s-hero img {
+        filter: brightness(0.62);
+      }
+
+      .device[data-tpl='cinema'] .s-title {
+        font-size: 1.5em;
+        font-weight: 900;
+        line-height: 0.98;
+      }
+
+      .device[data-tpl='cinema'] .s-price {
+        font-weight: 500;
+      }
+
+      .device[data-tpl='cinema'] .s-facts {
+        background: transparent;
+        gap: 0;
+        border-block: 1px solid var(--s-line);
+      }
+
+      .device[data-tpl='cinema'] .s-fact {
+        background: transparent;
+      }
+
+      .device[data-tpl='cinema'] .s-cta {
+        border-radius: 999px;
+        background: var(--s-ink);
+        color: var(--s-deep);
+      }
+
+      .device[data-tpl='showcase'] .s-hero {
+        aspect-ratio: 4 / 3;
+        margin: 0.45em;
+        border-radius: 0.9em;
+        overflow: hidden;
+      }
+
+      .device[data-tpl='showcase'] .s-price-bar {
+        margin-inline: 0.45em;
+        padding: 0.5em;
+        border-radius: 0.8em;
+        background: #fff;
+      }
+
+      .device[data-tpl='showcase'] .s-facts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.22em;
+        background: transparent;
+        border-block-start: 0;
+        padding: 0.35em 0.45em 0.6em;
+      }
+
+      .device[data-tpl='showcase'] .s-fact {
+        background: #fff;
+        border-radius: 999px;
+        min-block-size: 0;
+        padding: 0.28em 0.55em;
+      }
+
+      .device[data-tpl='showcase'] .s-cta {
+        border-radius: 999px;
+        background: var(--s-deep);
       }
 
       .device-label {

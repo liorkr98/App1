@@ -171,7 +171,11 @@
     "readMore": "",
     "monthlyCost": "",
     "closeLightbox": "",
-    "openPhoto": ""
+    "openPhoto": "",
+    "licenceNumber": "",
+    "metricPrev": "",
+    "metricNext": "",
+    "keyFacts": ""
   },
   "notFound": {
     "title": "",
@@ -284,7 +288,13 @@
       "linen": "",
       "linenNote": "",
       "studio": "",
-      "studioNote": ""
+      "studioNote": "",
+      "gallery": "",
+      "galleryNote": "",
+      "cinema": "",
+      "cinemaNote": "",
+      "showcase": "",
+      "showcaseNote": ""
     },
     "photosHint": "",
     "photosGuide": "",
