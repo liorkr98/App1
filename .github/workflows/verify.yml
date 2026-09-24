@@ -106,6 +106,19 @@ jobs:
       - name: Verify listing and shell a11y landmarks
         run: node scripts/verify-a11y.mjs
 
+      # A fact the seller confirmed absent is the distinction CLAUDE.md §7
+      # calls the reason this page reads as a description rather than an
+      # advertisement — and it is only that if a reader can read it. It once
+      # rendered at 1.70:1, and studio later repainted the label off --absent
+      # at 4.09:1, which a token-only check would have called green. This
+      # measures the ratio per template AND refuses any override that bypasses
+      # the token.
+      - name: Verify a confirmed absence is readable
+        run: node scripts/verify-absent-contrast.mjs
+
+      - name: Verify the absent-contrast rule actually fires
+        run: bash scripts/verify-absent-contrast-fires.sh
+
       # CLAUDE.md §4.2. A missing <bdi> is invisible in review AND usually on
       # the page: a bare number reads correctly until the words around it
       # change, then silently reorders. Runs on built HTML so it sees what is
