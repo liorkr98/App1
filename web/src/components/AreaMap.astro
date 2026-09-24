@@ -1,0 +1,46 @@
+---
+import { composedMapSrc, type AreaMap } from '@/features/listings/area-map';
+import { t } from '../lib/i18n';
+import Prose from './Prose.astro';
+import WalkMinutes from './WalkMinutes.astro';
+
+interface Props {
+  map: AreaMap;
+  attribution: string;
+}
+
+const { map, attribution } = Astro.props;
+const src = composedMapSrc(map);
+---
+
+<figure class="area-map">
+  <div class="area-map-stage">
+    <button type="button" class="map-open" data-map-open>
+      <img
+        src={src}
+        alt={t('listing.mapAlt')}
+        width="1600"
+        height="1000"
+        decoding="async"
+      />
+    </button>
+  </div>
+
+  <ol class="area-map-list">
+    {map.pins.map((pin) => (
+      <li>
+        {pin.walkMinutes === undefined ? (
+          <span class="area-map-walk"></span>
+        ) : (
+          <span class="area-map-walk">
+            <WalkMinutes minutes={pin.walkMinutes} />
+          </span>
+        )}
+        <b><Prose text={pin.name} /></b>
+        <span class="area-map-key"><bdi>{pin.key}</bdi></span>
+      </li>
+    ))}
+  </ol>
+
+  <figcaption class="area-map-credit"><Prose text={attribution} /></figcaption>
+</figure>

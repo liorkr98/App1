@@ -1,0 +1,32 @@
+---
+import type { Fact } from '@/types/listing';
+import { monthlyCost } from '@/features/listings/monthly-cost';
+import { ils } from '../lib/format';
+import { parts, t } from '../lib/i18n';
+
+interface Props {
+  facts: Fact[];
+}
+
+const cost = monthlyCost(Astro.props.facts);
+const slots: Record<string, string> = cost
+  ? {
+      arnona: ils(cost.arnonaIls),
+      arnonaBill: ils(cost.arnonaBillIls),
+      vaad: ils(cost.vaadIls),
+    }
+  : {};
+---
+{cost ? (
+  <p class="monthly-cost">
+    {parts('listing.monthlyCost').map((part) =>
+      'text' in part ? (
+        part.text
+      ) : (
+        <bdi dir="ltr">{slots[part.slot] ?? ''}</bdi>
+      ),
+    )}
+    {' '}
+    <span class="monthly-src">{t('source.seller')}</span>
+  </p>
+) : null}

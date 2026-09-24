@@ -1,4 +1,6 @@
+import type { LogoPlacement } from '@/features/agents/logo-placement.js';
 import type { ListingCategory } from '@/features/listings/schemas/index.js';
+import type { PhotoRoom } from '@/features/listings/photo-rooms.js';
 
 /**
  * The listing domain (RESEARCH.md §6, PRD.md §2).
@@ -85,6 +87,56 @@ export interface Fact {
   sourceDate?: string;
 }
 
+/** One named thing near the address. */
+export interface AreaPlace {
+  name: string;
+  /** Where OSM says it is. Used for the map and for routing, never printed. */
+  lat: number;
+  lon: number;
+  /**
+   * ROUTED walking minutes, from a pedestrian router, or absent.
+   *
+   * Absent is the normal state until a router is configured, and absent means
+   * the page says nothing about how long anything takes. It is never derived
+   * from the coordinates above: straight-line distance is not a walk
+   * (CLAUDE.md §2), and the two numbers differ most exactly where it matters —
+   * across a motorway, a rail cutting or a wadi.
+   */
+  walkMinutes?: number;
+  /**
+   * Bus stop vs rail / light rail. Used so the description can say
+   * "תחנת האוטובוס הקרובה" or "תחנת הרכבת הקרובה" instead of dumping every
+   * stop as a comma list. Absent on older cached rows — those read as a stop.
+   */
+  mode?: 'bus' | 'rail';
+}
+
+/** The five groups the paragraph may talk about. */
+export interface AreaPlaces {
+  /** Hebrew city, from the listing. Always present or there is no query. */
+  city: string;
+  /** Hebrew street, when the seller gave one. */
+  street?: string;
+  /**
+   * A point on that street, which is what walking times are measured from and
+   * where the map centres. The street, not the building: OSM names roads, and
+   * a listing page should not pin somebody's front door anyway.
+   */
+  origin?: { lat: number; lon: number };
+  /** OSM `place=suburb|neighbourhood|quarter` names near the street. */
+  neighbourhoods: AreaPlace[];
+  /** Schools and kindergartens. */
+  schools: AreaPlace[];
+  /** Named bus stops, rail and light-rail stations. */
+  transit: AreaPlace[];
+  /** Parks, gardens and playgrounds. */
+  parks: AreaPlace[];
+  /** Community centres, libraries, culture and sport. */
+  community: AreaPlace[];
+  /** Supermarkets, groceries, bakeries, pharmacies. */
+  shops: AreaPlace[];
+}
+
 /**
  * The schema-side definition a Fact is built from. Lives in a category schema
  * file; `options` applies to `enum`, and to `date` fields that also accept a
@@ -164,6 +216,46 @@ export interface FactDefinition {
    * carries make and model in the hero and not as cells.
    */
   showInGrid?: boolean;
+
+  /**
+   * Who this question is for. Absent means everyone.
+   *
+   * Entry date is a resident question; renters, rent and lease-end are
+   * investor questions. `both` sees both sets. An unanswered audience is
+   * treated as resident — the default path, not an empty one.
+   */
+  forAudience?: readonly ListingAudience[];
+
+  /**
+   * Only show this field when another fact's value is `true`.
+   *
+   * Rent amount and lease-end wait on "are there tenants?". Without this
+   * a form would ask how much the tenants pay before asking whether any
+   * exist.
+   */
+  requires?: string;
+
+  /**
+   * How this fact reads inside a Hebrew SENTENCE, with `{value}` where the
+   * answer goes — `'{value} חדרים'`, `'קומה {value}'`.
+   *
+   * The grid can render `label: value` in either order because it is a table.
+   * Prose cannot: Hebrew wants "4 חדרים" and "קומה 3", and no rule derived
+   * from the label produces both. Without this the generated description read
+   * "חדרים 4, קומה 3, מ״ר 95" — recognisably written by a machine, which is
+   * the one thing a page an agent is proud to send cannot look like.
+   *
+   * Omit it and the fact stays out of the prose. That is the right default:
+   * a fact with no phrasing is still shown in the grid, where it is correct.
+   *
+   * Hebrew, in the schema, for the reason `label` is (CLAUDE.md §12) — how a
+   * field is said is a property of the field, not a translation.
+   *
+   * For a BOOLEAN the phrase is used when the answer is yes and the `{value}`
+   * placeholder is unnecessary: `'מעלית'`. A `false` never reaches prose —
+   * "no lift" is information the grid states and an advertisement omits (§7).
+   */
+  phrase?: string;
 }
 
 /** A category's ordered fact definitions. Order is display order. */
@@ -240,6 +332,15 @@ export interface Image {
   caption?: string;
 
   /**
+   * Which room this photograph is of, when the seller named one.
+   *
+   * Property only. The listing page groups the gallery under that headline
+   * and builds the walk from the same field. Absent means unlabeled — the
+   * walk is omitted when nothing is labelled, rather than inventing rooms.
+   */
+  room?: PhotoRoom;
+
+  /**
    * Whether `{base}-{width}.webp` files exist alongside this URL.
    *
    * DEFAULTS TO FALSE, and the direction of that default is the point. No URL
@@ -254,6 +355,14 @@ export interface Image {
    * The failure mode of forgetting is a larger download, not a broken image.
    */
   variants?: boolean;
+
+  /**
+   * Cover crop, percent from the physical left and top (CSS object-position).
+   * Absent means centre. Copied onto the image at publish so the page does
+   * not read the agent's profile.
+   */
+  focalX?: number;
+  focalY?: number;
 }
 
 export interface Media {
@@ -264,6 +373,16 @@ export interface Media {
    * the download is not offered yet — never a broken link.
    */
   pdfUrl?: string;
+  /**
+   * Optional outbound 3D / Matterport URL. Rendered as a chip inside the
+   * photo tour that opens a new tab. Never an iframe, never a player.
+   */
+  tourUrl?: string;
+  /**
+   * Floor plan photograph. Rendered as a תשריט chip inside the tour — not a
+   * fifth section (DESIGN-CONTRACT §5).
+   */
+  floorPlan?: Image;
 }
 
 // ---------------------------------------------------------------------------
@@ -356,6 +475,24 @@ export interface NearbyPlace extends Provenance {
   walkMinutes: number;
 }
 
+/** Police desks and public parking from data.gov.il. Not OSM. */
+export type CivicKind = 'police' | 'parking' | 'park_ride';
+
+export interface NearbyCivic extends Provenance {
+  id: string;
+  name: string;
+  kind: CivicKind;
+  walkMinutes: number;
+}
+
+/**
+ * Short Hebrew copy about the area, written at publish from the lists already
+ * on the page. Omitted when missing. Never a valuation, never a live model call.
+ */
+export interface NeighborhoodNote {
+  text: string;
+}
+
 /**
  * The headline numbers, so a reader gets the shape of a neighbourhood without
  * reading three lists.
@@ -388,7 +525,14 @@ export interface PropertyEnrichment {
   transit: NearbyTransit[];
   schools: NearbySchool[];
   places: NearbyPlace[];
+  /** Police / parking / park-and-ride. Empty or absent is omitted on the page. */
+  civic?: NearbyCivic[];
   summary: ProximitySummary;
+  /**
+   * Written once at publish from the routed lists. Not a verified badge, not
+   * a live call, and not shown when the sanitiser rejects the text.
+   */
+  neighborhoodNote?: NeighborhoodNote;
 
   /**
    * Licence attributions that MUST be rendered wherever this data is shown.
@@ -452,6 +596,13 @@ export interface ListingLocation {
   city: string;
   /** Hebrew street name. Omitted from the page when the seller opts out. */
   street?: string;
+  /**
+   * How precisely the page may name the place.
+   *
+   * Absent is inferred: coords+street → exact, street → street, city → area.
+   * `area` never prints the street, even if the row still holds it for routing.
+   */
+  precision?: 'exact' | 'street' | 'area';
   /** Never rendered on the page. Used only to render the static map. */
   lat?: number;
   lng?: number;
@@ -478,6 +629,17 @@ export interface Seller {
    * rendered as exactly that, not a claim this product is vouching for.
    */
   licenceNumber?: string;
+  /**
+   * True only when this product matched the number against the Justice
+   * Ministry broker register. Until that check exists, this stays unset and
+   * the verified badge does not render.
+   */
+  licenceVerified?: boolean;
+  /**
+   * Where the agency mark sits. Copied from the profile at publish, same
+   * rule as the accent: changing /me next year must not repaint old pages.
+   */
+  logoPlacement?: LogoPlacement;
 }
 
 /**
@@ -493,7 +655,7 @@ export interface Seller {
  * commoner case, and a resident reading an investor's grid is merely puzzled
  * where the reverse hides the number the reader came for.
  */
-export type ListingAudience = 'resident' | 'investor';
+export type ListingAudience = 'resident' | 'investor' | 'both';
 
 export type ListingStatus = 'draft' | 'published' | 'sold' | 'archived';
 
@@ -511,10 +673,10 @@ export const TEMPLATE_IDS = [
   'agency',
   'editorial',
   'dark',
-  'sheet',
-  'poster',
-  'ledger',
-  'warm',
+  'walkFirst',
+  'brochure',
+  'linen',
+  'studio',
 ] as const;
 
 export type TemplateId = (typeof TEMPLATE_IDS)[number];
@@ -551,6 +713,17 @@ export interface Listing {
   listPrice?: number;
   /** Free text beside the price when there is no listPrice, e.g. פינוי גמיש. */
   priceNote?: string;
+  /**
+   * How the asking price is shown. Absent means exact.
+   * `from` prefixes החל מ־. `on_request` prints לפי פנייה and hides the number.
+   */
+  priceDisplay?: 'exact' | 'from' | 'on_request';
+
+  /**
+   * Up to three first-screen chips. Agent-chosen from HIGHLIGHT_LABELS plus
+   * one custom. Absent means none — "up to three" is a maximum, not a quota.
+   */
+  highlights?: string[];
 
   facts: Fact[];
   media: Media;
@@ -603,6 +776,12 @@ export interface Listing {
   indexable: boolean;
 
   /**
+   * When true, the public footer carries נבנה בהיעד. Free first listing: true.
+   * A paid grant turns it false. Absent means true, so older pages keep the mark.
+   */
+  hyadMark?: boolean;
+
+  /**
    * Who the seller is aiming this at. Defaults to 'resident' when absent.
    *
    * Reorders the facts grid — see orderForAudience. It is a question the
@@ -610,4 +789,39 @@ export interface Listing {
    * for different numbers and averaging them serves neither.
    */
   audience?: ListingAudience;
+
+  /**
+   * Seller declaration that this listing is not yet on commercial portals.
+   *
+   * DESIGN-BRIEF §5: "before it goes up" is urgency a portal listing can
+   * never have. Default false — a missing tick is not a claim. Never
+   * rendered as מאומת; it is לפי המוכר.
+   */
+  prePortal?: boolean;
+
+  /**
+   * What OpenStreetMap says is around this address: the neighbourhood, and the
+   * named schools, stops, parks, community places and shops, each with its
+   * position and — when a pedestrian router answered — routed walking minutes.
+   *
+   * Written when an agent asks for a description (web/src/pages/api/
+   * description.ts) and read by the page to draw the neighbourhood map. It is
+   * the reason `textAttributions` below exists.
+   */
+  areaPlaces?: AreaPlaces;
+
+  /**
+   * Licence credits this page owes for the words on it, as opposed to for the
+   * enrichment grid.
+   *
+   * The description can be written from OpenStreetMap names — the real schools,
+   * stops and parks around the address (area-note.ts) — and ODbL attribution
+   * is a condition of using them, not a courtesy (CLAUDE.md §10). Carried on
+   * the listing rather than hardcoded in the footer, so a page that was
+   * written without them credits nothing it did not use.
+   *
+   * Separate from `enrichment.attributions`, which credits the sources behind
+   * the proximity GRID. A page can owe one, both, or neither.
+   */
+  textAttributions?: string[];
 }

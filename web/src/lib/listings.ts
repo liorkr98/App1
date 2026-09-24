@@ -1,14 +1,8 @@
-import {
-  factsFromSchema,
-  type CategorySchema,
-  type Fact,
-  type FactValue,
-  type Listing,
-  type Provenance,
-  type PropertyEnrichment,
-  type VehicleEnrichment,
-} from '@/types/listing';
+import type { Listing, PropertyEnrichment, VehicleEnrichment } from '@/types/listing';
 import { propertySchema, vehicleSchema } from '@/features/listings/schemas';
+import { groundedAreaDescription } from '@/features/listings/neighborhood-note';
+import { fixtures } from './fixtures';
+import { answer } from './listing-facts';
 
 /**
  * Sample listings, with the content of the two reference pages.
@@ -18,42 +12,8 @@ import { propertySchema, vehicleSchema } from '@/features/listings/schemas';
  * gershayim and the fact-grid states are all exercised by the real templates.
  */
 
-/** `null` leaves a fact unanswered; `{ absent: true }` marks it confirmed absent. */
-type Answer = FactValue | { absent: true };
-
-/**
- * Builds a category's facts from answers, optionally marking the ones a
- * public register filled.
- *
- * `verifiedBy` stands in for a plate lookup having run. It promotes exactly
- * the facts the SCHEMA says are verifiable and that actually got a value —
- * never a field the seller typed, and never an empty one. Which fields those
- * are is read from the schema rather than listed here, so adding a verifiable
- * field is still a one-file change.
- */
-function answer(
-  schema: CategorySchema,
-  values: Record<string, Answer>,
-  verifiedBy?: Provenance,
-): Fact[] {
-  const verifiable = new Set(
-    schema.facts.filter((definition) => definition.source === 'verified').map((d) => d.key),
-  );
-
-  return factsFromSchema(schema).map((fact) => {
-    const promote = (next: Fact): Fact =>
-      verifiedBy && verifiable.has(next.key) && next.value !== null
-        ? { ...next, source: 'verified', ...verifiedBy }
-        : next;
-
-    if (!(fact.key in values)) return fact;
-    const given = values[fact.key];
-    if (given !== null && typeof given === 'object' && 'absent' in given) {
-      return { ...fact, present: false };
-    }
-    return promote({ ...fact, value: given ?? null });
-  });
-}
+export { fixtures } from './fixtures';
+export { answer } from './listing-facts';
 
 /**
  * Sample photographs, and where they came from.
@@ -114,15 +74,31 @@ const propertyEnrichment: PropertyEnrichment = {
     { id: 'p3', name: 'פארק פרס', category: 'park', walkMinutes: 9, ...{ sourceName: 'OpenStreetMap', sourceDate: '2026-09-05' } },
     { id: 'p4', name: 'קפה גרג', category: 'cafe', walkMinutes: 6, ...{ sourceName: 'OpenStreetMap', sourceDate: '2026-09-05' } },
     { id: 'p5', name: 'מסעדת הדרים', category: 'restaurant', walkMinutes: 11, ...{ sourceName: 'OpenStreetMap', sourceDate: '2026-09-05' } },
+    { id: 'p6', name: 'מתנ״ס חולון', category: 'culture', walkMinutes: 8, ...{ sourceName: 'OpenStreetMap', sourceDate: '2026-09-05' } },
+  ],
+  civic: [
+    { id: 'c1', name: 'תחנת חולון', kind: 'police', walkMinutes: 12, sourceName: 'משטרת ישראל', sourceDate: '2026-09-15' },
+    { id: 'c2', name: 'חניה ציבורית, חולון', kind: 'parking', walkMinutes: 4, sourceName: 'מפ״י', sourceDate: '2026-09-15' },
   ],
   summary: {
     restaurantsWithin500m: 7,
     nearestGrocery: { name: 'שופרסל שלי', walkMinutes: 5 },
     nearestPark: { name: 'פארק פרס', walkMinutes: 9 },
   },
+  // Filled immediately below from the same facts DeepSeek sees at publish.
+  neighborhoodNote: { text: 'placeholder' },
   // Carried by the data, so a page with no OSM places carries no OSM credit.
   attributions: ['© מפתחי OpenStreetMap, ברישיון ODbL'],
 };
+
+const SAMPLE_AREA = groundedAreaDescription({
+  city: 'חולון',
+  transit: propertyEnrichment.transit,
+  schools: propertyEnrichment.schools,
+  places: propertyEnrichment.places,
+  civic: propertyEnrichment.civic ?? [],
+});
+propertyEnrichment.neighborhoodNote = { text: SAMPLE_AREA };
 
 export const propertyListing: Listing = {
   id: 'sample-property',
@@ -131,7 +107,7 @@ export const propertyListing: Listing = {
 
   title: 'דירת 4 חדרים,\nמשופצת מהיסוד',
   description:
-    'הדירה עברה שיפוץ מלא לפני שנתיים — חשמל, אינסטלציה, מטבח וריצוף. הסלון פונה למרפסת שמש דרומית שמקבלת אור מהבוקר עד אחר הצהריים. שלושה חדרי שינה, אחד מהם עם יציאה נפרדת למרפסת שירות.\n\nהבניין שקט, שמונה דיירים בלבד, ועד בית פעיל. חניה בטאבו. בית ספר וגן ילדים במרחק הליכה, ותחנת הרכבת הקלה שבע דקות ברגל.',
+    'דירת ארבעה חדרים ששופצה מהיסוד. הסלון נפתח למרפסת שמש של 12 מ״ר, לכיוון דרום־מזרח, והמטבח חודש עם שאר הדירה. יש מעלית, חניה וממ״ד.',
   price: 1850000,
   currency: 'ILS',
   priceNote: 'פינוי גמיש',
@@ -146,9 +122,9 @@ export const propertyListing: Listing = {
     shelter: true,
     balcony_sqm: 12,
     aspect: 'דרום־מזרח',
-    // Confirmed absent — renders greyed showing אין, rather than vanishing.
     storage: { absent: true },
-    // Everything below is simply unanswered, so no cell appears at all.
+    property_tax: 640,
+    building_fee: 250,
   }),
 
   media: {
@@ -166,13 +142,15 @@ export const propertyListing: Listing = {
 
   enrichment: propertyEnrichment,
 
-  // Street present, so the map section renders.
-  location: { city: 'חולון', street: 'סוקולוב 42' },
+  // Street present, so the map section renders. Coordinates are the Sokolov
+  // corridor in Holon for the demo pin — this listing is not for sale.
+  location: { city: 'חולון', street: 'סוקולוב 42', lat: 32.0165, lng: 34.7792 },
   seller: { name: 'ליאור', phone: '972500000000', role: 'בעל הדירה' },
   template: 'editorial',
   status: 'published',
   publishedAt: '2026-09-07T00:00:00.000Z',
   indexable: false,
+  hyadMark: true,
 };
 
 
@@ -259,10 +237,38 @@ export const vehicleListing: Listing = {
   status: 'published',
   publishedAt: '2026-09-07T00:00:00.000Z',
   indexable: false,
+  hyadMark: true,
 };
 
 export const listings: Listing[] = [propertyListing, vehicleListing];
 
+/** CI demos plus the six P1 fixtures. `/a/_matrix` iterates this. */
+export const matrixListings: Listing[] = [...listings, ...fixtures];
+
+/**
+ * The same apartment, with rooms named so a walkFirst miniature and the
+ * `/template-check/walkFirst` fixture can show the filmstrip.
+ *
+ * A7K2M itself stays unlabeled: a labelled walk is a `<section class="walk">`,
+ * and verify-template-divergences.mjs forbids a fifth section that exists on
+ * the property demo and not the vehicle one.
+ */
+const SHOWCASE_ROOMS = ['living', 'kitchen', 'balcony'] as const;
+
+export function withNamedRooms(listing: Listing): Listing {
+  return {
+    ...listing,
+    media: {
+      ...listing.media,
+      cover: { ...listing.media.cover, room: 'living' },
+      gallery: listing.media.gallery.map((image, index) => ({
+        ...image,
+        room: SHOWCASE_ROOMS[index] ?? 'other',
+      })),
+    },
+  };
+}
+
 export function listingBySlug(slug: string): Listing | undefined {
-  return listings.find((listing) => listing.slug === slug);
+  return matrixListings.find((listing) => listing.slug === slug);
 }

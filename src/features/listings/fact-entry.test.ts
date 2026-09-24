@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { answer, answered, blankFacts, clear, markAbsent } from './fact-entry.js';
+import { answer, answered, blankFacts, clear, markAbsent, reconcileFacts } from './fact-entry.js';
 import { schemaFor } from './schemas/index.js';
 
 const find = (facts: ReturnType<typeof blankFacts>, key: string) => {
@@ -140,5 +140,20 @@ describe('answered', () => {
     const facts = answer(blankFacts('property'), 'balcony_sqm', 0);
 
     assert.ok(answered(facts).some((fact) => fact.key === 'balcony_sqm'));
+  });
+});
+
+describe('reconcileFacts', () => {
+  it('fills schema keys a stored draft is missing', () => {
+    const stale = blankFacts('property').filter((fact) => fact.key !== 'has_tenants');
+    const keys = reconcileFacts('property', stale).map((fact) => fact.key);
+    assert.ok(keys.includes('has_tenants'));
+    assert.ok(keys.includes('entry_date'));
+  });
+
+  it('keeps answers the seller already gave', () => {
+    const answeredRooms = answer(blankFacts('property'), 'rooms', 4);
+    const merged = reconcileFacts('property', answeredRooms);
+    assert.equal(merged.find((fact) => fact.key === 'rooms')?.value, 4);
   });
 });

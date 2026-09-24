@@ -25,6 +25,12 @@ export interface ShareInput {
   place?: string;
   /** Absolute, and the last line — see below. */
   url: string;
+  /**
+   * Optional seller declaration that the listing is not yet on the portals.
+   * A line in the paste, not only on the page (DESIGN-BRIEF §5). The Hebrew
+   * lives in locales/he.json — this layer interpolates, it does not own copy.
+   */
+  prePortalLine?: string;
 }
 
 /**
@@ -39,7 +45,7 @@ export function shareMessage(input: ShareInput): string {
   // become one line, because a two-line title reads as two messages.
   const title = input.title.replace(/\s*\n\s*/g, ' ').trim();
 
-  lines.push(`${title} · ${input.price}`);
+  lines.push(input.price ? `${title} · ${input.price}` : title);
 
   if (input.facts.length > 0) {
     // A middle dot rather than a comma: the facts are already comma-shaped
@@ -50,6 +56,11 @@ export function shareMessage(input: ShareInput): string {
   if (input.place) {
     lines.push('');
     lines.push(input.place);
+  }
+
+  if (input.prePortalLine) {
+    lines.push('');
+    lines.push(input.prePortalLine);
   }
 
   lines.push('');

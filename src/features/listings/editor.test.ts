@@ -28,6 +28,11 @@ const fact = (key: string, label: string, value: Fact['value'], required = false
 /** A listing with nothing wrong with it. */
 const ready = (): EditorState => ({
   category: 'property',
+  title: 'דירת 4 חדרים, משופצת מהיסוד',
+  price: 1850000,
+  city: 'חולון',
+  indexable: false,
+  prePortal: false,
   photoCount: 6,
   facts: [
     fact('rooms', 'חדרים', 4, true),
@@ -43,6 +48,54 @@ const ready = (): EditorState => ({
   // category is 'property', so it needs one to be blocker-free.
   ownerConsentDeclaredAt: '2026-09-12T10:00:00.000Z',
   entitlement: 'paid',
+});
+
+describe('the details gate', () => {
+  it('blocks on a missing title, not on a missing price', () => {
+    // `listings` has NOT NULL title and price columns that createDraft fills
+    // with '' and 0. Title is still required. Price is not: 0 means
+    // unanswered, and the page omits the number rather than printing ₪0.
+    const found = blockers({ ...ready(), title: '  ', price: 0 });
+    const codes = found.map((blocker) => blocker.code);
+
+    assert.ok(codes.includes('titleMissing'));
+    assert.equal(found.some((blocker) => blocker.step === 'details' && blocker.code !== 'titleMissing' && blocker.code !== 'cityMissing'), false);
+  });
+
+  it('lets a listing publish without a price', () => {
+    assert.deepEqual(
+      blockers({ ...ready(), price: 0 }).filter((b) => b.step === 'details'),
+      [],
+    );
+  });
+
+  it('treats a non-number price as unanswered, not as a blocker', () => {
+    // An empty <input type="number"> gives NaN. Optional means optional.
+    assert.deepEqual(
+      blockers({ ...ready(), price: Number.NaN }).filter((b) => b.step === 'details'),
+      [],
+    );
+  });
+
+  it('requires a city for a property and NOT for a vehicle', () => {
+    // A vehicle deliberately carries no location: pinning a car for sale to
+    // an address is the theft risk DESIGN-CONTRACT §5.4 refuses.
+    const property = { ...ready(), category: 'property' as const, city: '' };
+    assert.ok(blockers(property).some((b) => b.code === 'cityMissing'));
+
+    // The key is OMITTED, not set to undefined: exactOptionalPropertyTypes
+    // makes those two different types, and a vehicle genuinely has no city.
+    const { city: _noCity, ...vehicle } = { ...ready(), category: 'vehicle' as const };
+    assert.equal(blockers(vehicle).some((b) => b.code === 'cityMissing'), false);
+  });
+
+  it('puts title and city on the details step, so one screen fixes them', () => {
+    const found = blockers({ ...ready(), title: '', price: 0, city: '' });
+    for (const code of ['titleMissing', 'cityMissing']) {
+      assert.equal(found.find((b) => b.code === code)?.step, 'details', code);
+    }
+    assert.equal(found.filter((b) => b.step === 'details').length, 2);
+  });
 });
 
 describe('the seller gate', () => {
@@ -90,6 +143,11 @@ describe('stepsFor', () => {
     assert.ok(stepsFor('property').includes('consent'));
   });
 
+  it('gives the property flow a rooms step, and not the vehicle', () => {
+    assert.ok(stepsFor('property').includes('rooms'));
+    assert.ok(!stepsFor('vehicle').includes('rooms'));
+  });
+
   it('does not show a vehicle seller a consent step', () => {
     // The vehicle question is narrower and already asked in the plate step —
     // see the doc comment on EditorState.ownerConsentDeclaredAt.
@@ -99,7 +157,9 @@ describe('stepsFor', () => {
   it('keeps the flow in order', () => {
     assert.deepEqual(stepsFor('property'), [
       'category',
+      'details',
       'photos',
+      'rooms',
       'consent',
       'facts',
       'disclosures',
@@ -111,6 +171,7 @@ describe('stepsFor', () => {
 
     assert.deepEqual(stepsFor('vehicle'), [
       'category',
+      'details',
       'photos',
       'plate',
       'facts',
@@ -168,6 +229,10 @@ describe('blockers', () => {
     // been made to walk the form twice, and on a phone that is where people
     // give up.
     const found = blockers({
+      title: '',
+      price: 0,
+      indexable: false,
+      prePortal: false,
       photoCount: 0,
       facts: [fact('rooms', 'חדרים', null, true)],
       description: '',
@@ -212,34 +277,33 @@ describe('blockers', () => {
 describe('the description gate', () => {
   const generated = 'הדירה בת 4 חדרים ובה מעלית.';
 
-  it('blocks publishing text the seller never touched', () => {
+  it('lets a suggested description through without forcing an edit', () => {
     const found = blockers({
       ...ready(),
       generatedDescription: generated,
       description: generated,
     });
 
-    assert.ok(found.some((blocker) => blocker.step === 'description'));
-  });
-
-  it('clears once the seller has edited it', () => {
-    const found = blockers({
-      ...ready(),
-      generatedDescription: generated,
-      description: 'הדירה בת 4 חדרים, ובה מעלית וממ״ד.',
-    });
-
     assert.deepEqual(found, []);
   });
 
+  it('still blocks an empty description', () => {
+    assert.ok(
+      blockers({ ...ready(), description: '' }).some((blocker) => blocker.code === 'descriptionEmpty'),
+    );
+  });
+
   it('does not apply when the seller wrote it themselves', () => {
-    // No generatedDescription means nothing was generated to review.
     assert.deepEqual(blockers({ ...ready(), description: 'כתבתי בעצמי.' }), []);
   });
 });
 
 describe('entitlement — fail closed', () => {
-  it('publishes only when payment is confirmed', () => {
+  it('publishes the first listing for free, with the mark', () => {
+    assert.equal(canPublish({ ...ready(), entitlement: 'free' }), true);
+  });
+
+  it('publishes only when payment is confirmed after the free listing', () => {
     assert.equal(canPublish({ ...ready(), entitlement: 'paid' }), true);
   });
 
@@ -317,7 +381,8 @@ describe('the blocker codes and their copy', () => {
 describe('canAdvance', () => {
   it('lets an unpaid seller reach the preview', () => {
     // The preview is the conversion moment (§8): the seller sees their
-    // finished page and then pays to share it. Gating it earlier hides the
+    // finished page. The first listing publishes free with the mark; a
+    // second one waits for a grant. Gating the preview earlier hides the
     // thing that sells the product.
     const unpaid = { ...ready(), entitlement: 'unpaid' as const };
 
@@ -328,12 +393,25 @@ describe('canAdvance', () => {
   it('stops a seller leaving a step that is incomplete', () => {
     assert.equal(canAdvance('photos', { ...ready(), photoCount: 0 }), false);
   });
+
+  it('lets a seller skip naming rooms', () => {
+    assert.equal(canAdvance('rooms', ready()), true);
+  });
 });
 
 describe('nextStep — where a returning seller lands', () => {
   it('starts at the beginning for an empty listing', () => {
     assert.equal(
-      nextStep({ photoCount: 0, facts: [], description: '', entitlement: 'unknown' }),
+      nextStep({
+        title: '',
+        price: 0,
+        indexable: false,
+        prePortal: false,
+        photoCount: 0,
+        facts: [],
+        description: '',
+        entitlement: 'unknown',
+      }),
       'category',
     );
   });

@@ -1,3 +1,4 @@
+import { isAccentId } from '../agents/accents.js';
 import {
   TEMPLATE_IDS,
   type Fact,
@@ -53,27 +54,48 @@ export const DRAFT_VERSION = 1;
  * This becomes storable once images have URLs on a server, which is the same
  * decision that unblocks uploading at all.
  */
-export type Draft = Omit<EditorState, 'entitlement' | 'photoCount'>;
+export type Draft = Omit<EditorState, 'entitlement' | 'photoCount'> & {
+  /** The server row, once photos have created one. Not entitlement. */
+  listingId?: string;
+  slug?: string;
+};
 
 interface Stored extends Draft {
   version: number;
 }
 
-export function toDraft(state: EditorState): Stored {
+export function toDraft(
+  state: EditorState,
+  row?: { listingId?: string | null; slug?: string | null },
+): Stored {
   return {
     version: DRAFT_VERSION,
     ...(state.category === undefined ? {} : { category: state.category }),
+    // What the listing is, costs and where it is. Stored like everything
+    // else: the seller loses a phone call's worth of typing otherwise.
+    title: state.title,
+    price: state.price,
+    indexable: state.indexable,
+    prePortal: state.prePortal,
+    ...(state.city === undefined ? {} : { city: state.city }),
+    ...(state.street === undefined ? {} : { street: state.street }),
+    ...(state.priceNote === undefined ? {} : { priceNote: state.priceNote }),
     facts: state.facts,
     description: state.description,
     ...(state.generatedDescription === undefined
       ? {}
       : { generatedDescription: state.generatedDescription }),
     ...(state.template === undefined ? {} : { template: state.template }),
+    ...(state.accent === undefined ? {} : { accent: state.accent }),
     ...(state.audience === undefined ? {} : { audience: state.audience }),
     ...(state.ownerConsentDeclaredAt === undefined
       ? {}
       : { ownerConsentDeclaredAt: state.ownerConsentDeclaredAt }),
+    ...(state.ownerConsentName === undefined ? {} : { ownerConsentName: state.ownerConsentName }),
     ...(state.disclosures === undefined ? {} : { disclosures: state.disclosures }),
+    ...(state.tourUrl === undefined ? {} : { tourUrl: state.tourUrl }),
+    ...(row?.listingId ? { listingId: row.listingId } : {}),
+    ...(row?.slug ? { slug: row.slug } : {}),
   };
 }
 
@@ -123,26 +145,81 @@ export function fromDraft(raw: unknown): Draft | null {
     return null;
   }
 
+  const accent = parsed.accent;
+  if (accent !== undefined && !isAccentId(accent)) {
+    return null;
+  }
+
   const audience = parsed.audience;
-  if (audience !== undefined && audience !== 'resident' && audience !== 'investor') return null;
+  if (
+    audience !== undefined &&
+    audience !== 'resident' &&
+    audience !== 'investor' &&
+    audience !== 'both'
+  ) {
+    return null;
+  }
 
   const ownerConsentDeclaredAt = parsed.ownerConsentDeclaredAt;
   if (ownerConsentDeclaredAt !== undefined && typeof ownerConsentDeclaredAt !== 'string') {
     return null;
   }
 
+  const ownerConsentName = parsed.ownerConsentName;
+  if (ownerConsentName !== undefined && typeof ownerConsentName !== 'string') {
+    return null;
+  }
+
   const disclosuresResult = readDisclosures(parsed.disclosures);
   if (disclosuresResult === 'invalid') return null;
 
+  // Restored as the empty values rather than rejected: a draft written before
+  // these fields existed is still a draft worth giving back, and the editor's
+  // own blockers will ask for what is missing.
+  const title = typeof parsed.title === 'string' ? parsed.title : '';
+  const price = typeof parsed.price === 'number' && Number.isFinite(parsed.price) ? parsed.price : 0;
+
+  const text = (value: unknown) => (typeof value === 'string' ? value : undefined);
+  const city = text(parsed.city);
+  const street = text(parsed.street);
+  const priceNote = text(parsed.priceNote);
+  const indexable = parsed.indexable === true;
+  const prePortal = parsed.prePortal === true;
+
+  const listingId = text(parsed.listingId);
+  const listingIdOk =
+    listingId !== undefined &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(listingId)
+      ? listingId
+      : undefined;
+  const slug = text(parsed.slug);
+  const slugOk = slug !== undefined && /^[0-9A-HJKMNP-TV-Z]{5}$/.test(slug) ? slug : undefined;
+
   return {
     ...(category === undefined ? {} : { category }),
+    title,
+    price,
+    indexable,
+    prePortal,
+    ...(city === undefined ? {} : { city }),
+    ...(street === undefined ? {} : { street }),
+    ...(priceNote === undefined ? {} : { priceNote }),
     facts,
     description,
     ...(generated === undefined ? {} : { generatedDescription: generated }),
     ...(template === undefined ? {} : { template: template as TemplateId }),
+    ...(accent === undefined ? {} : { accent: String(accent) }),
     ...(audience === undefined ? {} : { audience: audience as ListingAudience }),
     ...(ownerConsentDeclaredAt === undefined ? {} : { ownerConsentDeclaredAt }),
+    ...(ownerConsentName === undefined || ownerConsentName.trim() === ''
+      ? {}
+      : { ownerConsentName }),
     ...(disclosuresResult === undefined ? {} : { disclosures: disclosuresResult }),
+    ...(typeof parsed.tourUrl === 'string' && parsed.tourUrl.startsWith('https://')
+      ? { tourUrl: parsed.tourUrl }
+      : {}),
+    ...(listingIdOk ? { listingId: listingIdOk } : {}),
+    ...(slugOk ? { slug: slugOk } : {}),
   };
 }
 

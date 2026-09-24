@@ -1,5 +1,6 @@
 ---
 import Editor from '../../components/editor/Editor.tsx';
+import BrandMark from '../../components/BrandMark.astro';
 import { t } from '../../lib/i18n';
 import '../../styles/tokens.css';
 import '../../styles/editor.css';
@@ -34,6 +35,10 @@ import '../../styles/editor.css';
     */}
     <meta name="robots" content="noindex,nofollow" />
 
+    {/* Without this the browser asks for /favicon.ico, which does not exist,
+        and every editor load carries a 404. */}
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -43,7 +48,7 @@ import '../../styles/editor.css';
 
     <style is:global>
       html {
-        background: var(--stone);
+        background: var(--plaster);
         /* Light-only: a dark-mode browser would otherwise invert the native
            controls on a page with no dark palette. */
         color-scheme: light;
@@ -58,15 +63,43 @@ import '../../styles/editor.css';
         color: var(--ink);
         font-size: var(--t-body);
         line-height: 1.62;
-        max-width: 620px;
+        max-inline-size: 1180px;
         margin-inline: auto;
         min-height: 100dvh;
         -webkit-font-smoothing: antialiased;
+      }
+
+      .editor-chrome {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.75rem var(--gut);
+        border-block-end: 1px solid var(--stone);
+      }
+
+      .editor-chrome .brand-mark {
+        color: var(--ink);
+      }
+
+      .editor-chrome > a:not(.brand-mark) {
+        display: inline-flex;
+        align-items: center;
+        min-block-size: 44px;
+        color: var(--muted);
+        font-size: 0.9rem;
       }
     </style>
   </head>
 
   <body>
-    <Editor client:load />
+    <a class="skip" href="#main">{t('a11y.skip')}</a>
+    <header class="editor-chrome">
+      <BrandMark href="/" />
+      <a href="/">{t('legal.home')}</a>
+    </header>
+    <main id="main">
+      <Editor client:load />
+    </main>
   </body>
 </html>

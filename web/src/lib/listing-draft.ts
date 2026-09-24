@@ -88,6 +88,7 @@ export async function createDraft(category: ListingCategory): Promise<DraftRow> 
         // database only needs a row it can hang photos off.
         title: '',
         price: 0,
+        template: 'agency',
         ...(stamped.seller ? { seller: stamped.seller } : {}),
         accent: stamped.accent,
       })

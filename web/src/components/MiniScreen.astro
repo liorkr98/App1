@@ -2,8 +2,10 @@
 import type { FactCell } from '../lib/facts';
 import type { PerUnitPrice } from '../lib/price';
 import type { Listing } from '@/types/listing';
+import { groupByRoom, hasRoomLabels, type PhotoRoom } from '@/features/listings/photo-rooms';
 import { HERO_WIDTHS, largest } from '../lib/images';
 import { ils } from '../lib/format';
+import { t } from '../lib/i18n';
 import Prose from './Prose.astro';
 
 interface Props {
@@ -23,6 +25,15 @@ const { listing, cells, perUnit, eager = false } = Astro.props;
 const place = listing.location?.street
   ? `${listing.location.street}, ${listing.location.city}`
   : (listing.location?.city ?? '');
+
+const walkPhotos = [listing.media.cover, ...listing.media.gallery];
+const walkRooms: PhotoRoom[] = hasRoomLabels(walkPhotos)
+  ? groupByRoom(walkPhotos)
+      .map((group) => group.room)
+      .filter((room): room is PhotoRoom => room !== undefined)
+  : [];
+const showWalk = listing.template === 'walkFirst' && walkRooms.length > 0;
+const walkThumbs = walkPhotos.slice(0, 4);
 ---
 
 {/*
@@ -45,31 +56,74 @@ const place = listing.location?.street
   price, the facts and the button off the bottom of every screen on the page.
 */}
 <span class="screen">
-  <span class="s-agent">
-    <span class="dot" />
-    <span class="who">{listing.seller.name}</span>
-    <span class="brand">סיבוב</span>
-  </span>
-
-  <span class="s-hero">
-    <img
-      src={largest(listing.media.cover, HERO_WIDTHS)}
-      alt={listing.media.cover.alt}
-      width={listing.media.cover.width}
-      height={listing.media.cover.height}
-      loading={eager ? 'eager' : 'lazy'}
-      decoding="async"
-    />
-    <span class="s-veil">
-      <span class="s-place"><Prose text={place} /></span>
-      {/* The reference titles carry their own line break; the first line is
-          what fits at this size. */}
-      <span class="s-title"><Prose text={listing.title.split('\n')[0] ?? ''} /></span>
+  {showWalk ? null : (
+    <span class="s-agent">
+      <span class="dot" />
+      <span class="who">{listing.seller.name}</span>
+      <span class="brand">{t('common.brand')}</span>
     </span>
-  </span>
+  )}
+
+  {showWalk ? (
+    <span class="s-walk">
+      <span class="s-walk-film">
+        {walkThumbs.map((photo) => (
+          <img
+            src={largest(photo, HERO_WIDTHS)}
+            alt=""
+            width="48"
+            height="48"
+            loading={eager ? 'eager' : 'lazy'}
+            decoding="async"
+          />
+        ))}
+      </span>
+      <span class="s-hero">
+        <img
+          src={largest(listing.media.cover, HERO_WIDTHS)}
+          alt={listing.media.cover.alt}
+          width={listing.media.cover.width}
+          height={listing.media.cover.height}
+          loading={eager ? 'eager' : 'lazy'}
+          decoding="async"
+        />
+        <span class="s-veil">
+          <span class="s-place"><Prose text={place} /></span>
+          <span class="s-title"><Prose text={listing.title.split('\n')[0] ?? ''} /></span>
+        </span>
+      </span>
+    </span>
+  ) : (
+    <span class="s-hero">
+      <img
+        src={largest(listing.media.cover, HERO_WIDTHS)}
+        alt={listing.media.cover.alt}
+        width={listing.media.cover.width}
+        height={listing.media.cover.height}
+        loading={eager ? 'eager' : 'lazy'}
+        decoding="async"
+      />
+      <span class="s-veil">
+        <span class="s-place"><Prose text={place} /></span>
+        {/* The reference titles carry their own line break; the first line is
+            what fits at this size. */}
+        <span class="s-title"><Prose text={listing.title.split('\n')[0] ?? ''} /></span>
+      </span>
+    </span>
+  )}
+
+  {showWalk ? (
+    <span class="s-chips">
+      {walkRooms.map((room) => (
+        <span class="s-chip">{t(`editor.rooms.${room}`)}</span>
+      ))}
+    </span>
+  ) : null}
 
   <span class="s-price-bar">
-    <span class="s-price"><bdi>{ils(listing.price)}</bdi></span>
+    {listing.price > 0 ? (
+      <span class="s-price"><bdi>{ils(listing.price)}</bdi></span>
+    ) : null}
     {perUnit && (
       <span class="s-price-note">
         <bdi>{perUnit.amount}</bdi> {perUnit.per}

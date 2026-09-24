@@ -1,0 +1,7 @@
+{
+  "G7F2K": { "priceDisplay": "from", "visible": "החל מ־ ₪62,000" },
+  "P5X1R": { "priceDisplay": "on_request", "visible": "לפי פנייה", "amountHidden": true },
+  "T4V7A": { "precision": "exact", "place": "דיזנגוף 99, תל אביב־יפו", "waze": true, "whatsappHasStreet": true },
+  "H2N6P": { "precision": "area", "map": false },
+  "M9S3W": { "precision": "area", "map": false }
+}

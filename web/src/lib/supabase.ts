@@ -62,6 +62,55 @@ const key = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || PUBLISHABLE_KEY;
  */
 export const supabaseConfigured = Boolean(url && key);
 
+/** Public project values. Safe to ship; RLS is the security. */
+export const supabaseUrl = url;
+export const supabaseKey = key;
+export const SUPABASE_URL = url;
+export const SUPABASE_ANON_KEY = key;
+
+/**
+ * A client with no session, for server reads of published pages.
+ *
+ * The browser client persists a session in localStorage. That storage does
+ * not exist on a Worker, and a listing page opened from WhatsApp has no
+ * account anyway. Public rows are readable under `listings_select_public`.
+ */
+export function supabasePublic(): SupabaseClient {
+  if (!supabaseConfigured) {
+    throw new Error(
+      'Supabase is not configured. Set PUBLIC_SUPABASE_URL and ' +
+        'PUBLIC_SUPABASE_ANON_KEY as BUILD variables — see docs/DEPLOY.md.',
+    );
+  }
+
+  return createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  });
+}
+
+/**
+ * A client that acts AS the signed-in agent, for a server route.
+ *
+ * The access token comes from the request's Authorization header, so every
+ * read and write still runs under that user's RLS policies — an agent can
+ * only reach their own draft, and the route needs no service-role key to be
+ * useful. That is the point: the key that bypasses RLS never has to exist in
+ * the Worker at all (CLAUDE.md §9).
+ */
+export function supabaseAsUser(accessToken: string): SupabaseClient {
+  if (!supabaseConfigured) {
+    throw new Error(
+      'Supabase is not configured. Set PUBLIC_SUPABASE_URL and ' +
+        'PUBLIC_SUPABASE_ANON_KEY as BUILD variables — see docs/DEPLOY.md.',
+    );
+  }
+
+  return createClient(url, key, {
+    global: { headers: { Authorization: `Bearer ${accessToken}` } },
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  });
+}
+
 let client: SupabaseClient | null = null;
 
 /**

@@ -2,8 +2,10 @@
 import { shareMessage, whatsappShareUrl } from '@/features/listings/share-message';
 import { toCells } from '../../../lib/facts';
 import { ils } from '../../../lib/format';
-import { listings } from '../../../lib/listings';
+import { t } from '../../../lib/i18n';
+import { publishedListing } from '../../../lib/listing-from-row';
 import '../../../styles/tokens.css';
+import '../../../styles/fonts.css';
 
 /**
  * The share kit. AN AGENT TOOL, not a buyer page.
@@ -20,12 +22,18 @@ import '../../../styles/tokens.css';
  * JavaScript is the point here rather than something to justify. The listing
  * page ships none and the design contract forbids reaching for it there; this
  * is a tool, and a tool that cannot copy to the clipboard is a poster.
+ *
+ * On-demand, like `/a/[slug]`: dashboard שיתוף points here for real slugs,
+ * not only the two demo fixtures.
  */
-export function getStaticPaths() {
-  return listings.map((listing) => ({ params: { slug: listing.slug }, props: { listing } }));
-}
+export const prerender = false;
 
-const { listing } = Astro.props;
+const slug = Astro.params.slug ?? '';
+const listing = await publishedListing(slug);
+
+if (!listing) {
+  return Astro.rewrite('/404');
+}
 
 const site = Astro.site?.origin ?? '';
 const url = `${site}/a/${listing.slug}/`;
@@ -55,7 +63,7 @@ const teaser = cells
   .slice(0, 4)
   .map((cell) => {
     if (cell.value === 'יש') return cell.label;
-    if (cell.pairedValue !== undefined) return `${cell.label} ${cell.value} / ${cell.pairedValue}`;
+    if (cell.displayValue !== cell.value) return `${cell.label} ${cell.displayValue}`;
     return `${cell.value} ${cell.label}`;
   });
 
@@ -65,9 +73,10 @@ const place = listing.location?.street
 
 const message = shareMessage({
   title: listing.title,
-  price: ils(listing.price),
+  price: listing.price > 0 ? ils(listing.price) : '',
   facts: teaser,
   ...(place ? { place } : {}),
+  ...(listing.prePortal ? { prePortalLine: t('listing.prePortal') } : {}),
   url,
 });
 
@@ -107,7 +116,7 @@ const messageLines = message.split('\n').map(isolate);
 // out of the DOM.
 const card = {
   cover: listing.media.cover.url,
-  price: ils(listing.price),
+  price: listing.price > 0 ? ils(listing.price) : '',
   title: flatTitle,
   place: place ?? '',
   facts: teaser.slice(0, 3),
@@ -127,13 +136,10 @@ const card = {
 
     {/* An agent's workspace. Never indexed, never previewed. */}
     <meta name="robots" content="noindex,nofollow" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Assistant:wght@400;600;700&display=swap"
-      rel="stylesheet"
-    />
+    <link rel="preload" href="/fonts/frank-ruhl-hebrew.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/assistant-hebrew.woff2" as="font" type="font/woff2" crossorigin />
 
     <style is:global>
       html {
@@ -201,7 +207,7 @@ const card = {
         padding: 0.9rem 1rem;
         background: var(--stone-warm);
         border-radius: 6px;
-        border-inline-start: 3px solid var(--olive);
+        border: 1px solid var(--stone);
       }
 
       .row {

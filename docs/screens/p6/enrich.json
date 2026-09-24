@@ -1,0 +1,33 @@
+{
+  "T4V7A": {
+    "has": true,
+    "leftover": [
+      "ועוד 1"
+    ],
+    "firstMins": "6",
+    "firstName": "דיזנגוף סנטר"
+  },
+  "M9S3W": {
+    "hasEnrich": false,
+    "sections": [
+      "hero",
+      "reveal",
+      "walk reveal",
+      "seller"
+    ]
+  },
+  "P5X1R": {
+    "hasEnrich": false,
+    "sections": [
+      "hero",
+      "reveal",
+      "seller"
+    ]
+  },
+  "G7F2K": {
+    "has": true,
+    "leftover": [],
+    "firstMins": "2027",
+    "firstName": "טסט בתוקף"
+  }
+}

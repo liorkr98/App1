@@ -1,3 +1,6 @@
+import type { CSSProperties } from 'react';
+
+import { ACCENTS, type AccentId, isAccentId } from '@/features/agents/accents';
 import { TEMPLATE_IDS, type TemplateId } from '@/types/listing';
 
 import { t } from '../../lib/i18n';
@@ -5,45 +8,87 @@ import { t } from '../../lib/i18n';
 interface Props {
   chosen?: TemplateId;
   onChoose: (template: TemplateId) => void;
+  accent?: string | undefined;
+  onAccent: (accent: AccentId) => void;
+  /** The seller's own photos, so the picker is the page not a grey slab. */
+  photos?: readonly string[];
 }
 
 /**
- * Choosing how the page looks.
+ * Choosing how the page looks — template shape AND the agent's colour.
  *
- * The copy says outright that the data is identical in all three and only the
- * appearance changes. That sentence is there to stop a seller believing a
- * template makes their listing better — the enrichment is what does that, and
- * a seller hunting for the "best" template is a seller not adding photos.
- *
- * Each option states when NOT to pick it. "Emphasises photos — only worth it
- * if the photos are good" is more use than three names that all sound
- * appealing, and it is honest about a template that will make a bad set of
- * photographs worse.
- *
- * Driven from TEMPLATE_IDS rather than a list written out here, so a fourth
- * template appears by existing — and its two strings are then missing from
- * locales/he.json, which is visible rather than silent.
+ * The facsimile beside this step restyles from `data-template` and
+ * `--accent`. These cards are the picker; that preview is the proof.
  */
-export function TemplateStep({ chosen, onChoose }: Props) {
+export function TemplateStep({ chosen, onChoose, accent, onAccent, photos = [] }: Props) {
+  const palette = isAccentId(accent) ? accent : 'olive';
+  const cover = photos[0];
+  const film = [0, 1, 2, 3].map((index) => photos[index]);
+
   return (
-    <>
+    <div className="template-step">
+      <fieldset className="palette-picker">
+        <legend>{t('editor.templates.palette')}</legend>
+        <p className="hint">{t('editor.templates.paletteHint')}</p>
+        <div className="palette-row">
+          {ACCENTS.map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              className={option.id === palette ? 'palette-chip chosen' : 'palette-chip'}
+              aria-pressed={option.id === palette}
+              aria-label={t(`agent.accents.${option.id}`)}
+              style={{ ['--chip']: option.base } as CSSProperties}
+              onClick={() => onAccent(option.id)}
+            >
+              <span className="palette-dot" aria-hidden="true" />
+              <span>{t(`agent.accents.${option.id}`)}</span>
+            </button>
+          ))}
+        </div>
+      </fieldset>
+
       <p className="hint">{t('editor.templates.hint')}</p>
 
-      <ul className="choices">
+      <ul className="template-grid">
         {TEMPLATE_IDS.map((template) => (
           <li key={template}>
             <button
               type="button"
-              className={template === chosen ? 'choice chosen' : 'choice'}
+              className={template === chosen ? 'template-card chosen' : 'template-card'}
               aria-pressed={template === chosen}
               onClick={() => onChoose(template)}
             >
+              <span
+                className={`template-thumb thumb-${template}`}
+                data-template={template}
+                aria-hidden="true"
+                style={{ ['--accent']: ACCENTS.find((item) => item.id === palette)?.base } as CSSProperties}
+              >
+                {template === 'walkFirst' ? (
+                  <span className="thumb-film">
+                    {film.map((src, index) =>
+                      src ? <img key={`${src}-${index}`} src={src} alt="" /> : <span key={index} />,
+                    )}
+                  </span>
+                ) : cover ? (
+                  <img className="thumb-hero-photo" src={cover} alt="" />
+                ) : (
+                  <span className="thumb-hero" />
+                )}
+                <span className="thumb-price" />
+                <span className="thumb-facts">
+                  <span />
+                  <span />
+                  <span />
+                </span>
+              </span>
               <span className="choice-name">{t(`editor.templates.${template}`)}</span>
               <span className="choice-note">{t(`editor.templates.${template}Note`)}</span>
             </button>
           </li>
         ))}
       </ul>
-    </>
+    </div>
   );
 }

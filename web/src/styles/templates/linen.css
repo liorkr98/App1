@@ -1,0 +1,51 @@
+/*
+  Linen — warm paper, larger numerals, same ramps.
+  --absent stays the shared stop; it already clears 4.5:1 on this plaster.
+*/
+
+html[data-template='linen'] {
+  --plaster: #f4e6cf;
+  --stone: #e2ccab;
+  --stone-warm: #efe0c4;
+  --ink: #2a1d12;
+  --ink-deep: #23180f;
+  --muted: #6d5844;
+  --muted-warm: #6d5844;
+  --heroWant: 70svh;
+}
+
+html[data-template='linen'] .hero-title {
+  font-weight: 700;
+  font-size: calc(var(--t-hero) * 1.18);
+  max-inline-size: 9ch;
+  line-height: 1.08;
+}
+
+html[data-template='linen'] .price {
+  color: var(--olive);
+  font-size: calc(var(--t-price) * 1.1);
+}
+
+html[data-template='linen'] .price-bar {
+  padding-block: 2rem 1.35rem;
+  border-block-end: 1px solid var(--stone);
+}
+
+html[data-template='linen'] .facts {
+  grid-template-columns: 1fr 1fr;
+  gap: 1.05rem;
+  background: transparent;
+  border-block: 0;
+  padding-block: 0.7rem 1.35rem;
+}
+
+html[data-template='linen'] .fact {
+  background: var(--stone-warm);
+  border-radius: 12px;
+  padding: 1.3rem 1.05rem;
+  text-align: start;
+}
+
+html[data-template='linen'] .gallery img {
+  border-radius: 14px;
+}

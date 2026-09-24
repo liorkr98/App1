@@ -1,11 +1,34 @@
 ---
+import { canonicalSellerRole } from '@/features/agents/profile';
 import type { Seller } from '@/types/listing';
+import { displayPhone, telHref } from '@/features/listings/phone';
+import { t } from '../lib/i18n';
+import SectionLabel from './SectionLabel.astro';
 
 interface Props {
   seller: Seller;
+  /** WhatsApp to the agent. Omitted when the listing is sold. */
+  whatsappHref?: string;
+  /** Pre-composed forward message. Buyer sharing, not contacting. */
+  shareHref?: string;
+  sold?: boolean;
 }
 
-const { seller } = Astro.props;
+const { seller, whatsappHref, shareHref, sold = false } = Astro.props;
+const sellerRole = seller.role ? canonicalSellerRole(seller.role) : '';
+
+/**
+ * A person photo, or the agency mark when the profile put the logo only
+ * in this card (footerOnly). Bar / watermark placements already show the
+ * mark elsewhere — repeating it here as an empty-looking disc is the
+ * P0 tell. No photo and no footer logo → no disc.
+ */
+const photo =
+  seller.avatarUrl ??
+  (seller.logoPlacement === 'footerOnly' ? seller.agencyLogoUrl : undefined);
+
+const callHref = telHref(seller.phone);
+const phoneLabel = displayPhone(seller.phone);
 ---
 {/*
   Agents are the primary audience (CLAUDE.md §1), so their name appears at
@@ -14,8 +37,13 @@ const { seller } = Astro.props;
   own content above without another hairline.
 */}
 <section class="seller">
+  <SectionLabel text={t('listing.section.seller')} />
   <div class="seller-row">
-    <div class="avatar" aria-hidden="true"></div>
+    {photo ? (
+      <div class="avatar" aria-hidden="true">
+        <img src={photo} alt="" />
+      </div>
+    ) : null}
     <div>
       <div class="seller-name">{seller.name}</div>
       {/*
@@ -25,10 +53,10 @@ const { seller } = Astro.props;
         has not earned this far down the page. The agent bar at the top is
         where the agency is the headline.
       */}
-      {(seller.role || seller.agencyName) && (
+      {(sellerRole || seller.agencyName) && (
         <div class="seller-role">
-          {seller.role}
-          {seller.role && seller.agencyName && ' · '}
+          {sellerRole}
+          {sellerRole && seller.agencyName && ' · '}
           {seller.agencyName}
         </div>
       )}
@@ -43,6 +71,31 @@ const { seller } = Astro.props;
       {seller.licenceNumber && (
         <div class="seller-role">רישיון מס׳ <bdi>{seller.licenceNumber}</bdi></div>
       )}
+      {/*
+        מאומת · פנקס המתווכים only when the register matched at signup.
+        licenceVerified is never inferred from the presence of a number — an
+        unbacked badge is worse than none (CLAUDE.md §7).
+      */}
+      {seller.licenceVerified && (
+        <div class="verified">{t('listing.licenceVerified')}</div>
+      )}
+      {phoneLabel && (
+        <div class="seller-role"><bdi>{phoneLabel}</bdi></div>
+      )}
     </div>
   </div>
+
+  {!sold && (
+    <div class="seller-actions">
+      {callHref && (
+        <a class="seller-action" href={callHref}>{t('listing.callCta')}</a>
+      )}
+      {whatsappHref && (
+        <a class="seller-action seller-action-wa" href={whatsappHref}>{t('listing.whatsappShort')}</a>
+      )}
+    </div>
+  )}
+  {shareHref && !sold && (
+    <a class="seller-share" href={shareHref}>{t('listing.share')}</a>
+  )}
 </section>

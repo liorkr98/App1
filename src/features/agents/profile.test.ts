@@ -7,6 +7,7 @@ import {
   normalisePhone,
   PROFILE_BLOCKER_CODES,
   profileBlockers,
+  canonicalSellerRole,
   toSeller,
 } from './profile.js';
 
@@ -127,6 +128,17 @@ describe('isProfileEmpty', () => {
     assert.equal(isProfileEmpty({ agencyName: 'רוזן נדל״ן' }), false);
   });
 
+  it('does not treat a logo as a filled-in profile', () => {
+    // The logo is optional branding, not a reason to skip the first-run
+    // prompt. Name and phone still have to be asked for.
+    assert.equal(
+      isProfileEmpty({
+        agencyLogoUrl: 'https://example.supabase.co/storage/v1/object/public/branding/x/logo.webp',
+      }),
+      true,
+    );
+  });
+
   it('is not the same question as isProfileComplete', () => {
     // A half-filled profile is neither empty nor complete, and the first-run
     // prompt and the publish gate must not share one boolean.
@@ -146,22 +158,24 @@ describe('toSeller', () => {
     assert.equal(seller?.phone, '972501234567');
   });
 
-  it('falls back to the category role when none was set', () => {
+  it('uses one role, בעל הנכס, when none was set', () => {
     const seller = toSeller({ displayName: 'ליאור', phone: '0501234567' }, 'בעל הרכב');
-    assert.equal(seller?.role, 'בעל הרכב');
+    assert.equal(seller?.role, 'בעל הנכס');
   });
 
-  it('prefers the agent’s own role line', () => {
+  it('collapses a broker line to the single role מתווך', () => {
     const seller = toSeller(
       { displayName: 'ליאור', phone: '0501234567', role: 'מתווך מורשה' },
       'בעל הדירה',
     );
-    assert.equal(seller?.role, 'מתווך מורשה');
+    assert.equal(seller?.role, 'מתווך');
+    assert.equal(canonicalSellerRole('בעל הדירה'), 'בעל הנכס');
+    assert.equal(canonicalSellerRole('מתווכת'), 'מתווך');
   });
 
   it('OMITS the agency rather than setting it empty', () => {
     // Seller.agencyName being absent is what makes the agent bar fall back to
-    // נבנה בסיבוב. An empty string is truthy in enough places to produce an
+    // נבנה בהיעד. An empty string is truthy in enough places to produce an
     // agency bar with no agency in it.
     const seller = toSeller(
       { displayName: 'ליאור', phone: '0501234567', agencyName: '  ' },
@@ -190,6 +204,31 @@ describe('toSeller', () => {
     );
     assert.ok(seller);
     assert.equal('licenceNumber' in seller, false);
+  });
+
+  it('carries the agency logo URL when one was uploaded', () => {
+    const seller = toSeller(
+      {
+        displayName: 'ליאור',
+        phone: '0501234567',
+        agencyLogoUrl: 'https://example.supabase.co/storage/v1/object/public/branding/x/logo.webp',
+      },
+      'בעל הדירה',
+    );
+    assert.equal(
+      seller?.agencyLogoUrl,
+      'https://example.supabase.co/storage/v1/object/public/branding/x/logo.webp',
+    );
+    assert.equal(seller?.logoPlacement, 'bar');
+  });
+
+  it('omits a blank logo URL rather than storing empty', () => {
+    const seller = toSeller(
+      { displayName: 'ליאור', phone: '0501234567', agencyLogoUrl: '  ' },
+      'בעל הדירה',
+    );
+    assert.ok(seller);
+    assert.equal('agencyLogoUrl' in seller, false);
   });
 
   it('returns undefined rather than a half-filled seller', () => {

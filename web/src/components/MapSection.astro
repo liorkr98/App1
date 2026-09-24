@@ -1,15 +1,38 @@
 ---
-import type { ListingLocation } from '@/types/listing';
+import type { ListingLocation, PropertyEnrichment } from '@/types/listing';
+import type { AreaMap as AreaMapData } from '@/features/listings/area-map';
+import { mapNearbyItems } from '@/features/listings/nearby-map';
+import { composedMapSrc } from '@/features/listings/area-map';
+import { googleMapsUrl, navigationTarget, wazeNavigateUrl } from '@/features/listings/map-card';
+import { publicPlace } from '@/features/listings/control-surface';
+import { walkPhrase } from '@/features/listings/hebrew-plural';
+import { t } from '../lib/i18n';
+import AreaMap from './AreaMap.astro';
 import Prose from './Prose.astro';
+import SectionLabel from './SectionLabel.astro';
+import WalkMinutes from './WalkMinutes.astro';
 
 interface Props {
   location: ListingLocation;
   mapImageUrl: string;
+  enrichment?: PropertyEnrichment;
+  /**
+   * The neighbourhood drawn from OpenStreetMap coordinates, when the address
+   * was looked up. Replaces the generic pin card, because a map of the actual
+   * surroundings is worth more than a decorative one.
+   */
+  areaMap?: AreaMapData | undefined;
+  areaAttribution?: string | undefined;
 }
 
-const { location, mapImageUrl } = Astro.props;
+const { location, mapImageUrl, enrichment, areaMap, areaAttribution } = Astro.props;
 
-const address = location.street ? `${location.street}, ${location.city}` : location.city;
+const address = publicPlace(location);
+const nearby = enrichment ? mapNearbyItems(enrichment) : [];
+const point = navigationTarget(location);
+const waze = point ? wazeNavigateUrl(point.lat, point.lng) : undefined;
+const google = point ? googleMapsUrl(point.lat, point.lng) : undefined;
+const zoomSrc = areaMap ? composedMapSrc(areaMap) : mapImageUrl;
 ---
 {
   /**
@@ -17,13 +40,62 @@ const address = location.street ? `${location.street}, ${location.city}` : locat
    * approximate meeting area, not an address; pinning a private car for sale
    * to a home address on a public page is a theft risk.
    *
-   * A rendered image, never an interactive embed — a map SDK is hundreds of
-   * kilobytes and a third-party script on a page whose whole job is loading
-   * fast on cellular.
+   * The image is a local SVG pin card — never an interactive embed and never
+   * a third-party tile (CLAUDE.md §12). Chips on the image are already-routed
+   * walking minutes (OSRM at publish). The named list under it repeats them.
+   * Omitted when that payload has nothing for a group. No live query at render.
    */
 }
 <section class="map reveal">
-  <h2>מיקום</h2>
-  <img src={mapImageUrl} alt="מפת האזור" loading="lazy" decoding="async" width="800" height="400">
+  <SectionLabel text={t('listing.section.map')} />
+  <h2>{t('listing.mapTitle')}</h2>
+
+  {areaMap && areaAttribution ? (
+    <AreaMap map={areaMap} attribution={areaAttribution} />
+  ) : (
+  <div class="map-stage">
+    <button type="button" class="map-open" data-map-open>
+      <img src={mapImageUrl} alt={t('listing.mapAlt')} loading="lazy" decoding="async" width="800" height="400" />
+    </button>
+    {nearby.map((item) => (
+      <span
+        class={`map-pin map-pin--${item.kind}`}
+        aria-label={`${walkPhrase(item.walkMinutes)} ל${t(`listing.mapNearby.${item.kind}`)}`}
+      >
+        <span class="map-pin-mins"><bdi>{item.walkMinutes}</bdi></span>
+        <span class="map-pin-unit">{t('listing.mapNearbyMin')}</span>
+      </span>
+    ))}
+  </div>
+  )}
+
   <div class="addr"><Prose text={address} /></div>
+  {(waze || google) && (
+    <div class="map-links">
+      {waze && (
+        <a class="map-nav" href={waze} rel="noopener noreferrer">{t('listing.mapNavigate')}</a>
+      )}
+      {google && (
+        <a class="map-nav" href={google} rel="noopener noreferrer">{t('listing.mapGoogle')}</a>
+      )}
+    </div>
+  )}
+
+  <dialog id="listing-map" class="map-dialog" aria-label={t('listing.mapTitle')}>
+    <button type="button" class="lightbox-close" data-map-close>{t('listing.closeLightbox')}</button>
+    <div class="map-zoom">
+      <img src={zoomSrc} alt="" width="4800" height="3000" />
+    </div>
+  </dialog>
+  {nearby.length > 0 && (
+    <ul class="map-nearby">
+      {nearby.map((item) => (
+        <li>
+          <span class="map-nearby-kind">{t(`listing.mapNearby.${item.kind}`)}</span>
+          <b><Prose text={item.name} /></b>
+          <span class="map-nearby-walk"><WalkMinutes minutes={item.walkMinutes} walking /></span>
+        </li>
+      ))}
+    </ul>
+  )}
 </section>

@@ -6,25 +6,54 @@
   // Without it, `wrangler deploy` runs its auto-configuration, which inspects
   // the repository and guesses. It guessed Expo — because `expo` is still a
   // root dependency and app.config.ts is still here, both deliberately, as the
-  // anchor for the EAS project that used to run CI (CLAUDE.md §2).
+  // anchor for the EAS project that used to run CI (CLAUDE.md §2). A committed
+  // config removes the guess entirely.
   //
-  // So it ran `bunx expo export -p web` and failed asking for react-native-web.
-  // It would have kept failing, because the detection is reading real files
-  // that are staying. A committed config removes the guess entirely.
+  // THE SHAPE CHANGED ON 14 SEPTEMBER 2026. This used to be a static-assets
+  // Worker: no `main`, assets pointed at web/dist. /a/[slug] is now rendered
+  // per request so that a REAL listing has a page at all — see
+  // astro.config.mjs — and @astrojs/cloudflare therefore splits its output:
   //
-  // The site is an ASTRO static build in web/. Nothing here is React Native.
+  //   web/dist/client   every prerendered page, plus /_astro and /_headers
+  //   web/dist/server   the Worker that renders the listing route
+  //
+  // Cloudflare serves a matching static asset BEFORE invoking the Worker, so
+  // the homepage, the dashboard, /new and /me still cost nothing to serve and
+  // only a listing page reaches the runtime.
+  //
+  // After `astro build`, Workers Builds runs wrangler, so `main` exists at
+  // deploy time. Do not point the Astro adapter at this path — `astro check`
+  // runs before dist/ exists. The adapter reads web/wrangler.jsonc instead.
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "besivov",
-  "compatibility_date": "2026-09-07",
+  "compatibility_date": "2026-09-11",
+
+  // @supabase/supabase-js reaches for Node built-ins. Without this the Worker
+  // fails at import time, before any request is handled.
+  "compatibility_flags": ["nodejs_compat"],
+
+  "main": "web/dist/server/entry.mjs",
+
+  // Workers Builds' dashboard Build field is optional and has been empty,
+  // which skips astro entirely and then fails here: "entry-point file at
+  // web/dist/server/entry.mjs was not found." Wrangler itself still runs
+  // this command on deploy / versions upload. Skip when the dashboard (or
+  // a local astro build) already produced the Worker.
+  "build": {
+    "command": "test -f web/dist/server/entry.mjs || npm run build"
+  },
 
   "observability": {
     "enabled": true
   },
 
   "assets": {
-    // web/dist, not dist. The auto-config wrote "dist" because it expected an
-    // Expo export at the repository root; the Astro build writes into its own
-    // workspace.
-    "directory": "web/dist"
+    "directory": "web/dist/client",
+    // The adapter's generated config names this binding, and the Astro
+    // runtime looks it up to serve prerendered pages from inside the Worker.
+    "binding": "ASSETS"
   }
+
+  // Do NOT add custom_domain here until hasivuv.com DNS is attached.
+  // A routes.custom_domain that does not resolve fails the deploy.
 }

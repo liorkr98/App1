@@ -40,7 +40,15 @@ export const vehicleSchema: CategorySchema = {
       showInGrid: false,
       source: 'verified',
     },
-    { key: 'year', label: 'שנתון', type: 'number', required: true, source: 'verified', grouped: false },
+    {
+      key: 'year',
+      label: 'שנתון',
+      type: 'number',
+      required: true,
+      source: 'verified',
+      grouped: false,
+      phrase: 'שנתון {value}',
+    },
     {
       key: 'engine_cc',
       label: 'נפח מנוע',
@@ -48,6 +56,7 @@ export const vehicleSchema: CategorySchema = {
       unit: 'סמ״ק',
       gridLabel: 'סמ״ק',
       source: 'verified',
+      phrase: '{value} סמ״ק',
     },
     {
       key: 'fuel',
@@ -55,6 +64,7 @@ export const vehicleSchema: CategorySchema = {
       type: 'enum',
       options: ['בנזין', 'דיזל', 'היברידי', 'חשמלי', 'גז'],
       source: 'verified',
+      phrase: 'מנוע {value}',
     },
     {
       key: 'hand',
@@ -62,6 +72,7 @@ export const vehicleSchema: CategorySchema = {
       type: 'enum',
       options: ['ראשונה', 'שנייה', 'שלישית', 'רביעית', 'חמישית ומעלה'],
       source: 'verified',
+      phrase: 'יד {value}',
     },
     {
       key: 'previous_ownership',
@@ -69,23 +80,39 @@ export const vehicleSchema: CategorySchema = {
       type: 'enum',
       options: ['פרטית', 'חברה', 'ליסינג', 'השכרה', 'מונית', 'לימוד נהיגה'],
       source: 'verified',
+      phrase: 'בעלות קודמת {value}',
     },
-    { key: 'test_until', label: 'טסט עד', type: 'date', source: 'verified' },
+    {
+      key: 'test_until',
+      label: 'טסט עד',
+      type: 'date',
+      source: 'verified',
+      phrase: 'טסט עד {value}',
+    },
 
     // --- Seller-declared from here down ---------------------------------
-    { key: 'mileage', label: 'קילומטראז׳', type: 'number', unit: 'ק״מ', gridLabel: 'ק״מ' },
+    {
+      key: 'mileage',
+      label: 'קילומטראז׳',
+      type: 'number',
+      unit: 'ק״מ',
+      gridLabel: 'ק״מ',
+      phrase: '{value} ק״מ',
+    },
     {
       key: 'gearbox',
       label: 'תיבת הילוכים',
       type: 'enum',
       options: ['אוטומטית', 'ידנית', 'רובוטית', 'טיפטרוניק'],
+      phrase: 'תיבה {value}',
     },
-    { key: 'color', label: 'צבע', type: 'text' },
+    { key: 'color', label: 'צבע', type: 'text', phrase: 'צבע {value}' },
     {
       key: 'condition',
       label: 'מצב הרכב',
       type: 'enum',
       options: ['מצוין', 'טוב', 'סביר', 'דורש טיפול'],
+      phrase: 'מצב הרכב {value}',
     },
   ],
 };

@@ -1,0 +1,58 @@
+/*
+  Brochure — tall hero, wrap-facts, same ramps.
+*/
+
+html[data-template='brochure'] {
+  --heroWant: 92svh;
+}
+
+html[data-template='brochure'] .hero {
+  min-block-size: 0;
+}
+
+html[data-template='brochure'] .hero-title {
+  font-weight: 700;
+  font-size: var(--t-hero);
+  max-inline-size: 16ch;
+}
+
+html[data-template='brochure'] .price-bar {
+  padding-block: 1.85rem 0.7rem;
+}
+
+html[data-template='brochure'] .facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  background: transparent;
+  border-block: 0;
+  padding-block-end: 0.85rem;
+}
+
+html[data-template='brochure'] .fact {
+  flex: 1 1 6rem;
+  background: transparent;
+  padding: 1.4rem 0.75rem 0.55rem;
+}
+
+html[data-template='brochure'] .gallery figure:not(:first-child) img {
+  border-radius: 50%;
+  aspect-ratio: 1;
+}
+
+@media print {
+  @page { size: A4; margin: 12mm; }
+  html[data-template='brochure'] .compact-bar,
+  html[data-template='brochure'] .progress,
+  html[data-template='brochure'] .cta-dock,
+  html[data-template='brochure'] .skip,
+  html[data-template='brochure'] .hero-line > span {
+    display: revert;
+    animation: none;
+  }
+  html[data-template='brochure'] .compact-bar,
+  html[data-template='brochure'] .progress,
+  html[data-template='brochure'] .cta-dock {
+    display: none;
+  }
+}

@@ -1,5 +1,9 @@
-import { syncSchools } from './sources/schools.js';
+import { syncParkRide } from './sources/park-ride.js';
+import { syncParking } from './sources/parking.js';
 import { syncPlaces } from './sources/places.js';
+import { syncPolice } from './sources/police.js';
+import { syncSchools } from './sources/schools.js';
+import { syncStations } from './sources/stations.js';
 import { syncTransit } from './sources/transit.js';
 import { SyncCollapsed } from './sync.js';
 
@@ -15,12 +19,23 @@ import { SyncCollapsed } from './sync.js';
  * where it was.
  */
 
-type SourceName = 'schools' | 'transit' | 'places';
+type SourceName =
+  | 'schools'
+  | 'transit'
+  | 'stations'
+  | 'places'
+  | 'police'
+  | 'parking'
+  | 'park_ride';
 
 const SOURCES: Record<SourceName, () => Promise<{ rows: number; skipped: Record<string, number> }>> = {
   schools: syncSchools,
   transit: syncTransit,
+  stations: syncStations,
   places: syncPlaces,
+  police: syncPolice,
+  parking: syncParking,
+  park_ride: syncParkRide,
 };
 
 function log(event: string, fields: Record<string, unknown> = {}): void {

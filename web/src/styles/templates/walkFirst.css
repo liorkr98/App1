@@ -1,0 +1,36 @@
+/*
+  walkFirst — same ramps, tour before the hero.
+  The hero { display:none } path is this template's identity, not a token.
+  First-screen contract for it is P3.
+*/
+
+html[data-template='walkFirst'][data-has-walk='1'] .hero {
+  display: none;
+}
+
+html[data-template='walkFirst'][data-has-walk='1'] .walk {
+  order: -2;
+  padding-block: 0 2.1rem;
+}
+
+html[data-template='walkFirst'][data-has-walk='1'] .price-bar {
+  order: -1;
+}
+
+html[data-template='walkFirst'] .walk {
+  padding-block-start: 1.45rem;
+}
+
+html[data-template='walkFirst'][data-has-walk='1'] .walk-main img {
+  min-block-size: min(72svh, 40rem);
+  aspect-ratio: 4 / 5;
+}
+
+html[data-template='walkFirst'][data-has-walk='1'] .walk-viewer {
+  grid-template-columns: 5.75rem minmax(0, 1fr);
+}
+
+html[data-template='walkFirst'][data-has-walk='1'] .walk h2 {
+  font-size: var(--t-h2);
+  margin-block-end: 0.2rem;
+}

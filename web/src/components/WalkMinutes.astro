@@ -1,0 +1,29 @@
+---
+import { walkingLineParts, walkMinuteParts } from '@/features/listings/hebrew-plural';
+
+interface Props {
+  minutes: number;
+  /** Append הליכה. The enrichment rows already sit under a walking-time heading. */
+  walking?: boolean;
+}
+
+const parts = Astro.props.walking
+  ? walkingLineParts(Astro.props.minutes)
+  : walkMinuteParts(Astro.props.minutes);
+---
+{
+  'digit' in parts ? (
+    Astro.props.walking ? (
+      <Fragment>
+        <bdi>{parts.digit}</bdi> {parts.noun}
+      </Fragment>
+    ) : (
+      <Fragment>
+        <bdi>{parts.digit}</bdi>
+        <small>{parts.noun}</small>
+      </Fragment>
+    )
+  ) : (
+    <span>{parts.words}</span>
+  )
+}

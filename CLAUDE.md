@@ -46,7 +46,7 @@ it. That is what is being sold.
 > it belongs to the speed promise, not the trust one. It is sold as "type the
 > plate, the rest fills itself", never as "verified against the register".
 
-**Product:** סיבוב. **Domain:** hasivuv.com.
+**Product:** היעד. **Domain:** hasivuv.com.
 
 **The primary audience is Israeli estate agents, not private sellers.** The
 Justice Ministry's public register lists 22,995 licensed brokers with contact
@@ -60,18 +60,46 @@ sellers are secondary. When a design decision trades one against the other,
 
 | Layer | Choice |
 |---|---|
-| Listing pages | **Astro**, static output, no runtime rendering |
+| Listing pages | **Astro**. Static everywhere EXCEPT `/a/[slug]` — see below |
 | Hosting | **Cloudflare Pages** |
 | Editor | **React island** at `/new`, mobile-first |
 | Language | **TypeScript**, `strict: true` everywhere |
 | Database | **Supabase** (Postgres, Auth, Realtime, RLS) |
 | Image storage | **Supabase Storage**. Decided 10 September 2026 — see below. |
 | Spatial | **PostGIS** for proximity queries |
-| Routing | **OSRM**, foot profile, self-hosted |
+| Routing | **OSRM**, foot profile, self-hosted — `osrm/`, see docs/OSRM.md |
 | Worker | **Fly.io** container, Postgres job queue |
 | Images | **sharp**/libvips, local, no external API in v1 |
 | PDF | **Puppeteer**, in its own Fly process group |
 | Payments | **Undecided.** Build behind a provider interface (PRD §6) |
+
+**`/a/[slug]` renders per request. Everything else is still a static file.**
+Corrected 14 September 2026, replacing "static output, no runtime rendering".
+
+The old rule was written when listings were build-time sample data, and its
+consequence was not a performance choice: `getStaticPaths()` returned the two
+demo slugs, so **a real listing had no page at all**. An agent could finish the
+whole flow and the link they shared would 404 — the one artefact the product
+exists to produce.
+
+The stated reason for the rule was that an adapter puts a cold start in front
+of the WhatsApp preview scraper. The alternative — rebuilding the site on every
+publish — puts one to two MINUTES between an agent pressing publish and their
+link existing, which is worse for that scraper and much worse for the agent.
+
+Only that route opts out. The homepage, the dashboard, `/new` and `/me` are
+still files on the CDN, and Cloudflare serves a matching static asset before it
+invokes the Worker.
+
+Two consequences worth knowing before touching the build:
+
+- Output is now `web/dist/client` and `web/dist/server`. Every `scripts/verify-*`
+  reads the former.
+- `/a/{slug}` is no longer a built HTML file, so the divergence and `<bdi>`
+  gates had nothing to read. `web/src/pages/template-check/[slug].astro`
+  prerenders the two demo listings for them, through the SAME
+  `ListingPage.astro` the real route renders — if the two could differ, the
+  check would be worthless.
 
 **Whether verification can run locally depends on which machine you are on.**
 This project is developed from two.
@@ -141,6 +169,21 @@ previous plan. Straight-line distance lies in Israel — a motorway or a wadi
 turns 300 metres into a twenty-minute walk, and the buyer discovers that on
 foot. The exclusion is written down because the fallback is tempting on the
 day OSRM is inconvenient.
+
+> **16 September 2026: OSRM is built but not deployed, and there is an interim
+> router.** `osrm/` holds the service (graph baked in, foot profile) and
+> `docs/OSRM.md` the deploy. Until `OSRM_URL` is set, walking times come from
+> **Valhalla on the OpenStreetMap Foundation's instance**, pedestrian costing,
+> one matrix call per listing, cached on the row.
+>
+> That is a public service and therefore the interim rather than the plan. It
+> is recorded here because it is a third-party routing dependency and this
+> section is where those are decided.
+>
+> **The OSRM demo server is NOT an option**, and it is the trap here. It
+> answers `/table/v1/foot/…` with 200 and returns CAR times: 162 seconds for a
+> hop Valhalla's pedestrian costing puts at 277. A profile is what the graph
+> was built with, not a segment of the URL. Measured, not assumed.
 
 Do not introduce a dependency without asking. Justify: what it does, size,
 last publish date, and why the stack above cannot do it.
@@ -350,25 +393,30 @@ summary:
 network failure. The payments provider is undecided — build behind an
 interface with one adapter and say what the interface needs.
 
+**Until a PSP is signed, entitlement is `listing_grants` (migration 0016).** A
+live row with `remaining > 0` inside its window is paid. Admins are
+`site_admins` (uuid only — never commit an email). Granting is an RPC with a
+required note. A Postgres `BEFORE UPDATE` trigger is the server-side publish
+gate: `draft→published` consumes one remaining listing or raises. The editor's
+`canPublish` is UX. Admin comps are dated quotas (`source = admin_comp`) and
+must not be wiped by a later failed webhook — there is no DELETE; close with
+`effective_to`. Seed with `docs/ADMIN-SEED.sql` against a uuid from the
+dashboard.
+
+Every PR that reads grant state and decides publish must flag CLAUDE.md §8 in
+the summary.
+
 ### The product rules
 
-**The free tier is create and preview only. Publishing requires payment.** The
-seller goes through the whole flow and sees their finished page — that is the
-conversion moment — but cannot share a link until they pay. A free published
-page would be the entire product given away: someone selling one apartment
-would take it and never come back.
+**The first published listing is free, and it carries נבנה בהיעד in the footer.** That mark is the viral loop: a listing page is forwarded to 30–80 people who are by definition interested in buying something. Small, elegant, clickable.
 
-**Metering is LISTINGS, not images.** Cap images per listing at 25. The user
-thinks in listings; our cost is in images; the cap is what bridges the two.
+**A live grant (purchase or admin) publishes further listings and takes the mark off** — including listings already published. Buying one listing is enough. A second listing without a grant does not publish.
 
-**No free trial on subscription tiers.** A private seller would take the trial,
-publish their one listing and churn — cannibalising the single-listing purchase
-that is the correct product for them.
+**Metering is LISTINGS, not images.** Cap images per listing at 25. The user thinks in listings; our cost is in images; the cap is what bridges the two.
 
-**Every published page carries נבנה בסיבוב in the footer**, removable only on
-agent tiers. This is the viral loop: a listing page is forwarded to 30–80
-people who are by definition interested in buying something. Small, elegant,
-clickable. Not obnoxious and not invisible.
+**No free trial on subscription tiers.** A private seller would take the trial, publish their one listing and churn — cannibalising the single-listing purchase that is the correct product for them. The one free listing with the mark is not a subscription trial.
+
+**Fail closed still.** Unknown or errored entitlement means not paid and not free. Never grant on network failure. The editor's `canPublish` is UX. The Postgres trigger is the law.
 
 ---
 
@@ -456,6 +504,10 @@ Ingestion is run one source at a time, on a schedule, never all at once:
 
 ```bash
 npm run sync:schools --prefix ingest
-npm run sync:transit --prefix ingest   # not implemented — fails with why
+npm run sync:stations --prefix ingest  # bus stops from data.gov.il (34k rows)
+npm run sync:police  --prefix ingest   # police desks, WGS84
+npm run sync:parking --prefix ingest   # public parking, ITM→WGS84 in PostGIS
+npm run sync:park-ride --prefix ingest # park-and-ride lots, same transform
+npm run sync:transit --prefix ingest   # GTFS zip — not implemented, fails with why
 npm run sync:places  --prefix ingest   # not implemented — fails with why
 ```

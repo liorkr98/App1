@@ -1,7 +1,10 @@
 import { useState } from 'react';
 
 import { MAX_IMAGES } from '@/features/listings/editor';
+import { photoWarnings } from '@/features/listings/photo-guidance';
+import { guessRoomFromName, type PhotoRoom } from '@/features/listings/photo-rooms';
 import { moveItem } from '@/features/listings/photo-order';
+import type { ListingCategory } from '@/features/listings/schemas';
 
 import { t } from '../../lib/i18n';
 import { Message } from './Message';
@@ -16,6 +19,19 @@ export interface EditorPhoto {
   file?: File;
 
   /**
+   * The PUBLIC copy's URL, once one exists.
+   *
+   * The original goes to the private `originals` bucket and can never be
+   * shown to a buyer. This is the re-encoded copy in `derived` — the only URL
+   * a listing page can carry. Absent until the upload finishes, which is why
+   * `saveListing` filters on it rather than assuming.
+   */
+  publicUrl?: string;
+  /** Of the public copy, so the page can reserve the box before the bytes. */
+  width?: number;
+  height?: number;
+
+  /**
    * Where this photo is in its journey to the private originals bucket.
    *
    * Shown per thumbnail rather than as one global spinner: an agent adding
@@ -25,6 +41,20 @@ export interface EditorPhoto {
   status?: 'local' | 'uploading' | 'uploaded' | 'failed';
   /** Storage key inside `originals`, once it has one. */
   path?: string;
+
+  /**
+   * Optional description for screen readers and the published <img alt>.
+   *
+   * Empty is the correct value when nobody wrote one — inventing a caption
+   * from the file name would be worse than silence. Not required to publish.
+   */
+  alt?: string;
+
+  /**
+   * Which room this is, when the seller named one. Property only — a car
+   * has no rooms, and the picker is not shown for one.
+   */
+  room?: PhotoRoom;
 }
 
 interface Props {
@@ -32,6 +62,7 @@ interface Props {
   onChange: (photos: EditorPhoto[]) => void;
   /** Uploading needs a listing row, which needs a signed-in owner (0004). */
   signedIn: boolean;
+  category?: ListingCategory;
 }
 
 /**
@@ -77,8 +108,20 @@ interface Props {
  * thumb on a moving bus — and because the buttons make the order checkable
  * without a pointer at all.
  */
-export function PhotosStep({ photos, onChange, signedIn }: Props) {
+export function PhotosStep({
+  photos,
+  onChange,
+  signedIn,
+  category,
+}: Props) {
   const [dragging, setDragging] = useState<number | null>(null);
+  const warnings = photoWarnings(photos);
+  const warningCopy: Record<(typeof warnings)[number], string> = {
+    few: t('editor.photosWarnFew'),
+    portraitCover: t('editor.photosWarnPortrait'),
+    narrow: t('editor.photosWarnNarrow'),
+    overCap: t('editor.photosWarnCap'),
+  };
 
   const add = (files: FileList | null) => {
     if (!files) return;
@@ -90,13 +133,17 @@ export function PhotosStep({ photos, onChange, signedIn }: Props) {
 
     onChange([
       ...photos,
-      ...taken.map((file) => ({
-        id: `${file.name}:${file.size}:${file.lastModified}:${Math.random().toString(36).slice(2, 8)}`,
-        url: URL.createObjectURL(file),
-        name: file.name,
-        file,
-        status: 'local' as const,
-      })),
+      ...taken.map((file) => {
+        const guessed = guessRoomFromName(file.name);
+        return {
+          id: `${file.name}:${file.size}:${file.lastModified}:${Math.random().toString(36).slice(2, 8)}`,
+          url: URL.createObjectURL(file),
+          name: file.name,
+          file,
+          status: 'local' as const,
+          ...(guessed && category === 'property' ? { room: guessed } : {}),
+        };
+      }),
     ]);
   };
 
@@ -117,7 +164,32 @@ export function PhotosStep({ photos, onChange, signedIn }: Props) {
     <>
       <p className="hint">
         <Message path="editor.photosHint" values={{ max: MAX_IMAGES }} />
+        {' '}
+        <a href="/guide/photos/">{t('editor.photosGuide')}</a>
       </p>
+      <ul className="photo-rules">
+        <li>{t('guide.before1')}</li>
+        <li>{t('guide.before2')}</li>
+        <li>{t('guide.before3')}</li>
+        <li>{t('guide.before4')}</li>
+      </ul>
+      <details className="photo-rules-more">
+        <summary>{t('listing.readMore')}</summary>
+        <ul>
+          <li>{t('guide.shoot1')}</li>
+          <li>{t('guide.shoot2')}</li>
+          <li>{t('guide.shoot3')}</li>
+          <li>{t('guide.shoot4')}</li>
+          <li>{t('guide.cover1')}</li>
+        </ul>
+      </details>
+      {warnings.length > 0 && (
+        <ul className="photo-warn">
+          {warnings.map((warning) => (
+            <li key={warning}>{warningCopy[warning]}</li>
+          ))}
+        </ul>
+      )}
 
       {photos.length > 0 ? (
         <ul className="strip">
@@ -126,7 +198,15 @@ export function PhotosStep({ photos, onChange, signedIn }: Props) {
               key={photo.id}
               className={dragging === index ? 'shot dragging' : 'shot'}
               draggable
-              onDragStart={() => setDragging(index)}
+              onDragStart={(event) => {
+                // An input inside a draggable tile would otherwise start a
+                // reorder the moment the seller tries to type an alt.
+                if ((event.target as HTMLElement).closest('input, select, label')) {
+                  event.preventDefault();
+                  return;
+                }
+                setDragging(index);
+              }}
               onDragEnd={() => setDragging(null)}
               onDragOver={(event) => event.preventDefault()}
               onDrop={(event) => {
@@ -137,7 +217,11 @@ export function PhotosStep({ photos, onChange, signedIn }: Props) {
                 setDragging(null);
               }}
             >
-              <img src={photo.url} alt="" />
+              <img
+                className={photo.status === 'uploaded' ? 'clip-reveal' : undefined}
+                src={photo.url}
+                alt={photo.alt?.trim() ?? ''}
+              />
 
               {index === 0 ? <span className="cover">{t('editor.coverPhoto')}</span> : null}
 
@@ -185,6 +269,26 @@ export function PhotosStep({ photos, onChange, signedIn }: Props) {
                   {t('common.delete')}
                 </button>
               </div>
+
+              <label className="shot-alt">
+                <input
+                  type="text"
+                  value={photo.alt ?? ''}
+                  placeholder={t('editor.photoAlt')}
+                  aria-label={t('editor.photoAlt')}
+                  title={t('editor.photoAltHint')}
+                  autoComplete="off"
+                  draggable={false}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onChange={(event) => {
+                    const alt = event.target.value;
+                    onChange(
+                      photos.map((item, at) => (at === index ? { ...item, alt } : item)),
+                    );
+                  }}
+                />
+              </label>
+
             </li>
           ))}
         </ul>

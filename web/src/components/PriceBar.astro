@@ -1,5 +1,7 @@
 ---
 import { ils } from '../lib/format';
+import { priceHeadline } from '@/features/listings/control-surface';
+import { t } from '../lib/i18n';
 import type { PerUnitPrice } from '../lib/price';
 
 interface Props {
@@ -8,26 +10,38 @@ interface Props {
   listPrice?: number;
   /** Free text used when there is no listPrice. */
   priceNote?: string;
+  /** exact / from / on_request. Absent is exact. */
+  priceDisplay?: 'exact' | 'from' | 'on_request';
   /** Derived, never declared. See lib/price.ts. */
   perUnit?: PerUnitPrice;
 }
 
-const { price, listPrice, priceNote, perUnit } = Astro.props;
+const { price, listPrice, priceNote, priceDisplay, perUnit } = Astro.props;
 
 /**
  * DIVERGENCE #2 (DESIGN-CONTRACT §5.2) — and it is still driven by DATA,
  * never by listing.category.
  *
- * A vehicle happens to carry a book price and a property happens to carry a
- * move-in note and a price per m², but either category could carry any of
- * them: the branches below ask what the listing HAS, not what it IS. That is
- * what keeps this one component instead of two, and what stops the note
- * becoming a fifth divergence.
+ * Price is optional. 0 means unanswered, not free — printing ₪0 would claim
+ * the opposite of what the seller meant. on_request is the same honesty with
+ * a label: לפי פנייה, no figure.
  */
+const headline = priceHeadline(priceDisplay);
+const priced = headline.showAmount && Number.isFinite(price) && price > 0;
+const onRequest = priceDisplay === 'on_request';
 const note = listPrice !== undefined ? `מחיר מחירון: ` : priceNote;
+const showBar = priced || onRequest || Boolean(note) || Boolean(perUnit);
 ---
+{showBar ? (
 <div class="price-bar">
-  <div class="price"><bdi>{ils(price)}</bdi></div>
+  {onRequest ? (
+    <div class="price">{t('listing.priceOnRequest')}</div>
+  ) : priced ? (
+    <div class="price">
+      {headline.prefix === 'from' ? <span class="price-from">{t('listing.priceFrom')}</span> : null}
+      <bdi>{ils(price)}</bdi>
+    </div>
+  ) : null}
 
   {(note || perUnit) && (
     <div class="price-note label">
@@ -45,3 +59,4 @@ const note = listPrice !== undefined ? `מחיר מחירון: ` : priceNote;
     </div>
   )}
 </div>
+) : null}

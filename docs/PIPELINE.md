@@ -20,6 +20,19 @@ the two database functions it wrote through.
 never gate publishing — a listing publishes with whatever succeeded — and
 because per-item work will need it again.
 
+**Enqueue is wired.** `web/src/lib/listing-jobs.ts` calls `enqueue_job` for
+`enhance_images` and `generate_og` after a successful publish. Failure there
+must not fail the publish. `render_pdf` is not enqueued yet — the PDF route
+redirects when `media.pdfUrl` exists, and the worker is not deployed from this
+change. Deploy:
+
+```
+fly deploy --config worker/fly.toml --dockerfile worker/Dockerfile
+fly secrets set SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=...
+```
+
+Do not set `PAGE_BASE_URL` until `hasivuv.com` is the live origin.
+
 The two groups claim **disjoint** job types. Chrome is the only thing here that
 routinely runs out of memory, and when it does it takes its machine with it.
 

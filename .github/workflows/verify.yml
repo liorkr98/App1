@@ -66,8 +66,22 @@ jobs:
       # Its own package.json, deliberately not an npm workspace: making the
       # root a workspace root would rewrite web's and worker's dependency
       # trees.
+      # RETRIED ONCE, and the reason is specific rather than superstitious.
+      # There are no lockfiles here on purpose (.gitignore says why), so every
+      # build resolves from the registry — and on 16 September 2026 npm served
+      # metadata for rolldown 1.2.9 a few minutes before its tarball existed.
+      # vite depends on it as ~1.2.6, so `npm install` chose the version that
+      # could not be downloaded:
+      #
+      #   npm error 404 Not Found - GET .../rolldown-1.2.9.tgz
+      #
+      # That failed this workflow AND the Cloudflare production deploy, for a
+      # publish race that resolved itself within the hour. A lockfile is the
+      # other answer and is a strategy change, not a fix (.gitignore again).
       - name: Install web dependencies
-        run: npm install --no-audit --no-fund --prefix web
+        run: |
+          npm install --no-audit --no-fund --prefix web \
+            || (sleep 25 && npm install --no-audit --no-fund --prefix web)
 
       - name: Web typecheck
         run: npm run typecheck --prefix web
@@ -85,6 +99,12 @@ jobs:
 
       - name: Verify exactly four template divergences
         run: node scripts/verify-template-divergences.mjs
+
+      - name: Verify every template id has a reference, a mini-screen and a picker card
+        run: node scripts/verify-template-ids.mjs
+
+      - name: Verify listing and shell a11y landmarks
+        run: node scripts/verify-a11y.mjs
 
       # CLAUDE.md §4.2. A missing <bdi> is invisible in review AND usually on
       # the page: a bare number reads correctly until the words around it
@@ -106,13 +126,31 @@ jobs:
       - name: Verify the motion degrades correctly
         run: node scripts/verify-motion-fallbacks.mjs
 
-      # A fact the seller confirmed absent used to render at 1.70:1 — the
-      # cell applied an opacity on top of a colour that was already under the
-      # bar. It is the distinction the product calls the reason the page
-      # reads honestly, so it has to stay readable on all seven templates,
-      # two of which invert its background.
-      - name: Verify a confirmed absence is readable
-        run: node scripts/verify-absent-contrast.mjs
+      - name: Verify translateX uses --dir
+        run: node scripts/verify-translate-dir.mjs
+
+      - name: Verify the translateX/--dir rule actually fires
+        run: bash scripts/verify-translate-dir-fires.sh
+
+      - name: Verify listing JS stays within 12 KB gz
+        run: node scripts/verify-listing-js-budget.mjs
+
+      # CLAUDE.md §7: a licence plate is a lookup key, never published.
+      - name: Verify listing pages never publish a licence plate
+        run: node scripts/verify-no-plates.mjs
+
+      - name: Verify the plate rule actually fires
+        run: bash scripts/verify-no-plates-fires.sh
+
+      - name: Verify WhatsApp og:title honors price mode
+        run: node scripts/verify-og-title.mjs
+
+      # Amendment 13: a listing page must not phone home to Google Fonts.
+      - name: Verify listing pages do not request Google Fonts
+        run: node scripts/verify-no-google-fonts.mjs
+
+      - name: Verify the Google Fonts rule actually fires
+        run: bash scripts/verify-no-google-fonts-fires.sh
 
       - name: Report built page weight
         run: node scripts/report-page-weight.mjs

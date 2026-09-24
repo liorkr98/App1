@@ -20,14 +20,30 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const DIST_ROOT = 'web/dist';
-const DIST = 'web/dist/a';
-const PROPERTY = path.join(DIST, 'A7K2M', 'index.html');
-const VEHICLE = path.join(DIST, 'V3M9Q', 'index.html');
+const DIST_ROOT = process.argv[2] ?? 'web/dist';
 
-for (const file of [PROPERTY, VEHICLE]) {
-  if (!fs.existsSync(file)) {
-    console.error(`Missing build output: ${file}\nRun the web build first.`);
+function listingHtml(slug) {
+  const candidates = [
+    path.join(DIST_ROOT, 'template-check', slug, 'index.html'),
+    path.join(DIST_ROOT, 'client', 'template-check', slug, 'index.html'),
+    path.join(DIST_ROOT, 'a', slug, 'index.html'),
+  ];
+  return candidates.find((file) => fs.existsSync(file));
+}
+
+const PROPERTY = listingHtml('A7K2M');
+const VEHICLE = listingHtml('V3M9Q');
+
+for (const [label, file] of [
+  ['property A7K2M', PROPERTY],
+  ['vehicle V3M9Q', VEHICLE],
+]) {
+  if (!file) {
+    console.error(
+      `Missing build output for ${label}.\n` +
+        `Expected web/dist/template-check/{slug}/index.html (or web/dist/client/…).\n` +
+        `Run the web build first.`,
+    );
     process.exit(1);
   }
 }
@@ -60,7 +76,10 @@ const styleOf = (html) => {
     .filter((href) => href && href.startsWith('/'))
     .map((href) => {
       const file = path.join(DIST_ROOT, href.slice(1));
-      return fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : `MISSING:${href}`;
+      const nested = path.join(DIST_ROOT, 'client', href.slice(1));
+      if (fs.existsSync(file)) return fs.readFileSync(file, 'utf8');
+      if (fs.existsSync(nested)) return fs.readFileSync(nested, 'utf8');
+      return `MISSING:${href}`;
     })
     .join('\n');
 

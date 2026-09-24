@@ -1,6 +1,8 @@
+import { rankEveryday } from '@/features/listings/place-rank';
 import type {
+  CivicKind,
+  NearbyCivic,
   NearbyPlace,
-  NearbyTransit,
   PlaceCategory,
   TransitMode,
 } from '@/types/listing';
@@ -78,31 +80,60 @@ export function groupPlaces(places: NearbyPlace[]): PlaceGroup[] {
     const matching = places.filter((place) => place.category === category);
     if (matching.length === 0) continue;
 
+    const everyday =
+      category === 'grocery' ||
+      category === 'pharmacy' ||
+      category === 'cafe' ||
+      category === 'restaurant' ||
+      category === 'gym';
+    const ranked = everyday
+      ? rankEveryday(matching)
+      : [...matching].sort((a, b) => a.walkMinutes - b.walkMinutes);
+    if (ranked.length === 0) continue;
+
     groups.push({
       category,
       label: categoryLabel(category),
-      places: [...matching].sort((a, b) => a.walkMinutes - b.walkMinutes),
+      places: ranked,
     });
   }
 
   return groups;
 }
 
-/**
- * Rail-type stops before buses, each set sorted by walking time.
- *
- * The payload is already capped and ordered this way by the ingestion, but the
- * page must not depend on that: a payload written by an older build, or by a
- * future one, still has to render sensibly.
- */
-export function orderTransit(transit: NearbyTransit[]): NearbyTransit[] {
-  const byWalk = (a: NearbyTransit, b: NearbyTransit) => a.walkMinutes - b.walkMinutes;
-
-  return [
-    ...transit.filter((stop) => stop.mode !== 'bus').sort(byWalk),
-    ...transit.filter((stop) => stop.mode === 'bus').sort(byWalk),
-  ];
+export interface CivicGroup {
+  kind: CivicKind;
+  items: NearbyCivic[];
 }
+
+const CIVIC_ORDER: CivicKind[] = ['police', 'parking', 'park_ride'];
+
+/**
+ * Groups civic sites by kind, dropping empty groups.
+ *
+ * Same omit-empty rule as places. A listing with no police desk in walking
+ * distance should not grow a heading that says משטרה and then nothing.
+ */
+export function groupCivic(civic: NearbyCivic[]): CivicGroup[] {
+  const groups: CivicGroup[] = [];
+
+  for (const kind of CIVIC_ORDER) {
+    const matching = civic.filter((item) => item.kind === kind);
+    if (matching.length === 0) continue;
+    groups.push({
+      kind,
+      items: [...matching].sort((a, b) => a.walkMinutes - b.walkMinutes),
+    });
+  }
+
+  return groups;
+}
+
+export {
+  enrichmentHasContent,
+  leftoverCount,
+  orderTransit,
+} from '@/features/listings/enrichment-view';
 
 /**
  * One citation line per source, deduplicated.

@@ -1,4 +1,5 @@
 import type { Seller } from '@/types/listing.js';
+import { asLogoPlacement } from './logo-placement.js';
 
 /**
  * The agent's own details, asked once and reused by every listing they make.
@@ -46,6 +47,15 @@ export interface AgentProfile {
    * never opens the picker still gets a coherent page. See accents.ts.
    */
   accent?: string | null;
+  /**
+   * Public URL of the agency mark. Optional. A private seller has none,
+   * and the agent bar keeps the colour dot.
+   */
+  agencyLogoUrl?: string | null;
+  /**
+   * Where the mark sits on a listing. Absent means `bar`.
+   */
+  logoPlacement?: string | null;
 }
 
 /**
@@ -123,7 +133,7 @@ export function normalisePhone(raw: string | null | undefined): string | undefin
  * being told about another is how a form on a phone gets abandoned.
  *
  * THE AGENCY NAME IS NOT REQUIRED. A private seller has none, and PRD §1 keeps
- * them a supported case — the page shows נבנה בסיבוב where an agency would
+ * them a supported case — the page shows נבנה בהיעד where an agency would
  * go. Requiring it would make the product agent-only rather than agent-first.
  */
 export function profileBlockers(profile: AgentProfile): ProfileBlockerCode[] {
@@ -161,11 +171,30 @@ export function isProfileEmpty(profile: AgentProfile): boolean {
 }
 
 /**
+ * One listing has one seller role, and both the bar and the card print it.
+ *
+ * Free text is how the bar said מתווך and the card said בעל הדירה for the
+ * same person. The page stores one of these two and renders that string
+ * in both places.
+ */
+export const SELLER_ROLES = ['מתווך', 'בעל הנכס'] as const;
+
+export type SellerRole = (typeof SELLER_ROLES)[number];
+
+const BROKER_ROLE = /מתווך|מתווכת|סוכן|סוכנת|broker/i;
+
+export function canonicalSellerRole(role: string | null | undefined): SellerRole {
+  const text = (role ?? '').trim();
+  if (text !== '' && BROKER_ROLE.test(text)) return 'מתווך';
+  return 'בעל הנכס';
+}
+
+/**
  * The profile, as the listing will carry it.
  *
- * `role` falls back to the category's own wording — בעל הדירה / בעל הרכב — so
- * a private seller who never set one still gets a line that reads like a
- * person rather than a blank.
+ * `role` is always one of `מתווך` | `בעל הנכס`. A private seller who never
+ * set one is בעל הנכס. A line that merely contains מתווך collapses to that
+ * one word, so the bar and the card cannot disagree.
  *
  * THE LICENCE NUMBER TRAVELS, BUT UNSTYLED. It is self-declared and unchecked
  * (0009) — this used to be a reason to hide it, on the grounds that showing
@@ -192,17 +221,20 @@ export function toSeller(
   if (!phone || !name) return undefined;
 
   const agencyName = profile.agencyName?.trim();
-  const role = profile.role?.trim();
+  const role = canonicalSellerRole(profile.role?.trim() || fallbackRole);
   const licenceNumber = profile.licenceNumber?.trim();
+  const agencyLogoUrl = profile.agencyLogoUrl?.trim();
+  const logoPlacement = asLogoPlacement(profile.logoPlacement);
 
   return {
     name,
     phone,
-    role: role !== '' && role !== undefined ? role : fallbackRole,
+    role,
     // Omitted rather than set to an empty string: `Seller.agencyName` being
-    // absent is what makes the agent bar show נבנה בסיבוב, and '' is truthy
+    // absent is what makes the agent bar show נבנה בהיעד, and '' is truthy
     // enough in enough places to produce an agency bar with no agency in it.
     ...(agencyName ? { agencyName } : {}),
     ...(licenceNumber ? { licenceNumber } : {}),
+    ...(agencyLogoUrl ? { agencyLogoUrl, logoPlacement } : {}),
   };
 }

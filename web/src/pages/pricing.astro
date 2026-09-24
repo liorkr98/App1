@@ -1,0 +1,109 @@
+---
+import BrandMark from '../components/BrandMark.astro';
+import PriceTiers from '../components/PriceTiers.astro';
+import { t } from '../lib/i18n';
+import '../styles/tokens.css';
+
+/**
+ * Cost page. Checkout is a disabled control until an Israeli PSP is wired
+ * (ADR 0003). Numbers in <bdi> via `ils()`. The agent tier is a dark panel
+ * with a text flag — not colour-only, and not the same outlined box thrice.
+ */
+---
+
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#FBFAF7" />
+    <title>{t('pricing.title')} · {t('common.brand')}</title>
+    <meta name="description" content={t('pricing.lead')} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Assistant:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style is:global>
+      html { background: var(--plaster); color-scheme: light; }
+      body {
+        font-family: 'Assistant', system-ui, sans-serif;
+        background: var(--plaster);
+        color: var(--ink);
+        font-size: var(--t-body);
+        line-height: 1.7;
+        max-inline-size: 56rem;
+        margin-inline: auto;
+        padding: 1.5rem var(--gut) 3rem;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        margin-block-end: 2.4rem;
+        padding-block-end: 1rem;
+        border-block-end: 1px solid var(--stone);
+      }
+      header > a:not(.brand-mark) {
+        display: inline-flex;
+        align-items: center;
+        min-block-size: 44px;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+      h1 {
+        font-family: 'Frank Ruhl Libre', serif;
+        font-weight: 700;
+        font-size: var(--t-h2);
+        margin-block-end: 0.45rem;
+        letter-spacing: -0.02em;
+      }
+      .lead {
+        color: var(--muted);
+        max-inline-size: 48ch;
+        margin-block-end: 2rem;
+      }
+      .note {
+        color: var(--muted);
+        font-size: 0.92rem;
+        margin-block-start: 1.5rem;
+        max-inline-size: 52ch;
+      }
+      footer { margin-block-start: 2.5rem; color: var(--muted); font-size: 0.85rem; }
+      footer a {
+        display: inline-flex;
+        align-items: center;
+        min-block-size: 44px;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip" href="#main">{t('a11y.skip')}</a>
+    <header>
+      <BrandMark />
+      <a href="/">{t('legal.home')}</a>
+    </header>
+    <main id="main">
+      <h1>{t('pricing.title')}</h1>
+      <p class="lead">{t('pricing.lead')}</p>
+      <p class="lead">{t('pricing.freeLine')}</p>
+      <PriceTiers />
+      <p class="note">{t('pricing.checkoutOff')}</p>
+    </main>
+    <footer>
+      <a href="/about/">{t('legal.about')}</a>
+      {' · '}
+      <a href="/contact/">{t('legal.contact')}</a>
+      {' · '}
+      <a href="/legal/terms/">{t('legal.terms')}</a>
+      {' · '}
+      <a href="/legal/privacy/">{t('legal.privacy')}</a>
+      {' · '}
+      <a href="/legal/accessibility/">{t('legal.accessibility')}</a>
+    </footer>
+  </body>
+</html>

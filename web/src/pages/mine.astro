@@ -1,4 +1,5 @@
 ---
+import BrandMark from '../components/BrandMark.astro';
 import { t } from '../lib/i18n';
 import '../styles/tokens.css';
 
@@ -37,16 +38,17 @@ import '../styles/tokens.css';
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#111208" />
-    <title>{t('dash.title')} · סיבוב</title>
+    <title>{t('dash.title')} · {t('common.brand')}</title>
 
     {/* A private workspace holding unpublished drafts. There is no version of
         it that belongs in a search result. */}
     <meta name="robots" content="noindex,nofollow" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Assistant:wght@400;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Assistant:wght@400;600;700;800&display=swap"
       rel="stylesheet"
     />
 
@@ -62,6 +64,10 @@ import '../styles/tokens.css';
         color-scheme: light;
         touch-action: manipulation;
         -webkit-tap-highlight-color: rgba(74, 93, 58, 0.18);
+      }
+
+      @view-transition {
+        navigation: auto;
       }
 
       body {
@@ -98,13 +104,8 @@ import '../styles/tokens.css';
         padding-block: 1rem;
       }
 
-      .mark {
-        font-family: 'Frank Ruhl Libre', serif;
-        font-weight: 700;
-        font-size: 1.3rem;
-        letter-spacing: -0.015em;
+      .bar .brand-mark {
         color: var(--plaster);
-        text-decoration: none;
       }
 
       .bar nav {
@@ -116,6 +117,9 @@ import '../styles/tokens.css';
 
       .bar nav a {
         /* 6.94:1 on --ink-deep. --olive-lift is 3.83:1 and would fail here. */
+        display: inline-flex;
+        align-items: center;
+        min-block-size: 44px;
         color: #9c9d93;
         font-size: var(--t-label);
         font-weight: 600;
@@ -127,12 +131,17 @@ import '../styles/tokens.css';
       }
 
       .cta {
-        display: inline-block;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-block-size: 44px;
         padding: 0.6rem 1.2rem;
         background: var(--olive);
         color: var(--plaster);
-        font-size: 0.92rem;
-        font-weight: 700;
+        font-size: 0.95rem;
+        /* 800, matching the homepage. Assistant carries it and the page loads
+           it — the buttons were asking for a weight the browser did not have. */
+        font-weight: 800;
         border: none;
         border-radius: 5px;
         text-decoration: none;
@@ -227,6 +236,35 @@ import '../styles/tokens.css';
         font-variant-numeric: tabular-nums;
       }
 
+      /* ---------- First run ---------- */
+
+      .onboard {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1.25rem;
+        flex-wrap: wrap;
+        background: var(--stone-warm);
+        border: 1px solid var(--stone);
+        border-radius: 8px;
+        padding: 1.1rem 1.25rem;
+        margin-block-end: 1.5rem;
+        /* --muted is 4.35:1 on this tinted ground and 4.87:1 on plaster. */
+        --muted: #67685f;
+      }
+
+      .onboard b {
+        font-family: 'Frank Ruhl Libre', serif;
+        font-weight: 700;
+        font-size: 1.15rem;
+      }
+
+      .onboard p {
+        color: var(--muted);
+        font-size: 0.92rem;
+        max-inline-size: 52ch;
+      }
+
       /* ---------- The grid ----------
          auto-fit with a floor, so the column count follows the width without
          a breakpoint per size. */
@@ -234,7 +272,7 @@ import '../styles/tokens.css';
       .grid {
         list-style: none;
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
         gap: clamp(1rem, 2vw, 1.5rem);
         padding: 0;
         margin: 0;
@@ -312,6 +350,15 @@ import '../styles/tokens.css';
         border-color: var(--ink-deep);
       }
 
+      .card[data-status='archived'] {
+        opacity: 0.82;
+      }
+
+      .card[data-status='archived'] .pill {
+        background: var(--stone-warm);
+        color: var(--muted);
+      }
+
       .body {
         padding: 0.9rem 1rem 0.4rem;
         flex: 1 1 auto;
@@ -368,8 +415,8 @@ import '../styles/tokens.css';
       .act {
         padding: 0.4rem 0.7rem;
         font: inherit;
-        font-size: 0.82rem;
-        font-weight: 600;
+        font-size: 0.84rem;
+        font-weight: 700;
         color: var(--ink);
         background: none;
         border: var(--rule);
@@ -459,6 +506,20 @@ import '../styles/tokens.css';
         display: none !important;
       }
 
+      .dash-foot {
+        padding-block: 1.5rem 2rem;
+        font-size: 0.85rem;
+        color: var(--muted);
+        text-align: center;
+      }
+
+      .dash-foot a {
+        display: inline-flex;
+        align-items: center;
+        min-block-size: 44px;
+        color: var(--muted);
+      }
+
       @media (prefers-reduced-motion: reduce) {
         .card,
         .act,
@@ -471,17 +532,19 @@ import '../styles/tokens.css';
   </head>
 
   <body>
+    <a class="skip" href="#main">{t('a11y.skip')}</a>
     <header class="bar">
       <div class="shell">
-        <a class="mark" href="/">סיבוב</a>
+        <BrandMark />
         <nav>
           <a href="/me/">{t('agent.editDetails')}</a>
-          <a class="cta" href="/new/">{t('dash.new')}</a>
+          <a id="nav-admin" href="/admin/" hidden>{t('admin.link')}</a>
+          <a class="cta" href="/new/?fresh=1">{t('dash.new')}</a>
         </nav>
       </div>
     </header>
 
-    <main class="shell">
+    <main id="main" class="shell">
       <div class="head">
         <h1>{t('dash.title')}</h1>
         <p class="lead">{t('dash.lead')}</p>
@@ -489,9 +552,27 @@ import '../styles/tokens.css';
 
       {/*
         Present from the start, hidden by script. The filter is a radio group
-        so the browser owns the "one of four" behaviour; the script only reads
+        so the browser owns the "one of five" behaviour; the script only reads
         which one is checked and sets a data attribute on the grid.
       */}
+      {/*
+        FIRST-RUN ONBOARDING. There was none: an agent signed in, landed here,
+        and nothing ever told them their name and phone were what every
+        listing they made would carry — or that the page's only button needs
+        that phone to go anywhere.
+
+        Shown only while the profile is genuinely untouched (isProfileEmpty),
+        not while it is merely incomplete: nagging somebody who has already
+        been to the page is how a banner gets ignored.
+      */}
+      <div class="onboard" id="onboard" hidden>
+        <div>
+          <b>{t('dash.onboardTitle')}</b>
+          <p>{t('dash.onboardBody')}</p>
+        </div>
+        <a class="cta" href="/me/">{t('dash.onboardCta')}</a>
+      </div>
+
       <div class="filters" id="filters" hidden>
         <input type="radio" name="filter" id="f-all" value="all" checked />
         <label for="f-all">{t('dash.filterAll')}</label>
@@ -505,6 +586,9 @@ import '../styles/tokens.css';
         <input type="radio" name="filter" id="f-sold" value="sold" />
         <label for="f-sold">{t('dash.filterSold')}</label>
 
+        <input type="radio" name="filter" id="f-archived" value="archived" />
+        <label for="f-archived">{t('dash.filterArchived')}</label>
+
         <span class="count" id="count"></span>
       </div>
 
@@ -517,7 +601,7 @@ import '../styles/tokens.css';
 
       <div class="state" id="empty" hidden>
         <b>{t('dash.emptyTitle')}</b>
-        {t('dash.emptyBody')} <a href="/new/">{t('dash.new')}</a>
+        {t('dash.emptyBody')} <a href="/new/?fresh=1">{t('dash.new')}</a>
       </div>
 
       <p class="state" id="none" hidden>{t('dash.emptyFiltered')}</p>
@@ -527,20 +611,42 @@ import '../styles/tokens.css';
       <ul class="grid" id="grid" hidden></ul>
     </main>
 
+    <footer class="dash-foot">
+      <div class="shell">
+        <a href="/about/">{t('legal.about')}</a>
+        {' · '}
+        <a href="/contact/">{t('legal.contact')}</a>
+        {' · '}
+        <a href="/legal/accessibility/">{t('legal.accessibility')}</a>
+        {' · '}
+        <a href="/legal/terms/">{t('legal.terms')}</a>
+        {' · '}
+        <a href="/legal/privacy/">{t('legal.privacy')}</a>
+      </div>
+    </footer>
+
     <p class="say" id="say" role="status" aria-live="polite" hidden></p>
 
     <script>
+      import { isProfileEmpty } from '@/features/agents/profile';
+
       import { t } from '../lib/i18n';
+      import { loadProfile } from '../lib/profile';
       import { supabase, supabaseConfigured } from '../lib/supabase';
+      import { revealIfSiteAdmin } from '../lib/site-admin';
 
       type Row = {
+        id?: string;
         slug: string;
         title: string | null;
         price: number | null;
         status: string;
         category: string;
+        published_at: string | null;
         media: { cover?: { url?: string; alt?: string } } | null;
         location: { city?: string; street?: string } | null;
+        views?: number;
+        waTaps?: number;
       };
 
       const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -563,6 +669,19 @@ import '../styles/tokens.css';
         currency: 'ILS',
         maximumFractionDigits: 0,
       });
+
+      // Four weeks. A constant here, not a config system: this is the broker
+      // duty to update or remove an unavailable listing (OPPORTUNITIES.md
+      // §1b), and the copy asks whether it is still available rather than
+      // asserting that it is not.
+      const STALE_AFTER_MS = 28 * 24 * 60 * 60 * 1000;
+
+      const isStalePublished = (row: Row, now: number): boolean => {
+        if (row.status !== 'published' || !row.published_at) return false;
+        const published = Date.parse(row.published_at);
+        if (!Number.isFinite(published)) return false;
+        return now - published >= STALE_AFTER_MS;
+      };
 
       let sayTimer = 0;
       const tell = (text: string, tone: 'good' | 'bad' = 'good') => {
@@ -630,13 +749,49 @@ import '../styles/tokens.css';
         paint();
       };
 
+      const deleteListing = async (slug: string, button: HTMLButtonElement) => {
+        if (!window.confirm(t('dash.confirmDelete'))) return;
+
+        button.disabled = true;
+
+        const { error } = await supabase().from('listings').delete().eq('slug', slug);
+
+        button.disabled = false;
+
+        if (error) return tell(t('dash.deletedFailed'), 'bad');
+
+        rows = rows.filter((candidate) => candidate.slug !== slug);
+        tell(t('dash.deletedDone'));
+        paint();
+      };
+
+      const archiveListing = async (slug: string, button: HTMLButtonElement) => {
+        if (!window.confirm(t('dash.confirmArchive'))) return;
+
+        button.disabled = true;
+
+        const { error } = await supabase()
+          .from('listings')
+          .update({ status: 'archived' })
+          .eq('slug', slug);
+
+        button.disabled = false;
+
+        if (error) return tell(t('dash.archivedFailed'), 'bad');
+
+        const row = rows.find((candidate) => candidate.slug === slug);
+        if (row) row.status = 'archived';
+        tell(t('dash.archivedDone'));
+        paint();
+      };
+
       const card = (row: Row) => {
         const item = document.createElement('li');
         item.className = 'card';
         item.dataset.status = row.status;
 
         const href = publicUrl(row.slug);
-        const sendable = row.status !== 'draft';
+          const sendable = row.status === 'published';
 
         // --- Cover -------------------------------------------------------
         const shot = document.createElement(sendable ? 'a' : 'div');
@@ -652,6 +807,7 @@ import '../styles/tokens.css';
           image.alt = row.media?.cover?.alt ?? '';
           image.loading = 'lazy';
           image.decoding = 'async';
+          image.style.viewTransitionName = `cover-${row.slug}`;
           shot.append(image);
         } else {
           const none = document.createElement('div');
@@ -683,6 +839,28 @@ import '../styles/tokens.css';
 
         body.append(title, price);
 
+        if (row.status === 'published' || row.status === 'sold') {
+          const stats = document.createElement('div');
+          stats.className = 'where';
+          const views = document.createElement('bdi');
+          views.textContent = String(row.views ?? 0);
+          const wa = document.createElement('bdi');
+          wa.textContent = String(row.waTaps ?? 0);
+          stats.append(
+            views,
+            document.createTextNode(` ${t('dash.views')} · `),
+            wa,
+            document.createTextNode(` ${t('dash.waTaps')}`),
+          );
+          if (row.published_at) {
+            const days = Math.max(0, Math.floor((Date.now() - Date.parse(row.published_at)) / 86400000));
+            const daysBdi = document.createElement('bdi');
+            daysBdi.textContent = String(days);
+            stats.append(document.createTextNode(' · '), daysBdi, document.createTextNode(` ${t('dash.daysLive')}`));
+          }
+          body.append(stats);
+        }
+
         const place = [row.location?.street, row.location?.city].filter(Boolean).join(', ');
         if (place) {
           const where = document.createElement('div');
@@ -693,10 +871,20 @@ import '../styles/tokens.css';
 
         item.append(shot, body);
 
-        if (!sendable) {
+        if (row.status === 'draft') {
           const hint = document.createElement('p');
           hint.className = 'hint';
           hint.textContent = t('dash.draftHint');
+          item.append(hint);
+        } else if (row.status === 'archived') {
+          const hint = document.createElement('p');
+          hint.className = 'hint';
+          hint.textContent = t('dash.archivedHint');
+          item.append(hint);
+        } else if (isStalePublished(row, Date.now())) {
+          const hint = document.createElement('p');
+          hint.className = 'hint';
+          hint.textContent = t('dash.staleHint');
           item.append(hint);
         }
 
@@ -706,7 +894,10 @@ import '../styles/tokens.css';
 
         const edit = document.createElement('a');
         edit.className = 'act';
-        edit.href = '/new/';
+        // The listing this card is for, not a blank new one. This said
+        // '/new/' with no id at all, so "edit" started a fresh listing and
+        // the agent's work looked lost.
+        edit.href = `/new/?id=${encodeURIComponent(row.slug)}`;
         edit.textContent = t('dash.edit');
         acts.append(edit);
 
@@ -741,6 +932,22 @@ import '../styles/tokens.css';
           }
         }
 
+        if (row.status !== 'archived') {
+          const archive = document.createElement('button');
+          archive.type = 'button';
+          archive.className = 'act';
+          archive.textContent = t('dash.archive');
+          archive.addEventListener('click', () => void archiveListing(row.slug, archive));
+          acts.append(archive);
+        }
+
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'act';
+        remove.textContent = t('dash.delete');
+        remove.addEventListener('click', () => void deleteListing(row.slug, remove));
+        acts.append(remove);
+
         item.append(acts);
         return item;
       };
@@ -751,7 +958,10 @@ import '../styles/tokens.css';
           (document.querySelector('input[name="filter"]:checked') as HTMLInputElement | null)
             ?.value ?? 'all';
 
-        const shown = chosen === 'all' ? rows : rows.filter((row) => row.status === chosen);
+        const shown =
+          chosen === 'all'
+            ? rows.filter((row) => row.status !== 'archived')
+            : rows.filter((row) => row.status === chosen);
 
         count.textContent = `${shown.length} ${t('dash.countSuffix')}`;
 
@@ -773,6 +983,8 @@ import '../styles/tokens.css';
         const { data: session } = await client.auth.getSession();
         if (!session.session) return show('anon');
 
+        void revealIfSiteAdmin(document.getElementById('nav-admin'));
+
         /*
          * No `.eq('owner_id', …)`, on purpose.
          *
@@ -782,12 +994,47 @@ import '../styles/tokens.css';
          */
         const { data, error } = await client
           .from('listings')
-          .select('slug, title, price, status, category, media, location')
+          .select('id, slug, title, price, status, category, media, location, published_at')
           .order('created_at', { ascending: false });
 
         if (error) return show('failed');
 
         rows = (data ?? []) as Row[];
+
+        const counts = await client.from('listing_event_counts').select('listing_id, views, wa_taps');
+        if (!counts.error && counts.data) {
+          const byId = new Map(
+            (counts.data as { listing_id: string; views: number; wa_taps: number }[]).map((row) => [
+              row.listing_id,
+              row,
+            ]),
+          );
+          rows = rows.map((row) => {
+            const tally = row.id ? byId.get(row.id) : undefined;
+            return {
+              ...row,
+              views: Number(tally?.views ?? 0),
+              waTaps: Number(tally?.wa_taps ?? 0),
+            };
+          });
+        }
+
+        /*
+         * The first-run prompt, decided by the profile rather than by the
+         * listing count. An agent with nine listings and no phone number
+         * still needs it; one who filled the page in on day one does not,
+         * however few listings they have.
+         *
+         * Failure is silent: a banner is a convenience and must never be the
+         * reason the dashboard does not appear.
+         */
+        void loadProfile()
+          .then((result) => {
+            if ('profile' in result && isProfileEmpty(result.profile)) {
+              $('onboard').hidden = false;
+            }
+          })
+          .catch(() => undefined);
 
         if (rows.length === 0) return show('empty');
 

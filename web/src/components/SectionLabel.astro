@@ -1,0 +1,17 @@
+---
+interface Props {
+  /** Hebrew noun, without parentheses — this component wraps it. */
+  text: string;
+}
+
+const { text } = Astro.props;
+---
+{/*
+  The Hebrew replacement for the Latin eyebrow.
+
+  Tracked uppercase labels need case, which Hebrew does not have. Parentheses
+  translate: (הדירה) · (מסביב) · (גלריה) · (המתווך). Assistant 600, --t-label,
+  --muted. DESIGN.md used to ban eyebrows; the redesign plan §4.4 is the
+  exception, and Hallmark must not delete this (REDESIGN-AUDIT C3).
+*/}
+<p class="section-label">({text})</p>

@@ -37,6 +37,10 @@
       "@/*": ["../src/*"]
     }
   },
-  "include": ["src/**/*", "../src/types/listing.ts"],
+  "include": [
+    "src/**/*",
+    "../src/types/listing.ts",
+    "../src/features/listings/neighborhood-note.ts"
+  ],
   "exclude": ["dist", "test-build", "node_modules"]
 }

@@ -2,7 +2,6 @@ import type { Fact, ListingAudience, TemplateId } from '../../types/listing.js';
 // ListingCategory comes from the schemas module, not from types/listing.js —
 // that file imports the name for its own use and does not re-export it.
 import type { ListingCategory } from './schemas/index.js';
-import { isUnedited } from './description.js';
 
 /**
  * The editor's state machine.
@@ -13,13 +12,15 @@ import { isUnedited } from './description.js';
  * check them is to click through a form on a phone.
  *
  * Flow (E1):
- *   category → photos → (vehicle: plate | property: consent) → facts
- *   → description → template → preview → publish
+ *   category → details → photos → (property: rooms + consent | vehicle: plate)
+ *   → facts → description → template → preview → publish
  */
 
 export const STEPS = [
   'category',
+  'details',
   'photos',
+  'rooms',
   'plate',
   'consent',
   'facts',
@@ -53,14 +54,52 @@ export const MIN_IMAGES = 1;
  * arrives, and `unknown` exists so that "we could not reach the provider" is
  * representable rather than collapsing into a boolean that has to guess.
  *
- * FAIL CLOSED: only 'paid' unblocks publishing. 'unknown' does not, and a
- * network failure must produce 'unknown' rather than 'paid'.
+ * FAIL CLOSED: 'paid' and 'free' may publish. 'unknown' does not, and a
+ * network failure must produce 'unknown' rather than 'paid' or 'free'.
  * ======================================================================
  */
-export type Entitlement = 'paid' | 'unpaid' | 'unknown';
+export type Entitlement = 'paid' | 'free' | 'unpaid' | 'unknown';
 
 export interface EditorState {
   category?: ListingCategory;
+
+  /**
+   * WHAT THE LISTING IS, WHAT IT COSTS, AND WHERE IT IS.
+   *
+   * None of these existed until 14 September 2026, and their absence was not
+   * a small gap: `listings` has NOT NULL `title` and `price` columns that
+   * `createDraft` fills with '' and 0, and nothing ever updated them. Every
+   * draft an agent made sat in the database titled nothing, priced nothing,
+   * and the dashboard card that showed `—` and `₪0` was reporting the truth.
+   *
+   * They are the first step now, before photographs, because the title and
+   * (for a property) the city are what the row cannot be published without.
+   * Price is optional: 0 means unanswered, and the page omits the number
+   * rather than printing ₪0.
+   */
+  title: string;
+  /** Shekels. 0 means unanswered — the column is NOT NULL and has no other way to say so. */
+  price: number;
+  /**
+   * The accent this listing will publish with.
+   *
+   * Defaults to the agent's /me choice. Choosing another colour here stamps
+   * this listing only — already-published pages keep the colour they shipped.
+   */
+  accent?: string;
+  /** Hebrew city. Required for a property, absent for a vehicle (§7). */
+  city?: string;
+  /** Hebrew street. Optional even for a property — the seller may withhold it. */
+  street?: string;
+  /** Free text beside the price, e.g. פינוי גמיש. */
+  priceNote?: string;
+
+  /**
+   * Whether search engines may index the published page. Defaults false.
+   * The address of someone's home is not ours to put in Google.
+   */
+  indexable: boolean;
+
   photoCount: number;
   facts: readonly Fact[];
   description: string;
@@ -111,6 +150,19 @@ export interface EditorState {
   ownerConsentDeclaredAt?: string;
 
   /**
+   * Optional name of the owner named in that declaration. Not a blocker —
+   * a required field they cannot answer is a form they abandon (PRD §2).
+   * Not rendered on the public page; it is a record, not a badge.
+   */
+  ownerConsentName?: string;
+
+  /**
+   * Seller declaration that the listing is not yet on commercial portals.
+   * Defaults false. Never inferred (DESIGN-BRIEF §5).
+   */
+  prePortal: boolean;
+
+  /**
    * Free-text items a buyer would want to know before viewing — a scratch,
    * a repair that is coming, a legal or structural issue. BOTH categories,
    * not vehicle-only: `Disclosures.astro` already renders any non-empty list
@@ -128,6 +180,9 @@ export interface EditorState {
    */
   disclosures?: string[];
 
+  /** Optional https URL for a 3D tour. Poster only; never embedded. */
+  tourUrl?: string;
+
   entitlement: Entitlement;
 }
 
@@ -141,7 +196,8 @@ export function stepsFor(category: ListingCategory | undefined): Step[] {
   return STEPS.filter(
     (step) =>
       (step !== 'plate' || category === 'vehicle') &&
-      (step !== 'consent' || category === 'property'),
+      (step !== 'consent' || category === 'property') &&
+      (step !== 'rooms' || category === 'property'),
   );
 }
 
@@ -155,11 +211,12 @@ export function stepsFor(category: ListingCategory | undefined): Step[] {
  */
 export const BLOCKER_CODES = [
   'categoryMissing',
+  'titleMissing',
+  'cityMissing',
   'photosTooFew',
   'photosTooMany',
   'factMissing',
   'descriptionEmpty',
-  'descriptionUnedited',
   'templateMissing',
   'sellerMissing',
   'consentMissing',
@@ -202,6 +259,20 @@ export function blockers(state: EditorState): Blocker[] {
     found.push({ step: 'category', code: 'categoryMissing' });
   }
 
+  if (state.title.trim() === '') {
+    found.push({ step: 'details', code: 'titleMissing' });
+  }
+
+  // Price is optional. 0 is unanswered, not free, and the page omits it.
+  // NaN from an empty number input is treated the same as 0.
+
+  // A property without a city cannot be found; a vehicle deliberately carries
+  // no location at all, because pinning a car for sale to an address is the
+  // theft risk DESIGN-CONTRACT §5.4 refuses.
+  if (state.category === 'property' && (state.city ?? '').trim() === '') {
+    found.push({ step: 'details', code: 'cityMissing' });
+  }
+
   if (state.photoCount < MIN_IMAGES) {
     found.push({ step: 'photos', code: 'photosTooFew' });
   }
@@ -220,14 +291,6 @@ export function blockers(state: EditorState): Blocker[] {
 
   if (state.description.trim() === '') {
     found.push({ step: 'description', code: 'descriptionEmpty' });
-  } else if (
-    state.generatedDescription &&
-    isUnedited(state.generatedDescription, state.description)
-  ) {
-    // E6. Not because the model writes badly — because the seller is the one
-    // making a representation about their own property, and a description
-    // nobody read is a claim nobody stands behind.
-    found.push({ step: 'description', code: 'descriptionUnedited' });
   }
 
   if (!state.template) {
@@ -251,15 +314,13 @@ export function blockers(state: EditorState): Blocker[] {
   }
 
   // ========================== HUMAN REVIEW ==========================
-  // The entitlement read. Anything that is not 'paid' blocks publishing,
-  // including 'unknown' — a provider we could not reach is not a licence
-  // to give the product away (CLAUDE.md §8).
+  // The entitlement read. 'paid' (grant) and 'free' (first listing, mark
+  // on) may publish. 'unknown' never does — a provider we could not reach
+  // is not a licence to give a second listing away (CLAUDE.md §8).
   //
-  // The two cases get DIFFERENT codes because they are different
-  // situations and the seller can act on only one of them: "pay to
-  // publish" is a button, "we could not check" is a wait.
+  // unpaid and unknown get DIFFERENT codes: pay vs wait.
   // ==================================================================
-  if (state.entitlement !== 'paid') {
+  if (state.entitlement !== 'paid' && state.entitlement !== 'free') {
     found.push({
       step: 'publish',
       code: state.entitlement === 'unpaid' ? 'paymentRequired' : 'paymentUnverified',
@@ -286,8 +347,9 @@ export function canAdvance(step: Step, state: EditorState): boolean {
  *
  * ============================ HUMAN REVIEW ============================
  * The single place access is granted. Every blocker must be clear, which
- * includes the entitlement one — so this returns false whenever payment is
- * unconfirmed, and there is no branch that grants on error.
+ * includes the entitlement one — so this returns false whenever the
+ * read is unpaid or unknown, and there is no branch that grants on error.
+ * 'paid' and 'free' still have to clear every other blocker.
  * ======================================================================
  */
 export function canPublish(state: EditorState): boolean {

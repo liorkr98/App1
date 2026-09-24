@@ -1,0 +1,36 @@
+---
+import type { Image } from '@/types/listing';
+import { GALLERY_WIDTHS, largest } from '../lib/images';
+
+interface Props {
+  images: Image[];
+  /** Hash of the strip when rooms were labelled. Otherwise the gallery. */
+  href?: string;
+}
+
+const { images, href = '#listing-gallery' } = Astro.props;
+const shown = images.slice(0, 3);
+const extra = Math.max(0, images.length - shown.length);
+---
+{shown.length > 1 && (
+  <div class="hero-thumbs">
+    {shown.map((image, index) => {
+      const last = index === shown.length - 1 && extra > 0;
+      return (
+        <a href={last ? '#listing-gallery' : href} class:list={['hero-thumb', { 'is-more': last }]}>
+          <img
+            src={largest(image, GALLERY_WIDTHS)}
+            alt=""
+            width="120"
+            height="90"
+            loading="lazy"
+            decoding="async"
+          />
+          {last && (
+            <span class="hero-thumb-more"><bdi>+{extra}</bdi></span>
+          )}
+        </a>
+      );
+    })}
+  </div>
+)}

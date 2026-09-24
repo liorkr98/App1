@@ -48,6 +48,24 @@ export function blankFacts(category: ListingCategory): Fact[] {
   }));
 }
 
+/**
+ * Brings a stored fact list up to the current schema.
+ *
+ * A draft written before has_tenants existed still has to offer that
+ * question, and dropping unknown keys would lose an answer if a field was
+ * renamed. Missing keys are filled blank; extra keys are kept at the end
+ * so nothing the seller typed disappears.
+ */
+export function reconcileFacts(category: ListingCategory, facts: readonly Fact[]): Fact[] {
+  const byKey = new Map(facts.map((fact) => [fact.key, fact]));
+  const merged = blankFacts(category).map((blank) => byKey.get(blank.key) ?? blank);
+  const known = new Set(merged.map((fact) => fact.key));
+  for (const fact of facts) {
+    if (!known.has(fact.key)) merged.push(fact);
+  }
+  return merged;
+}
+
 /** Records an answer. */
 export function answer(facts: readonly Fact[], key: string, value: FactValue): Fact[] {
   return facts.map((fact) =>

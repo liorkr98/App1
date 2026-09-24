@@ -18,6 +18,12 @@ describe('the message an agent pastes', () => {
     assert.equal(first, 'דירת 4 חדרים, משופצת מהיסוד · ₪1,850,000');
   });
 
+  it('omits the price when nobody set one', () => {
+    const first = shareMessage({ ...base, price: '' }).split('\n')[0];
+    assert.equal(first, 'דירת 4 חדרים, משופצת מהיסוד');
+    assert.ok(!first?.includes('₪'));
+  });
+
   it('flattens the title, because a two-line title reads as two messages', () => {
     assert.ok(!shareMessage(base).split('\n')[0]?.includes('\n'));
     assert.ok(shareMessage(base).includes('דירת 4 חדרים, משופצת מהיסוד'));
@@ -65,6 +71,14 @@ describe('the message an agent pastes', () => {
       const message = shareMessage(input);
       assert.equal(message, message.trimEnd());
     }
+  });
+
+  it('puts the pre-portal line above the URL, when the seller declared it', () => {
+    const message = shareMessage({ ...base, prePortalLine: 'עדיין לא בלוחות' });
+    const lines = message.split('\n');
+    assert.equal(lines[lines.length - 1], base.url);
+    assert.ok(message.includes('עדיין לא בלוחות'));
+    assert.ok(message.indexOf('עדיין לא בלוחות') < message.indexOf(base.url));
   });
 });
 

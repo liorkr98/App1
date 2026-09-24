@@ -7,6 +7,11 @@ import { answer, blankFacts } from './fact-entry.js';
 
 const state = (): EditorState => ({
   category: 'property',
+  title: 'דירת 4 חדרים, משופצת מהיסוד',
+  price: 1850000,
+  city: 'חולון',
+  indexable: false,
+  prePortal: false,
   photoCount: 6,
   facts: answer(blankFacts('property'), 'rooms', 4),
   description: 'הדירה משופצת ופונה לדרום.',
@@ -25,6 +30,25 @@ describe('a draft survives a refresh', () => {
     assert.equal(restored.description, 'הדירה משופצת ופונה לדרום.');
     assert.equal(restored.template, 'editorial');
     assert.equal(restored.facts.find((fact) => fact.key === 'rooms')?.value, 4);
+  });
+
+  it('carries the listing row id so photographs can be reloaded', () => {
+    const stored = JSON.stringify(
+      toDraft(state(), {
+        listingId: '00000000-0000-4000-8000-000000000001',
+        slug: 'A7K2M',
+      }),
+    );
+    const restored = fromDraft(stored);
+    assert.ok(restored);
+    assert.equal(restored.listingId, '00000000-0000-4000-8000-000000000001');
+    assert.equal(restored.slug, 'A7K2M');
+  });
+
+  it('carries the indexable flag back', () => {
+    const restored = roundTrip({ ...state(), indexable: true });
+    assert.ok(restored);
+    assert.equal(restored.indexable, true);
   });
 
   it('keeps unanswered and absent apart across the round trip', () => {
@@ -69,6 +93,31 @@ describe('a draft survives a refresh', () => {
 
     assert.ok(restored);
     assert.equal('ownerConsentDeclaredAt' in restored, false);
+  });
+
+  it('carries the optional owner name back', () => {
+    const restored = roundTrip({ ...state(), ownerConsentName: 'דנה כהן' });
+
+    assert.ok(restored);
+    assert.equal(restored.ownerConsentName, 'דנה כהן');
+  });
+
+  it('carries the pre-portal flag back, and defaults it false', () => {
+    const restoredOn = roundTrip({ ...state(), prePortal: true });
+    assert.ok(restoredOn);
+    assert.equal(restoredOn.prePortal, true);
+
+    const restoredOff = roundTrip(state());
+    assert.ok(restoredOff);
+    assert.equal(restoredOff.prePortal, false);
+  });
+
+  it('treats a draft written before prePortal existed as not pre-portal', () => {
+    const stored = toDraft(state());
+    const { prePortal: _dropped, ...without } = stored;
+    const restored = fromDraft(JSON.stringify(without));
+    assert.ok(restored);
+    assert.equal(restored.prePortal, false);
   });
 
   it('carries disclosures back, in order', () => {
@@ -156,6 +205,11 @@ describe('anything unrecognised starts clean', () => {
     assert.equal(fromDraft(bad), null);
   });
 
+  it('rejects an owner name that is not a string', () => {
+    const bad = JSON.stringify({ ...toDraft(state()), ownerConsentName: 12345 });
+    assert.equal(fromDraft(bad), null);
+  });
+
   it('rejects disclosures that are not a list of strings', () => {
     for (const bad of ['a single string', 42, { 0: 'not an array' }, ['fine', 5]]) {
       const stored = JSON.stringify({ ...toDraft(state()), disclosures: bad });
@@ -199,7 +253,16 @@ describe('anything unrecognised starts clean', () => {
     // The common case, not an edge one: someone opens the editor, taps a
     // category and puts the phone down.
     const empty = JSON.stringify(
-      toDraft({ photoCount: 0, facts: [], description: '', entitlement: 'unknown' }),
+      toDraft({
+        title: '',
+        price: 0,
+        indexable: false,
+        prePortal: false,
+        photoCount: 0,
+        facts: [],
+        description: '',
+        entitlement: 'unknown',
+      }),
     );
 
     const restored = fromDraft(empty);

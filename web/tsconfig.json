@@ -27,6 +27,13 @@
     "../src/features/listings/editor.ts",
     "../src/features/listings/description.ts",
     "../src/features/listings/photo-order.ts",
+    "../src/features/listings/highlights.ts",
+    "../src/features/listings/monthly-cost.ts",
+    "../src/features/listings/photo-alt.ts",
+    "../src/features/listings/enrichment-view.ts",
+    "../src/features/listings/phone.ts",
+    "../src/features/listings/share-message.ts",
+    "../src/features/listings/control-surface.ts",
     "../src/features/listings/schemas/**/*"
   ],
   "exclude": ["dist", "node_modules"]

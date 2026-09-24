@@ -1,8 +1,9 @@
 import { orderForAudience } from '@/features/listings/audience-order';
+import { absenceIsStated } from '@/features/listings/fact-absence';
 import type { Fact, ListingAudience } from '@/types/listing';
-import { factDefinition, schemaFor } from '@/features/listings/schemas';
-import type { ListingCategory } from '@/features/listings/schemas';
+import { factDefinition, factShown, schemaFor, type ListingCategory } from '@/features/listings/schemas';
 
+import { pairedCellText } from '@/features/listings/monthly-cost';
 import { factValue, needsBdi } from './format';
 
 /**
@@ -28,12 +29,21 @@ export interface FactCell {
    */
   value: string;
 
-  /** Second value for a paired cell, e.g. floor 3 / 5. */
-  pairedValue?: string;
-  /** Wrap value (and pairedValue) in <bdi>. */
+  /**
+   * What the cell actually paints. For a paired floor this is `3 / 5` as one
+   * string, so a single `<bdi>` can isolate the whole run. Two sibling `<bdi>`s
+   * reorder to `5 / 3` in RTL (DESIGN-CONTRACT §7 case 2).
+   */
+  displayValue: string;
+  /** Wrap displayValue in <bdi>. */
   bdi: boolean;
-  /** Confirmed absent — renders at 35% opacity showing אין. */
+  /** Confirmed absent — renders in --absent, showing אין. */
   absent: boolean;
+  /**
+   * Numeric value to count up (M3). The formatted `displayValue` stays in the
+   * HTML. m² only — never the price, never rooms, never a floor ratio.
+   */
+  countFrom?: number;
 
   /**
    * True when a public register supplied this value, so the cell can carry
@@ -48,7 +58,7 @@ export interface FactCell {
 }
 
 /**
- * present:false  → a cell showing אין at 35% opacity. The seller said no.
+ * present:false  → a cell showing אין in --absent. The seller said no.
  * value:null     → NO cell at all. The seller never answered.
  *
  * Collapsing these would turn "we do not know" into "no", which is the
@@ -73,7 +83,7 @@ function unitLabel(label: string, unit: string | undefined): string {
 
 export function toCells(
   category: ListingCategory,
-  facts: Fact[],
+  facts: readonly Fact[],
   audience: ListingAudience = 'resident',
 ): FactCell[] {
   const byKey = new Map(facts.map((fact) => [fact.key, fact]));
@@ -92,12 +102,17 @@ export function toCells(
 
     const definition = factDefinition(category, fact.key);
     if (definition?.showInGrid === false) continue;
+    if (!factShown(definition, audience, facts)) continue;
 
     if (fact.present === false) {
+      // Dates, numbers, text and enums are omitted when empty. Only a
+      // boolean may be negated — "תאריך כניסה: אין" is a false claim.
+      if (!absenceIsStated(definition?.type ?? fact.type)) continue;
       cells.push({
         key: fact.key,
         label: unitLabel(definition?.gridLabel ?? fact.label, fact.unit),
         value: 'אין',
+        displayValue: 'אין',
         bdi: false,
         absent: true,
         // A register does not record the absence of a balcony. Absence is
@@ -124,15 +139,17 @@ export function toCells(
     // renders as an ordinary cell rather than as an unbacked badge.
     const cited = fact.source === 'verified' && Boolean(fact.sourceName && fact.sourceDate);
 
+    const value = factValue(fact.value, definition?.grouped);
     cells.push({
       key: fact.key,
       label: unitLabel(definition?.gridLabel ?? fact.label, fact.unit),
-      value: factValue(fact.value, definition?.grouped),
-      ...(partnerValue === undefined ? {} : { pairedValue: partnerValue }),
-      bdi: needsBdi(fact.value),
+      value,
+      displayValue: pairedCellText(value, partnerValue),
+      bdi: needsBdi(fact.value) || partnerValue !== undefined,
       absent: false,
       verified: cited,
       ...(cited ? { sourceName: fact.sourceName, sourceDate: fact.sourceDate } : {}),
+      ...(typeof fact.value === 'number' && fact.key === 'area_sqm' ? { countFrom: fact.value } : {}),
     });
   }
 

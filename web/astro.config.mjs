@@ -1,13 +1,24 @@
 import react from '@astrojs/react';
+import cloudflare from '@astrojs/cloudflare';
 import { defineConfig } from 'astro/config';
 
 /**
- * Static output only.
+ * Mostly static, with on-demand listing routes.
  *
- * These pages load over Israeli cellular and must be Google-indexable, so
- * every page is pre-rendered at build time and served from Cloudflare Pages
- * as a file. There is no runtime rendering and no server adapter — adding one
- * would put a cold start in front of the WhatsApp preview scraper.
+ * Homepage, editor, legal and the CI fixtures prerender. `/a/[slug]`,
+ * `/a/[slug]/share`, the PDF stub and the sitemap run at request time so a
+ * real agent's slug exists without a rebuild.
+ *
+ * `@astrojs/cloudflare` is the adapter this host already deploys with
+ * (Workers Builds + wrangler.jsonc). It is not a stack substitution: listing
+ * pages stay Astro HTML, and prerendered routes are still files. Size is the
+ * official adapter; it tracks Astro's own release. Without it, `prerender =
+ * false` has nowhere to run.
+ *
+ * imageService is passthrough — we do not use Astro's <Image>, and the
+ * default cloudflare-binding would provision an Images binding we do not
+ * want. session is off: no KV namespace for a product that does not use
+ * Astro sessions.
  */
 export default defineConfig({
   // Absolute OG image URLs are built from this. WhatsApp rejects relative
@@ -37,8 +48,42 @@ export default defineConfig({
     process.env.CF_PAGES_URL ??
     'https://besivov.liorkr98.workers.dev',
 
+  /*
+   * STATIC EVERYWHERE EXCEPT THE LISTING PAGE.
+   *
+   * This said `output: 'static'` with no adapter, and the consequence was not
+   * a performance choice — it was that A REAL LISTING COULD NEVER HAVE A
+   * PAGE. getStaticPaths() returns the two demo slugs from listings.ts, so a
+   * link an agent actually shared would 404. The whole product is that link.
+   *
+   * Only /a/[slug] opts out of prerendering (`export const prerender = false`
+   * in that file). The homepage, the dashboard, /new and /me stay static
+   * files on the CDN exactly as before.
+   *
+   * CLAUDE.md §2 said "no runtime rendering", and the reason given was that an
+   * adapter would put a cold start in front of the WhatsApp preview scraper.
+   * That rule was written when listings were build-time sample data. It is
+   * updated there rather than quietly broken here — and the alternative,
+   * rebuilding the site on every publish, puts a one-to-two minute wait
+   * between an agent pressing publish and their link existing, which is worse
+   * for the same scraper and much worse for the agent.
+   */
   output: 'static',
   build: { format: 'directory' },
+  session: false,
+  redirects: {
+    '/accessibility': '/legal/accessibility/',
+  },
+
+  adapter: cloudflare({
+    imageService: 'passthrough',
+    // This file, not the repo-root wrangler.jsonc. The root file's `main` is
+    // the built Worker (web/dist/server/entry.mjs), which does not exist
+    // until after `astro build`. The Vite plugin resolves `main` when the
+    // config loads, so pointing the adapter at that path fails `astro check`
+    // on a clean checkout.
+    configPath: './wrangler.jsonc',
+  }),
 
   // React exists for ONE page. /new is a multi-step form with drag-ordered
   // photos and live validation, which is a genuine application; the listing
@@ -57,6 +102,22 @@ export default defineConfig({
   // the typechecker; this guides the bundler. If they disagree, the build and
   // the typecheck disagree about what the code means.
   vite: {
+    /*
+     * Supabase is not pre-bundled for the SSR runtime.
+     *
+     * `astro dev` runs the listing route inside workerd now, and Vite's SSR
+     * dependency optimizer produced a chunk it then could not find:
+     *
+     *   The file does not exist at ".../deps_ssr/base-Cr1Nqci9.js?v=..."
+     *   which is in the optimize deps directory.
+     *
+     * The dev server exited 1 on every boot. The build was unaffected, which
+     * is exactly the kind of difference that gets discovered by somebody else
+     * later. Excluding the package is the fix its own error message suggests.
+     */
+    optimizeDeps: {
+      exclude: ['@supabase/supabase-js', 'astro/assets/services/noop'],
+    },
     resolve: {
       alias: {
         '@': new URL('../src', import.meta.url).pathname,

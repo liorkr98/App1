@@ -1,4 +1,5 @@
 ---
+import BrandMark from '../components/BrandMark.astro';
 import { t } from '../lib/i18n';
 import '../styles/tokens.css';
 
@@ -24,13 +25,14 @@ import '../styles/tokens.css';
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#FBFAF7" />
-    <title>{t('auth.title')} · סיבוב</title>
+    <title>{t('auth.title')} · {t('common.brand')}</title>
     <meta name="robots" content="noindex,nofollow" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Assistant:wght@400;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Assistant:wght@400;600;700;800&display=swap"
       rel="stylesheet"
     />
 
@@ -61,11 +63,7 @@ import '../styles/tokens.css';
         padding: 2.5rem var(--gut);
       }
 
-      .mark {
-        font-family: 'Frank Ruhl Libre', serif;
-        font-weight: 700;
-        font-size: 1.35rem;
-        letter-spacing: -0.02em;
+      .brand-mark {
         margin-block-end: 2rem;
       }
 
@@ -109,8 +107,8 @@ import '../styles/tokens.css';
         margin-block-start: 0.9rem;
         padding: 0.95rem;
         font: inherit;
-        font-size: 1.06rem;
-        font-weight: 700;
+        font-size: 1.08rem;
+        font-weight: 800;
         color: var(--plaster);
         background: var(--olive);
         border: none;
@@ -171,8 +169,9 @@ import '../styles/tokens.css';
   </head>
 
   <body>
-    <main>
-      <p class="mark">סיבוב</p>
+    <a class="skip" href="#main">{t('a11y.skip')}</a>
+    <main id="main">
+      <BrandMark />
 
       <h1>{t('auth.title')}</h1>
       <p class="lead">{t('auth.lead')}</p>

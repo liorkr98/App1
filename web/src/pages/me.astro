@@ -1,5 +1,6 @@
 ---
 import { ACCENTS } from '@/features/agents/accents';
+import BrandMark from '../components/BrandMark.astro';
 import { t } from '../lib/i18n';
 import '../styles/tokens.css';
 
@@ -28,7 +29,7 @@ import '../styles/tokens.css';
  * into a text input has no idea what they are buying. The same agent watching
  * the strip above it fill in with their own name does. It is also the honest
  * way to show what happens when the agency is left blank — the bar falls back
- * to נבנה בסיבוב — rather than explaining that in a hint nobody reads.
+ * to נבנה בהיעד — rather than explaining that in a hint nobody reads.
  */
 ---
 
@@ -38,16 +39,17 @@ import '../styles/tokens.css';
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#FBFAF7" />
-    <title>{t('agent.title')} · סיבוב</title>
+    <title>{t('agent.title')} · {t('common.brand')}</title>
 
     {/* A private settings page. There is no version of it that belongs in a
         search result. */}
     <meta name="robots" content="noindex,nofollow" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Assistant:wght@400;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Assistant:wght@400;600;700;800&display=swap"
       rel="stylesheet"
     />
 
@@ -76,22 +78,42 @@ import '../styles/tokens.css';
         padding: 2.25rem var(--gut) 3rem;
       }
 
-      .mark {
-        font-family: 'Frank Ruhl Libre', serif;
-        font-weight: 700;
-        font-size: 1.35rem;
-        letter-spacing: -0.015em;
+      footer {
+        padding: 0 var(--gut) 2rem;
+        font-size: 0.85rem;
+        color: var(--muted);
+        text-align: center;
+      }
+
+      footer a {
+        display: inline-flex;
+        align-items: center;
+        min-block-size: 44px;
+        color: var(--muted);
+      }
+
+      .top .brand-mark {
+        color: var(--ink);
       }
 
       .top {
         display: flex;
-        align-items: baseline;
+        align-items: center;
         justify-content: space-between;
         gap: 1rem;
         margin-block-end: 2rem;
       }
 
-      .top a {
+      .top nav {
+        display: flex;
+        align-items: center;
+        gap: 1.15rem;
+      }
+
+      .top nav a {
+        display: inline-flex;
+        align-items: center;
+        min-block-size: 44px;
         font-size: var(--t-label);
         font-weight: 600;
         color: var(--muted);
@@ -145,6 +167,34 @@ import '../styles/tokens.css';
         border-radius: 50%;
         background: var(--olive-lift);
         flex: 0 0 auto;
+        overflow: hidden;
+      }
+
+      .agent-bar[data-logo='barWide'] .dot {
+        inline-size: 42px;
+        block-size: 42px;
+        border-radius: 8px;
+      }
+      .agent-bar[data-logo='footerOnly'] .dot,
+      .agent-bar[data-logo='watermark'] .dot {
+        display: none;
+      }
+      .preview-watermark {
+        display: none;
+        margin-block-start: 0.5rem;
+        inline-size: 4.5rem;
+        opacity: 0.35;
+      }
+      .preview[data-logo='watermark'] .preview-watermark {
+        display: block;
+      }
+
+      .agent-bar .dot img {
+        inline-size: 100%;
+        block-size: 100%;
+        object-fit: contain;
+        border-radius: 50%;
+        display: block;
       }
 
       .agent-bar strong {
@@ -298,8 +348,8 @@ import '../styles/tokens.css';
         margin-block-start: 1.75rem;
         padding: 0.95rem;
         font: inherit;
-        font-size: 1.06rem;
-        font-weight: 700;
+        font-size: 1.08rem;
+        font-weight: 800;
         color: var(--plaster);
         background: var(--olive);
         border: none;
@@ -322,6 +372,28 @@ import '../styles/tokens.css';
         background: var(--stone);
         color: var(--muted);
         cursor: default;
+      }
+
+      button.quiet {
+        inline-size: auto;
+        min-block-size: 44px;
+        margin-block-start: 0.5rem;
+        padding-block: 0.5rem;
+        padding-inline: 0.85rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--ink);
+        background: transparent;
+        border: 1px solid var(--stone);
+      }
+
+      button.quiet:hover:not(:disabled) {
+        background: var(--stone);
+      }
+
+      input[type='file'] {
+        padding-block: 0.45rem;
+        padding-inline: 0.45rem;
       }
 
       :focus-visible {
@@ -364,10 +436,14 @@ import '../styles/tokens.css';
   </head>
 
   <body>
-    <main>
+    <a class="skip" href="#main">{t('a11y.skip')}</a>
+    <main id="main">
       <div class="top">
-        <a class="mark" href="/">סיבוב</a>
-        <a href="/mine/">{t('auth.myListings')}</a>
+        <BrandMark />
+        <nav>
+          <a href="/mine/">{t('auth.myListings')}</a>
+          <a id="nav-admin" href="/admin/" hidden>{t('admin.link')}</a>
+        </nav>
       </div>
 
       <h1>{t('agent.title')}</h1>
@@ -391,11 +467,12 @@ import '../styles/tokens.css';
       <div id="panel">
         <div class="preview">
           <p class="preview-label">{t('agent.previewTitle')}</p>
-          <div class="agent-bar">
-            <span class="dot" aria-hidden="true"></span>
+          <div class="agent-bar" id="pv-bar">
+            <span class="dot" aria-hidden="true"><img id="pv-logo" hidden alt="" /></span>
             <strong id="pv-name" data-empty="true">{t('agent.name')}</strong>
             <span class="brand" id="pv-brand">{t('agent.previewFallback')}</span>
           </div>
+          <img class="preview-watermark" id="pv-mark" alt="" />
         </div>
 
         <form id="form" novalidate>
@@ -459,9 +536,51 @@ import '../styles/tokens.css';
               <p class="hint">{t('agent.agencyHint')}</p>
             </div>
 
+            <div class="field" id="f-logo">
+              <label for="logo">{t('agent.logo')}</label>
+              <input id="logo" name="logo" type="file" accept="image/jpeg,image/png,image/webp" />
+              <p class="hint">{t('agent.logoHint')}</p>
+              <button type="button" class="quiet" id="logo-remove" hidden>
+                {t('agent.logoRemove')}
+              </button>
+            </div>
+
+            <div class="field" id="f-placement">
+              <label>{t('agent.logoPlacement')}</label>
+              <div class="swatches">
+                {
+                  (
+                    [
+                      ['bar', 'logoBar'],
+                      ['barWide', 'logoBarWide'],
+                      ['footerOnly', 'logoFooterOnly'],
+                      ['watermark', 'logoWatermark'],
+                    ] as const
+                  ).map(([id, key], index) => (
+                    <Fragment>
+                      <input
+                        type="radio"
+                        name="logoPlacement"
+                        id={`place-${id}`}
+                        value={id}
+                        checked={index === 0}
+                      />
+                      <label for={`place-${id}`}>{t(`agent.${key}`)}</label>
+                    </Fragment>
+                  ))
+                }
+              </div>
+              <p class="hint">{t('agent.logoPlacementHint')}</p>
+            </div>
+
             <div class="field" id="f-role">
-              <label for="role">{t('agent.role')}</label>
-              <input id="role" name="role" type="text" />
+              <span class="label">{t('agent.role')}</span>
+              <div class="swatches">
+                <input type="radio" name="role" id="role-agent" value="מתווך" />
+                <label for="role-agent">{t('agent.roleAgent')}</label>
+                <input type="radio" name="role" id="role-owner" value="בעל הנכס" checked />
+                <label for="role-owner">{t('agent.roleOwner')}</label>
+              </div>
               <p class="hint">{t('agent.roleHint')}</p>
             </div>
 
@@ -479,11 +598,26 @@ import '../styles/tokens.css';
       </div>
     </main>
 
+    <footer>
+      <a href="/about/">{t('legal.about')}</a>
+      {' · '}
+      <a href="/contact/">{t('legal.contact')}</a>
+      {' · '}
+      <a href="/legal/terms/">{t('legal.terms')}</a>
+      {' · '}
+      <a href="/legal/privacy/">{t('legal.privacy')}</a>
+      {' · '}
+      <a href="/legal/accessibility/">{t('legal.accessibility')}</a>
+    </footer>
+
     <script>
       import { ACCENTS } from '@/features/agents/accents';
+      import { asLogoPlacement } from '@/features/agents/logo-placement';
       import { profileBlockers, type ProfileBlockerCode } from '@/features/agents/profile';
       import { t } from '../lib/i18n';
+      import { removeAgencyLogo, uploadAgencyLogo } from '../lib/agency-logo';
       import { loadProfile, saveProfile } from '../lib/profile';
+      import { revealIfSiteAdmin } from '../lib/site-admin';
       import { supabaseConfigured } from '../lib/supabase';
 
       const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -503,12 +637,24 @@ import '../styles/tokens.css';
       const name = $<HTMLInputElement>('name');
       const phone = $<HTMLInputElement>('phone');
       const agency = $<HTMLInputElement>('agency');
-      const role = $<HTMLInputElement>('role');
+      const chosenRole = () =>
+        (document.querySelector('input[name="role"]:checked') as HTMLInputElement | null)?.value ??
+        'בעל הנכס';
       const licence = $<HTMLInputElement>('licence');
+      const logo = $<HTMLInputElement>('logo');
+      const logoRemove = $<HTMLButtonElement>('logo-remove');
 
       const pvName = $('pv-name');
       const pvDot = document.querySelector('.agent-bar .dot') as HTMLElement | null;
+      const pvLogo = $<HTMLImageElement>('pv-logo');
       const pvBrand = $('pv-brand');
+      const pvBar = $('pv-bar');
+      const pvMark = $<HTMLImageElement>('pv-mark');
+      const preview = document.querySelector('.preview') as HTMLElement | null;
+
+      // Kept beside the form, not in an input: the file control's value is
+      // the local path, and the public URL is what the page actually stamps.
+      let logoUrl = '';
 
       const say = (text: string, tone: 'good' | 'bad' = 'good') => {
         said.textContent = text;
@@ -520,19 +666,27 @@ import '../styles/tokens.css';
         (document.querySelector('input[name="accent"]:checked') as HTMLInputElement | null)
           ?.value ?? 'olive';
 
+      const chosenPlacement = () =>
+        asLogoPlacement(
+          (document.querySelector('input[name="logoPlacement"]:checked') as HTMLInputElement | null)
+            ?.value,
+        );
+
       const read = () => ({
         displayName: name.value,
         phone: phone.value,
         agencyName: agency.value,
-        role: role.value,
+        role: chosenRole(),
         licenceNumber: licence.value,
         accent: chosenAccent(),
+        agencyLogoUrl: logoUrl || null,
+        logoPlacement: chosenPlacement(),
       });
 
       /**
        * The preview, and the fallback that makes the agency field's point.
        *
-       * With no agency the brand slot reads נבנה בסיבוב — which is what
+       * With no agency the brand slot reads נבנה בהיעד — which is what
        * BaseListing does, and is also the viral loop (CLAUDE.md §8). Showing
        * it here is the difference between "optional" and "here is what you
        * get instead".
@@ -551,6 +705,20 @@ import '../styles/tokens.css';
         // read as a colour at all.
         const accent = ACCENT_MAP.get(chosenAccent());
         if (accent && pvDot) pvDot.style.background = accent.lift;
+
+        if (logoUrl) {
+          pvLogo.src = logoUrl;
+          pvLogo.hidden = false;
+          pvMark.src = logoUrl;
+        } else {
+          pvLogo.removeAttribute('src');
+          pvLogo.hidden = true;
+          pvMark.removeAttribute('src');
+        }
+        const placement = chosenPlacement();
+        pvBar.dataset.logo = placement;
+        if (preview) preview.dataset.logo = placement;
+        logoRemove.hidden = logoUrl === '';
       };
 
       /**
@@ -582,11 +750,13 @@ import '../styles/tokens.css';
         return found.length === 0;
       };
 
-      for (const swatch of document.querySelectorAll('input[name="accent"]')) {
+      for (const swatch of document.querySelectorAll(
+        'input[name="accent"], input[name="logoPlacement"], input[name="role"]',
+      )) {
         swatch.addEventListener('change', paint);
       }
 
-      for (const input of [name, phone, agency, role, licence]) {
+      for (const input of [name, phone, agency, licence]) {
         input.addEventListener('input', () => {
           paint();
           validate();
@@ -596,6 +766,44 @@ import '../styles/tokens.css';
           validate();
         });
       }
+
+      logo.addEventListener('change', () => {
+        const file = logo.files?.[0];
+        logo.value = '';
+        if (!file) return;
+
+        void (async () => {
+          logo.disabled = true;
+          const result = await uploadAgencyLogo(file);
+          logo.disabled = false;
+
+          if ('url' in result) {
+            logoUrl = result.url;
+            paint();
+            say(t('agent.saved'));
+            return;
+          }
+
+          say('signedOut' in result ? t('agent.signedOut') : t('agent.logoFailed'), 'bad');
+        })();
+      });
+
+      logoRemove.addEventListener('click', () => {
+        void (async () => {
+          logoRemove.disabled = true;
+          const result = await removeAgencyLogo();
+          logoRemove.disabled = false;
+
+          if ('ok' in result) {
+            logoUrl = '';
+            paint();
+            say(t('agent.saved'));
+            return;
+          }
+
+          say('signedOut' in result ? t('agent.signedOut') : t('agent.logoFailed'), 'bad');
+        })();
+      });
 
       const start = async () => {
         if (!supabaseConfigured) {
@@ -613,6 +821,8 @@ import '../styles/tokens.css';
           return;
         }
 
+        void revealIfSiteAdmin(document.getElementById('nav-admin'));
+
         if ('error' in result) {
           // The form still opens. An agent who cannot read their saved
           // details can still type new ones, and a page that shows only an
@@ -626,8 +836,16 @@ import '../styles/tokens.css';
         name.value = profile.displayName ?? '';
         phone.value = profile.phone ?? '';
         agency.value = profile.agencyName ?? '';
-        role.value = profile.role ?? '';
+        const broker = /מתווך|מתווכת|סוכן|סוכנת/.test(profile.role ?? '');
+        const roleInput = document.getElementById(broker ? 'role-agent' : 'role-owner') as HTMLInputElement | null;
+        if (roleInput) roleInput.checked = true;
         licence.value = profile.licenceNumber ?? '';
+        logoUrl = profile.agencyLogoUrl?.trim() ?? '';
+
+        const savedPlace = document.querySelector(
+          `input[name="logoPlacement"][value="${CSS.escape(profile.logoPlacement ?? 'bar')}"]`,
+        ) as HTMLInputElement | null;
+        if (savedPlace) savedPlace.checked = true;
 
         const saved = document.querySelector(
           `input[name="accent"][value="${CSS.escape(profile.accent ?? 'olive')}"]`,

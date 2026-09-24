@@ -1,0 +1,42 @@
+---
+import type { Listing, TemplateId } from '@/types/listing';
+import { TEMPLATE_IDS } from '@/types/listing';
+import ListingPage from '../../components/ListingPage.astro';
+import {
+  fixtures,
+  listings,
+  matrixListings,
+  propertyListing,
+  withNamedRooms,
+} from '../../lib/listings';
+
+export function getStaticPaths() {
+  const applyTemplate = (listing: Listing, id: TemplateId): Listing => {
+    const next: Listing = { ...listing, template: id };
+    if (id === 'walkFirst' && listing.slug === propertyListing.slug) {
+      return withNamedRooms(next);
+    }
+    return next;
+  };
+
+  const demos = listings.map((listing) => ({ params: { slug: listing.slug }, props: { listing } }));
+  const templates = TEMPLATE_IDS.map((id) => ({
+    params: { slug: id },
+    props: { listing: applyTemplate(propertyListing, id) },
+  }));
+  const fixturePages = fixtures.map((listing) => ({
+    params: { slug: listing.slug },
+    props: { listing },
+  }));
+  const combos = matrixListings.flatMap((listing) =>
+    TEMPLATE_IDS.map((id) => ({
+      params: { slug: `${listing.slug}-${id}` },
+      props: { listing: applyTemplate(listing, id) },
+    })),
+  );
+  return [...demos, ...templates, ...fixturePages, ...combos];
+}
+
+const { listing } = Astro.props;
+---
+<ListingPage listing={listing} robots="noindex,nofollow" />

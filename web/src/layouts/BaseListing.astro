@@ -1,6 +1,10 @@
 ---
 import { accentFor } from '@/features/agents/accents';
+import { canonicalSellerRole } from '@/features/agents/profile';
+import { telHref } from '@/features/listings/phone';
 import type { Listing } from '@/types/listing';
+import { t } from '../lib/i18n';
+import { listingJsonLd } from '../lib/jsonld';
 import { ogDescription, ogImageUrl, ogTitle } from '../lib/og';
 import '../styles/tokens.css';
 
@@ -18,9 +22,14 @@ interface Props {
    * frame either crops it or fills the rest with asphalt.
    */
   heroHeight: string;
+  /** Override robots. `/template-check/` forces noindex. */
+  robots?: string;
+  /** True when the walk section will render. walkFirst then hides the hero. */
+  hasWalk?: boolean;
 }
 
-const { listing, ogFactKeys, heroHeight } = Astro.props;
+const { listing, ogFactKeys, heroHeight, robots: robotsOverride, hasWalk = false } = Astro.props;
+const sellerRole = listing.seller.role ? canonicalSellerRole(listing.seller.role) : '';
 
 /**
  * The agent's accent, resolved to two stops and set as inline custom
@@ -44,19 +53,36 @@ const description = ogDescription(listing, ogFactKeys);
 // real 1200x630 crop — see ogImageUrl.
 const ogImage = ogImageUrl(listing, Astro.site);
 
+const canonical = new URL(`/a/${listing.slug}/`, Astro.site).href;
+
 // noindex unless the seller opted in. A private seller usually does not want
 // their home address permanently searchable; an agent does. Not our call.
-const robots = listing.indexable ? 'index,follow' : 'noindex';
+const robots = robotsOverride ?? (listing.indexable === true ? 'index,follow' : 'noindex, nofollow');
+
+// Structured data only when Google is invited. A noindex page with JSON-LD
+// still puts the address in a crawl report.
+const jsonLd =
+  robots.startsWith('index') && listing.indexable
+    ? listingJsonLd(listing, canonical)
+    : undefined;
+
+const sold = listing.status === 'sold';
+const callHref = sold ? '' : telHref(listing.seller.phone);
+const waBarHref = `/a/${listing.slug}/wa`;
 
 /**
  * The agent bar, and what it says when there is no agent.
  *
- * CLAUDE.md §1 makes agents the primary audience and §8 makes נבנה בסיבוב the
+ * CLAUDE.md §1 makes agents the primary audience and §8 makes נבנה בהיעד the
  * viral loop. Both are served by the same strip: an agency name where one
  * exists, our own mark where it does not. A private seller's listing is the
  * one most likely to be forwarded to somebody who has never heard of us.
  */
 const agency = listing.seller.agencyName;
+const logoPlacement = listing.seller.logoPlacement ?? 'bar';
+const showBarLogo =
+  Boolean(listing.seller.agencyLogoUrl) &&
+  (logoPlacement === 'bar' || logoPlacement === 'barWide');
 ---
 
 <!DOCTYPE html>
@@ -70,6 +96,9 @@ const agency = listing.seller.agencyName;
   lang="he"
   dir="rtl"
   data-template={listing.template}
+  data-category={listing.category}
+  data-logo={logoPlacement}
+  data-has-walk={hasWalk ? '1' : undefined}
   style={`--heroH:${heroHeight};--accent:${accent.base};--accent-lift:${accent.lift}`}
 >
 <head>
@@ -80,10 +109,13 @@ const agency = listing.seller.agencyName;
 <meta name="description" content={description}>
 
 <meta name="robots" content={robots}>
+<link rel="canonical" href={canonical}>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 
 <meta property="og:type" content="website">
 <meta property="og:locale" content="he_IL">
-<meta property="og:site_name" content="סיבוב">
+<meta property="og:url" content={canonical}>
+<meta property="og:site_name" content={t('common.brand')}>
 <meta property="og:title" content={title}>
 <meta property="og:description" content={description}>
 <meta property="og:image" content={ogImage}>
@@ -91,942 +123,24 @@ const agency = listing.seller.agencyName;
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Assistant:wght@400;600;700&display=swap" rel="stylesheet">
+{/* Hebrew faces first. Latin subsets load on unicode-range. No Google Fonts
+    request — a listing is forwarded, and that CDN call is a third-party
+    connection on every buyer (DESIGN-CONTRACT §2). */}
+<link rel="preload" href="/fonts/frank-ruhl-hebrew.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/assistant-hebrew.woff2" as="font" type="font/woff2" crossorigin>
+
+{jsonLd && (
+  <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+)}
 
 <style is:global>
-/* ============================================================
-   סיבוב — עמוד מודעה
-   טיפוגרפיה: Frank Ruhl Libre לכותרות ולמספרים, Assistant לגוף
-   תנועה: scroll-driven נטיבי בלבד. בלי GSAP, בלי ספריות.
-   ============================================================ */
-
-/* הסקאלה הפלואידית וה-gutter נמצאים ב-styles/tokens.css, כי גם העורך
-   ב-/new משתמש בהם. הגדרה אחת לשני המשטחים. */
-
-html{
-  background:var(--stone);direction:rtl;scroll-behavior:smooth;
-  /* Light-only. Without it a browser in dark mode inverts native controls
-     and scrollbars against a page that has no dark palette. */
-  color-scheme:light;
-  /* Removes the 300ms double-tap delay. This is a page read on a phone. */
-  touch-action:manipulation;
-  -webkit-tap-highlight-color:rgba(74,93,58,.18);
-}
-
-/* Smooth scrolling is motion too. The reference sets it unconditionally; a
-   reader who has asked for less movement did not exclude this one. */
-@media (prefers-reduced-motion:reduce){
-  html{scroll-behavior:auto}
-}
-
-body{
-  font-family:'Assistant',system-ui,sans-serif;
-  background:var(--plaster);
-  color:var(--ink);
-  font-size:var(--t-body);
-  line-height:1.62;
-  max-width:620px;
-  margin-inline:auto;
-  padding-bottom:7rem;
-  -webkit-font-smoothing:antialiased;
-  overflow-x:hidden;
-}
-
-/* ---------- תווית: עברית אין לה אותיות גדולות ואסור לה tracking חיובי,
-     אז ההיררכיה נבנית מגודל, משקל וצבע ולא מ-uppercase ---------- */
-.label{
-  font-size:var(--t-label);
-  font-weight:600;
-  color:var(--muted);
-  line-height:1.3;
-}
-
-/* ============================================================
-   סרגל הסוכן — נותן למתווך נוכחות מהשורה הראשונה
-   ============================================================ */
-.agent-bar{
-  display:flex;align-items:center;gap:.65rem;
-  padding:.7rem var(--gut);
-  background:var(--ink-deep);color:var(--on-dark);
-  font-size:.86rem;
-}
-.agent-bar .dot{width:26px;height:26px;border-radius:50%;background:var(--olive-lift);flex:0 0 auto}
-.agent-bar strong{font-weight:600}
-.agent-bar span{color:#9C9D93;margin-inline-start:auto;font-size:.8rem}
-.agent-bar a{color:inherit}
-
-/* ============================================================
-   Hero — full bleed, פרלקסה נטיבית
-   ============================================================ */
-.hero{position:relative;height:var(--heroH);min-height:440px;overflow:hidden;background:var(--stone)}
-.hero-img{position:absolute;inset:0;width:100%;height:118%;object-fit:cover;display:block}
-
-.hero-veil{
-  position:absolute;inset-inline:0;bottom:0;
-  padding:7rem var(--gut) 1.6rem;
-  background:linear-gradient(to top,rgba(17,18,8,.9) 12%,rgba(17,18,8,.55) 48%,transparent);
-  color:var(--on-dark);
-}
-.hero-place{font-size:.92rem;opacity:.88;margin-bottom:.35rem}
-.hero-title{
-  font-family:'Frank Ruhl Libre',serif;
-  font-weight:900;
-  font-size:var(--t-hero);
-  line-height:1.02;
-  letter-spacing:-.015em;
-  text-wrap:balance;
-}
-
-/* ============================================================
-   מחיר — טיפוגרפיה, לא כרטיס סטטיסטיקה
-   ============================================================ */
-.price-bar{
-  display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;
-  padding:1.5rem var(--gut) 1.35rem;
-}
-.price{
-  font-family:'Frank Ruhl Libre',serif;
-  font-weight:700;font-size:var(--t-price);
-  line-height:1;letter-spacing:-.02em;
-  font-variant-numeric:tabular-nums;
-}
-.price-note{text-align:end;padding-block-end:.2rem}
-
-/* ============================================================
-   עובדות — מספרים בסריף, לא טבלה
-   ============================================================ */
-.facts{
-  display:grid;grid-template-columns:repeat(3,1fr);
-  gap:1px;background:var(--stone);
-  border-block:1px solid var(--stone);
-}
-.fact{background:var(--plaster);padding:1.05rem .6rem;text-align:center}
-.fact-val{
-  font-family:'Frank Ruhl Libre',serif;font-weight:500;
-  font-size:var(--t-num);line-height:1.1;letter-spacing:-.01em;
-  font-variant-numeric:tabular-nums;
-}
-.fact-lbl{font-size:var(--t-label);color:var(--muted);margin-top:.2rem}
-/*
-  A CONFIRMED ABSENCE IS QUIETER, NOT FAINTER.
-
-  This used to be `opacity:.42` over --muted on --stone-warm. --muted is
-  already only 4.35:1 on that tint, and the opacity composited it toward the
-  background until אין rendered at 1.70:1 — measured, not estimated. Most
-  people cannot read that, which meant the product kept the distinction it
-  calls the reason the page reads as a description rather than an
-  advertisement (CLAUDE.md §7) at a contrast that effectively hid it.
-
-  --absent is a solid colour with a measured floor instead. It stays visibly
-  secondary to a present fact — 5.44:1 against --ink's 16.77:1 on the same
-  ground — while remaining readable. scripts/verify-absent-contrast.mjs
-  asserts it against every template's own .fact.off ground on each build,
-  because two templates invert that ground and a single value cannot serve
-  both.
-*/
-.fact.off{background:var(--stone-warm)}
-.fact.off .fact-val,.fact.off .fact-lbl{color:var(--absent)}
-
-/* פרובננס — מי עומד מאחורי המספר. זית בקו, לא וי ירוק:
-   וי נקרא "טוב", וזו אמירה על מי שרשם את הנתון ולא המלצה. */
-.fact-src{margin-top:.4rem;display:flex;flex-direction:column;gap:.12rem;align-items:center}
-.verified{
-  font-size:.62rem;font-weight:600;color:var(--olive);
-  border:1px solid var(--olive);border-radius:2px;
-  padding:.02rem .28rem;line-height:1.4;
-}
-.fact-cite{font-size:.62rem;color:var(--muted);line-height:1.4}
-
-/* ============================================================
-   סקשנים — ריתמוס משתנה, לא אותו קו מפריד כל פעם
-   ============================================================ */
-section{padding:2.4rem var(--gut)}
-h2{
-  font-family:'Frank Ruhl Libre',serif;
-  font-weight:500;font-size:var(--t-h2);
-  line-height:1.2;margin-bottom:.85rem;
-  text-wrap:balance;
-}
-/*
-  --olive, not --olive-lift. The lift is the accent carried up for type on a
-  DARK ground; on .flaws (--stone-warm) it measured 2.69:1 against a 3.0 bar
-  for display type. --olive is 6.16:1 there and clears it on every template.
-  The enrichment block is the one place this type really is on a dark ground,
-  and it takes the lift back below.
-*/
-h2 .h2-num{color:var(--olive);font-weight:700}
-.enrich h2 .h2-num{color:var(--olive-lift)}
-p{max-width:62ch}
-p + p{margin-top:.9rem}
-
-/* ---------- גילוי נאות — רכב בלבד ---------- */
-.flaws{background:var(--stone-warm)}
-.flaws ul{list-style:none;margin-top:.3rem}
-.flaws li{
-  display:flex;gap:.7rem;align-items:baseline;
-  padding-block:.7rem;
-  border-block-end:1px solid var(--stone);
-}
-.flaws li:last-child{border-block-end:none}
-.flaws .mark{
-  inline-size:.42rem;block-size:.42rem;border-radius:50%;
-  background:var(--olive);flex:0 0 auto;transform:translateY(-.15rem);
-}
-
-/* ============================================================
-   העשרה — הלב של המוצר. מספר הדקות הוא העוגן הוויזואלי.
-   ============================================================ */
-.enrich{background:var(--ink-deep);color:var(--on-dark);padding-block:2.8rem}
-.enrich h2{color:var(--on-dark)}
-.enrich-sub{color:#9C9D93;font-size:.88rem;margin-bottom:1.9rem}
-
-.egroup{margin-block-end:2.1rem}
-.egroup:last-of-type{margin-block-end:0}
-.egroup-head{
-  display:flex;align-items:baseline;gap:.5rem;
-  padding-block-end:.6rem;margin-block-end:.5rem;
-  border-block-end:1px solid rgba(251,250,247,.16);
-}
-.egroup-head h3{font-family:'Frank Ruhl Libre',serif;font-weight:500;font-size:1.1rem}
-.egroup-head .count{font-size:.8rem;color:#9C9D93;margin-inline-start:auto}
-
-.erow{display:flex;align-items:baseline;gap:.9rem;padding-block:.62rem}
-.erow + .erow{border-block-start:1px solid rgba(251,250,247,.07)}
-.erow .mins{
-  font-family:'Frank Ruhl Libre',serif;font-weight:500;
-  font-size:1.45rem;line-height:1;color:var(--olive-lift);
-  flex:0 0 3.6rem;text-align:start;
-  /* A column of walk times is read down, not across. */
-  font-variant-numeric:tabular-nums;
-}
-.erow .mins small{font-size:.62rem;color:#9C9D93;font-family:'Assistant',sans-serif;display:block;margin-top:.15rem}
-.erow .who{flex:1}
-.erow .who b{font-weight:600;display:block}
-.erow .who em{font-style:normal;color:#9C9D93;font-size:.83rem}
-
-.source{
-  margin-top:1.8rem;padding-top:1rem;
-  border-top:1px solid rgba(251,250,247,.16);
-  font-size:.74rem;color:#83847B;line-height:1.7;
-}
-
-/* ============================================================
-   גלריה — א-סימטרית. תמונה ראשונה גדולה, אחר כך זוגות.
-   ============================================================ */
-.gallery{padding:0 var(--gut) 2.4rem;display:grid;gap:.5rem;
-  grid-template-columns:1fr 1fr}
-.gallery figure{margin:0}
-.gallery figure:first-child{grid-column:1 / -1}
-.gallery img{width:100%;display:block;background:var(--stone);border-radius:2px;
-  aspect-ratio:4/3;object-fit:cover}
-.gallery figure:first-child img{aspect-ratio:16/10}
-.gallery figcaption{font-size:.78rem;color:var(--muted);margin-top:.35rem}
-
-/* ---------- מפה ---------- */
-.map img{width:100%;display:block;border-radius:2px;background:var(--stone);aspect-ratio:2/1;object-fit:cover}
-.addr{font-size:.9rem;color:var(--muted);margin-top:.6rem}
-
-/* ---------- סוכן ---------- */
-.seller{background:var(--stone-warm)}
-.seller-row{display:flex;align-items:center;gap:1rem}
-.avatar{width:58px;height:58px;border-radius:50%;background:var(--stone);flex:0 0 auto}
-.seller-name{font-family:'Frank Ruhl Libre',serif;font-size:1.25rem;font-weight:500}
-.seller-role{font-size:.87rem;color:var(--muted-warm)}
-
-/* ============================================================
-   CTA — עגינה תחתונה
-   ============================================================ */
-.cta-dock{
-  position:fixed;inset-inline:0;bottom:0;z-index:20;
-  max-width:620px;margin-inline:auto;
-  padding:.8rem 1rem calc(.8rem + env(safe-area-inset-bottom));
-  background:linear-gradient(to top,var(--plaster) 70%,rgba(251,250,247,0));
-}
-.cta{
-  display:flex;align-items:center;justify-content:center;gap:.5rem;
-  width:100%;padding:1.02rem;
-  background:var(--olive);color:var(--plaster);
-  font-family:'Assistant',sans-serif;font-size:1.06rem;font-weight:700;
-  border:none;border-radius:6px;text-decoration:none;
-  box-shadow:0 6px 22px -10px rgba(25,26,21,.55);
-}
-/* Press feedback is a SCALE, not a nudge. Nothing in the physical world
-   moves down by one pixel when pressed; things compress. 0.97 is inside the
-   0.95–0.98 band the standards give — enough to feel, too little to notice. */
-.cta{transition:transform var(--press) var(--ease-out),background var(--press) var(--ease-out)}
-.cta:hover{background:var(--olive-lift)}
-.cta:active{background:var(--olive-lift);transform:scale(.97)}
-.cta:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
-
-footer{padding:1.6rem var(--gut) .5rem;text-align:center;font-size:.8rem;color:var(--muted)}
-footer a{color:var(--muted)}
-.odbl{font-size:.7rem;color:#96978E;margin-top:.5rem;line-height:1.6}
-.attribution{font-size:.7rem;color:var(--muted);line-height:1.6}
-
-/* ============================================================
-   תנועה — scroll-driven נטיבי. אפס JS.
-   דפדפן שלא תומך פשוט מציג את התוכן. שיפור מדורג.
-   ============================================================ */
-@media (prefers-reduced-motion:no-preference){
-
-  /* פרלקסה: התמונה נעה לאט יותר מהגלילה */
-  @supports (animation-timeline:view()){
-    .hero-img{
-      animation:drift linear both;
-      animation-timeline:view();
-      animation-range:entry 0% exit 100%;
-    }
-    @keyframes drift{
-      from{transform:translateY(-7%)}
-      to{transform:translateY(7%)}
-    }
-
-    /* חשיפה בגלילה */
-    .reveal{
-      animation:rise linear both;
-      animation-timeline:view();
-      animation-range:entry 4% entry 46%;
-    }
-    @keyframes rise{
-      from{opacity:0;transform:translateY(22px)}
-      to{opacity:1;transform:none}
-    }
-
-    /* קו התקדמות דק בראש העמוד */
-    .progress{
-      position:fixed;inset-block-start:0;inset-inline:0;height:2px;z-index:30;
-      background:var(--olive);transform-origin:right center;
-      animation:fill linear both;
-      animation-timeline:scroll(root block);
-    }
-    @keyframes fill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
-  }
-
-  .hero-veil{animation:rise .55s .08s both cubic-bezier(.2,.7,.3,1)}
-}
-
-/* ============================================================
-   התבניות — שלוש, ואותם נתונים בדיוק בכל אחת
-   ============================================================
-
-   HOW A TEMPLATE WORKS, AND WHY IT IS A PALETTE AND NOT A LAYOUT.
-
-   `listings.template` used to be written by the editor, stored in Postgres,
-   and READ BY NOTHING. All three names produced one identical page. This is
-   what makes them real.
-
-   Each template REDEFINES THE BASE TOKENS rather than adding a parallel set of
-   rules. Every selector below already reads --plaster, --ink, --olive and the
-   rest, so swapping those swaps the whole page and no rule has to know a
-   template exists. The consequence worth stating plainly: inside a template
-   the token names are ROLES, not colours. --plaster means "the page ground",
-   and under [data-template='dark'] that ground is nearly black.
-
-   The alternative — three parallel stylesheets, or a second token layer with
-   names like --page-bg — was rejected for one concrete reason. CI asserts the
-   two built listing pages carry BYTE-IDENTICAL CSS (verify-template-
-   divergences.mjs), which is what stops a fifth divergence appearing between
-   property and vehicle. One stylesheet carrying all three templates keeps that
-   guarantee exactly as it was. Three stylesheets would not.
-
-   Both sample listings are therefore on the SAME template. If one were moved
-   to another, that check would stop comparing like with like and would start
-   reporting a difference that is not a bug.
-
-   CONTRAST WAS MEASURED FOR EACH, not eyeballed. See docs/DESIGN.md. */
-
-/* ---------- משרדי — בהיר, מסודר, כתום ----------
-   The Quarter reference: the busiest of the three, closest to an agency's own
-   site. Orange rather than olive, and still not blue — CLAUDE.md §2's
-   exclusion is of blue specifically, because every Israeli property brand is
-   blue, and orange breaks from both. */
-/*
-  TYPE ON A DARK SURFACE, IN EVERY TEMPLATE.
-
-  The agent bar, the hero veil and the enrichment block sit on a dark ground
-  in all three templates — that is what those elements ARE. They used
-  var(--plaster), which reads correctly right up until a template redefines
-  --plaster as the page ground and that ground is nearly black: the hero title
-  then renders near-black over the photograph and the agent's name disappears
-  out of the bar. Caught on the running page, not in review.
-
-  So the three of them take a token that is a ROLE and not a palette entry. It
-  is deliberately not overridden below.
-*/
-/*
-  THE ACCENT, MAPPED ONTO THE TOKENS EVERY RULE ALREADY READS.
-
-  --accent and --accent-lift arrive inline from the agent's profile. Rather
-  than rewriting every selector that says var(--olive), the two tokens are
-  redefined in terms of them — so an accent change repaints the whole page and
-  no rule has to know the feature exists.
-
-  The fallbacks are olive, so a page rendered without the inline properties
-  (an older listing, a test fixture) is the brand colour rather than nothing.
-
-  [data-template] rather than :root, deliberately: it has to outrank the
-  :root declarations in tokens.css whichever order the bundler emits them in.
-*/
-html[data-template] {
-  --olive: var(--accent, #4a5d3a);
-  --olive-lift: var(--accent-lift, #7e9a62);
-}
-
-html {
-  --on-dark: #fbfaf7;
-
-  /*
-    --muted on --stone-warm measures 4.35:1 — the same failure the homepage
-    hit, and it fails for the same reason: a token that clears AA on the
-    reading ground does not clear it on the tinted one. Carried down until it
-    does (4.83:1). Overridden by the dark template, where --stone-warm is a
-    dark surface and this would be dark-on-dark.
-  */
-  --muted-warm: #67685f;
-
-  /*
-    The colour of a fact the seller confirmed is absent. 5.44:1 at worst
-    across the five light templates' .fact.off grounds — the floor is
-    --stone-warm on editorial, and every other light template is lighter.
-    The two templates whose absent cell is DARK override it below.
-  */
-  --absent: #5f6058;
-}
-
-html[data-template='agency'] {
-  /* Orange lived here and has gone. It gave the product two brand colours
-     depending on which template a listing used, which is an inconsistency
-     rather than a palette. The accent is the AGENT's choice now (0011), set
-     as an inline custom property on <html>, and every template uses it. */
-  --ink-deep: #1c1917;
-  --stone: #e7e2da;
-  --stone-warm: #faf6f0;
-  --plaster: #ffffff;
-  --muted: #6b6259;
-}
-
-/*
-  AGENCY IS A DIFFERENT SHAPE, NOT A DIFFERENT COLOUR.
-
-  The first version of these templates changed only the palette, and the
-  verdict on seeing them side by side was that they looked the same. They did.
-  A colour swap is not a template.
-
-  So agency is the information-dense one: a shorter hero because the
-  photograph is not the argument here, facts as a LABELLED TWO-COLUMN LIST
-  rather than three centred cells, a price band that fills rather than sits on
-  a hairline, and a rounded carded surface throughout. It reads like an
-  agency's own site, which is the reference it was drawn from.
-*/
-/*
-  THE HERO HEIGHT IS SET ON .hero, NOT ON --heroH, AND THAT IS NOT A STYLE
-  PREFERENCE.
-
-  BaseListing writes --heroH into the style ATTRIBUTE on <html>, because the
-  category divergence rides on it. A style attribute outranks every author
-  stylesheet rule, so `html[data-template='agency'] { --heroH: 54svh }` — which
-  is what this block used to say — never applied: the property page kept the
-  category's 84svh and the vehicle page its 64svh, in all three templates.
-  Silent, and invisible in review, because the declaration is right there in
-  the file looking like it works.
-
-  Overriding the height on .hero instead wins, because nothing is inline on
-  .hero. The custom property keeps carrying the CATEGORY divergence, which is
-  what DESIGN-CONTRACT §5.1 describes and what CI checks.
-
-  The photograph shares the first screen here rather than owning it.
-*/
-html[data-template='agency'] .hero {
-  height: 54svh;
-  min-height: 320px;
-}
-
-html[data-template='agency'] .hero-title {
-  font-weight: 700;
-  font-size: calc(var(--t-hero) * .72);
-}
-
-/* A filled band, so the number is the loudest thing above the fold. */
-html[data-template='agency'] .price-bar {
-  background: var(--stone-warm);
-  border-block-end: 1px solid var(--stone);
-  align-items: center;
-}
-
-html[data-template='agency'] .price {
-  font-size: calc(var(--t-price) * .82);
-}
-
-/* Two columns, label beside value, left as a list rather than three cells of
-   centred display type. Density is the point of this template. */
-html[data-template='agency'] .facts {
-  grid-template-columns: repeat(2, 1fr);
-  gap: .5rem;
-  background: transparent;
-  border-block: 0;
-  padding: var(--gut) var(--gut) .4rem;
-}
-
-html[data-template='agency'] .fact {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: .6rem;
-  text-align: start;
-  padding: .7rem .85rem;
-  border: 1px solid var(--stone);
-  border-radius: 10px;
-}
-
-html[data-template='agency'] .fact-val {
-  font-size: calc(var(--t-num) * .78);
-  order: 2;
-}
-
-html[data-template='agency'] .fact-lbl {
-  margin-top: 0;
-  order: 1;
-}
-
-/* The provenance chip has nowhere to sit in a single-line cell. */
-html[data-template='agency'] .fact-src {
-  display: none;
-}
-
-html[data-template='agency'] .gallery {
-  grid-template-columns: repeat(3, 1fr);
-}
-
-html[data-template='agency'] .gallery figure:first-child {
-  grid-column: 1 / -1;
-}
-
-html[data-template='agency'] .cta {
-  border-radius: 999px;
-}
-
-/* ---------- כהה — התמונות נושאות את העמוד ----------
-   Inverted. The enrichment block, which is --ink-deep on the other two, has to
-   become the LIGHT band here or it disappears into the page: a section that
-   exists to stand out cannot be the same value as its surroundings. */
-/* On this ground the base stop is too close in value to read as accent, so
-   the lift becomes the accent and the base is not used at all. */
-html[data-template='dark'] {
-  --olive: var(--accent-lift, #7e9a62);
-  --plaster: #14150f;
-  --ink: #f3f1ea;
-  --ink-deep: #0a0b06;
-  --stone: #2c2e24;
-  --stone-warm: #1d1f16;
-  --muted: #a3a498;
-}
-
-html[data-template='dark'] {
-  --muted-warm: #a3a498;
-}
-
-html[data-template='dark'] .enrich {
-  background: var(--stone-warm);
-}
-
-/* #83847B is a literal in the base, chosen against --ink-deep. Against this
-   template's lighter dark surface it falls to 4.41:1, just under the bar. */
-html[data-template='dark'] .source {
-  color: var(--muted);
-}
-
-/* --olive is the ACCENT on a dark ground and the CTA fill on a light one.
-   Filling a button with it here would put pale-on-pale; the button inverts
-   instead, which is also the only element on the page that should. */
-html[data-template='dark'] .cta {
-  background: var(--ink);
-  color: var(--plaster);
-}
-html[data-template='dark'] .cta:hover,
-html[data-template='dark'] .cta:active {
-  background: var(--olive-lift);
-  color: var(--ink-deep);
-}
-
-/* A photograph on a near-black page needs no veil to carry white type, and
-   the heavy gradient the light templates use reads as dirt here. */
-html[data-template='dark'] .hero-veil {
-  background: linear-gradient(to top, rgba(10, 11, 6, .92) 10%, rgba(10, 11, 6, .45) 45%, transparent);
-}
-
-/*
-  DARK IS THE PHOTOGRAPH-LED SHAPE. The hero takes the whole first screen, the
-  facts lose their boxes and become a row of bare numbers, and the gallery runs
-  edge to edge. Nothing competes with the pictures, which is the only reason to
-  choose this template — and why its own copy in the picker says it is worth it
-  only if the photographs are good.
-*/
-html[data-template='dark'] .hero {
-  height: 94svh;
-}
-
-html[data-template='dark'] .hero-title {
-  font-size: calc(var(--t-hero) * 1.08);
-}
-
-html[data-template='dark'] .price {
-  font-size: calc(var(--t-price) * 1.12);
-}
-
-/* No cells, no hairlines: three numbers on the page itself. */
-html[data-template='dark'] .facts {
-  gap: 0;
-  background: transparent;
-  border-block: 1px solid var(--stone);
-}
-
-/* The absent cell here is transparent over this template's own near-black
-   ground, so the light dim value applies instead of the dark one. */
-html[data-template='dark'] {
-  --absent: #9c9d93;
-}
-
-html[data-template='dark'] .fact {
-  background: transparent;
-  padding-block: 1.4rem;
-}
-
-html[data-template='dark'] .fact + .fact {
-  border-inline-start: 1px solid var(--stone);
-}
-
-html[data-template='dark'] .fact.off {
-  background: transparent;
-}
-
-/* Full bleed. The 620px column is the editorial shape, not this one. */
-html[data-template='dark'] .gallery {
-  padding-inline: 0;
-  gap: .25rem;
-}
-
-html[data-template='dark'] .gallery img {
-  border-radius: 0;
-}
-
-/* ---------- דף נכס — the page as a printed property sheet ----------
-
-   The one template that does not get worse when the photographs are ordinary,
-   which describes most listings. It is also where the page and the PDF finally
-   describe the same object: the worker already renders a PDF from this very
-   page, and until now that PDF was a screenshot of a web design.
-
-   Everything here is a print move — a true white stock, a rule dark enough to
-   read as a printed rule, ruled rows instead of cells, and no radius anywhere.
-   The trap it invites is stated in docs/DESIGN-CONTRACT: a page that looks
-   official invites the reader to assume the numbers were checked, so the
-   מאומת discipline has to stay exactly as loud here as everywhere else. */
-html[data-template='sheet'] {
-  --plaster: #ffffff;
-  /* 1.67:1 against the stock, where the base --stone is 1.26:1. A hairline
-     that cannot be seen is not a rule, and this design is made of rules. */
-  --stone: #cec8b8;
-  --stone-warm: #f6f3ec;
-  /* 6.36:1 on white. Darker than the base --muted because a spec sheet's
-     labels are read, not glanced at. */
-  --muted: #5f6058;
-}
-
-html[data-template='sheet'] .hero {
-  height: 42svh;
-  min-height: 300px;
-}
-
-/* The veil's 7rem gradient runway is sized for a hero that owns the screen.
-   In a 300px plate it would push the title out of its own photograph. */
-html[data-template='sheet'] .hero-veil {
-  padding-block-start: 3.4rem;
-}
-
-/* Facts as ruled rows, label leading and value trailing — the way a printed
-   spec sheet sets them, and the way a reader checks one figure against
-   another without scanning a grid. */
-html[data-template='sheet'] .facts {
-  grid-template-columns: 1fr;
-  gap: 0;
-  background: transparent;
-}
-
-html[data-template='sheet'] .fact {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.8rem;
-  text-align: start;
-  padding: 0.62rem var(--gut);
-  border-block-end: 1px dotted var(--stone);
-}
-
-html[data-template='sheet'] .fact:last-child {
-  border-block-end: 0;
-}
-
-html[data-template='sheet'] .fact-val {
-  font-size: calc(var(--t-num) * 0.72);
-  order: 2;
-}
-
-html[data-template='sheet'] .fact-lbl {
-  margin-top: 0;
-  order: 1;
-}
-
-/* The provenance chip cannot sit under a value that is now beside its label,
-   so it joins the row rather than stacking below it. */
-html[data-template='sheet'] .fact-src {
-  order: 3;
-  flex-direction: row;
-  align-items: baseline;
-  gap: 0.4rem;
-  margin-top: 0;
-}
-
-/* Sections separated by a rule rather than by space alone — a sheet is a
-   sequence of blocks, not a scroll. */
-html[data-template='sheet'] section {
-  border-block-start: 1px solid var(--stone);
-}
-
-html[data-template='sheet'] .cta,
-html[data-template='sheet'] .gallery img {
-  border-radius: 0;
-}
-
-/* ---------- כרזה — one photograph, and a caption band ----------
-
-   A SHAPE, NOT A PALETTE. It keeps the editorial tokens exactly, for the same
-   reason the agency template gave up its orange: the accent belongs to the
-   agent, and a template that recolours the product is an inconsistency the
-   agent did not ask for.
-
-   Why it exists: DESIGN-BRIEF §2 found that Israeli agents distribute through
-   WhatsApp Status as much as through links, and Status is an IMAGE surface —
-   read full-screen, in about three seconds, with no reliable tap. Everything
-   else in this product optimises the link preview card, which is the right
-   answer for a pasted link and irrelevant to a Status post. This is the
-   template that survives being screenshotted. */
-/*
-  100svh MINUS THE AGENT BAR, not 100svh.
-
-  The hero is not the first thing on the page — the agent bar sits above it and
-  is about 3rem tall — so a hero of exactly 100svh ends 3rem BELOW the fold,
-  and the veil anchored to its bottom goes with it. Measured at 390×844: the
-  hero ran to y=892 on an 844px screen, which put the title under the dock even
-  after the veil was given room to clear it.
-
-  Subtracting the bar makes the photograph end exactly at the fold, which is
-  what "one photograph, the whole screen" was supposed to mean.
-*/
-html[data-template='poster'] .hero {
-  height: calc(100svh - 3rem);
-  min-height: 520px;
-}
-
-html[data-template='poster'] .hero-title {
-  font-size: calc(var(--t-hero) * 1.12);
-}
-
-/*
-  The caption band: price and facts read as one strip beneath the photograph
-  rather than as two sections of a document.
-
-  COLOUR IS SET AS WELL AS BACKGROUND, and that is the whole bug this rule
-  exists to avoid. `.fact` inherits its colour from body, which is --ink — so
-  painting only the background here would put near-black type on a near-black
-  band. The same trap the dark template hit, recorded above.
-*/
-html[data-template='poster'] .price-bar,
-html[data-template='poster'] .facts,
-html[data-template='poster'] .fact {
-  background: var(--ink-deep);
-  color: var(--on-dark);
-}
-
-html[data-template='poster'] .price-bar {
-  padding-block: 1.35rem 1.1rem;
-}
-
-/* The 1px gap shows this background through it, so the hairlines between the
-   cells become light-on-dark instead of disappearing. */
-html[data-template='poster'] .facts {
-  background: rgba(251, 250, 247, 0.16);
-  border-block: 0;
-}
-
-/*
-  #9C9D93, NOT --muted, and this one was measured rather than judged:
-  --muted (#6E6F66) is 3.71:1 on --ink-deep, which fails AA for text this
-  size. #9C9D93 is 6.87:1 and is the value the agent bar and the enrichment
-  block already use for exactly this job.
-*/
-html[data-template='poster'] .fact-lbl,
-html[data-template='poster'] .price-note,
-html[data-template='poster'] .fact-cite {
-  color: #9c9d93;
-}
-
-/* Same inversion as the dark template: the absent cell's ground here is the
-   caption band, so the absent colour has to come up rather than down. */
-html[data-template='poster'] {
-  --absent: #9c9d93;
-}
-
-/* A confirmed absence still has to read as one on the dark band. */
-html[data-template='poster'] .fact.off {
-  background: #1a1b10;
-}
-
-/* --olive is the accent for a light ground; on the band it is the lift, the
-   same swap the dark template makes. */
-html[data-template='poster'] .verified {
-  color: var(--olive-lift);
-  border-color: var(--olive-lift);
-}
-
-/*
-  A HERO THAT REACHES THE BOTTOM OF THE VIEWPORT PUTS ITS OWN TITLE BEHIND THE
-  CTA DOCK.
-
-  .cta-dock is fixed to the bottom and stands about 5rem tall, so a hero ending
-  within that distance of the bottom edge hides the last lines of its veil
-  behind the button — the place survives, the title is sliced in half. The base
-  84svh leaves room; 94svh and 100svh do not.
-
-  BOTH of these were broken and only one is new. The dark template has asked
-  for 94svh since it was written, and never got it, because --heroH was being
-  set inline and the override above it could not win — so this collision could
-  not happen and nobody saw it. Fixing that height is what surfaced this.
-
-  Caught by screenshotting the built page at 390×844, not in review, where a
-  fixed element overlapping a full-height one looks like nothing at all.
-*/
-html[data-template='dark'] .hero-veil,
-html[data-template='poster'] .hero-veil {
-  padding-block-end: 6.4rem;
-}
-
-/* ---------- טבלה — numbers before photograph ----------
-
-   For the reader who is comparing this listing against four others, and whose
-   question is ₪ per m² rather than what the light is like in the kitchen. The
-   schema already knows that reader exists: `audience` (0009) and the
-   priceDenominator fact both describe them, and the facts grid already
-   reorders on the answer — but every template still opened with 84svh of
-   photograph first.
-
-   The hairline grid is the whole design, so --stone carries ink rather than
-   tint and the 1px gaps in .facts become real rules. */
-html[data-template='ledger'] {
-  --plaster: #fdfcf9;
-  --ink: #14150f;
-  /* 2.04:1 on the ground. This template is made of lines and they have to
-     hold at 1px on a phone in sunlight. */
-  --stone: #b9b3a4;
-  --stone-warm: #f2efe6;
-  --muted: #5c5d55;
-}
-
-html[data-template='ledger'] .hero {
-  height: 34svh;
-  min-height: 260px;
-}
-
-html[data-template='ledger'] .hero-veil {
-  padding-block-start: 2.6rem;
-}
-
-/* The title yields to the numbers below it rather than filling the frame. */
-html[data-template='ledger'] .hero-title {
-  font-size: calc(var(--t-hero) * 0.68);
-  font-weight: 700;
-}
-
-/* The gap IS the rule: 1px of ink showing between cells, which is what makes
-   this read as a table rather than as three tiles. */
-html[data-template='ledger'] .facts {
-  background: var(--ink);
-  border-block: 1px solid var(--ink);
-}
-
-html[data-template='ledger'] .fact {
-  padding-block: 1.3rem;
-}
-
-html[data-template='ledger'] .fact-val {
-  font-size: calc(var(--t-num) * 1.06);
-}
-
-html[data-template='ledger'] .price-bar {
-  border-block-end: 1px solid var(--ink);
-}
-
-html[data-template='ledger'] .cta,
-html[data-template='ledger'] .gallery img {
-  border-radius: 0;
-}
-
-/* ---------- ביתי — the private seller's template ----------
-
-   Every other template is agent-shaped: a dark agency bar on top, a portfolio
-   that should look consistent, a page built to be sent weekly. PRD §1 keeps
-   the private seller a supported case — the person selling one flat, who
-   arrived from a footer credit — and nothing here was drawn for them.
-
-   So: one column of large rounded photographs instead of an asymmetric grid,
-   more leading, and the seller block raised off the ground rather than
-   recessed into it. The photographs are the only rounded thing on the page;
-   rounding the text blocks as well is how this becomes the generic listing
-   template the product sells against. */
-html[data-template='warm'] {
-  --plaster: #faf6ee;
-  --stone: #e6ddcc;
-  /* LIGHTER than the ground, not darker. The seller block and a confirmed
-     absence lift off this page instead of sinking into it. */
-  --stone-warm: #fffdf8;
-  --muted: #64655c;
-}
-
-html[data-template='warm'] body {
-  line-height: 1.72;
-}
-
-html[data-template='warm'] .hero {
-  height: 66svh;
-  min-height: 380px;
-}
-
-/* One photograph per row, at a comfortable size. A personal album rather than
-   a contact sheet — and it is the move that keeps this template from reading
-   as the agency one in warmer paint. */
-html[data-template='warm'] .gallery {
-  grid-template-columns: 1fr;
-  gap: 0.75rem;
-}
-
-html[data-template='warm'] .gallery img,
-html[data-template='warm'] .gallery figure:first-child img {
-  aspect-ratio: 4 / 3;
-  border-radius: 14px;
-}
-
-html[data-template='warm'] .seller {
-  border-block: 1px solid var(--stone);
-}
-
-html[data-template='warm'] .avatar {
-  width: 66px;
-  height: 66px;
-}
+@import '../styles/listing.css';
+@import '../styles/walk.css';
 </style>
 </head>
 <body>
+
+<a class="skip" href="#main">{t('a11y.skip')}</a>
 
 {/*
   The progress line is decoration for something the scrollbar already says,
@@ -1036,34 +150,64 @@ html[data-template='warm'] .avatar {
 */}
 <div class="progress" aria-hidden="true"></div>
 
-<div class="agent-bar">
-  <div class="dot" aria-hidden="true"></div>
+<header class="agent-bar">
+  {showBarLogo ? (
+    <div class="dot" aria-hidden="true">
+      <img src={listing.seller.agencyLogoUrl} alt="" />
+    </div>
+  ) : null}
   {agency ? (
     <Fragment>
       <strong>{listing.seller.name}</strong>
+      {sellerRole ? <span class="agent-role">{sellerRole}</span> : null}
+      {callHref ? (
+        <span class="agent-actions">
+          <a href={waBarHref} aria-label={t('listing.whatsappShort')}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7A2.5 2.5 0 0 1 17.5 16H9l-4 3.2A.8.8 0 0 1 4 18.6V6.5Z"/></svg>
+          </a>
+          <a href={callHref} aria-label={t('listing.callCta')}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8.2 3.8c.4-.4 1-.5 1.5-.2l2.1 1.2c.5.3.7.9.5 1.4l-.8 2.1a1.2 1.2 0 0 0 .3 1.3l2.6 2.6c.4.4 1 .5 1.4.3l2.1-.8c.5-.2 1.1 0 1.4.5l1.2 2.1c.3.5.2 1.1-.2 1.5l-1.3 1.3c-.5.5-1.2.7-1.9.6-2.3-.4-5.2-2.1-7.6-4.5S4.6 8.7 4.2 6.4c-.1-.7.1-1.4.6-1.9l1.3-1.3Z"/></svg>
+          </a>
+        </span>
+      ) : null}
+      {listing.seller.licenceVerified ? (
+        <span class="agent-verified">{t('listing.licenceVerified')}</span>
+      ) : null}
       <span>{agency}</span>
     </Fragment>
   ) : (
     <Fragment>
       <strong>{listing.seller.name}</strong>
-      <span>נבנה ב<a href="https://hasivuv.com">סיבוב</a></span>
+      {sellerRole ? <span class="agent-role">{sellerRole}</span> : null}
+      {callHref ? (
+        <span class="agent-actions">
+          <a href={waBarHref} aria-label={t('listing.whatsappShort')}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7A2.5 2.5 0 0 1 17.5 16H9l-4 3.2A.8.8 0 0 1 4 18.6V6.5Z"/></svg>
+          </a>
+          <a href={callHref} aria-label={t('listing.callCta')}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8.2 3.8c.4-.4 1-.5 1.5-.2l2.1 1.2c.5.3.7.9.5 1.4l-.8 2.1a1.2 1.2 0 0 0 .3 1.3l2.6 2.6c.4.4 1 .5 1.4.3l2.1-.8c.5-.2 1.1 0 1.4.5l1.2 2.1c.3.5.2 1.1-.2 1.5l-1.3 1.3c-.5.5-1.2.7-1.9.6-2.3-.4-5.2-2.1-7.6-4.5S4.6 8.7 4.2 6.4c-.1-.7.1-1.4.6-1.9l1.3-1.3Z"/></svg>
+          </a>
+        </span>
+      ) : null}
+      <span>{t('common.builtByPrefix')}<a href="/">{t('common.brand')}</a></span>
     </Fragment>
   )}
-</div>
+</header>
 
-{/*
-  <main> so a screen-reader user can skip the agent bar and the hero and
-  reach the listing itself. Lighthouse flagged landmark-one-main; neither
-  built page had a main element at all.
+{sold ? <p class="sold-banner">{t('listing.soldBanner')}</p> : null}
 
-  The footer comes through its own slot so it stays OUTSIDE main. A
-  contentinfo landmark nested inside main is its own axe finding, and this
-  footer carries the ODbL attribution, which is a licence condition and
-  should be reachable as a landmark in its own right.
-*/}
-<main>
-<slot />
+<main id="main" class="listing-flow">
+  <slot />
 </main>
-<slot name="footer" />
+<slot name="after" />
+
+<dialog id="listing-lightbox" class="lightbox" aria-label={t('listing.openPhoto')}>
+  <button type="button" class="lightbox-close">{t('listing.closeLightbox')}</button>
+  <p class="lightbox-room" data-lightbox-room hidden></p>
+  <p class="lightbox-count"><bdi data-lightbox-count></bdi></p>
+  <div class="lightbox-track"></div>
+</dialog>
+
+<script src="../scripts/listing-enhance.ts"></script>
 </body>
 </html>

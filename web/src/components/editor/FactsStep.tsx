@@ -1,5 +1,10 @@
 import { answer, clear, markAbsent } from '@/features/listings/fact-entry';
-import { factDefinition, schemaFor, type ListingCategory } from '@/features/listings/schemas';
+import {
+  factDefinition,
+  factShown,
+  schemaFor,
+  type ListingCategory,
+} from '@/features/listings/schemas';
 import type { Fact, ListingAudience } from '@/types/listing';
 
 import { t } from '../../lib/i18n';
@@ -9,7 +14,7 @@ interface Props {
   facts: readonly Fact[];
   onChange: (facts: Fact[]) => void;
   audience: ListingAudience | undefined;
-  onAudience: (audience: ListingAudience) => void;
+  onAudience: (audience: ListingAudience | undefined) => void;
 }
 
 /**
@@ -49,33 +54,46 @@ export function FactsStep({ category, facts, onChange, audience, onAudience }: P
         <p className="hint">{t('editor.audienceHint')}</p>
 
         <div className="fact-toggle">
-          {(['resident', 'investor'] as const).map((option) => (
+          {(['resident', 'investor', 'both'] as const).map((option) => (
             <button
               key={option}
               type="button"
               aria-pressed={audience === option}
-              onClick={() => onAudience(option)}
+              onClick={() => onAudience(audience === option ? undefined : option)}
             >
               <span className="choice-name">
-                {t(option === 'resident' ? 'editor.audienceResident' : 'editor.audienceInvestor')}
+                {t(
+                  option === 'resident'
+                    ? 'editor.audienceResident'
+                    : option === 'investor'
+                      ? 'editor.audienceInvestor'
+                      : 'editor.audienceBoth',
+                )}
               </span>
               <span className="choice-note">
                 {t(
                   option === 'resident'
                     ? 'editor.audienceResidentNote'
-                    : 'editor.audienceInvestorNote',
+                    : option === 'investor'
+                      ? 'editor.audienceInvestorNote'
+                      : 'editor.audienceBothNote',
                 )}
               </span>
             </button>
           ))}
         </div>
+        <button type="button" className="audience-skip" onClick={() => onAudience(undefined)}>
+          {t('editor.audienceSkip')}
+        </button>
       </fieldset>
       ) : null}
 
       <p className="hint">{t('editor.factsHint')}</p>
 
       <ul className="facts-entry">
-        {facts.map((fact) => (
+        {facts
+          .filter((fact) => factShown(factDefinition(category, fact.key), audience, facts))
+          .map((fact) => (
           <li key={fact.key} className={fact.present ? 'fact-row' : 'fact-row absent'}>
             <div className="fact-head">
               <label htmlFor={`fact-${fact.key}`}>

@@ -1,0 +1,17 @@
+{
+  "T4V7A": {
+    "avatar": false,
+    "barLogo": true,
+    "call": "tel:+972521110001",
+    "phone": "052-111-0001",
+    "share": true,
+    "verified": true
+  },
+  "H2N6P": {
+    "banner": true,
+    "dock": "נכסים נוספים",
+    "dockHref": "/",
+    "call": false,
+    "avatar": false
+  }
+}
