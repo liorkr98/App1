@@ -13,7 +13,11 @@ import path from 'node:path';
 
 const ROOT = 'web/src';
 const EXTENSIONS = new Set(['.astro', '.css', '.html', '.ts', '.tsx', '.mjs']);
-const TRANSLATE = /translateX\s*\(([^)]*)\)/g;
+// Two levels of nested parentheses, so the form this gate recommends —
+// translateX(calc(var(--dir) * 24px)) — is read whole. A flat [^)]* stopped at
+// the first ')' and failed that form too; nothing used translateX until the
+// dashboard's chart tooltip, so it had never been exercised.
+const TRANSLATE = /translateX\s*\(((?:[^()]|\((?:[^()]|\([^()]*\))*\))*)\)/g;
 
 function walk(dir) {
   const out = [];

@@ -25,6 +25,14 @@ import '../styles/tokens.css';
  * so. The filter is not in this file, deliberately — a filter in the client
  * is a suggestion, and one that looks like security is worse than none.
  *
+ * THE NUMBERS ARE COUNTS, NOT ESTIMATES (September 2026 redesign). Views
+ * and WhatsApp taps come from listing_events — recorded by the SSR route and
+ * the /wa redirect, no IP, no user agent — rolled up per Israel day by
+ * listing_event_daily (0029). The arithmetic lives in
+ * src/features/analytics/dashboard-stats.ts, where it is tested. If the daily
+ * view is unavailable the tiles fall back to all-time totals and SAY so;
+ * the charts are omitted rather than drawn from nothing.
+ *
  * EVERY STATE IS IN THE MARKUP and hidden by script, never created by it.
  * /me shipped the other way round and rendered a blank page the first time a
  * stale dependency made the module fail. A dashboard that can go blank is a
@@ -55,12 +63,17 @@ import '../styles/tokens.css';
     <style is:global>
       :root {
         --rule: 1px solid var(--stone);
-        --shell: 1180px;
+        --shell: 1320px;
         --pad: clamp(1.1rem, 4vw, 2.5rem);
+        /* The workspace ground. Text set directly on it uses --muted-warm
+           (4.91:1); the white cards keep --muted (5.09:1). */
+        --ground: #eef0ea;
+        --card: #ffffff;
+        --radius: 20px;
       }
 
       html {
-        background: var(--plaster);
+        background: var(--ground);
         color-scheme: light;
         touch-action: manipulation;
         -webkit-tap-highlight-color: rgba(74, 93, 58, 0.18);
@@ -72,11 +85,11 @@ import '../styles/tokens.css';
 
       body {
         font-family: 'Assistant', system-ui, sans-serif;
-        background: var(--plaster);
+        background: var(--ground);
         color: var(--ink);
         font-size: var(--t-body);
         /* Hebrew carries no ascenders or descenders to separate its lines. */
-        line-height: 1.7;
+        line-height: 1.6;
         min-height: 100dvh;
         -webkit-font-smoothing: antialiased;
       }
@@ -101,7 +114,7 @@ import '../styles/tokens.css';
         display: flex;
         align-items: center;
         gap: 1rem;
-        padding-block: 1rem;
+        padding-block: 0.9rem;
       }
 
       .bar .brand-mark {
@@ -112,10 +125,11 @@ import '../styles/tokens.css';
         margin-inline-start: auto;
         display: flex;
         align-items: center;
-        gap: 1.25rem;
+        gap: clamp(0.7rem, 2vw, 1.25rem);
+        min-inline-size: 0;
       }
 
-      .bar nav a {
+      .bar nav a:not(.cta) {
         /* 6.94:1 on --ink-deep. --olive-lift is 3.83:1 and would fail here. */
         display: inline-flex;
         align-items: center;
@@ -123,10 +137,11 @@ import '../styles/tokens.css';
         color: #9c9d93;
         font-size: var(--t-label);
         font-weight: 600;
+        line-height: 1.25;
         text-decoration: none;
       }
 
-      .bar nav a:hover {
+      .bar nav a:not(.cta):hover {
         color: var(--plaster);
       }
 
@@ -134,16 +149,16 @@ import '../styles/tokens.css';
         display: inline-flex;
         align-items: center;
         justify-content: center;
+        gap: 0.45rem;
         min-block-size: 44px;
-        padding: 0.6rem 1.2rem;
-        background: var(--olive);
-        color: var(--plaster);
+        padding: 0.6rem 1.25rem;
+        background: var(--plaster);
+        color: var(--ink-deep);
         font-size: 0.95rem;
-        /* 800, matching the homepage. Assistant carries it and the page loads
-           it — the buttons were asking for a weight the browser did not have. */
         font-weight: 800;
         border: none;
-        border-radius: 5px;
+        border-radius: 999px;
+        white-space: nowrap;
         text-decoration: none;
         cursor: pointer;
         font-family: inherit;
@@ -152,45 +167,179 @@ import '../styles/tokens.css';
           background var(--press) var(--ease-out);
       }
 
+      .cta svg {
+        inline-size: 16px;
+        block-size: 16px;
+      }
+
       .cta:hover {
-        background: var(--olive-lift);
+        background: #fff;
       }
 
       .cta:active {
         transform: scale(0.97);
       }
 
+      .cta.dark {
+        background: var(--ink-deep);
+        color: var(--plaster);
+      }
+
+      .cta.dark:hover {
+        background: var(--olive);
+      }
+
       /* ---------- Head ---------- */
 
       .head {
-        padding-block: clamp(1.75rem, 4vw, 2.75rem) 1.25rem;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 1rem 2rem;
+        flex-wrap: wrap;
+        padding-block: clamp(1.75rem, 4vw, 2.75rem) 1.4rem;
+      }
+
+      .hello {
+        font-size: var(--t-meta);
+        font-weight: 700;
+        color: var(--muted-warm);
       }
 
       h1 {
         font-family: 'Frank Ruhl Libre', serif;
         font-weight: 700;
-        font-size: clamp(1.7rem, 4vw, 2.3rem);
-        line-height: 1.15;
-        letter-spacing: -0.015em;
+        font-size: clamp(2rem, 4.6vw, 3.1rem);
+        line-height: 1.08;
+        letter-spacing: -0.02em;
       }
 
       .lead {
+        color: var(--muted-warm);
+        font-weight: 600;
+        margin-block-start: 0.4rem;
+        max-inline-size: 60ch;
+      }
+
+      .lead bdi {
+        color: var(--ink);
+        font-weight: 800;
+      }
+
+      /* ---------- KPI tiles ----------
+         Four numbers an agent checks every morning. Big, few, and each one
+         says over what window it was counted. */
+
+      /* Two by two on a phone, one row of four from 900px. */
+      .kpis {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: clamp(0.7rem, 1.6vw, 1.1rem);
+        margin-block-end: 1.6rem;
+      }
+
+      @media (min-width: 900px) {
+        .kpis {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+      }
+
+      .kpi {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        min-inline-size: 0;
+        min-block-size: 9.5rem;
+        padding: clamp(0.9rem, 2vw, 1.15rem) clamp(0.9rem, 2vw, 1.25rem) 1rem;
+        background: var(--card);
+        border-radius: var(--radius);
+        box-shadow: 0 1px 2px rgba(17, 18, 8, 0.04);
+      }
+
+      .kpi-lbl {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: var(--t-label);
+        font-weight: 700;
         color: var(--muted);
-        margin-block-start: 0.3rem;
-        max-inline-size: 48ch;
+      }
+
+      .kpi-lbl svg {
+        inline-size: 15px;
+        block-size: 15px;
+        flex: 0 0 auto;
+      }
+
+      .kpi-num {
+        font-family: 'Frank Ruhl Libre', serif;
+        font-weight: 500;
+        font-size: clamp(1.9rem, 3.6vw, 2.9rem);
+        line-height: 1;
+        letter-spacing: -0.02em;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
+
+      .kpi-num small {
+        font-family: 'Assistant', sans-serif;
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--muted);
+        letter-spacing: 0;
+        margin-inline-start: 0.35rem;
+      }
+
+      .kpi-note {
+        font-size: var(--t-label);
+        font-weight: 700;
+        color: var(--olive);
+      }
+
+      .kpi-note.plain {
+        color: var(--muted);
+      }
+
+      .spark {
+        margin-block-start: auto;
+        inline-size: 100%;
+        block-size: auto;
+        display: block;
+        overflow: visible;
+      }
+
+      /* Drawn only when the per-day view answered; an empty line is not a trend. */
+      .spark[data-empty] {
+        display: none;
+      }
+
+      .meter {
+        margin-block-start: auto;
+        block-size: 8px;
+        border-radius: 999px;
+        background: var(--stone-warm);
+        overflow: hidden;
+      }
+
+      .meter span {
+        display: block;
+        block-size: 100%;
+        inline-size: var(--share, 0%);
+        border-radius: 999px;
+        background: var(--olive);
       }
 
       /* ---------- Filters ----------
-         Radios, not buttons: the filter is one choice out of four and a radio
+         Radios, not buttons: the filter is one choice out of five and a radio
          group is what that is. It also means the whole thing works with no
          JavaScript beyond the one line that reads which is checked. */
 
       .filters {
         display: flex;
-        gap: 0.4rem;
+        gap: 0.45rem;
         flex-wrap: wrap;
-        padding-block-end: 1.5rem;
-        border-block-end: var(--rule);
+        align-items: center;
+        padding-block-end: 1.1rem;
       }
 
       .filters input {
@@ -200,27 +349,24 @@ import '../styles/tokens.css';
       }
 
       .filters label {
-        padding: 0.4rem 0.95rem;
-        font-size: 0.88rem;
-        font-weight: 600;
-        color: var(--muted);
-        border: var(--rule);
+        min-block-size: 40px;
+        display: inline-flex;
+        align-items: center;
+        padding: 0.35rem 1rem;
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--ink);
+        background: var(--card);
         border-radius: 999px;
         cursor: pointer;
         transition:
           color var(--press) var(--ease-out),
-          border-color var(--press) var(--ease-out),
           background var(--press) var(--ease-out);
-      }
-
-      .filters label:hover {
-        color: var(--ink);
       }
 
       .filters input:checked + label {
         color: var(--plaster);
         background: var(--ink-deep);
-        border-color: var(--ink-deep);
       }
 
       .filters input:focus-visible + label {
@@ -230,9 +376,9 @@ import '../styles/tokens.css';
 
       .count {
         margin-inline-start: auto;
-        align-self: center;
         font-size: var(--t-label);
-        color: var(--muted);
+        font-weight: 700;
+        color: var(--muted-warm);
         font-variant-numeric: tabular-nums;
       }
 
@@ -244,19 +390,16 @@ import '../styles/tokens.css';
         justify-content: space-between;
         gap: 1.25rem;
         flex-wrap: wrap;
-        background: var(--stone-warm);
-        border: 1px solid var(--stone);
-        border-radius: 8px;
-        padding: 1.1rem 1.25rem;
+        background: var(--card);
+        border-radius: var(--radius);
+        padding: 1.2rem 1.4rem;
         margin-block-end: 1.5rem;
-        /* --muted is 4.35:1 on this tinted ground and 4.87:1 on plaster. */
-        --muted: #67685f;
       }
 
       .onboard b {
         font-family: 'Frank Ruhl Libre', serif;
         font-weight: 700;
-        font-size: 1.15rem;
+        font-size: 1.2rem;
       }
 
       .onboard p {
@@ -265,45 +408,62 @@ import '../styles/tokens.css';
         max-inline-size: 52ch;
       }
 
-      /* ---------- The grid ----------
-         auto-fit with a floor, so the column count follows the width without
-         a breakpoint per size. */
+      /* ---------- Workspace ----------
+         Cards on the start side; from 1100px the chosen listing opens in a
+         panel on the end side, sticky, with its own chart. */
+
+      .workspace {
+        display: grid;
+        gap: clamp(1rem, 2vw, 1.5rem);
+        padding-block-end: 3rem;
+        align-items: start;
+      }
 
       .grid {
         list-style: none;
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-        gap: clamp(1rem, 2vw, 1.5rem);
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
+        gap: clamp(0.8rem, 1.6vw, 1.1rem);
         padding: 0;
         margin: 0;
-        padding-block: 1.75rem 3rem;
       }
 
       .card {
         display: flex;
         flex-direction: column;
-        border: var(--rule);
-        border-radius: 8px;
+        border-radius: var(--radius);
         overflow: hidden;
-        background: var(--plaster);
-        transition: box-shadow var(--press) var(--ease-out);
+        background: var(--card);
+        outline: 2px solid transparent;
+        outline-offset: -2px;
+        transition:
+          box-shadow 0.35s var(--ease-out),
+          transform 0.35s var(--ease-out),
+          outline-color var(--press) var(--ease-out);
       }
 
       .card:hover {
-        box-shadow: 0 8px 26px -14px rgba(25, 26, 21, 0.5);
+        transform: translateY(-3px);
+        box-shadow: 0 18px 40px -24px rgba(17, 18, 8, 0.45);
+      }
+
+      .card.is-chosen {
+        outline-color: var(--ink-deep);
       }
 
       /* A card the agent cannot send yet reads as unfinished at a glance. */
       .card[data-status='draft'] {
-        border-style: dashed;
+        outline: 2px dashed var(--stone);
       }
 
       .shot {
         position: relative;
         display: block;
-        aspect-ratio: 16 / 10;
+        aspect-ratio: 4 / 3;
         background: var(--stone-warm);
         overflow: hidden;
+        margin: 0.5rem 0.5rem 0;
+        border-radius: 14px;
         /* It is an <a> when the listing is sendable, so the placeholder text
            inside it would otherwise render underlined and link-coloured. */
         text-decoration: none;
@@ -315,6 +475,11 @@ import '../styles/tokens.css';
         block-size: 100%;
         object-fit: cover;
         display: block;
+        transition: transform 0.9s var(--ease-out);
+      }
+
+      .card:hover .shot img {
+        transform: scale(1.04);
       }
 
       .shot .none {
@@ -325,33 +490,36 @@ import '../styles/tokens.css';
         color: var(--muted);
       }
 
-      .pill {
+      .pill,
+      .tpl {
         position: absolute;
         inset-block-start: 0.6rem;
+        padding: 0.18rem 0.65rem;
+        font-size: 0.72rem;
+        font-weight: 800;
+        border-radius: 999px;
+      }
+
+      .pill {
         inset-inline-start: 0.6rem;
-        padding: 0.12rem 0.55rem;
-        font-size: 0.7rem;
-        font-weight: 700;
-        border-radius: 3px;
         background: var(--plaster);
         color: var(--ink);
-        border: 1px solid var(--stone);
+      }
+
+      .tpl {
+        inset-inline-end: 0.6rem;
+        background: rgba(17, 18, 8, 0.72);
+        color: var(--plaster);
       }
 
       .card[data-status='published'] .pill {
         background: var(--olive);
         color: var(--plaster);
-        border-color: var(--olive);
       }
 
       .card[data-status='sold'] .pill {
         background: var(--ink-deep);
         color: var(--plaster);
-        border-color: var(--ink-deep);
-      }
-
-      .card[data-status='archived'] {
-        opacity: 0.82;
       }
 
       .card[data-status='archived'] .pill {
@@ -360,16 +528,18 @@ import '../styles/tokens.css';
       }
 
       .body {
-        padding: 0.9rem 1rem 0.4rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+        padding: 0.85rem 1rem 0.4rem;
         flex: 1 1 auto;
       }
 
       .body b {
-        display: block;
         font-family: 'Frank Ruhl Libre', serif;
         font-weight: 500;
-        font-size: 1.1rem;
-        line-height: 1.25;
+        font-size: 1.08rem;
+        line-height: 1.3;
         /* Two lines, then ellipsis: a title the agent typed can be long and
            ragged card heights make a grid look broken. */
         overflow: hidden;
@@ -378,51 +548,98 @@ import '../styles/tokens.css';
         -webkit-box-orient: vertical;
       }
 
+      .price-row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+      }
+
       .price {
         font-family: 'Frank Ruhl Libre', serif;
         font-weight: 700;
-        font-size: 1.25rem;
+        font-size: 1.3rem;
         letter-spacing: -0.015em;
         font-variant-numeric: tabular-nums;
-        margin-block-start: 0.35rem;
       }
 
       .where {
         font-size: var(--t-label);
+        font-weight: 600;
         color: var(--muted);
       }
 
-      .hint {
-        font-size: 0.76rem;
+      .stats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem 0.9rem;
+        margin-block-start: 0.5rem;
+        padding-block-start: 0.6rem;
+        border-block-start: var(--rule);
+        font-size: 0.8rem;
+        font-weight: 700;
         color: var(--muted);
-        padding: 0 1rem 0.5rem;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .stats span {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+      }
+
+      .stats svg {
+        inline-size: 14px;
+        block-size: 14px;
+      }
+
+      .stats bdi {
+        color: var(--ink);
+      }
+
+      .hint {
+        margin: 0.4rem 1rem 0;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+        border-radius: 10px;
+        color: var(--ink);
+        background: #f7efd9;
+      }
+
+      .card[data-status='draft'] .hint,
+      .card[data-status='archived'] .hint {
+        background: var(--stone-warm);
+        color: var(--muted-warm);
       }
 
       /* ---------- Card actions ----------
          Icon-free on purpose. Hebrew labels are short, an icon set is another
-         thing to get right in RTL (CLAUDE.md §4.3), and a row of four glyphs
-         an agent has to decode is slower than four words they can read. */
+         thing to get right in RTL (CLAUDE.md §4.3), and a row of glyphs an
+         agent has to decode is slower than words they can read. */
 
       .acts {
         display: flex;
         flex-wrap: wrap;
         gap: 0.35rem;
-        padding: 0.5rem 0.75rem 0.85rem;
-        border-block-start: var(--rule);
-        margin-block-start: 0.6rem;
+        padding: 0.7rem 0.8rem 0.9rem;
       }
 
       .act {
-        padding: 0.4rem 0.7rem;
+        min-block-size: 36px;
+        padding: 0.35rem 0.8rem;
         font: inherit;
-        font-size: 0.84rem;
+        font-size: 0.82rem;
         font-weight: 700;
         color: var(--ink);
-        background: none;
+        background: var(--card);
         border: var(--rule);
-        border-radius: 4px;
+        border-radius: 999px;
         cursor: pointer;
         text-decoration: none;
+        display: inline-flex;
+        align-items: center;
         transition:
           background var(--press) var(--ease-out),
           border-color var(--press) var(--ease-out);
@@ -430,18 +647,17 @@ import '../styles/tokens.css';
 
       .act:hover {
         background: var(--stone-warm);
-        border-color: var(--muted);
       }
 
       .act.primary {
-        background: var(--olive);
+        background: var(--ink-deep);
         color: var(--plaster);
-        border-color: var(--olive);
+        border-color: var(--ink-deep);
       }
 
       .act.primary:hover {
-        background: var(--olive-lift);
-        border-color: var(--olive-lift);
+        background: var(--olive);
+        border-color: var(--olive);
       }
 
       .act:disabled {
@@ -449,19 +665,305 @@ import '../styles/tokens.css';
         cursor: default;
       }
 
+      /* ---------- Detail panel ---------- */
+
+      .detail {
+        display: none;
+      }
+
+      @media (min-width: 1100px) {
+        .workspace {
+          grid-template-columns: minmax(0, 1fr) 25rem;
+        }
+
+        .detail {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+          position: sticky;
+          inset-block-start: 1.2rem;
+          padding: 0.8rem 0.8rem 1.2rem;
+          background: var(--card);
+          border-radius: 24px;
+          box-shadow: 0 30px 60px -40px rgba(17, 18, 8, 0.45);
+        }
+
+        .detail[hidden] {
+          display: none;
+        }
+      }
+
+      .d-pics {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        grid-template-rows: repeat(2, 5.2rem);
+        gap: 0.45rem;
+      }
+
+      .d-pics img {
+        inline-size: 100%;
+        block-size: 100%;
+        object-fit: cover;
+        border-radius: 14px;
+        display: block;
+        background: var(--stone-warm);
+      }
+
+      .d-pics img:first-child {
+        grid-row: 1 / 3;
+      }
+
+      .d-pics[data-n='1'] {
+        grid-template-columns: 1fr;
+      }
+
+      .d-head {
+        padding-inline: 0.4rem;
+      }
+
+      .d-head h2 {
+        font-family: 'Frank Ruhl Libre', serif;
+        font-weight: 700;
+        font-size: 1.35rem;
+        line-height: 1.2;
+      }
+
+      .d-head .price {
+        font-size: 1.6rem;
+        margin-block-start: 0.2rem;
+      }
+
+      .d-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        margin-inline: 0.4rem;
+        border-block: var(--rule);
+      }
+
+      .d-stats div {
+        display: flex;
+        flex-direction: column-reverse;
+        padding: 0.8rem 0.2rem;
+      }
+
+      .d-stats div + div {
+        border-inline-start: var(--rule);
+        padding-inline-start: 0.8rem;
+      }
+
+      .d-stats dd {
+        margin: 0;
+        font-family: 'Frank Ruhl Libre', serif;
+        font-size: 1.7rem;
+        line-height: 1.1;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .d-stats dt {
+        font-size: var(--t-label);
+        font-weight: 700;
+        color: var(--muted);
+      }
+
+      .d-note {
+        padding-inline: 0.4rem;
+        font-size: 0.9rem;
+        color: var(--muted);
+      }
+
+      /* ---------- Chart ----------
+         One series — views per day — so no legend: the title names it.
+         Bars at most 24px, 4px rounded tops, a 2px gap, one hairline
+         baseline. Oldest day on the start side, which in Hebrew is the right:
+         time reads the way the page does. */
+
+      .chart {
+        padding-inline: 0.4rem;
+      }
+
+      .chart h3 {
+        font-size: var(--t-label);
+        font-weight: 800;
+        color: var(--muted);
+        margin-block-end: 0.6rem;
+      }
+
+      .bars {
+        position: relative;
+        display: flex;
+        align-items: flex-end;
+        gap: 2px;
+        block-size: 9rem;
+        padding-block-start: 1.4rem;
+        border-block-end: 1px solid var(--stone);
+        list-style: none;
+        margin: 0;
+        padding-inline: 0;
+      }
+
+      .bars li {
+        flex: 1 1 0;
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        block-size: 100%;
+        position: relative;
+        cursor: default;
+      }
+
+      .bars .b {
+        inline-size: min(100%, 24px);
+        block-size: var(--h, 0%);
+        min-block-size: 2px;
+        border-radius: 4px 4px 0 0;
+        background: color-mix(in srgb, var(--olive) 34%, #fff);
+        transform-origin: bottom;
+        transition: background var(--press) var(--ease-out);
+      }
+
+      .bars li.is-last .b,
+      .bars li:hover .b {
+        background: var(--olive);
+      }
+
+      .bars .cap {
+        position: absolute;
+        inset-block-end: calc(var(--h, 0%) + 0.3rem);
+        font-size: 0.72rem;
+        font-weight: 800;
+        color: var(--ink);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
+
+      .axis {
+        display: flex;
+        justify-content: space-between;
+        margin-block-start: 0.35rem;
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* Centred over its bar; the outermost bars anchor theirs to the
+         chart's edge so a tooltip never spills past the panel. */
+      .tip {
+        position: absolute;
+        inset-block-end: calc(100% + 0.4rem);
+        inset-inline-start: 50%;
+        z-index: 3;
+        padding: 0.35rem 0.6rem;
+        border-radius: 8px;
+        background: var(--ink-deep);
+        color: var(--plaster);
+        font-size: 0.75rem;
+        font-weight: 700;
+        white-space: nowrap;
+        pointer-events: none;
+        /* Half its own width back towards the start edge, which centres it
+           on the bar. --dir makes that direction follow the page's. */
+        transform: translateX(calc(var(--dir) * -50%));
+      }
+
+      .tip.at-start {
+        inset-inline-start: 0;
+        transform: none;
+      }
+
+      .tip.at-end {
+        inset-inline-start: auto;
+        inset-inline-end: 0;
+        transform: none;
+      }
+
+      .table-view {
+        margin-block-start: 0.6rem;
+        font-size: 0.82rem;
+      }
+
+      .table-view summary {
+        cursor: pointer;
+        font-weight: 700;
+        color: var(--muted);
+      }
+
+      .table-view table {
+        inline-size: 100%;
+        border-collapse: collapse;
+        margin-block-start: 0.4rem;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .table-view th,
+      .table-view td {
+        text-align: start;
+        padding: 0.2rem 0.3rem;
+        border-block-end: var(--rule);
+      }
+
+      .linkbox {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin-inline: 0.4rem;
+        padding-block: 0.45rem;
+        padding-inline-start: 0.9rem;
+        padding-inline-end: 0.45rem;
+        background: var(--stone-warm);
+        border-radius: 999px;
+      }
+
+      .linkbox span {
+        font-size: var(--t-label);
+        font-weight: 800;
+        color: var(--muted-warm);
+      }
+
+      .linkbox bdi {
+        flex: 1 1 auto;
+        min-inline-size: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-weight: 700;
+        font-size: 0.9rem;
+      }
+
+      .linkbox .act {
+        white-space: nowrap;
+      }
+
+      .d-acts {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+        margin-inline: 0.4rem;
+      }
+
+      .d-acts .act {
+        justify-content: center;
+        min-block-size: 46px;
+        font-size: 0.9rem;
+      }
+
+      .d-acts .act.primary {
+        grid-column: 1 / -1;
+      }
+
       /* ---------- States ---------- */
 
       .state {
         padding-block: 3.5rem;
         text-align: center;
-        color: var(--muted);
+        color: var(--muted-warm);
       }
 
       .state b {
         display: block;
         font-family: 'Frank Ruhl Libre', serif;
         font-weight: 700;
-        font-size: 1.4rem;
+        font-size: 1.5rem;
         color: var(--ink);
         margin-block-end: 0.4rem;
       }
@@ -483,8 +985,8 @@ import '../styles/tokens.css';
         background: var(--ink-deep);
         color: var(--plaster);
         font-size: 0.9rem;
-        font-weight: 600;
-        border-radius: 6px;
+        font-weight: 700;
+        border-radius: 999px;
         box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6);
         z-index: 50;
       }
@@ -502,113 +1004,199 @@ import '../styles/tokens.css';
         outline-color: var(--plaster);
       }
 
-      [hidden] {
-        display: none !important;
+      .skip {
+        position: absolute;
+        inset-inline-start: 1rem;
+        inset-block-start: -3rem;
+        padding: 0.5rem 1rem;
+        background: var(--ink-deep);
+        color: var(--plaster);
+        z-index: 60;
+      }
+
+      .skip:focus {
+        inset-block-start: 1rem;
       }
 
       .dash-foot {
-        padding-block: 1.5rem 2rem;
-        font-size: 0.85rem;
-        color: var(--muted);
+        padding-block: 1.5rem 2.5rem;
+        font-size: var(--t-label);
+        color: var(--muted-warm);
         text-align: center;
       }
 
       .dash-foot a {
-        display: inline-flex;
-        align-items: center;
-        min-block-size: 44px;
-        color: var(--muted);
+        color: inherit;
       }
 
-      @media (prefers-reduced-motion: reduce) {
-        .card,
-        .act,
-        .cta,
-        .filters label {
-          transition: none;
+      /* ---------- Motion ----------
+         Tiles and cards settle in; numbers count up to the value already in
+         the markup; the chart's bars grow from the baseline. None of it runs
+         for a reader who asked for less motion. */
+
+      @media (prefers-reduced-motion: no-preference) {
+        .kpi,
+        .card {
+          animation: dash-in 0.7s var(--ease-out) both;
+          animation-delay: calc(var(--i, 0) * 70ms);
+        }
+
+        .spark path.line {
+          stroke-dasharray: 400;
+          animation: dash-draw 1.6s var(--ease-out) 0.2s both;
+        }
+
+        .bars .b {
+          animation: dash-grow 0.8s var(--ease-out) both;
+          animation-delay: calc(var(--i, 0) * 22ms);
+        }
+
+        .detail.is-new {
+          animation: dash-in 0.5s var(--ease-out) both;
+        }
+
+        @keyframes dash-in {
+          from {
+            opacity: 0;
+            transform: translateY(14px);
+          }
+        }
+
+        @keyframes dash-draw {
+          from {
+            stroke-dashoffset: 400;
+          }
+          to {
+            stroke-dashoffset: 0;
+          }
+        }
+
+        @keyframes dash-grow {
+          from {
+            transform: scaleY(0);
+          }
         }
       }
     </style>
   </head>
-
   <body>
     <a class="skip" href="#main">{t('a11y.skip')}</a>
+
     <header class="bar">
       <div class="shell">
         <BrandMark />
         <nav>
           <a href="/me/">{t('agent.editDetails')}</a>
           <a id="nav-admin" href="/admin/" hidden>{t('admin.link')}</a>
-          <a class="cta" href="/new/?fresh=1">{t('dash.new')}</a>
+          <a class="cta" href="/new/?fresh=1">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+            {t('dash.new')}
+          </a>
         </nav>
       </div>
     </header>
 
     <main id="main" class="shell">
       <div class="head">
-        <h1>{t('dash.title')}</h1>
-        <p class="lead">{t('dash.lead')}</p>
+        <div>
+          <p class="hello" id="hello" hidden></p>
+          <h1>{t('dash.title')}</h1>
+          <p class="lead" id="lead">{t('dash.lead')}</p>
+        </div>
       </div>
 
       {/*
-        Present from the start, hidden by script. The filter is a radio group
-        so the browser owns the "one of five" behaviour; the script only reads
-        which one is checked and sets a data attribute on the grid.
-      */}
-      {/*
-        FIRST-RUN ONBOARDING. There was none: an agent signed in, landed here,
-        and nothing ever told them their name and phone were what every
-        listing they made would carry — or that the page's only button needs
-        that phone to go anywhere.
-
-        Shown only while the profile is genuinely untouched (isProfileEmpty),
-        not while it is merely incomplete: nagging somebody who has already
-        been to the page is how a banner gets ignored.
+        FIRST-RUN ONBOARDING. Shown only while the profile is genuinely
+        untouched (isProfileEmpty), not while it is merely incomplete: nagging
+        somebody who has already been to the page is how a banner gets
+        ignored.
       */}
       <div class="onboard" id="onboard" hidden>
         <div>
           <b>{t('dash.onboardTitle')}</b>
           <p>{t('dash.onboardBody')}</p>
         </div>
-        <a class="cta" href="/me/">{t('dash.onboardCta')}</a>
+        <a class="cta dark" href="/me/">{t('dash.onboardCta')}</a>
       </div>
 
+      {/*
+        The four tiles. In the markup from the start and filled by script;
+        hidden until there is at least one listing, because a zero on every
+        tile is not information.
+      */}
+      <section class="kpis" id="kpis" aria-label={t('dash.title')} hidden>
+        <div class="kpi" style="--i:0">
+          <span class="kpi-lbl">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>
+            {t('dash.kpiViews')} · <span data-window></span>
+          </span>
+          <span class="kpi-num"><bdi id="k-views">0</bdi></span>
+          <span class="kpi-note plain">{t('dash.kpiViewsNote')}</span>
+          <svg class="spark" id="s-views" viewBox="0 0 200 44" aria-hidden="true" data-empty></svg>
+        </div>
+        <div class="kpi" style="--i:1">
+          <span class="kpi-lbl">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7A2.5 2.5 0 0 1 17.5 16H9l-4 3.2A.8.8 0 0 1 4 18.6V6.5Z"/></svg>
+            {t('dash.kpiTaps')} · <span data-window></span>
+          </span>
+          <span class="kpi-num"><bdi id="k-taps">0</bdi></span>
+          <span class="kpi-note">{t('dash.kpiTapsNote')}</span>
+          <svg class="spark" id="s-taps" viewBox="0 0 200 44" aria-hidden="true" data-empty></svg>
+        </div>
+        <div class="kpi" style="--i:2">
+          <span class="kpi-lbl">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M7.5 9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM16.5 18a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            {t('dash.kpiRate')}
+          </span>
+          <span class="kpi-num"><bdi id="k-rate">—</bdi></span>
+          <span class="kpi-note plain" id="k-rate-note">{t('dash.kpiRateNote')}</span>
+        </div>
+        <div class="kpi" style="--i:3">
+          <span class="kpi-lbl">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+            {t('dash.kpiLive')}
+          </span>
+          <span class="kpi-num"><bdi id="k-live">0</bdi><small id="k-of"></small></span>
+          <span class="kpi-note plain" id="k-live-note"></span>
+          <div class="meter" aria-hidden="true"><span id="k-meter"></span></div>
+        </div>
+      </section>
+
+      {/*
+        Present from the start, hidden by script. The filter is a radio group
+        so the browser owns the "one of five" behaviour; the script only reads
+        which one is checked.
+      */}
       <div class="filters" id="filters" hidden>
         <input type="radio" name="filter" id="f-all" value="all" checked />
         <label for="f-all">{t('dash.filterAll')}</label>
-
-        <input type="radio" name="filter" id="f-draft" value="draft" />
-        <label for="f-draft">{t('dash.filterDraft')}</label>
-
         <input type="radio" name="filter" id="f-published" value="published" />
         <label for="f-published">{t('dash.filterPublished')}</label>
-
+        <input type="radio" name="filter" id="f-draft" value="draft" />
+        <label for="f-draft">{t('dash.filterDraft')}</label>
         <input type="radio" name="filter" id="f-sold" value="sold" />
         <label for="f-sold">{t('dash.filterSold')}</label>
-
         <input type="radio" name="filter" id="f-archived" value="archived" />
         <label for="f-archived">{t('dash.filterArchived')}</label>
-
         <span class="count" id="count"></span>
       </div>
 
       <p class="state" id="loading">{t('common.loading')}</p>
-
       <div class="state" id="anon" hidden>
         <b>{t('dash.signedOut')}</b>
         <a href="/enter/">{t('dash.signIn')}</a>
       </div>
-
       <div class="state" id="empty" hidden>
         <b>{t('dash.emptyTitle')}</b>
         {t('dash.emptyBody')} <a href="/new/?fresh=1">{t('dash.new')}</a>
       </div>
-
       <p class="state" id="none" hidden>{t('dash.emptyFiltered')}</p>
-
       <p class="state" id="failed" hidden>{t('dash.failed')}</p>
 
-      <ul class="grid" id="grid" hidden></ul>
+      <div class="workspace" id="workspace" hidden>
+        <ul class="grid" id="grid"></ul>
+        <aside class="detail" id="detail" aria-live="polite" hidden></aside>
+      </div>
     </main>
 
     <footer class="dash-foot">
@@ -629,8 +1217,16 @@ import '../styles/tokens.css';
 
     <script>
       import { isProfileEmpty } from '@/features/agents/profile';
-
-      import { t } from '../lib/i18n';
+      import {
+        contactRate,
+        daysSincePublished,
+        lastDays,
+        series,
+        totals,
+        type DailyRow,
+        type DayPoint,
+      } from '@/features/analytics/dashboard-stats';
+      import { formatValue, parts, t, type Values } from '../lib/i18n';
       import { loadProfile } from '../lib/profile';
       import { supabase, supabaseConfigured } from '../lib/supabase';
       import { revealIfSiteAdmin } from '../lib/site-admin';
@@ -642,21 +1238,27 @@ import '../styles/tokens.css';
         price: number | null;
         status: string;
         category: string;
+        template?: string | null;
         published_at: string | null;
-        media: { cover?: { url?: string; alt?: string } } | null;
+        media: {
+          cover?: { url?: string; alt?: string };
+          gallery?: { url?: string; alt?: string }[];
+        } | null;
         location: { city?: string; street?: string } | null;
         views?: number;
         waTaps?: number;
       };
 
       const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
-
       const grid = $<HTMLUListElement>('grid');
+      const detail = $('detail');
       const filters = $('filters');
       const count = $('count');
       const say = $('say');
+      const sparkViews = document.getElementById('s-views') as unknown as SVGSVGElement;
+      const sparkTaps = document.getElementById('s-taps') as unknown as SVGSVGElement;
 
-      const PANELS = ['loading', 'anon', 'empty', 'none', 'failed', 'grid'];
+      const PANELS = ['loading', 'anon', 'empty', 'none', 'failed', 'workspace'];
       const show = (id: string) => {
         for (const name of PANELS) {
           const node = document.getElementById(name);
@@ -664,18 +1266,21 @@ import '../styles/tokens.css';
         }
       };
 
+      const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const WINDOW = 30;
+      const today = new Date();
+      const windowDays = lastDays(today, WINDOW);
+
       const money = new Intl.NumberFormat('he-IL', {
         style: 'currency',
         currency: 'ILS',
         maximumFractionDigits: 0,
       });
+      const num = (value: number) => formatValue(value);
 
-      // Four weeks. A constant here, not a config system: this is the broker
-      // duty to update or remove an unavailable listing (OPPORTUNITIES.md
-      // §1b), and the copy asks whether it is still available rather than
-      // asserting that it is not.
+      // Four weeks. The broker duty to update or remove an unavailable
+      // listing (OPPORTUNITIES.md §1b); the copy asks rather than asserts.
       const STALE_AFTER_MS = 28 * 24 * 60 * 60 * 1000;
-
       const isStalePublished = (row: Row, now: number): boolean => {
         if (row.status !== 'published' || !row.published_at) return false;
         const published = Date.parse(row.published_at);
@@ -696,28 +1301,66 @@ import '../styles/tokens.css';
 
       /** Every row we loaded, so filtering never needs a second request. */
       let rows: Row[] = [];
+      /** Per-day rows, or undefined when the daily view could not be read. */
+      let daily: DailyRow[] | undefined;
+      let chosen: string | undefined;
 
       const statusLabel = (status: string) =>
         t(`dash.status${status.charAt(0).toUpperCase()}${status.slice(1)}`);
 
-      /**
-       * The public URL of a listing.
-       *
-       * Built from the page's own origin rather than from a configured host.
-       * On the deployed site that is the real origin; in dev it is localhost,
-       * which is correct — a link copied while testing should point at the
-       * thing being tested, not at production.
-       */
       const publicUrl = (slug: string) => `${window.location.origin}/a/${slug}/`;
 
       /**
-       * Copy, with a fallback for the browsers and contexts that refuse.
+       * A message with its numbers isolated.
        *
-       * navigator.clipboard needs a secure context and throws when a
-       * permission is denied. An agent standing in front of a client does not
-       * care why; they need the link. So on failure we say where to get it
-       * rather than failing silently.
+       * Hebrew around a number reorders it without <bdi> (CLAUDE.md §4.2), so
+       * interpolated values become their own elements rather than being
+       * concatenated into the sentence.
        */
+      const sentence = (path: string, values: Values): Node[] =>
+        parts(path).map((part) => {
+          if ('text' in part) return document.createTextNode(part.text);
+          const bdi = document.createElement('bdi');
+          const value = values[part.slot];
+          bdi.textContent = value === undefined ? '' : formatValue(value);
+          return bdi;
+        });
+
+      const svgNS = 'http://www.w3.org/2000/svg';
+      const icon = (d: string, fill = false) => {
+        const svg = document.createElementNS(svgNS, 'svg');
+        svg.setAttribute('viewBox', '0 0 24 24');
+        svg.setAttribute('aria-hidden', 'true');
+        const path = document.createElementNS(svgNS, 'path');
+        path.setAttribute('d', d);
+        if (fill) path.setAttribute('fill', 'currentColor');
+        else {
+          path.setAttribute('fill', 'none');
+          path.setAttribute('stroke', 'currentColor');
+          path.setAttribute('stroke-width', '2');
+          path.setAttribute('stroke-linecap', 'round');
+        }
+        svg.append(path);
+        return svg;
+      };
+      const EYE = 'M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Zm10 3a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z';
+      const CHAT = 'M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7A2.5 2.5 0 0 1 17.5 16H9l-4 3.2A.8.8 0 0 1 4 18.6V6.5Z';
+      const CLOCK = 'M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z';
+
+      /** Counts a <bdi> up to the value already written into it. */
+      const countUp = (el: HTMLElement, to: number, text: string) => {
+        el.textContent = text;
+        if (reduced || !(to > 0)) return;
+        const start = performance.now();
+        const tick = (now: number) => {
+          const k = Math.min(1, (now - start) / 1100);
+          const eased = 1 - (1 - k) ** 3;
+          el.textContent = k < 1 ? num(Math.round(to * eased)) : text;
+          if (k < 1) requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      };
+
       const copy = async (text: string) => {
         try {
           await navigator.clipboard.writeText(text);
@@ -729,20 +1372,12 @@ import '../styles/tokens.css';
 
       const markSold = async (slug: string, button: HTMLButtonElement) => {
         if (!window.confirm(t('dash.confirmSold'))) return;
-
         button.disabled = true;
-
         // No owner filter, for the same reason the select has none: the
         // update policy in 0002 is what restricts this to the agent's own row.
-        const { error } = await supabase()
-          .from('listings')
-          .update({ status: 'sold' })
-          .eq('slug', slug);
-
+        const { error } = await supabase().from('listings').update({ status: 'sold' }).eq('slug', slug);
         button.disabled = false;
-
         if (error) return tell(t('dash.soldFailed'), 'bad');
-
         const row = rows.find((candidate) => candidate.slug === slug);
         if (row) row.status = 'sold';
         tell(t('dash.soldDone'));
@@ -751,53 +1386,169 @@ import '../styles/tokens.css';
 
       const deleteListing = async (slug: string, button: HTMLButtonElement) => {
         if (!window.confirm(t('dash.confirmDelete'))) return;
-
         button.disabled = true;
-
         const { error } = await supabase().from('listings').delete().eq('slug', slug);
-
         button.disabled = false;
-
         if (error) return tell(t('dash.deletedFailed'), 'bad');
-
         rows = rows.filter((candidate) => candidate.slug !== slug);
+        if (chosen === slug) chosen = undefined;
         tell(t('dash.deletedDone'));
         paint();
       };
 
       const archiveListing = async (slug: string, button: HTMLButtonElement) => {
         if (!window.confirm(t('dash.confirmArchive'))) return;
-
         button.disabled = true;
-
         const { error } = await supabase()
           .from('listings')
           .update({ status: 'archived' })
           .eq('slug', slug);
-
         button.disabled = false;
-
         if (error) return tell(t('dash.archivedFailed'), 'bad');
-
         const row = rows.find((candidate) => candidate.slug === slug);
         if (row) row.status = 'archived';
         tell(t('dash.archivedDone'));
         paint();
       };
 
-      const card = (row: Row) => {
+      const button = (label: string, className: string, onClick: (self: HTMLButtonElement) => void) => {
+        const node = document.createElement('button');
+        node.type = 'button';
+        node.className = className;
+        node.textContent = label;
+        node.addEventListener('click', () => onClick(node));
+        return node;
+      };
+
+      const link = (label: string, className: string, href: string) => {
+        const node = document.createElement('a');
+        node.className = className;
+        node.href = href;
+        node.textContent = label;
+        return node;
+      };
+
+      const flatTitle = (row: Row) =>
+        String(row.title ?? '').replace(/\s*\n\s*/g, ' ').trim() || '—';
+
+      const priceNode = (row: Row) => {
+        const price = document.createElement('div');
+        price.className = 'price';
+        const bdi = document.createElement('bdi');
+        bdi.textContent = money.format(Number(row.price ?? 0));
+        price.append(bdi);
+        return price;
+      };
+
+      const daysLive = (row: Row) =>
+        row.published_at
+          ? Math.max(0, Math.floor((Date.now() - Date.parse(row.published_at)) / 86400000))
+          : undefined;
+
+      // ------------------------------------------------------------------
+      // Tiles
+      // ------------------------------------------------------------------
+
+      /** A 2px line with a 10% wash under it and an end dot. One series. */
+      const drawSpark = (svg: SVGSVGElement, values: number[]) => {
+        svg.replaceChildren();
+        const max = Math.max(...values, 1);
+        const W = 200;
+        const H = 44;
+        const step = values.length > 1 ? W / (values.length - 1) : W;
+        // Oldest on the start side, i.e. the right in RTL.
+        const x = (index: number) => W - index * step;
+        const y = (value: number) => H - 4 - (value / max) * (H - 10);
+        const points = values.map((value, index) => `${x(index).toFixed(1)},${y(value).toFixed(1)}`);
+        const area = document.createElementNS(svgNS, 'path');
+        area.setAttribute('d', `M${points.join('L')}L${x(values.length - 1)},${H}L${x(0)},${H}Z`);
+        area.setAttribute('fill', 'var(--olive)');
+        area.setAttribute('fill-opacity', '0.1');
+        const line = document.createElementNS(svgNS, 'path');
+        line.setAttribute('class', 'line');
+        line.setAttribute('d', `M${points.join('L')}`);
+        line.setAttribute('fill', 'none');
+        line.setAttribute('stroke', 'var(--olive)');
+        line.setAttribute('stroke-width', '2');
+        line.setAttribute('stroke-linejoin', 'round');
+        line.setAttribute('stroke-linecap', 'round');
+        const last = values.length - 1;
+        const dot = document.createElementNS(svgNS, 'circle');
+        dot.setAttribute('cx', String(x(last)));
+        dot.setAttribute('cy', String(y(values[last] ?? 0)));
+        dot.setAttribute('r', '4');
+        dot.setAttribute('fill', 'var(--olive)');
+        dot.setAttribute('stroke', '#fff');
+        dot.setAttribute('stroke-width', '2');
+        svg.append(area, line, dot);
+        svg.removeAttribute('data-empty');
+      };
+
+      const paintTiles = () => {
+        const live = rows.filter((row) => row.status === 'published');
+        const kept = rows.filter((row) => row.status !== 'archived');
+        const liveIds = new Set(rows.filter((row) => row.status !== 'draft').map((row) => row.id));
+
+        let views: number;
+        let taps: number;
+        const windowLabel = daily ? t('dash.kpiWindow30') : t('dash.kpiWindowAll');
+        for (const node of document.querySelectorAll<HTMLElement>('[data-window]')) {
+          node.textContent = windowLabel;
+        }
+
+        if (daily) {
+          const own = daily.filter((row) => liveIds.has(row.listing_id));
+          const points = series(own, windowDays);
+          ({ views, taps } = totals(points));
+          drawSpark(sparkViews, points.map((p) => p.views));
+          drawSpark(sparkTaps, points.map((p) => p.taps));
+        } else {
+          views = rows.reduce((sum, row) => sum + (row.views ?? 0), 0);
+          taps = rows.reduce((sum, row) => sum + (row.waTaps ?? 0), 0);
+        }
+
+        countUp($('k-views'), views, num(views));
+        countUp($('k-taps'), taps, num(taps));
+
+        const rate = contactRate(views, taps);
+        $('k-rate').textContent = rate === undefined ? '—' : `${rate.toFixed(1)}%`;
+        $('k-rate-note').textContent = rate === undefined ? t('dash.kpiRateNone') : t('dash.kpiRateNote');
+
+        countUp($('k-live'), live.length, num(live.length));
+        $('k-of').replaceChildren(...sentence('dash.kpiOf', { total: kept.length }));
+        $('k-live-note').replaceChildren(
+          ...sentence('dash.kpiLiveNote', {
+            drafts: rows.filter((row) => row.status === 'draft').length,
+            sold: rows.filter((row) => row.status === 'sold').length,
+          }),
+        );
+        const share = kept.length > 0 ? Math.round((live.length / kept.length) * 100) : 0;
+        $('k-meter').style.setProperty('--share', `${share}%`);
+
+        $('lead').replaceChildren(
+          ...sentence(daily ? 'dash.leadLive' : 'dash.leadLiveAll', { live: live.length, taps }),
+        );
+        $('kpis').hidden = false;
+      };
+
+      // ------------------------------------------------------------------
+      // Cards
+      // ------------------------------------------------------------------
+
+      const card = (row: Row, index: number) => {
         const item = document.createElement('li');
         item.className = 'card';
         item.dataset.status = row.status;
-
+        item.dataset.slug = row.slug;
+        item.style.setProperty('--i', String(Math.min(index, 8)));
+        if (row.slug === chosen) item.classList.add('is-chosen');
         const href = publicUrl(row.slug);
-          const sendable = row.status === 'published';
+        const sendable = row.status === 'published';
 
         // --- Cover -------------------------------------------------------
         const shot = document.createElement(sendable ? 'a' : 'div');
         shot.className = 'shot';
         if (sendable) (shot as HTMLAnchorElement).href = href;
-
         const cover = row.media?.cover?.url;
         if (cover) {
           const image = document.createElement('img');
@@ -815,170 +1566,342 @@ import '../styles/tokens.css';
           none.textContent = t('dash.noPhoto');
           shot.append(none);
         }
-
         const pill = document.createElement('span');
         pill.className = 'pill';
         pill.textContent = statusLabel(row.status);
         shot.append(pill);
+        if (row.template) {
+          const tpl = document.createElement('span');
+          tpl.className = 'tpl';
+          tpl.textContent = t(`editor.templates.${row.template}`);
+          shot.append(tpl);
+        }
 
         // --- Body --------------------------------------------------------
         const body = document.createElement('div');
         body.className = 'body';
-
         const title = document.createElement('b');
         // textContent, never innerHTML: the agent typed this.
-        title.textContent = String(row.title ?? '').replace(/\s*\n\s*/g, ' ').trim() || '—';
-
-        const price = document.createElement('div');
-        price.className = 'price';
-        // Wrapped, because a number in a Hebrew line reorders without it
-        // (CLAUDE.md §4.2). The element IS the isolate.
-        const priceBdi = document.createElement('bdi');
-        priceBdi.textContent = money.format(Number(row.price ?? 0));
-        price.append(priceBdi);
-
-        body.append(title, price);
+        title.textContent = flatTitle(row);
+        const priceRow = document.createElement('div');
+        priceRow.className = 'price-row';
+        priceRow.append(priceNode(row));
+        const place = [row.location?.street, row.location?.city].filter(Boolean).join(', ');
+        if (place) {
+          const where = document.createElement('span');
+          where.className = 'where';
+          where.textContent = place;
+          priceRow.append(where);
+        }
+        body.append(title, priceRow);
 
         if (row.status === 'published' || row.status === 'sold') {
           const stats = document.createElement('div');
-          stats.className = 'where';
-          const views = document.createElement('bdi');
-          views.textContent = String(row.views ?? 0);
-          const wa = document.createElement('bdi');
-          wa.textContent = String(row.waTaps ?? 0);
+          stats.className = 'stats';
+          const stat = (d: string, fill: boolean, value: number, label: string) => {
+            const span = document.createElement('span');
+            const bdi = document.createElement('bdi');
+            bdi.textContent = num(value);
+            span.append(icon(d, fill), bdi, document.createTextNode(` ${label}`));
+            return span;
+          };
           stats.append(
-            views,
-            document.createTextNode(` ${t('dash.views')} · `),
-            wa,
-            document.createTextNode(` ${t('dash.waTaps')}`),
+            stat(EYE, false, row.views ?? 0, t('dash.views')),
+            stat(CHAT, true, row.waTaps ?? 0, t('dash.waTaps')),
           );
-          if (row.published_at) {
-            const days = Math.max(0, Math.floor((Date.now() - Date.parse(row.published_at)) / 86400000));
-            const daysBdi = document.createElement('bdi');
-            daysBdi.textContent = String(days);
-            stats.append(document.createTextNode(' · '), daysBdi, document.createTextNode(` ${t('dash.daysLive')}`));
-          }
+          const days = daysLive(row);
+          if (days !== undefined) stats.append(stat(CLOCK, false, days, t('dash.daysLive')));
           body.append(stats);
-        }
-
-        const place = [row.location?.street, row.location?.city].filter(Boolean).join(', ');
-        if (place) {
-          const where = document.createElement('div');
-          where.className = 'where';
-          where.textContent = place;
-          body.append(where);
         }
 
         item.append(shot, body);
 
-        if (row.status === 'draft') {
-          const hint = document.createElement('p');
-          hint.className = 'hint';
-          hint.textContent = t('dash.draftHint');
-          item.append(hint);
-        } else if (row.status === 'archived') {
-          const hint = document.createElement('p');
-          hint.className = 'hint';
-          hint.textContent = t('dash.archivedHint');
-          item.append(hint);
-        } else if (isStalePublished(row, Date.now())) {
-          const hint = document.createElement('p');
-          hint.className = 'hint';
-          hint.textContent = t('dash.staleHint');
-          item.append(hint);
+        let hint = '';
+        if (row.status === 'draft') hint = t('dash.draftHint');
+        else if (row.status === 'archived') hint = t('dash.archivedHint');
+        else if (isStalePublished(row, Date.now())) hint = t('dash.staleHint');
+        if (hint) {
+          const note = document.createElement('p');
+          note.className = 'hint';
+          note.textContent = hint;
+          item.append(note);
         }
 
         // --- Actions -----------------------------------------------------
         const acts = document.createElement('div');
         acts.className = 'acts';
-
-        const edit = document.createElement('a');
-        edit.className = 'act';
-        // The listing this card is for, not a blank new one. This said
-        // '/new/' with no id at all, so "edit" started a fresh listing and
-        // the agent's work looked lost.
-        edit.href = `/new/?id=${encodeURIComponent(row.slug)}`;
-        edit.textContent = t('dash.edit');
-        acts.append(edit);
-
         if (sendable) {
-          const share = document.createElement('a');
-          share.className = 'act primary';
-          share.href = `/a/${row.slug}/share/`;
-          share.textContent = t('dash.share');
+          acts.append(
+            link(t('dash.share'), 'act primary', `/a/${row.slug}/share/`),
+            button(t('dash.copyLink'), 'act', () => void copy(href)),
+          );
+        }
+        // The listing this card is for, not a blank new one.
+        acts.append(link(t('dash.edit'), 'act', `/new/?id=${encodeURIComponent(row.slug)}`));
+        if (row.status === 'published') {
+          acts.append(button(t('dash.markSold'), 'act', (self) => void markSold(row.slug, self)));
+        }
+        if (row.status !== 'archived') {
+          acts.append(button(t('dash.archive'), 'act', (self) => void archiveListing(row.slug, self)));
+        }
+        acts.append(button(t('dash.delete'), 'act', (self) => void deleteListing(row.slug, self)));
+        item.append(acts);
 
-          const link = document.createElement('button');
-          link.type = 'button';
-          link.className = 'act';
-          link.textContent = t('dash.copyLink');
-          link.addEventListener('click', () => void copy(href));
+        // Choosing a card opens it in the panel. Clicks on the card's own
+        // links and buttons keep doing what they say.
+        item.addEventListener('click', (event) => {
+          if ((event.target as Element).closest('a, button')) return;
+          choose(row.slug);
+        });
 
-          /*
-           * No "view" button, deliberately. The cover photograph above is
-           * already a link to the same page, and a fifth equal-weight action
-           * wrapped the row onto two lines — which made every card in the
-           * grid a different height and buried שיתוף, the one action the
-           * whole dashboard exists for.
-           */
-          acts.append(share, link);
+        return item;
+      };
 
-          if (row.status === 'published') {
-            const sold = document.createElement('button');
-            sold.type = 'button';
-            sold.className = 'act';
-            sold.textContent = t('dash.markSold');
-            sold.addEventListener('click', () => void markSold(row.slug, sold));
-            acts.append(sold);
+      // ------------------------------------------------------------------
+      // Detail panel
+      // ------------------------------------------------------------------
+
+      const chart = (points: DayPoint[]) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'chart';
+        const heading = document.createElement('h3');
+        heading.textContent = t('dash.chartTitle');
+        wrap.append(heading);
+
+        const { views } = totals(points);
+        if (views === 0) {
+          const empty = document.createElement('p');
+          empty.className = 'd-note';
+          empty.textContent = t('dash.chartEmpty');
+          wrap.append(empty);
+          return wrap;
+        }
+
+        const max = Math.max(...points.map((p) => p.views));
+        const peak = points.findIndex((p) => p.views === max);
+        const summary = document.createElement('p');
+        summary.className = 'd-note';
+        summary.append(...sentence('dash.chartSummary', { views, days: points.length, max }));
+
+        // The bars are for the eye; the table below carries the same numbers
+        // for everyone else.
+        const bars = document.createElement('ol');
+        bars.className = 'bars';
+        bars.setAttribute('aria-hidden', 'true');
+        points.forEach((point, index) => {
+          const item = document.createElement('li');
+          if (index === points.length - 1) item.classList.add('is-last');
+          const bar = document.createElement('span');
+          bar.className = 'b';
+          const height = `${Math.round((point.views / max) * 100)}%`;
+          item.style.setProperty('--h', height);
+          bar.style.setProperty('--i', String(index));
+          item.append(bar);
+          // Selective labels: the peak and today, never every bar.
+          if (index === peak || index === points.length - 1) {
+            const cap = document.createElement('span');
+            cap.className = 'cap';
+            cap.textContent = num(point.views);
+            item.append(cap);
+          }
+          const tip = document.createElement('span');
+          tip.className = 'tip';
+          if (index < points.length * 0.25) tip.classList.add('at-start');
+          else if (index > points.length * 0.75) tip.classList.add('at-end');
+          tip.hidden = true;
+          const [, month, day] = point.day.split('-');
+          const date = document.createElement('bdi');
+          date.textContent = `${Number(day)}/${Number(month)}`;
+          const v = document.createElement('bdi');
+          v.textContent = num(point.views);
+          const w = document.createElement('bdi');
+          w.textContent = num(point.taps);
+          tip.append(date, ' · ', v, ` ${t('dash.views')} · `, w, ` ${t('dash.waTaps')}`);
+          item.append(tip);
+          item.addEventListener('pointerenter', () => (tip.hidden = false));
+          item.addEventListener('pointerleave', () => (tip.hidden = true));
+          bars.append(item);
+        });
+
+        const axis = document.createElement('div');
+        axis.className = 'axis';
+        axis.setAttribute('aria-hidden', 'true');
+        const label = (point: DayPoint | undefined) => {
+          const bdi = document.createElement('bdi');
+          if (point) {
+            const [, month, day] = point.day.split('-');
+            bdi.textContent = `${Number(day)}/${Number(month)}`;
+          }
+          return bdi;
+        };
+        axis.append(label(points[0]), label(points.at(-1)));
+
+        const table = document.createElement('details');
+        table.className = 'table-view';
+        const toggle = document.createElement('summary');
+        toggle.textContent = t('dash.chartTable');
+        const grid = document.createElement('table');
+        const head = grid.createTHead().insertRow();
+        for (const text of [t('dash.colDay'), t('dash.views'), t('dash.waTaps')]) {
+          const th = document.createElement('th');
+          th.textContent = text;
+          head.append(th);
+        }
+        const tbody = grid.createTBody();
+        for (const point of points) {
+          const tr = tbody.insertRow();
+          const [, month, day] = point.day.split('-');
+          for (const text of [`${Number(day)}/${Number(month)}`, num(point.views), num(point.taps)]) {
+            const td = tr.insertCell();
+            const bdi = document.createElement('bdi');
+            bdi.textContent = text;
+            td.append(bdi);
+          }
+        }
+        table.append(toggle, grid);
+
+        wrap.append(summary, bars, axis, table);
+        return wrap;
+      };
+
+      const paintDetail = (fresh = false) => {
+        const row = rows.find((candidate) => candidate.slug === chosen);
+        if (!row) {
+          detail.hidden = true;
+          return;
+        }
+        detail.replaceChildren();
+        detail.hidden = false;
+        detail.classList.toggle('is-new', fresh);
+
+        const pics = document.createElement('div');
+        pics.className = 'd-pics';
+        const images = [row.media?.cover, ...(row.media?.gallery ?? [])]
+          .map((image) => image?.url)
+          .filter((url): url is string => Boolean(url))
+          .slice(0, 3);
+        pics.dataset.n = String(images.length);
+        for (const url of images) {
+          const image = document.createElement('img');
+          image.src = url;
+          image.alt = '';
+          image.loading = 'lazy';
+          pics.append(image);
+        }
+        if (images.length > 0) detail.append(pics);
+
+        const head = document.createElement('div');
+        head.className = 'd-head';
+        const title = document.createElement('h2');
+        title.textContent = flatTitle(row);
+        const where = document.createElement('div');
+        where.className = 'where';
+        where.textContent = [
+          row.location?.city,
+          row.template ? t(`editor.templates.${row.template}`) : '',
+          statusLabel(row.status),
+        ]
+          .filter(Boolean)
+          .join(' · ');
+        head.append(title, where, priceNode(row));
+        detail.append(head);
+
+        if (row.status === 'draft') {
+          const note = document.createElement('p');
+          note.className = 'd-note';
+          note.textContent = t('dash.detailDraft');
+          detail.append(note);
+        } else {
+          const views = row.views ?? 0;
+          const taps = row.waTaps ?? 0;
+          const rate = contactRate(views, taps);
+          const stats = document.createElement('dl');
+          stats.className = 'd-stats';
+          for (const [label, value] of [
+            [t('dash.views'), num(views)],
+            [t('dash.waTaps'), num(taps)],
+            [t('dash.rateShort'), rate === undefined ? '—' : `${rate.toFixed(1)}%`],
+          ] as const) {
+            const cell = document.createElement('div');
+            const dt = document.createElement('dt');
+            dt.textContent = label;
+            const dd = document.createElement('dd');
+            const bdi = document.createElement('bdi');
+            bdi.textContent = value;
+            dd.append(bdi);
+            cell.append(dt, dd);
+            stats.append(cell);
+          }
+          detail.append(stats);
+
+          if (daily && row.id && row.published_at) {
+            const days = daysSincePublished(row.published_at, today, WINDOW);
+            if (days.length > 0) detail.append(chart(series(daily, days, row.id)));
           }
         }
 
-        if (row.status !== 'archived') {
-          const archive = document.createElement('button');
-          archive.type = 'button';
-          archive.className = 'act';
-          archive.textContent = t('dash.archive');
-          archive.addEventListener('click', () => void archiveListing(row.slug, archive));
-          acts.append(archive);
+        if (row.status === 'published') {
+          const box = document.createElement('div');
+          box.className = 'linkbox';
+          const label = document.createElement('span');
+          label.textContent = t('dash.linkLabel');
+          const url = document.createElement('bdi');
+          url.textContent = publicUrl(row.slug).replace(/^https?:\/\//, '');
+          box.append(label, url, button(t('dash.copyLink'), 'act primary', () => void copy(publicUrl(row.slug))));
+          detail.append(box);
         }
 
-        const remove = document.createElement('button');
-        remove.type = 'button';
-        remove.className = 'act';
-        remove.textContent = t('dash.delete');
-        remove.addEventListener('click', () => void deleteListing(row.slug, remove));
-        acts.append(remove);
+        const acts = document.createElement('div');
+        acts.className = 'd-acts';
+        if (row.status === 'published') {
+          acts.append(link(t('dash.share'), 'act primary', `/a/${row.slug}/share/`));
+        }
+        acts.append(link(t('dash.edit'), 'act', `/new/?id=${encodeURIComponent(row.slug)}`));
+        if (row.status === 'published') {
+          acts.append(button(t('dash.markSold'), 'act', (self) => void markSold(row.slug, self)));
+        }
+        detail.append(acts);
+      };
 
-        item.append(acts);
-        return item;
+      const choose = (slug: string) => {
+        chosen = slug;
+        for (const node of grid.querySelectorAll<HTMLElement>('.card')) {
+          node.classList.toggle('is-chosen', node.dataset.slug === slug);
+        }
+        paintDetail(true);
       };
 
       /** Renders whatever the current filter selects. */
       const paint = () => {
-        const chosen =
-          (document.querySelector('input[name="filter"]:checked') as HTMLInputElement | null)
-            ?.value ?? 'all';
-
+        const filter =
+          (document.querySelector('input[name="filter"]:checked') as HTMLInputElement | null)?.value ??
+          'all';
         const shown =
-          chosen === 'all'
+          filter === 'all'
             ? rows.filter((row) => row.status !== 'archived')
-            : rows.filter((row) => row.status === chosen);
+            : rows.filter((row) => row.status === filter);
 
-        count.textContent = `${shown.length} ${t('dash.countSuffix')}`;
+        const shownCount = document.createElement('bdi');
+        shownCount.textContent = num(shown.length);
+        count.replaceChildren(shownCount, document.createTextNode(` ${t('dash.countSuffix')}`));
+        paintTiles();
+        filters.hidden = false;
 
         if (shown.length === 0) {
-          filters.hidden = false;
           show('none');
           return;
         }
-
+        // The panel opens on the first listing that has something to show.
+        if (!chosen || !rows.some((row) => row.slug === chosen)) {
+          chosen = (shown.find((row) => row.status === 'published') ?? shown[0])?.slug;
+        }
         grid.replaceChildren(...shown.map(card));
-        filters.hidden = false;
-        show('grid');
+        paintDetail();
+        show('workspace');
       };
 
       const load = async () => {
         if (!supabaseConfigured) return show('failed');
-
         const client = supabase();
         const { data: session } = await client.auth.getSession();
         if (!session.session) return show('anon');
@@ -994,14 +1917,20 @@ import '../styles/tokens.css';
          */
         const { data, error } = await client
           .from('listings')
-          .select('id, slug, title, price, status, category, media, location, published_at')
+          .select('id, slug, title, price, status, category, template, media, location, published_at')
           .order('created_at', { ascending: false });
-
         if (error) return show('failed');
-
         rows = (data ?? []) as Row[];
 
-        const counts = await client.from('listing_event_counts').select('listing_id, views, wa_taps');
+        const [counts, perDay] = await Promise.all([
+          client.from('listing_event_counts').select('listing_id, views, wa_taps'),
+          // The same RLS: listing_event_daily is security_invoker (0029).
+          client
+            .from('listing_event_daily')
+            .select('listing_id, day, views, wa_taps')
+            .gte('day', windowDays[0] ?? ''),
+        ]);
+
         if (!counts.error && counts.data) {
           const byId = new Map(
             (counts.data as { listing_id: string; views: number; wa_taps: number }[]).map((row) => [
@@ -1011,33 +1940,31 @@ import '../styles/tokens.css';
           );
           rows = rows.map((row) => {
             const tally = row.id ? byId.get(row.id) : undefined;
-            return {
-              ...row,
-              views: Number(tally?.views ?? 0),
-              waTaps: Number(tally?.wa_taps ?? 0),
-            };
+            return { ...row, views: Number(tally?.views ?? 0), waTaps: Number(tally?.wa_taps ?? 0) };
           });
         }
+        // Unavailable (0029 not applied, or an error) leaves daily undefined:
+        // the tiles then say "since publishing" and the charts are omitted.
+        daily = perDay.error ? undefined : ((perDay.data ?? []) as DailyRow[]);
 
         /*
-         * The first-run prompt, decided by the profile rather than by the
-         * listing count. An agent with nine listings and no phone number
-         * still needs it; one who filled the page in on day one does not,
-         * however few listings they have.
-         *
+         * The first-run prompt and the greeting, decided by the profile.
          * Failure is silent: a banner is a convenience and must never be the
          * reason the dashboard does not appear.
          */
         void loadProfile()
           .then((result) => {
-            if ('profile' in result && isProfileEmpty(result.profile)) {
-              $('onboard').hidden = false;
+            if (!('profile' in result)) return;
+            if (isProfileEmpty(result.profile)) $('onboard').hidden = false;
+            const first = result.profile.displayName?.trim().split(/\s+/)[0];
+            if (first) {
+              $('hello').textContent = t('dash.hello', { name: first });
+              $('hello').hidden = false;
             }
           })
           .catch(() => undefined);
 
         if (rows.length === 0) return show('empty');
-
         paint();
       };
 
