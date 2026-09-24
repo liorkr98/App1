@@ -64,8 +64,18 @@ html[data-template='studio'] .fact.off {
   color: var(--ink);
 }
 
+/*
+  --absent, not --muted. The absent cell inverts to a light ground here, so
+  the dark-pill label colour above has to be undone — but --muted is 4.09:1
+  on this template's --stone-warm and fails AA, while --absent is 5.36:1 and
+  is the stop every other template already uses for exactly this cell.
+
+  Reaching for --muted also bypasses --absent entirely, which means a gate
+  that checked only the token would have called this green while the page
+  rendered something else. scripts/verify-absent-contrast.mjs checks both.
+*/
 html[data-template='studio'] .fact.off .fact-lbl {
-  color: var(--muted);
+  color: var(--absent);
 }
 
 html[data-template='studio'] .gallery {
