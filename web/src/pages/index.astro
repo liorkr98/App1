@@ -10,6 +10,7 @@ import BrandMark from '../components/BrandMark.astro';
 import Prose from '../components/Prose.astro';
 import PriceTiers from '../components/PriceTiers.astro';
 import SectionLabel from '../components/SectionLabel.astro';
+import WalkMinutes from '../components/WalkMinutes.astro';
 import { TEMPLATE_IDS } from '@/types/listing';
 import { propertyListing, vehicleListing, withNamedRooms } from '../lib/listings';
 import '../styles/tokens.css';
@@ -1916,9 +1917,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
             <li>
               <strong>{sampleSchool.name}</strong>
               <span class="around-walk">
-                <bdi>{sampleSchool.walkMinutes}</bdi>
-                {' '}
-                {t('listing.mapNearbyMin')}
+                <WalkMinutes minutes={sampleSchool.walkMinutes} walking />
               </span>
               <span class="cite">
                 {sampleSchool.sourceName} · {t('source.asOf')}
@@ -1930,9 +1929,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
             <li>
               <strong>{sampleBus.name}</strong>
               <span class="around-walk">
-                <bdi>{sampleBus.walkMinutes}</bdi>
-                {' '}
-                {t('listing.mapNearbyMin')}
+                <WalkMinutes minutes={sampleBus.walkMinutes} walking />
               </span>
               <span class="cite">
                 {sampleBus.sourceName} · {t('source.asOf')}
@@ -1944,9 +1941,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
             <li>
               <strong>{sampleGrocery.name}</strong>
               <span class="around-walk">
-                <bdi>{sampleGrocery.walkMinutes}</bdi>
-                {' '}
-                {t('listing.mapNearbyMin')}
+                <WalkMinutes minutes={sampleGrocery.walkMinutes} walking />
               </span>
             </li>
           )}
@@ -2031,6 +2026,8 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
           <a href="/legal/accessibility/">{t('legal.accessibility')}</a>
           {' · '}
           <a href="/pricing/">{t('pricing.title')}</a>
+          {' · '}
+          <a href="/guide/photos/">{t('guide.photosTitle')}</a>
           {' · '}
           <a href="/new/?fresh=1">{t('home.cta')}</a>
         </span>

@@ -263,7 +263,8 @@
 .walk-all{inset-inline-start:.7rem}
 .walk-next{inset-inline-end:.7rem}
 
-/* M5 — centre-active snap. Index 0 is inline-start (right in RTL). */
+/* M5 — centre-active snap. The page is RTL, so flex-start is the right
+   edge and figure 0 is the rightmost card. Do not set direction:ltr. */
 .walk-main.tour-track{
   display:flex;
   overflow-x:auto;
@@ -276,6 +277,7 @@
 .walk-main.tour-track > figure{
   flex:0 0 82%;
   scroll-snap-align:center;
+  scroll-margin-inline:9%;
   scroll-snap-stop:always;
   margin:0;
   visibility:visible;

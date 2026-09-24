@@ -97,6 +97,6 @@ describe('acceptNeighborhoodNote', () => {
 describe('descriptionOrArea', () => {
   it('keeps a seller-written description and fills an empty one from the note', () => {
     assert.equal(descriptionOrArea('כתבתי בעצמי.', { text: 'בחולון.' }), 'כתבתי בעצמי.');
-    assert.equal(descriptionOrArea('  ', { text: 'בחולון, ליד וולפסון.' }), 'בחולון, ליד וולפסון.');
+    assert.equal(descriptionOrArea('  ', { text: 'בחולון, ליד וולפסון.' }), '');
   });
 });

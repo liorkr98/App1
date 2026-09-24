@@ -7,6 +7,7 @@ import {
   normalisePhone,
   PROFILE_BLOCKER_CODES,
   profileBlockers,
+  canonicalSellerRole,
   toSeller,
 } from './profile.js';
 
@@ -157,17 +158,19 @@ describe('toSeller', () => {
     assert.equal(seller?.phone, '972501234567');
   });
 
-  it('falls back to the category role when none was set', () => {
+  it('uses one role, בעל הנכס, when none was set', () => {
     const seller = toSeller({ displayName: 'ליאור', phone: '0501234567' }, 'בעל הרכב');
-    assert.equal(seller?.role, 'בעל הרכב');
+    assert.equal(seller?.role, 'בעל הנכס');
   });
 
-  it('prefers the agent’s own role line', () => {
+  it('collapses a broker line to the single role מתווך', () => {
     const seller = toSeller(
       { displayName: 'ליאור', phone: '0501234567', role: 'מתווך מורשה' },
       'בעל הדירה',
     );
-    assert.equal(seller?.role, 'מתווך מורשה');
+    assert.equal(seller?.role, 'מתווך');
+    assert.equal(canonicalSellerRole('בעל הדירה'), 'בעל הנכס');
+    assert.equal(canonicalSellerRole('מתווכת'), 'מתווך');
   });
 
   it('OMITS the agency rather than setting it empty', () => {

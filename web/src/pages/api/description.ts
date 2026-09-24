@@ -4,13 +4,8 @@ import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 
 import {
-  acceptAreaNote,
   allPlaces,
-  areaNoteFromPlaces,
-  AREA_SYSTEM_PROMPT,
-  buildAreaPrompt,
   hasPlaces,
-  OSM_ATTRIBUTION,
   type AreaPlace,
   type AreaPlaces,
 } from '@/features/listings/area-note';
@@ -34,16 +29,10 @@ import { supabaseAsUser, supabaseConfigured } from '../../lib/supabase';
 /**
  * POST /api/description — the suggested Hebrew description for one listing.
  *
- * ===================== WHAT THE AGENT ASKED FOR =====================
- * "I want DeepSeek to write the description by the address — about the
- * neighbourhood, schools, transport, community. A few lines, not more."
- *
- * So the address is the input. The city and street go to OpenStreetMap, which
- * answers with the real named schools, bus stops, parks, community centres and
- * neighbourhood around that street, and those names are the only things the
- * model is allowed to write about. Everything it returns is checked back
- * against the list before the seller ever sees it.
- * ====================================================================
+ * The paragraph is about the property: rooms, condition, light, layout.
+ * Surroundings stay on the map. The address is still looked up, and the
+ * named places are stored on the row for that map, but they are not
+ * handed to the model.
  *
  * WHY A SERVER ROUTE. The model key is a secret and the editor is a browser.
  * Those two facts decide the shape entirely: the island sends a listing id and
@@ -55,15 +44,10 @@ import { supabaseAsUser, supabaseConfigured } from '../../lib/supabase';
  * against the same invented list. The row is the only thing that can ground
  * its own description.
  *
- * THREE ANSWERS, IN ORDER OF HOW MUCH THEY SAY:
- *
- *   area   the model's paragraph about the real neighbourhood     (source: 'area')
- *   places the same names, in plainer sentences, no model         (source: 'places')
- *   facts  the seller's own rooms/size/floor, when OSM knows
- *          nothing about the street or there is no city at all    (source: 'facts')
- *
- * Each step down is a normal outcome, not an error. A seller always gets
- * something they can edit, and nothing here waits on a provider being up.
+ * The answer is the property paragraph (source: 'model', or 'facts' when
+ * the model is absent or rejected). A second press sends the previous
+ * paragraph so the next one is a different wording of the same facts.
+ * No facts at all is `no_facts` — the box stays empty for the agent.
  *
  * NOT A PAGE-RENDER FETCH (CLAUDE.md §12). This runs when an agent presses a
  * button in the editor, the result is stored on their row like any other field
@@ -293,26 +277,8 @@ export const POST: APIRoute = async ({ request }) => {
           .eq('id', listingId);
       }
 
-      const again = previous !== '';
-      const fallbackText = areaNoteFromPlaces(places, { alternate: again });
-      return modelText(
-        apiKey,
-        AREA_SYSTEM_PROMPT,
-        buildAreaPrompt(places, previous),
-        (raw) => {
-          const accepted = acceptAreaNote(raw, places);
-          if (!accepted) return undefined;
-          return again && sameParagraph(accepted, previous) ? undefined : accepted;
-        },
-        {
-          text: fallbackText,
-          source: 'places',
-          attribution: OSM_ATTRIBUTION,
-        },
-        'area',
-        stream,
-        again ? 0.85 : undefined,
-      );
+      // The places stay on the row for the map. They do not become the
+      // description — that paragraph is about the property.
     }
   }
 
@@ -333,6 +299,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   const again = previous !== '';
   const grounded = groundedDescription(input, { alternate: again });
+  // Nothing to say about the property: the editor keeps the box empty.
   if (!grounded.trim()) return json({ error: 'no_facts' }, 409);
 
   return modelText(

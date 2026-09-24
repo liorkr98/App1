@@ -13,6 +13,7 @@ import {
 import { t } from '../lib/i18n';
 import Prose from './Prose.astro';
 import SectionLabel from './SectionLabel.astro';
+import WalkMinutes from './WalkMinutes.astro';
 
 interface Props {
   enrichment: EnrichmentBlock;
@@ -135,7 +136,7 @@ const sources = isProperty
       </div>
       {transit.slice(0, MAX_ROWS).map((stop) => (
         <div class="erow">
-          <div class="mins"><bdi>{stop.walkMinutes}</bdi><small>דקות</small></div>
+          <div class="mins"><WalkMinutes minutes={stop.walkMinutes} /></div>
           <div class="who">
             <b><Prose text={stop.name} /></b>
             <em>
@@ -158,7 +159,7 @@ const sources = isProperty
       </div>
       {schools.slice(0, MAX_ROWS).map((school) => (
         <div class="erow">
-          <div class="mins"><bdi>{school.walkMinutes}</bdi><small>דקות</small></div>
+          <div class="mins"><WalkMinutes minutes={school.walkMinutes} /></div>
           <div class="who">
             <b><Prose text={school.name} /></b>
             <em>{[school.type, school.stream, school.gradeSpan].filter(Boolean).join(' · ')}</em>
@@ -178,7 +179,7 @@ const sources = isProperty
       </div>
       {group.places.slice(0, MAX_ROWS).map((place) => (
         <div class="erow">
-          <div class="mins"><bdi>{place.walkMinutes}</bdi><small>דקות</small></div>
+          <div class="mins"><WalkMinutes minutes={place.walkMinutes} /></div>
           <div class="who"><b><Prose text={place.name} /></b></div>
         </div>
       ))}
@@ -195,7 +196,7 @@ const sources = isProperty
       </div>
       {group.items.slice(0, MAX_ROWS).map((site) => (
         <div class="erow">
-          <div class="mins"><bdi>{site.walkMinutes}</bdi><small>דקות</small></div>
+          <div class="mins"><WalkMinutes minutes={site.walkMinutes} /></div>
           <div class="who"><b><Prose text={site.name} /></b></div>
         </div>
       ))}

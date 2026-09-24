@@ -60,6 +60,28 @@ export interface AreaMap {
   rows: number;
 }
 
+/**
+ * One picture, 16:10, no tile requests and no text.
+ *
+ * Circles only. The numerals live in the HTML list, inside <bdi>. The page
+ * must not ask the browser for OpenStreetMap tiles.
+ */
+export function composedMapSrc(map: AreaMap): string {
+  const width = 1600;
+  const height = 1000;
+  const sx = width / map.width;
+  const sy = height / map.height;
+  const pins = map.pins
+    .map(
+      (pin) =>
+        `<circle cx="${Math.round(pin.x * sx)}" cy="${Math.round(pin.y * sy)}" r="22" fill="#4a5d3a"/>`,
+    )
+    .join('');
+  const origin = `<circle cx="${Math.round(map.origin.x * sx)}" cy="${Math.round(map.origin.y * sy)}" r="16" fill="#fbfaf7"/><circle cx="${Math.round(map.origin.x * sx)}" cy="${Math.round(map.origin.y * sy)}" r="9" fill="#191a15"/>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}"><rect width="${width}" height="${height}" fill="#e4dfd4"/>${pins}${origin}</svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
 export function osmTileUrl(zoom: number, x: number, y: number): string {
   return `https://tile.openstreetmap.org/${zoom}/${x}/${y}.png`;
 }
@@ -72,13 +94,10 @@ const MIN_ZOOM = 14;
 const MAX_ZOOM = 16;
 
 /**
- * The Hebrew alphabet as ordinals, which is how a Hebrew list is keyed.
- *
- * Letters rather than digits, and not only for style: a digit in the drawing
- * would be a number outside `<bdi>` in the built page, which §4.2 forbids and
- * the build gate rejects.
+ * Pin index. A Hebrew letter reads as a word (א is "a", not "1"), so the
+ * list prints a numeral and the page wraps it in <bdi>. The drawing itself
+ * has no text node — a digit inside SVG <text> cannot be isolated.
  */
-const KEYS = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י'];
 
 /**
  * Which places go on the map, in which order.
@@ -185,7 +204,7 @@ export function areaMap(places: AreaPlaces): AreaMap | undefined {
 
   return {
     pins: worlds.map((item, index) => ({
-      key: KEYS[index] ?? '',
+      key: String(index + 1),
       name: item.place.name,
       group: groupOf(places, item.place),
       ...(item.place.walkMinutes === undefined ? {} : { walkMinutes: item.place.walkMinutes }),

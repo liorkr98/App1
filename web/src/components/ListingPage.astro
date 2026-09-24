@@ -6,6 +6,7 @@ import Disclosures from './Disclosures.astro';
 import Enrichment from './Enrichment.astro';
 import FactsGrid from './FactsGrid.astro';
 import Gallery from './Gallery.astro';
+import HeroThumbs from './HeroThumbs.astro';
 import HighlightChips from './HighlightChips.astro';
 import Hero from './Hero.astro';
 import MonthlyCost from './MonthlyCost.astro';
@@ -145,6 +146,8 @@ const shareHref = whatsappShareUrl(
     }
   />
 
+  <HeroThumbs images={walkImages} href={hasWalk ? '#walk-frame-0' : '#listing-gallery'} />
+
   {/* M7: CSS view-timeline reveals this after the hero (or walkFirst
       tour) leaves. Until then it is display:none / opacity:0, so it
       cannot sit under the dock on the first screen. */}
@@ -167,7 +170,7 @@ const shareHref = whatsappShareUrl(
     perUnit={perUnit}
   />
 
-  <HighlightChips highlights={listing.highlights} />
+  <HighlightChips highlights={listing.highlights} facts={listing.facts} />
 
   {/* Seller declaration, omitted when sold — urgency that the thing is
       gone is a different claim than "not yet on the portals". Never
@@ -186,9 +189,15 @@ const shareHref = whatsappShareUrl(
   <section class="reveal">
     <SectionLabel text={homeLabel} />
     <h2>{heading}</h2>
-    {paragraphs.map((paragraph, index) => (
-      <p style={index > 0 ? 'margin-top:.8rem' : undefined}><Prose text={paragraph} /></p>
-    ))}
+    {paragraphs[0] ? <p><Prose text={paragraphs[0]} /></p> : null}
+    {paragraphs.length > 1 && (
+      <details class="read-more">
+        <summary>{t('listing.readMore')}</summary>
+        {paragraphs.slice(1).map((paragraph) => (
+          <p><Prose text={paragraph} /></p>
+        ))}
+      </details>
+    )}
   </section>
 
   {listing.disclosures && listing.disclosures.length > 0 && (
@@ -258,6 +267,8 @@ const shareHref = whatsappShareUrl(
       <a href="/legal/privacy/">{t('legal.privacy')}</a>
       {' · '}
       <a href="/legal/accessibility/">{t('legal.accessibility')}</a>
+      {' · '}
+      <a href="/guide/photos/">{t('guide.photosTitle')}</a>
     </footer>
   </Fragment>
 </BaseListing>

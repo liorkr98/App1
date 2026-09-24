@@ -1,4 +1,5 @@
 import { findBannedWords, findReservedTopics } from './description.js';
+import { walkPhrase } from './hebrew-plural.js';
 
 /**
  * The area paragraph: what is around this address, by name.
@@ -108,7 +109,7 @@ const railsOf = (places: AreaPlaces) =>
 function named(place: AreaPlace): string {
   return place.walkMinutes === undefined
     ? place.name
-    : `${place.name} (${place.walkMinutes} דקות הליכה)`;
+    : `${place.name} (${walkPhrase(place.walkMinutes)})`;
 }
 
 function line(label: string, places: readonly AreaPlace[], cap: number): string | undefined {

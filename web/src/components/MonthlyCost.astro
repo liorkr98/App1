@@ -10,7 +10,11 @@ interface Props {
 
 const cost = monthlyCost(Astro.props.facts);
 const slots: Record<string, string> = cost
-  ? { arnona: ils(cost.arnonaIls), vaad: ils(cost.vaadIls) }
+  ? {
+      arnona: ils(cost.arnonaIls),
+      arnonaBill: ils(cost.arnonaBillIls),
+      vaad: ils(cost.vaadIls),
+    }
   : {};
 ---
 {cost ? (
