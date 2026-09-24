@@ -11,9 +11,11 @@ import {
 } from '@/features/listings/area-note';
 import {
   acceptDescription,
+  appendRewrite,
   descriptionPrompt,
   DESCRIPTION_SYSTEM_PROMPT,
   groundedDescription,
+  sameParagraph,
   type ListingCopyInput,
 } from '@/features/listings/listing-copy';
 import { LISTING_CATEGORIES, type ListingCategory } from '@/features/listings/schemas';
@@ -27,16 +29,10 @@ import { supabaseAsUser, supabaseConfigured } from '../../lib/supabase';
 /**
  * POST /api/description — the suggested Hebrew description for one listing.
  *
- * ===================== WHAT THE AGENT ASKED FOR =====================
- * "I want DeepSeek to write the description by the address — about the
- * neighbourhood, schools, transport, community. A few lines, not more."
- *
- * So the address is the input. The city and street go to OpenStreetMap, which
- * answers with the real named schools, bus stops, parks, community centres and
- * neighbourhood around that street, and those names are the only things the
- * model is allowed to write about. Everything it returns is checked back
- * against the list before the seller ever sees it.
- * ====================================================================
+ * The paragraph is about the property: rooms, condition, light, layout.
+ * Surroundings stay on the map. The address is still looked up, and the
+ * named places are stored on the row for that map, but they are not
+ * handed to the model.
  *
  * WHY A SERVER ROUTE. The model key is a secret and the editor is a browser.
  * Those two facts decide the shape entirely: the island sends a listing id and
@@ -48,15 +44,10 @@ import { supabaseAsUser, supabaseConfigured } from '../../lib/supabase';
  * against the same invented list. The row is the only thing that can ground
  * its own description.
  *
- * THREE ANSWERS, IN ORDER OF HOW MUCH THEY SAY:
- *
- *   area   the model's paragraph about the real neighbourhood     (source: 'area')
- *   places the same names, in plainer sentences, no model         (source: 'places')
- *   facts  the seller's own rooms/size/floor, when OSM knows
- *          nothing about the street or there is no city at all    (source: 'facts')
- *
- * Each step down is a normal outcome, not an error. A seller always gets
- * something they can edit, and nothing here waits on a provider being up.
+ * The answer is the property paragraph (source: 'model', or 'facts' when
+ * the model is absent or rejected). A second press sends the previous
+ * paragraph so the next one is a different wording of the same facts.
+ * No facts at all is `no_facts` — the box stays empty for the agent.
  *
  * NOT A PAGE-RENDER FETCH (CLAUDE.md §12). This runs when an agent presses a
  * button in the editor, the result is stored on their row like any other field
@@ -108,6 +99,7 @@ async function modelText(
   fallback: Record<string, unknown>,
   successSource: string,
   stream: boolean,
+  temperature?: number,
 ): Promise<Response> {
   const succeed = (text: string) => ({ ...fallback, text, source: successSource });
 
@@ -118,15 +110,21 @@ async function modelText(
   if (stream) {
     return sse(async (send) => {
       send('status', { phase: 'model' });
-      const raw = await deepseekParagraphStreaming({ apiKey, system, user }, (token) =>
-        send('token', { t: token }),
+      const raw = await deepseekParagraphStreaming(
+        { apiKey, system, user, ...(temperature === undefined ? {} : { temperature }) },
+        (token) => send('token', { t: token }),
       );
       const accepted = raw ? accept(raw) : undefined;
       send('done', accepted ? succeed(accepted) : fallback);
     });
   }
 
-  const raw = await deepseekParagraph({ apiKey, system, user });
+  const raw = await deepseekParagraph({
+    apiKey,
+    system,
+    user,
+    ...(temperature === undefined ? {} : { temperature }),
+  });
   const accepted = raw ? accept(raw) : undefined;
   if (accepted) return json(succeed(accepted), 200);
   return json(fallback, 200);
@@ -207,9 +205,11 @@ export const POST: APIRoute = async ({ request }) => {
   if (!token) return json({ error: 'unauthenticated' }, 401);
 
   let listingId = '';
+  let previous = '';
   try {
-    const body = (await request.json()) as { listingId?: unknown };
+    const body = (await request.json()) as { listingId?: unknown; previous?: unknown };
     listingId = typeof body.listingId === 'string' ? body.listingId : '';
+    previous = typeof body.previous === 'string' ? body.previous.trim() : '';
   } catch {
     return json({ error: 'bad_request' }, 400);
   }
@@ -278,7 +278,7 @@ export const POST: APIRoute = async ({ request }) => {
       }
 
       // The places stay on the row for the map. They do not become the
-      // description — that paragraph is about the property (§1.7).
+      // description — that paragraph is about the property.
     }
   }
 
@@ -297,21 +297,23 @@ export const POST: APIRoute = async ({ request }) => {
     ...(city ? { city } : {}),
   };
 
-  const grounded = groundedDescription(input);
-  // Nothing to say about the property: leave the box empty so the agent writes.
-  if (!grounded.trim()) {
-    return stream
-      ? sse(async (send) => send('done', { text: '', source: 'none' }))
-      : json({ text: '', source: 'none' }, 200);
-  }
+  const again = previous !== '';
+  const grounded = groundedDescription(input, { alternate: again });
+  // Nothing to say about the property: the editor keeps the box empty.
+  if (!grounded.trim()) return json({ error: 'no_facts' }, 409);
 
   return modelText(
     apiKey,
     DESCRIPTION_SYSTEM_PROMPT,
-    descriptionPrompt(input),
-    (raw) => acceptDescription(raw, input),
+    appendRewrite(descriptionPrompt(input), previous),
+    (raw) => {
+      const accepted = acceptDescription(raw, input);
+      if (!accepted) return undefined;
+      return again && sameParagraph(accepted, previous) ? undefined : accepted;
+    },
     { text: grounded, source: 'facts', areaPending },
     'model',
     stream,
+    again ? 0.85 : undefined,
   );
 };

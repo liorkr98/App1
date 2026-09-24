@@ -38,6 +38,11 @@ export interface ParagraphRequest {
   user: string;
   /** Overridable for a proxy or a self-hosted gateway. */
   baseUrl?: string;
+  /**
+   * Default 0.4. A second press of "another description" needs more range or
+   * the same facts produce the same paragraph and the button looks dead.
+   */
+  temperature?: number;
 }
 
 /**
@@ -62,7 +67,7 @@ export async function deepseekParagraph(
         // Low, not zero. Zero produces the same sentence shape for every
         // listing, and an agency publishing twenty flats would ship twenty
         // pages that read as one template.
-        temperature: 0.4,
+        temperature: request.temperature ?? 0.4,
         max_tokens: 400,
         messages: [
           { role: 'system', content: request.system },
@@ -104,7 +109,7 @@ export async function deepseekParagraphStreaming(
       },
       body: JSON.stringify({
         model: 'deepseek-chat',
-        temperature: 0.4,
+        temperature: request.temperature ?? 0.4,
         max_tokens: 400,
         stream: true,
         messages: [
