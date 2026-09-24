@@ -16,9 +16,11 @@ import {
 } from '@/features/listings/area-note';
 import {
   acceptDescription,
+  appendRewrite,
   descriptionPrompt,
   DESCRIPTION_SYSTEM_PROMPT,
   groundedDescription,
+  sameParagraph,
   type ListingCopyInput,
 } from '@/features/listings/listing-copy';
 import { LISTING_CATEGORIES, type ListingCategory } from '@/features/listings/schemas';
@@ -113,6 +115,7 @@ async function modelText(
   fallback: Record<string, unknown>,
   successSource: string,
   stream: boolean,
+  temperature?: number,
 ): Promise<Response> {
   const succeed = (text: string) => ({ ...fallback, text, source: successSource });
 
@@ -123,15 +126,21 @@ async function modelText(
   if (stream) {
     return sse(async (send) => {
       send('status', { phase: 'model' });
-      const raw = await deepseekParagraphStreaming({ apiKey, system, user }, (token) =>
-        send('token', { t: token }),
+      const raw = await deepseekParagraphStreaming(
+        { apiKey, system, user, ...(temperature === undefined ? {} : { temperature }) },
+        (token) => send('token', { t: token }),
       );
       const accepted = raw ? accept(raw) : undefined;
       send('done', accepted ? succeed(accepted) : fallback);
     });
   }
 
-  const raw = await deepseekParagraph({ apiKey, system, user });
+  const raw = await deepseekParagraph({
+    apiKey,
+    system,
+    user,
+    ...(temperature === undefined ? {} : { temperature }),
+  });
   const accepted = raw ? accept(raw) : undefined;
   if (accepted) return json(succeed(accepted), 200);
   return json(fallback, 200);
@@ -212,9 +221,11 @@ export const POST: APIRoute = async ({ request }) => {
   if (!token) return json({ error: 'unauthenticated' }, 401);
 
   let listingId = '';
+  let previous = '';
   try {
-    const body = (await request.json()) as { listingId?: unknown };
+    const body = (await request.json()) as { listingId?: unknown; previous?: unknown };
     listingId = typeof body.listingId === 'string' ? body.listingId : '';
+    previous = typeof body.previous === 'string' ? body.previous.trim() : '';
   } catch {
     return json({ error: 'bad_request' }, 400);
   }
@@ -282,18 +293,25 @@ export const POST: APIRoute = async ({ request }) => {
           .eq('id', listingId);
       }
 
+      const again = previous !== '';
+      const fallbackText = areaNoteFromPlaces(places, { alternate: again });
       return modelText(
         apiKey,
         AREA_SYSTEM_PROMPT,
-        buildAreaPrompt(places),
-        (raw) => acceptAreaNote(raw, places),
+        buildAreaPrompt(places, previous),
+        (raw) => {
+          const accepted = acceptAreaNote(raw, places);
+          if (!accepted) return undefined;
+          return again && sameParagraph(accepted, previous) ? undefined : accepted;
+        },
         {
-          text: areaNoteFromPlaces(places),
+          text: fallbackText,
           source: 'places',
           attribution: OSM_ATTRIBUTION,
         },
         'area',
         stream,
+        again ? 0.85 : undefined,
       );
     }
   }
@@ -313,16 +331,22 @@ export const POST: APIRoute = async ({ request }) => {
     ...(city ? { city } : {}),
   };
 
-  const grounded = groundedDescription(input);
+  const again = previous !== '';
+  const grounded = groundedDescription(input, { alternate: again });
   if (!grounded.trim()) return json({ error: 'no_facts' }, 409);
 
   return modelText(
     apiKey,
     DESCRIPTION_SYSTEM_PROMPT,
-    descriptionPrompt(input),
-    (raw) => acceptDescription(raw, input),
+    appendRewrite(descriptionPrompt(input), previous),
+    (raw) => {
+      const accepted = acceptDescription(raw, input);
+      if (!accepted) return undefined;
+      return again && sameParagraph(accepted, previous) ? undefined : accepted;
+    },
     { text: grounded, source: 'facts', areaPending },
     'model',
     stream,
+    again ? 0.85 : undefined,
   );
 };

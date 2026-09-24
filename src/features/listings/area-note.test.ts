@@ -115,6 +115,12 @@ describe('buildAreaPrompt', () => {
     assert.equal(prompt.includes('פארקים'), false);
     assert.equal(prompt.includes('קהילה'), false);
   });
+
+  it('quotes the previous paragraph when asking for another', () => {
+    const prompt = buildAreaPrompt(HOLON, 'הדירה בשכונת רסקו א׳.');
+    assert.ok(prompt.includes('ניסוח אחר'));
+    assert.ok(prompt.includes('הדירה בשכונת רסקו א׳.'));
+  });
 });
 
 describe('isGrounded', () => {
@@ -261,6 +267,13 @@ describe('areaNoteFromPlaces', () => {
 
   it('says only where it is when nothing else is known', () => {
     assert.equal(areaNoteFromPlaces(EMPTY), 'הדירה בחולון.');
+  });
+
+  it('reorders later sentences on a second press', () => {
+    const first = areaNoteFromPlaces(HOLON);
+    const second = areaNoteFromPlaces(HOLON, { alternate: true });
+    assert.notEqual(first, second);
+    assert.ok(second.startsWith('הדירה בשכונת'));
   });
 });
 

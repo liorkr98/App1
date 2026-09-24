@@ -122,7 +122,7 @@ function closestLine(label: string, places: readonly AreaPlace[]): string | unde
 }
 
 /** The user message. Names only — there is no coordinate and no distance. */
-export function buildAreaPrompt(places: AreaPlaces): string {
+export function buildAreaPrompt(places: AreaPlaces, previous?: string): string {
   return [
     `עיר: ${places.city}`,
     places.street ? `רחוב: ${places.street}` : undefined,
@@ -135,6 +135,9 @@ export function buildAreaPrompt(places: AreaPlaces): string {
     line('מסחר יומיומי', places.shops, CAPS.shops),
     'כתוב מודעה של מתווך בארבעה חלקים: המקום, הירוק מסביב, הלימוד, ההגעה, ואם יש גם קניות מהרשימה.',
     'רק שמות מהרשימה. דקות הליכה רק בצורה שנמסרה. בלי מספר תושבים ובלי דרך שלא נמסרה.',
+    previous?.trim()
+      ? `כתוב ניסוח אחר לגמרי. אסור לחזור על הפסקה הזו מילה במילה:\n${previous.trim()}`
+      : undefined,
   ]
     .filter((entry): entry is string => entry !== undefined)
     .join('\n');
@@ -290,7 +293,10 @@ function hebrewList(items: readonly string[]): string {
  * Used when there is no key, when the provider is down, and when a reply fails
  * grounding. Plainer than the model's version and never a comma dump of OSM.
  */
-export function areaNoteFromPlaces(places: AreaPlaces): string {
+export function areaNoteFromPlaces(
+  places: AreaPlaces,
+  options: { alternate?: boolean } = {},
+): string {
   const hood = places.neighbourhoods[0]?.name;
   const street = places.street;
   const where = hood
@@ -337,6 +343,11 @@ export function areaNoteFromPlaces(places: AreaPlaces): string {
   const shops = nearest(places.shops).slice(0, 2).map(named);
   if (shops.length > 0) {
     sentences.push(`למסחר יומיומי יש את ${hebrewList(shops)}.`);
+  }
+
+  if (options.alternate && sentences.length > 2) {
+    const [whereLine, ...rest] = sentences;
+    return [whereLine, ...rest.reverse()].join(' ');
   }
 
   return sentences.join(' ');

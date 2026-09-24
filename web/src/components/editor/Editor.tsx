@@ -332,10 +332,14 @@ export default function Editor() {
    */
   const canSuggest = Boolean(savedRow?.id ?? listingId.current) && supabaseConfigured && signedIn;
 
+  const descriptionRef = useRef(state.description);
+  descriptionRef.current = state.description;
+
   const suggest = (retriesLeft = 1) => {
     const id = listingId.current;
     if (!id || suggesting) return;
 
+    const previous = descriptionRef.current.trim();
     setSuggesting(true);
     setSuggestFailed(false);
 
@@ -352,7 +356,7 @@ export default function Editor() {
             Authorization: `Bearer ${token}`,
             Accept: 'text/event-stream',
           },
-          body: JSON.stringify({ listingId: id }),
+          body: JSON.stringify({ listingId: id, previous }),
         });
         if (!response.ok) throw new Error(String(response.status));
 
@@ -368,7 +372,6 @@ export default function Editor() {
           const decoder = new TextDecoder();
           let buffer = '';
           let draft = '';
-          setState((current) => ({ ...current, description: '' }));
 
           while (true) {
             const { value, done } = await reader.read();
@@ -951,6 +954,9 @@ export default function Editor() {
             onChoose={(template) => setState((current) => ({ ...current, template }))}
             accent={state.accent ?? profile.accent ?? undefined}
             onAccent={(accent) => setState((current) => ({ ...current, accent }))}
+            photos={photos
+              .map((photo) => photo.publicUrl ?? photo.url)
+              .filter((url): url is string => url.trim() !== '')}
           />
         ) : null}
 
@@ -960,7 +966,7 @@ export default function Editor() {
             generated={state.generatedDescription}
             facts={state.facts}
             onChange={(description) => setState((current) => ({ ...current, description }))}
-            onSuggest={canSuggest ? suggest : undefined}
+            onSuggest={canSuggest ? () => suggest() : undefined}
             suggesting={suggesting}
             suggestFailed={suggestFailed ? t('editor.description.suggestFailed') : undefined}
           />

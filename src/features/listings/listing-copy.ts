@@ -123,7 +123,10 @@ function hebrewList(items: readonly string[]): string {
  * as a list. Then the seller's own note, then the area paragraph if proximity
  * ran. Anything missing is simply not a sentence.
  */
-export function groundedDescription(input: ListingCopyInput): string {
+export function groundedDescription(
+  input: ListingCopyInput,
+  options: { alternate?: boolean } = {},
+): string {
   const schema = schemaFor(input.category);
   const { measured, features } = factFragments(input);
 
@@ -132,8 +135,11 @@ export function groundedDescription(input: ListingCopyInput): string {
     ...measured,
   ].join(', ');
 
-  const sentences = [`${opening}.`];
-  if (features.length > 0) sentences.push(`יש ${hebrewList(features)}.`);
+  const featureLine = features.length > 0 ? `יש ${hebrewList(features)}.` : undefined;
+  const sentences: string[] =
+    options.alternate && featureLine
+      ? [featureLine, `${opening}.`]
+      : [`${opening}.`, ...(featureLine ? [featureLine] : [])];
 
   const notes = input.sellerNotes?.trim();
   if (notes) sentences.push(notes.endsWith('.') ? notes : `${notes}.`);
@@ -165,6 +171,31 @@ export function descriptionPrompt(input: ListingCopyInput): string {
     ...(input.areaNote ? { areaNote: input.areaNote } : {}),
     ...(input.sellerNotes ? { sellerNotes: input.sellerNotes } : {}),
   });
+}
+
+/**
+ * Second press of "הצע תיאור אחר": same facts, a different paragraph.
+ *
+ * Without this the model (and the deterministic fallback) return the same
+ * sentences, so the button looks dead.
+ */
+export function rewriteInstruction(previous: string): string {
+  const text = previous.trim();
+  if (text === '') return '';
+  return (
+    'כתוב ניסוח אחר לגמרי. שנה את הפתיחה ואת סדר המשפטים. ' +
+    'אסור לחזור על הפסקה הזו מילה במילה:\n' +
+    text
+  );
+}
+
+export function appendRewrite(prompt: string, previous?: string): string {
+  const extra = previous ? rewriteInstruction(previous) : '';
+  return extra === '' ? prompt : `${prompt}\n\n${extra}`;
+}
+
+export function sameParagraph(a: string, b: string): boolean {
+  return a.replace(/\s+/g, ' ').trim() === b.replace(/\s+/g, ' ').trim();
 }
 
 /** Hebrew has to be present, or the model answered in the wrong language. */

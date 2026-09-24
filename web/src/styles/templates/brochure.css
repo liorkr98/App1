@@ -17,7 +17,7 @@ html[data-template='brochure'] .hero-title {
 }
 
 html[data-template='brochure'] .price-bar {
-  padding-block: 1.5rem 0.35rem;
+  padding-block: 1.85rem 0.7rem;
 }
 
 html[data-template='brochure'] .facts {
@@ -26,13 +26,13 @@ html[data-template='brochure'] .facts {
   gap: 0;
   background: transparent;
   border-block: 0;
-  padding-block-end: 0.4rem;
+  padding-block-end: 0.85rem;
 }
 
 html[data-template='brochure'] .fact {
   flex: 1 1 6rem;
   background: transparent;
-  padding: 1.15rem 0.6rem 0.2rem;
+  padding: 1.4rem 0.75rem 0.55rem;
 }
 
 html[data-template='brochure'] .gallery figure:not(:first-child) img {

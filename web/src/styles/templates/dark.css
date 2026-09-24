@@ -62,7 +62,7 @@ html[data-template='dark'] .facts {
 
 html[data-template='dark'] .fact {
   background: transparent;
-  padding-block: 1.4rem;
+  padding-block: 1.75rem;
 }
 
 html[data-template='dark'] .fact + .fact {
@@ -75,7 +75,7 @@ html[data-template='dark'] .fact.off {
 
 html[data-template='dark'] .gallery {
   padding-inline: 0;
-  gap: 0.25rem;
+  gap: 0.45rem;
 }
 
 html[data-template='dark'] .gallery img {

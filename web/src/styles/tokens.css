@@ -59,16 +59,16 @@
   --t-meta: 0.82rem;
 
   /* One gutter for every full-bleed block, on both surfaces. */
-  --gut: 1.4rem;
+  --gut: 1.7rem;
 
   /*
     Section rhythm. Identical padding on every block is why the page reads
     as one flat stack. Tight after the hero, open before enrichment, tight
     in the agent card (listing redesign §8).
   */
-  --pad-tight: 1.35rem;
-  --pad-section: 2.4rem;
-  --pad-open: 3.4rem;
+  --pad-tight: 1.65rem;
+  --pad-section: 3rem;
+  --pad-open: 4.1rem;
 
   /* Hairline accent mark. Replaces the 6px side-tab rails Impeccable flags. */
   --accent-mark: 2px;

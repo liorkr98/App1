@@ -10,7 +10,7 @@ html[data-template='walkFirst'][data-has-walk='1'] .hero {
 
 html[data-template='walkFirst'][data-has-walk='1'] .walk {
   order: -2;
-  padding-block: 0 1.6rem;
+  padding-block: 0 2.1rem;
 }
 
 html[data-template='walkFirst'][data-has-walk='1'] .price-bar {
@@ -18,7 +18,7 @@ html[data-template='walkFirst'][data-has-walk='1'] .price-bar {
 }
 
 html[data-template='walkFirst'] .walk {
-  padding-block-start: 1.1rem;
+  padding-block-start: 1.45rem;
 }
 
 html[data-template='walkFirst'][data-has-walk='1'] .walk-main img {

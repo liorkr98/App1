@@ -26,8 +26,10 @@ html[data-template='editorial'] .price {
 
 html[data-template='editorial'] .facts {
   grid-template-columns: repeat(3, 1fr);
+  padding-block: 0.35rem 0.2rem;
 }
 
 html[data-template='editorial'] .fact {
   text-align: start;
+  padding-block: 1.35rem 1.2rem;
 }
