@@ -1,5 +1,7 @@
 ---
 import { accentFor } from '@/features/agents/accents';
+import { canonicalSellerRole } from '@/features/agents/profile';
+import { telHref } from '@/features/listings/phone';
 import type { Listing } from '@/types/listing';
 import { t } from '../lib/i18n';
 import { listingJsonLd } from '../lib/jsonld';
@@ -27,6 +29,7 @@ interface Props {
 }
 
 const { listing, ogFactKeys, heroHeight, robots: robotsOverride, hasWalk = false } = Astro.props;
+const sellerRole = listing.seller.role ? canonicalSellerRole(listing.seller.role) : '';
 
 /**
  * The agent's accent, resolved to two stops and set as inline custom
@@ -54,7 +57,7 @@ const canonical = new URL(`/a/${listing.slug}/`, Astro.site).href;
 
 // noindex unless the seller opted in. A private seller usually does not want
 // their home address permanently searchable; an agent does. Not our call.
-const robots = robotsOverride ?? (listing.indexable ? 'index,follow' : 'noindex');
+const robots = robotsOverride ?? (listing.indexable === true ? 'index,follow' : 'noindex, nofollow');
 
 // Structured data only when Google is invited. A noindex page with JSON-LD
 // still puts the address in a crawl report.
@@ -64,6 +67,8 @@ const jsonLd =
     : undefined;
 
 const sold = listing.status === 'sold';
+const callHref = sold ? '' : telHref(listing.seller.phone);
+const waBarHref = `/a/${listing.slug}/wa`;
 
 /**
  * The agent bar, and what it says when there is no agent.
@@ -154,6 +159,17 @@ const showBarLogo =
   {agency ? (
     <Fragment>
       <strong>{listing.seller.name}</strong>
+      {sellerRole ? <span class="agent-role">{sellerRole}</span> : null}
+      {callHref ? (
+        <span class="agent-actions">
+          <a href={waBarHref} aria-label={t('listing.whatsappShort')}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7A2.5 2.5 0 0 1 17.5 16H9l-4 3.2A.8.8 0 0 1 4 18.6V6.5Z"/></svg>
+          </a>
+          <a href={callHref} aria-label={t('listing.callCta')}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8.2 3.8c.4-.4 1-.5 1.5-.2l2.1 1.2c.5.3.7.9.5 1.4l-.8 2.1a1.2 1.2 0 0 0 .3 1.3l2.6 2.6c.4.4 1 .5 1.4.3l2.1-.8c.5-.2 1.1 0 1.4.5l1.2 2.1c.3.5.2 1.1-.2 1.5l-1.3 1.3c-.5.5-1.2.7-1.9.6-2.3-.4-5.2-2.1-7.6-4.5S4.6 8.7 4.2 6.4c-.1-.7.1-1.4.6-1.9l1.3-1.3Z"/></svg>
+          </a>
+        </span>
+      ) : null}
       {listing.seller.licenceVerified ? (
         <span class="agent-verified">{t('listing.licenceVerified')}</span>
       ) : null}
@@ -162,6 +178,17 @@ const showBarLogo =
   ) : (
     <Fragment>
       <strong>{listing.seller.name}</strong>
+      {sellerRole ? <span class="agent-role">{sellerRole}</span> : null}
+      {callHref ? (
+        <span class="agent-actions">
+          <a href={waBarHref} aria-label={t('listing.whatsappShort')}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7A2.5 2.5 0 0 1 17.5 16H9l-4 3.2A.8.8 0 0 1 4 18.6V6.5Z"/></svg>
+          </a>
+          <a href={callHref} aria-label={t('listing.callCta')}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8.2 3.8c.4-.4 1-.5 1.5-.2l2.1 1.2c.5.3.7.9.5 1.4l-.8 2.1a1.2 1.2 0 0 0 .3 1.3l2.6 2.6c.4.4 1 .5 1.4.3l2.1-.8c.5-.2 1.1 0 1.4.5l1.2 2.1c.3.5.2 1.1-.2 1.5l-1.3 1.3c-.5.5-1.2.7-1.9.6-2.3-.4-5.2-2.1-7.6-4.5S4.6 8.7 4.2 6.4c-.1-.7.1-1.4.6-1.9l1.3-1.3Z"/></svg>
+          </a>
+        </span>
+      ) : null}
       <span>{t('common.builtByPrefix')}<a href="/">{t('common.brand')}</a></span>
     </Fragment>
   )}
@@ -176,6 +203,7 @@ const showBarLogo =
 
 <dialog id="listing-lightbox" class="lightbox" aria-label={t('listing.openPhoto')}>
   <button type="button" class="lightbox-close">{t('listing.closeLightbox')}</button>
+  <p class="lightbox-room" data-lightbox-room hidden></p>
   <p class="lightbox-count"><bdi data-lightbox-count></bdi></p>
   <div class="lightbox-track"></div>
 </dialog>

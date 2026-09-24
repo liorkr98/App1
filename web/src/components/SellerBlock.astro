@@ -1,4 +1,5 @@
 ---
+import { canonicalSellerRole } from '@/features/agents/profile';
 import type { Seller } from '@/types/listing';
 import { displayPhone, telHref } from '@/features/listings/phone';
 import { t } from '../lib/i18n';
@@ -14,6 +15,7 @@ interface Props {
 }
 
 const { seller, whatsappHref, shareHref, sold = false } = Astro.props;
+const sellerRole = seller.role ? canonicalSellerRole(seller.role) : '';
 
 /**
  * A person photo, or the agency mark when the profile put the logo only
@@ -51,10 +53,10 @@ const phoneLabel = displayPhone(seller.phone);
         has not earned this far down the page. The agent bar at the top is
         where the agency is the headline.
       */}
-      {(seller.role || seller.agencyName) && (
+      {(sellerRole || seller.agencyName) && (
         <div class="seller-role">
-          {seller.role}
-          {seller.role && seller.agencyName && ' · '}
+          {sellerRole}
+          {sellerRole && seller.agencyName && ' · '}
           {seller.agencyName}
         </div>
       )}

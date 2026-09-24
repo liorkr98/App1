@@ -97,6 +97,10 @@ body{
 .agent-bar .dot img{inline-size:100%;block-size:100%;object-fit:cover;border-radius:50%;display:block}
 .agent-bar strong{font-weight:600}
 .agent-bar span{color:#9C9D93;margin-inline-start:auto;font-size:.8rem}
+.agent-bar .agent-role,.agent-bar .agent-actions{margin-inline-start:0;color:inherit}
+.agent-actions{display:flex;gap:.3rem;flex:0 0 auto}
+.agent-actions a{color:var(--on-dark);justify-content:center;border:1px solid currentColor;border-radius:50%}
+.agent-actions svg{inline-size:16px;block-size:16px;display:block}
 .agent-verified{
   flex:0 0 auto;
   font-size:.62rem;
@@ -177,6 +181,39 @@ body{
   margin-inline-end:.35rem;
 }
 .price-note{text-align:end;padding-block-end:.2rem}
+.price-note bdi{font-family:'Frank Ruhl Libre',serif;font-weight:500}
+
+.hero-thumbs{
+  display:flex;
+  gap:.45rem;
+  padding:.7rem var(--gut) 0;
+}
+.hero-thumb{
+  position:relative;
+  flex:1 1 0;
+  display:block;
+  border-radius:8px;
+  overflow:hidden;
+  aspect-ratio:4/3;
+}
+.hero-thumb img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+.hero-thumb.is-more img{filter:brightness(.45)}
+.hero-thumb-more{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--plaster);
+  font-family:'Frank Ruhl Libre',serif;
+  font-weight:700;
+  font-size:1.35rem;
+}
 
 .highlights{
   display:flex;
@@ -187,13 +224,47 @@ body{
   margin:0;
 }
 .highlights li{
-  border:1px solid var(--stone);
+  border:1px solid var(--olive);
   border-radius:999px;
   padding:.28rem .75rem;
   font-size:var(--t-label);
   font-weight:600;
   color:var(--ink);
   line-height:1.3;
+  background:transparent;
+}
+.absent-line{
+  margin:0;
+  padding:.75rem var(--gut) .2rem;
+  color:var(--absent);
+  font-size:.92rem;
+  line-height:1.5;
+}
+.facts-more{
+  margin:0;
+  padding:.4rem var(--gut) .9rem;
+}
+.facts-more summary,
+.read-more summary{
+  cursor:pointer;
+  font-weight:600;
+  font-size:.92rem;
+  color:var(--ink);
+}
+.read-more p{margin-block-start:.8rem}
+.spec-list{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:.65rem 1.2rem;
+  margin:.8rem 0 0;
+}
+.spec-list div{display:flex;flex-direction:column;gap:.1rem}
+.spec-list dt{font-size:var(--t-label);color:var(--muted)}
+.spec-list dd{
+  margin:0;
+  font-family:'Frank Ruhl Libre',serif;
+  font-size:1.15rem;
+  font-weight:500;
 }
 
 /* ============================================================
@@ -242,7 +313,11 @@ body{
    סקשנים — ריתמוס משתנה, לא אותו קו מפריד כל פעם
    ============================================================ */
 section{padding:var(--pad-section) var(--gut)}
+/* Tight under the hero, open before the neighbourhood, tight again
+   on the agent card. Identical padding is what made the page read flat. */
 section:not(.hero):not(.enrich){padding-block-start:var(--pad-tight)}
+.enrich{padding-block:var(--pad-open)}
+.seller{padding-block:var(--pad-tight)}
 h2{
   font-family:'Frank Ruhl Libre',serif;
   font-weight:500;font-size:var(--t-h2);
@@ -419,24 +494,50 @@ p + p{margin-top:.9rem}
   overflow:hidden;
   border-radius:4px;
   border:1px solid var(--stone);
+  aspect-ratio:16/10;
 }
-.area-map-tiles{
-  display:grid;
-  grid-template-columns:repeat(var(--map-cols),minmax(0,1fr));
-}
-.area-map-tiles img{
-  display:block;
-  inline-size:100%;
-  block-size:auto;
-}
-.area-map-svg{
-  position:absolute;
-  inset:0;
+.area-map-stage img{
   display:block;
   inline-size:100%;
   block-size:100%;
+  object-fit:cover;
+}
+.map-open{
+  display:block;
+  width:100%;
+  padding:0;
+  border:0;
   background:none;
-  pointer-events:none;
+  cursor:pointer;
+}
+.map-links{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.5rem;
+  margin-block-start:.8rem;
+}
+.map-dialog{
+  inset:0;
+  width:100%;
+  max-width:none;
+  height:100%;
+  max-height:none;
+  margin:0;
+  padding:0;
+  border:0;
+  background:var(--ink-deep);
+}
+.map-zoom{
+  overflow:auto;
+  touch-action:pinch-zoom;
+  overscroll-behavior:contain;
+  block-size:100%;
+}
+.map-zoom img{
+  max-width:none;
+  width:300%;
+  height:auto;
+  display:block;
 }
 .area-map-list{
   list-style:none;
@@ -457,8 +558,7 @@ p + p{margin-top:.9rem}
   border-block-start:1px solid var(--stone);
 }
 .area-map-list li:first-child{border-block-start:0;padding-block-start:0}
-/* The key that ties a line of the list to a pin in the drawing. A Hebrew
-   letter and not a digit, so no number sits outside <bdi> (§4.2). */
+/* The key that ties a line of the list to a pin. A numeral, inside <bdi>. */
 .area-map-key{
   display:inline-flex;
   align-items:center;
@@ -472,9 +572,14 @@ p + p{margin-top:.9rem}
   font-weight:700;
   font-size:.86rem;
 }
-.area-map-walk{
-  color:var(--muted);
+.area-map-walk,
+.map-nearby-walk{
+  font-family:'Frank Ruhl Libre',serif;
+  font-size:1.45rem;
+  font-weight:700;
+  color:var(--olive);
   font-variant-numeric:tabular-nums;
+  line-height:1.1;
 }
 /* ODbL. A licence condition, so it is not styled to disappear. */
 .area-map-credit{
@@ -665,19 +770,17 @@ footer a{
     @keyframes fill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
   }
 
-  .hero-veil{animation:rise var(--dur-reveal) .08s both var(--ease-out)}
-
-  .hero-line > span{
-    animation:line-rise var(--dur-reveal) var(--ease-out) both;
-  }
-  .hero-line:nth-child(2) > span{animation-delay:80ms}
-  .hero-line:nth-child(3) > span{animation-delay:140ms}
-  @keyframes line-rise{
-    from{transform:translateY(110%)}
-    to{transform:none}
-  }
-
   @supports (animation-timeline:view()){
+    .hero-line > span{
+      animation:line-rise var(--dur-reveal) var(--ease-out) both;
+    }
+    .hero-line:nth-child(2) > span{animation-delay:80ms}
+    .hero-line:nth-child(3) > span{animation-delay:140ms}
+    @keyframes line-rise{
+      from{clip-path:inset(0 0 100% 0);transform:translateY(110%)}
+      to{clip-path:inset(0);transform:none}
+    }
+
     .clip-reveal{
       animation:clip-expand linear both;
       animation-timeline:view();
@@ -877,6 +980,16 @@ footer a{
   color:var(--on-dark);
 }
 .lightbox-count:has(bdi:empty){display:none}
+.lightbox-room{
+  position:fixed;
+  inset-block-start:.85rem;
+  inset-inline-start:var(--gut);
+  z-index:2;
+  margin:0;
+  font-weight:600;
+  font-size:.92rem;
+}
+.lightbox-room[hidden]{display:none}
 .lightbox-close{
   position:fixed;
   inset-block-start:.7rem;
@@ -901,15 +1014,25 @@ footer a{
 .tour-chips label,
 .walk-next,
 .walk-all,
+.hero-thumb,
+.map-nav,
+.facts-more summary,
+.seller-action,
 .cta{
   transition:transform var(--dur-press) var(--ease-out);
 }
+.agent-actions a:active,
 .gallery-open:active,
 .compact-wa:active,
 .tour-chips a:active,
 .tour-chips label:active,
 .walk-next:active,
-.walk-all:active{
+.walk-all:active,
+.hero-thumb:active,
+.map-nav:active,
+.facts-more summary:active,
+.seller-action:active,
+.cta:active{
   transform:scale(.97);
 }
 

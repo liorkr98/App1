@@ -1,8 +1,8 @@
 ---
-import type { AreaMap } from '@/features/listings/area-map';
-import { osmTileUrl } from '@/features/listings/area-map';
+import { composedMapSrc, type AreaMap } from '@/features/listings/area-map';
 import { t } from '../lib/i18n';
 import Prose from './Prose.astro';
+import WalkMinutes from './WalkMinutes.astro';
 
 interface Props {
   map: AreaMap;
@@ -10,78 +10,34 @@ interface Props {
 }
 
 const { map, attribution } = Astro.props;
-
-const colour: Record<string, string> = {
-  transit: '#4a5d3a',
-  school: '#7a5c2e',
-  park: '#3f6b4a',
-  community: '#5a4a7a',
-  shop: '#7a3f3f',
-  neighbourhood: '#67685f',
-};
-
-const tiles = Array.from({ length: map.rows }, (_, row) =>
-  Array.from({ length: map.cols }, (_, col) => ({
-    src: osmTileUrl(map.zoom, map.tileX0 + col, map.tileY0 + row),
-    row,
-    col,
-  })),
-).flat();
+const src = composedMapSrc(map);
 ---
 
 <figure class="area-map">
-  {/*
-    direction:ltr so north stays up and east stays east. The rest of the
-    page is RTL; a mirrored street map is a wrong map.
-  */}
-  <div class="area-map-stage" style={`--map-cols:${map.cols};--map-rows:${map.rows}`}>
-    <div class="area-map-tiles">
-      {tiles.map((tile) => (
-        <img src={tile.src} alt="" width="256" height="256" loading="lazy" decoding="async" />
-      ))}
-    </div>
-    <svg
-      class="area-map-svg"
-      viewBox={`0 0 ${map.width} ${map.height}`}
-      role="presentation"
-      aria-hidden="true"
-    >
-      {map.pins.map((pin) => (
-        <g>
-          <circle cx={pin.x} cy={pin.y} r="17" fill={colour[pin.group] ?? colour.neighbourhood} />
-          <text
-            x={pin.x}
-            y={pin.y}
-            text-anchor="middle"
-            dominant-baseline="central"
-            font-family="'Frank Ruhl Libre', serif"
-            font-size="19"
-            font-weight="700"
-            fill="#fbfaf7"
-          >{pin.key}</text>
-        </g>
-      ))}
-      <g>
-        <circle cx={map.origin.x} cy={map.origin.y} r="13" fill="#fbfaf7" />
-        <circle cx={map.origin.x} cy={map.origin.y} r="8" fill="#191a15" />
-      </g>
-    </svg>
+  <div class="area-map-stage">
+    <button type="button" class="map-open" data-map-open>
+      <img
+        src={src}
+        alt={t('listing.mapAlt')}
+        width="1600"
+        height="1000"
+        decoding="async"
+      />
+    </button>
   </div>
 
   <ol class="area-map-list">
     {map.pins.map((pin) => (
       <li>
-        <span class="area-map-key" style={`--pin:${colour[pin.group] ?? colour.neighbourhood}`}>
-          {pin.key}
-        </span>
-        <b><Prose text={pin.name} /></b>
         {pin.walkMinutes === undefined ? (
           <span class="area-map-walk"></span>
         ) : (
           <span class="area-map-walk">
-            <bdi>{pin.walkMinutes}</bdi> {t('listing.mapNearbyMinutes')}
+            <WalkMinutes minutes={pin.walkMinutes} />
           </span>
         )}
+        <b><Prose text={pin.name} /></b>
+        <span class="area-map-key"><bdi>{pin.key}</bdi></span>
       </li>
     ))}
   </ol>

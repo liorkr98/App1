@@ -1,3 +1,4 @@
+import { rankEveryday } from '@/features/listings/place-rank';
 import type {
   CivicKind,
   NearbyCivic,
@@ -79,10 +80,21 @@ export function groupPlaces(places: NearbyPlace[]): PlaceGroup[] {
     const matching = places.filter((place) => place.category === category);
     if (matching.length === 0) continue;
 
+    const everyday =
+      category === 'grocery' ||
+      category === 'pharmacy' ||
+      category === 'cafe' ||
+      category === 'restaurant' ||
+      category === 'gym';
+    const ranked = everyday
+      ? rankEveryday(matching)
+      : [...matching].sort((a, b) => a.walkMinutes - b.walkMinutes);
+    if (ranked.length === 0) continue;
+
     groups.push({
       category,
       label: categoryLabel(category),
-      places: [...matching].sort((a, b) => a.walkMinutes - b.walkMinutes),
+      places: ranked,
     });
   }
 

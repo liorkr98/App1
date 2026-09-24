@@ -8,13 +8,15 @@ import type {
 } from '../../types/listing.js';
 
 import { tidyParagraph } from './description.js';
+import { minutePhrase, walkPhrase } from './hebrew-plural.js';
 
 /**
  * Hebrew neighbourhood copy, from the lists already computed at publish.
  *
- * This is the listing DESCRIPTION the seller can edit — not a live model call
- * on the page, not a valuation, and not a sentence about something we do not
- * have (CLAUDE.md §7). Coordinates never enter the prompt.
+ * This is neighbourhood copy for the enrichment block — not the listing
+ * description, which stays about the property. Not a live model call on the
+ * page, not a valuation, and not a sentence about something we do not have
+ * (CLAUDE.md §7). Coordinates never enter the prompt.
  */
 
 const HEBREW = /[\u0590-\u05FF]/;
@@ -60,7 +62,7 @@ function line(
   if (items.length === 0) return undefined;
   const nearest = byWalk(items)
     .slice(0, cap)
-    .map((item) => `${item.name} (${item.walkMinutes} דקות הליכה)`);
+    .map((item) => `${item.name} (${walkPhrase(item.walkMinutes)})`);
   return `${label}: ${nearest.join(', ')}`;
 }
 
@@ -161,7 +163,7 @@ export function groundedAreaDescription(facts: NeighborhoodFacts): string {
       railFirst
         .map(
           (stop) =>
-            `${MODE_PHRASE[stop.mode]} ${stop.name} כ־${stop.walkMinutes} דקות הליכה`,
+            `${MODE_PHRASE[stop.mode]} ${stop.name} כ־${walkPhrase(stop.walkMinutes)}`,
         )
         .join(', ') + '.',
     );
@@ -171,7 +173,7 @@ export function groundedAreaDescription(facts: NeighborhoodFacts): string {
   if (schools.length > 0) {
     sentences.push(
       'חינוך במרחק הליכה: ' +
-        schools.map((school) => `${school.name} (${school.walkMinutes} דקות)`).join(', ') +
+        schools.map((school) => `${school.name} (${minutePhrase(school.walkMinutes)})`).join(', ') +
         '.',
     );
   }
@@ -186,10 +188,10 @@ export function groundedAreaDescription(facts: NeighborhoodFacts): string {
   )[0];
 
   const amenities: string[] = [];
-  if (grocery) amenities.push(`${grocery.name} (${grocery.walkMinutes} דקות)`);
-  if (park) amenities.push(`${park.name} (${park.walkMinutes} דקות)`);
-  if (community) amenities.push(`${community.name} (${community.walkMinutes} דקות)`);
-  if (parking) amenities.push(`${parking.name} (${parking.walkMinutes} דקות)`);
+  if (grocery) amenities.push(`${grocery.name} (${minutePhrase(grocery.walkMinutes)})`);
+  if (park) amenities.push(`${park.name} (${minutePhrase(park.walkMinutes)})`);
+  if (community) amenities.push(`${community.name} (${minutePhrase(community.walkMinutes)})`);
+  if (parking) amenities.push(`${parking.name} (${minutePhrase(parking.walkMinutes)})`);
   if (amenities.length > 0) {
     sentences.push(`בסביבה: ${amenities.join(', ')}.`);
   }
@@ -209,12 +211,16 @@ export function groundedAreaDescription(facts: NeighborhoodFacts): string {
  * The DeepSeek / grounded paragraph is the listing description. A seller
  * who already wrote one keeps it; an empty field takes the area copy.
  */
+/**
+ * The description is about the property. The enrichment block owns the
+ * neighbourhood, so an empty description stays empty — it is never filled
+ * with the area paragraph, which would repeat the map.
+ */
 export function descriptionOrArea(
   description: string,
-  note?: NeighborhoodNote,
+  _note?: NeighborhoodNote,
 ): string {
-  if (description.trim() !== '') return description;
-  return note?.text ?? description;
+  return description.trim();
 }
 
 export function acceptNeighborhoodNote(
