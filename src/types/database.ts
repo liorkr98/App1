@@ -638,6 +638,23 @@ export type Database = {
         }
         Relationships: []
       }
+      listing_event_daily: {
+        Row: {
+          day: string | null
+          listing_id: string | null
+          views: number | null
+          wa_taps: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_events_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       listing_event_counts: {
         Row: {
           listing_id: string | null

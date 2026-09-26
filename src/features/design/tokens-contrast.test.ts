@@ -44,6 +44,9 @@ const TOKENS = readFileSync(new URL('../../../web/src/styles/tokens.css', import
 const DARK = readFileSync(new URL('../../../web/src/styles/templates/dark.css', import.meta.url), 'utf8');
 const AGENCY = readFileSync(new URL('../../../web/src/styles/templates/agency.css', import.meta.url), 'utf8');
 const LINEN = readFileSync(new URL('../../../web/src/styles/templates/linen.css', import.meta.url), 'utf8');
+const GALLERY = readFileSync(new URL('../../../web/src/styles/templates/gallery.css', import.meta.url), 'utf8');
+const CINEMA = readFileSync(new URL('../../../web/src/styles/templates/cinema.css', import.meta.url), 'utf8');
+const SHOWCASE = readFileSync(new URL('../../../web/src/styles/templates/showcase.css', import.meta.url), 'utf8');
 const MUTED_ON_DARK = tokenHex(TOKENS, '--muted-on-dark');
 
 const PLASTER = tokenHex(TOKENS, '--plaster');
@@ -101,5 +104,39 @@ describe('absent and muted tokens meet WCAG AA body', () => {
   it('--muted-on-dark clears 4.5:1 on studio ink-deep', () => {
     const ratio = contrast(MUTED_ON_DARK, '#141310');
     assert.ok(ratio >= 4.5, `--muted-on-dark is ${ratio.toFixed(2)}:1 on #141310`);
+  });
+
+  it('gallery and showcase keep the shared --absent and --muted readable on their grounds', () => {
+    for (const [name, source] of [
+      ['gallery', GALLERY],
+      ['showcase', SHOWCASE],
+    ] as const) {
+      const scope = `html\\[data-template='${name}'\\]`;
+      // Same pairing as the base tokens: --muted on plaster, --muted-warm on
+      // the tinted blocks, --absent on both.
+      const plaster = scopedTokenHex(source, scope, '--plaster');
+      const warm = scopedTokenHex(source, scope, '--stone-warm');
+      for (const [label, ink, token, ground] of [
+        ['--absent', ABSENT, '--plaster', plaster],
+        ['--absent', ABSENT, '--stone-warm', warm],
+        ['--muted', MUTED, '--plaster', plaster],
+        ['--muted-warm', MUTED_WARM, '--stone-warm', warm],
+      ] as const) {
+        const ratio = contrast(ink, ground);
+        assert.ok(ratio >= 4.5, `${name} ${label} is ${ratio.toFixed(2)}:1 on ${token} ${ground}`);
+      }
+    }
+  });
+
+  it('cinema --absent and --muted clear 4.5:1 on its plaster and stone-warm', () => {
+    const scope = "html\\[data-template='cinema'\\]";
+    for (const token of ['--plaster', '--stone-warm'] as const) {
+      const ground = scopedTokenHex(CINEMA, scope, token);
+      for (const label of ['--absent', '--muted'] as const) {
+        const ink = scopedTokenHex(CINEMA, scope, label);
+        const ratio = contrast(ink, ground);
+        assert.ok(ratio >= 4.5, `cinema ${label} is ${ratio.toFixed(2)}:1 on ${token} ${ground}`);
+      }
+    }
   });
 });

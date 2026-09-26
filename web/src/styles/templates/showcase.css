@@ -1,0 +1,208 @@
+/*
+  Showcase — a headline, a rounded photograph and a card beside it carrying
+  the three numbers, the price and the agent. Soft ground, generous air,
+  black pill buttons.
+
+  The ground is a gradient of two plasters, not a colour of its own: every
+  contrast pair the facts and the provenance rely on is measured against
+  --plaster, and the gradient never leaves the range those were measured at.
+*/
+
+html[data-template='showcase'] {
+  --plaster: #f7f5f0;
+  --stone: #e3dfd5;
+  --stone-warm: #efebe2;
+  --heroWant: 70svh;
+}
+
+html[data-template='showcase'] body {
+  background:
+    radial-gradient(60rem 36rem at 100% 0%, color-mix(in srgb, var(--olive) 9%, var(--plaster)), transparent 70%),
+    var(--plaster);
+}
+
+html[data-template='showcase'] section.stage-showcase {
+  padding: 1.6rem var(--gut) 0.6rem;
+}
+
+html[data-template='showcase'] .show-head {
+  padding-block-end: 1.3rem;
+}
+
+html[data-template='showcase'] .show-head .stage-title {
+  font-size: clamp(2.2rem, 5.6vw, 4.4rem);
+  max-inline-size: 18ch;
+}
+
+html[data-template='showcase'] .show-grid {
+  display: grid;
+  gap: 0.9rem;
+}
+
+html[data-template='showcase'] .show-photo {
+  aspect-ratio: 4 / 3;
+  border-radius: 26px;
+}
+
+html[data-template='showcase'] .show-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 1.5rem;
+  border-radius: 26px;
+  background: #fff;
+  box-shadow: 0 30px 70px -40px rgba(17, 18, 8, 0.4);
+}
+
+html[data-template='showcase'] .show-card .numerals {
+  margin: 0;
+  border-block-start: 0;
+}
+
+html[data-template='showcase'] .show-card .numerals > div {
+  padding-block-start: 0;
+}
+
+/* Three numbers in a 19rem card: sized to the card, not the viewport. */
+html[data-template='showcase'] .show-card .numerals dd {
+  font-size: clamp(1.6rem, 2.4vw, 2.2rem);
+}
+
+html[data-template='showcase'] .show-card .price-bar {
+  padding: 1rem 0 0.3rem;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: baseline;
+  gap: 0.3rem 1rem;
+}
+
+html[data-template='showcase'] .show-card .price {
+  font-size: clamp(2.1rem, 3.6vw, 2.8rem);
+}
+
+html[data-template='showcase'] .show-card .price-note {
+  text-align: start;
+}
+
+/* The agent sits inside the card here, as a tinted row, not a second card. */
+html[data-template='showcase'] .show-card .agent-card {
+  margin: 0.8rem 0 0;
+  padding: 1rem;
+  border: 0;
+  border-radius: 18px;
+  background: var(--stone-warm);
+  box-shadow: none;
+  animation: none;
+}
+
+/* --muted is 4.3:1 on this tint; the warm stop is the AA one. */
+html[data-template='showcase'] .show-card .agent-card :is(.agent-card-name span, .agent-card-licence, .agent-card-phone) {
+  color: var(--muted-warm);
+}
+
+html[data-template='showcase'] .show-card .agent-card-call {
+  background: #fff;
+  border-color: var(--stone);
+}
+
+html[data-template='showcase'] .stage-showcase > .highlights {
+  padding: 1.2rem 0 0;
+}
+
+html[data-template='showcase'] .highlights li {
+  border-color: var(--stone);
+  background: #fff;
+  padding: 0.45rem 0.95rem;
+}
+
+/* Facts as a single rounded bar of pills. */
+html[data-template='showcase'] .facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-inline: var(--gut);
+  padding: 0.8rem;
+  background: #fff;
+  border: 0;
+  border-radius: 24px;
+}
+
+html[data-template='showcase'] .fact {
+  flex: 1 1 8.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 16px;
+  background: var(--plaster);
+}
+
+html[data-template='showcase'] .fact-val {
+  font-size: clamp(1.35rem, 2.6vw, 1.7rem);
+}
+
+html[data-template='showcase'] .enrich {
+  margin-inline: var(--gut);
+  border-radius: 26px;
+}
+
+html[data-template='showcase'] .seller {
+  margin-inline: var(--gut);
+  border-radius: 26px;
+}
+
+html[data-template='showcase'] .gallery img {
+  border-radius: 18px;
+}
+
+html[data-template='showcase'] .cta {
+  border-radius: 999px;
+  background: var(--ink-deep);
+}
+
+@media (min-width: 900px) {
+  html[data-template='showcase'] section.stage-showcase {
+    padding-block-start: 2.6rem;
+  }
+
+  html[data-template='showcase'] .show-grid {
+    grid-template-columns: minmax(0, 1.55fr) minmax(19rem, 1fr);
+    align-items: stretch;
+    gap: 1.1rem;
+  }
+
+  html[data-template='showcase'] .show-photo {
+    aspect-ratio: auto;
+    min-block-size: 32rem;
+  }
+
+  html[data-template='showcase'] .show-card {
+    padding: 1.9rem;
+  }
+
+  /* .listing-flow is a flex column, so a width has to be given: auto
+     margins alone would shrink each block to its content. */
+  html[data-template='showcase'] .listing-flow > :not(.stage, .compact-bar) {
+    align-self: center;
+    inline-size: min(100%, 64rem);
+    max-width: none;
+    box-sizing: border-box;
+  }
+
+  html[data-template='showcase'] :is(.enrich, .seller, .facts, .monthly-cost) {
+    margin-inline: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html[data-template='showcase'] .show-photo img {
+    animation: show-settle 2.2s var(--ease-out) both;
+  }
+
+  html[data-template='showcase'] .show-card {
+    animation: stage-fade 1s var(--ease-out) 300ms both;
+  }
+
+  @keyframes show-settle {
+    from {
+      transform: scale(1.12);
+    }
+  }
+}

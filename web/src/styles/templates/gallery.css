@@ -1,0 +1,249 @@
+/*
+  Gallery — the photographs first, as a mosaic; then title, price and big
+  numerals beside an agent card that stays in view.
+
+  On a phone the mosaic is a swipeable strip and the card follows the price.
+  From 960px the page is two columns: the flow on the start side, the card
+  sticky on the end side for the whole scroll. The card is a sibling of the
+  flow's children (ListingPage renders it), because a sticky element only
+  sticks inside its own parent.
+*/
+
+html[data-template='gallery'] {
+  --plaster: #fcfbf8;
+  --stone: #e6e2d8;
+  --stone-warm: #f3f0e8;
+  --heroWant: 60svh;
+}
+
+/* ---------- Mosaic ---------- */
+
+html[data-template='gallery'] section.stage-gallery {
+  padding: 0;
+}
+
+html[data-template='gallery'] .mosaic {
+  position: relative;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 86%;
+  gap: 0.5rem;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: inline mandatory;
+  scroll-padding-inline: var(--gut);
+  padding: 0.9rem var(--gut) 0;
+  scrollbar-width: none;
+}
+
+html[data-template='gallery'] .mosaic::-webkit-scrollbar {
+  display: none;
+}
+
+html[data-template='gallery'] .mosaic-tile {
+  grid-row: 1;
+  aspect-ratio: 4 / 3.3;
+  border-radius: 16px;
+  scroll-snap-align: start;
+}
+
+html[data-template='gallery'] .mosaic-room {
+  position: absolute;
+  inset-block-start: 0.7rem;
+  inset-inline-start: 0.7rem;
+  padding: 0.22rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(17, 18, 8, 0.72);
+  color: var(--on-dark);
+  font-size: var(--t-label);
+  font-weight: 700;
+}
+
+html[data-template='gallery'] .mosaic-all {
+  grid-row: 2;
+  grid-column: 1;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-block-start: 0.2rem;
+  min-block-size: 44px;
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  font-size: var(--t-meta);
+  font-weight: 700;
+  text-decoration: none;
+  background: var(--plaster);
+}
+
+/* ---------- Body ---------- */
+
+html[data-template='gallery'] .stage-body {
+  padding: 1.6rem var(--gut) 0.4rem;
+}
+
+html[data-template='gallery'] .stage-body .price-bar {
+  padding: 1.1rem 0 0;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem 1.2rem;
+}
+
+html[data-template='gallery'] .stage-body .price {
+  font-size: clamp(2.4rem, 5.2vw, 3.6rem);
+}
+
+html[data-template='gallery'] .stage-body .price-note {
+  text-align: start;
+}
+
+html[data-template='gallery'] .stage-body .highlights {
+  padding: 1.2rem 0 0;
+}
+
+/* ---------- Enrichment as a dark card ---------- */
+
+html[data-template='gallery'] .enrich {
+  margin-inline: var(--gut);
+  border-radius: 22px;
+}
+
+/* ---------- Desktop ---------- */
+
+@media (min-width: 960px) {
+  html[data-template='gallery'] .listing-flow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 22rem;
+    column-gap: clamp(2.5rem, 4vw, 4.5rem);
+    align-items: start;
+    padding-inline: var(--gut);
+  }
+
+  html[data-template='gallery'] .listing-flow > * {
+    grid-column: 1;
+    min-inline-size: 0;
+  }
+
+  /* The stage dissolves into the grid so the mosaic can span both columns
+     and the card can sit beside the title. */
+  html[data-template='gallery'] section.stage-gallery {
+    display: contents;
+  }
+
+  html[data-template='gallery'] .mosaic {
+    grid-column: 1 / -1;
+    grid-auto-flow: row;
+    grid-auto-columns: auto;
+    grid-template-columns: 2fr 1fr 1fr;
+    grid-template-rows: repeat(2, clamp(12rem, 20vw, 17.5rem));
+    overflow: visible;
+    padding: 1.4rem 0 0;
+    gap: 0.6rem;
+  }
+
+  html[data-template='gallery'] .mosaic-tile {
+    grid-row: auto;
+    aspect-ratio: auto;
+    border-radius: 12px;
+  }
+
+  html[data-template='gallery'] .mosaic-tile:first-child {
+    grid-row: 1 / 3;
+    border-radius: 18px;
+  }
+
+  html[data-template='gallery'] .mosaic[data-tiles='4'] .mosaic-tile:nth-child(4) {
+    grid-column: 2 / 4;
+  }
+
+  html[data-template='gallery'] .mosaic[data-tiles='3'],
+  html[data-template='gallery'] .mosaic[data-tiles='2'] {
+    grid-template-columns: 2fr 1fr;
+  }
+
+  html[data-template='gallery'] .mosaic[data-tiles='2'] .mosaic-tile:nth-child(2) {
+    grid-row: 1 / 3;
+  }
+
+  html[data-template='gallery'] .mosaic[data-tiles='1'] {
+    grid-template-columns: 1fr;
+    grid-template-rows: clamp(20rem, 42vw, 34rem);
+  }
+
+  html[data-template='gallery'] .mosaic-all {
+    position: absolute;
+    inset-block-end: 1rem;
+    inset-inline-end: 1rem;
+    margin: 0;
+    border-color: transparent;
+    box-shadow: 0 10px 30px -12px rgba(17, 18, 8, 0.5);
+  }
+
+  html[data-template='gallery'] .stage-body {
+    padding: 2.4rem 0 0.4rem;
+  }
+
+  html[data-template='gallery'] .agent-card {
+    grid-column: 2;
+    grid-row: 2 / span 30;
+    position: sticky;
+    inset-block-start: 1.5rem;
+    margin: 2.4rem 0 0;
+  }
+
+  html[data-template='gallery'] .listing-flow > :is(section, .price-bar, .highlights, .absent-line, .facts-more, .pre-portal):not(.stage, .enrich, .seller) {
+    padding-inline: 0;
+  }
+
+  html[data-template='gallery'] .monthly-cost {
+    margin-inline: 0;
+  }
+
+  html[data-template='gallery'] .seller {
+    border-radius: 18px;
+    padding-inline: clamp(1.4rem, 2.6vw, 2.2rem);
+  }
+
+  html[data-template='gallery'] .enrich {
+    margin-inline: 0;
+    padding-inline: clamp(1.6rem, 3vw, 2.6rem);
+  }
+
+  html[data-template='gallery'] .facts {
+    grid-template-columns: repeat(3, 1fr);
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--stone);
+  }
+
+  /* The card carries the WhatsApp button for the whole scroll; a second one
+     docked at the bottom of a laptop screen is a duplicate. */
+  html[data-template='gallery'] .cta-dock {
+    display: none;
+  }
+
+  html[data-template='gallery'] body {
+    padding-block-end: 2rem;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    /* Each tile opens from a slight inset as it enters, on phones as the
+       strip is swiped and on desktop as the page settles. */
+    html[data-template='gallery'] .mosaic-tile img {
+      animation: gallery-tile linear both;
+      animation-timeline: view(inline);
+      animation-range: entry 0% cover 40%;
+    }
+
+    @keyframes gallery-tile {
+      from {
+        transform: scale(1.14);
+      }
+    }
+  }
+}

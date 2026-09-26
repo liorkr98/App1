@@ -269,7 +269,29 @@ function bindMapDialog(): void {
   });
 }
 
+/**
+ * The cinema panel's numbers, one at a time.
+ *
+ * Without this every number shows in a row, which is the whole content; the
+ * script only adds the stepping. RTL: the start-side button goes back.
+ */
+function bindMetric(): void {
+  const panel = document.querySelector<HTMLElement>('[data-metric]');
+  const items = panel ? [...panel.querySelectorAll<HTMLElement>('.cine-metric')] : [];
+  if (!panel || items.length < 2) return;
+  let at = 0;
+  panel.classList.add('is-cycling');
+  panel.addEventListener('click', (event) => {
+    const step = (event.target as Element).closest('[data-metric-step]');
+    if (!step) return;
+    items[at]?.classList.remove('is-on');
+    at = (at + Number(step.getAttribute('data-metric-step')) + items.length) % items.length;
+    items[at]?.classList.add('is-on');
+  });
+}
+
 observeCounts();
 bindLightbox();
 bindWalk();
 bindMapDialog();
+bindMetric();

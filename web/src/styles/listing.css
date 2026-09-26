@@ -26,6 +26,10 @@
 @import './templates/brochure.css';
 @import './templates/linen.css';
 @import './templates/studio.css';
+@import './stage.css';
+@import './templates/gallery.css';
+@import './templates/cinema.css';
+@import './templates/showcase.css';
 
 /* ============================================================
    היעד — עמוד מודעה
@@ -88,7 +92,10 @@ body{
    סרגל הסוכן — נותן למתווך נוכחות מהשורה הראשונה
    ============================================================ */
 .agent-bar{
-  display:flex;align-items:center;gap:.65rem;
+  /* Wraps rather than overflows: on a 390px phone name, role, both
+     buttons and the register badge already fill the line, and the agency
+     name was pushed 16px off the screen. */
+  display:flex;flex-wrap:wrap;align-items:center;gap:0 .65rem;
   padding:.7rem var(--gut);
   background:var(--ink-deep);color:var(--on-dark);
   font-size:.86rem;

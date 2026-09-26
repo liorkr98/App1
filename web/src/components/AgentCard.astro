@@ -1,0 +1,85 @@
+---
+import { canonicalSellerRole } from '@/features/agents/profile';
+import { displayPhone, telHref } from '@/features/listings/phone';
+import type { Seller } from '@/types/listing';
+import { t } from '../lib/i18n';
+
+interface Props {
+  seller: Seller;
+  /** Counted WhatsApp route, /a/{slug}/wa?text=… */
+  waHref: string;
+  sold?: boolean;
+  /** `aside` for the gallery's sticky column; `div` inside the showcase card. */
+  as?: 'aside' | 'div';
+}
+
+const { seller, waHref, sold = false, as: Tag = 'aside' } = Astro.props as Props;
+const role = seller.role ? canonicalSellerRole(seller.role) : '';
+const callHref = sold ? '' : telHref(seller.phone);
+const phoneLabel = displayPhone(seller.phone);
+const photo = seller.avatarUrl;
+
+/**
+ * Two letters from the name the agent typed, for the disc when there is no
+ * photo. Derived, not invented: it is the same name printed beside it.
+ */
+const initials = seller.name
+  .split(/\s+/)
+  .filter(Boolean)
+  .slice(0, 2)
+  .map((word) => word[0])
+  .join('');
+---
+{/*
+  The agent, at the top of the page rather than only at the bottom.
+
+  The reference layouts every agent pointed at put the person and the button
+  beside the photographs, and keep them there while the buyer scrolls. The
+  bottom SellerBlock stays: it carries the share link and is where the
+  broker's licence line has always been.
+
+  The licence NUMBER is printed plain, never with the מאומת treatment — it is
+  the agent's own declaration (OPPORTUNITIES.md §1a). Only licenceVerified,
+  which the register match sets, earns the badge.
+*/}
+<Tag class="agent-card">
+  <div class="agent-card-who">
+    <span class="agent-card-disc" aria-hidden="true">
+      {photo ? <img src={photo} alt="" width="52" height="52" /> : initials}
+    </span>
+    <span class="agent-card-name">
+      <strong>{seller.name}</strong>
+      {(role || seller.agencyName) && (
+        <span>
+          {role}
+          {role && seller.agencyName && ' · '}
+          {seller.agencyName}
+        </span>
+      )}
+    </span>
+  </div>
+
+  {(seller.licenceVerified || seller.licenceNumber) && (
+    <div class="agent-card-licence">
+      {seller.licenceVerified && <span class="verified">{t('listing.licenceVerified')}</span>}
+      {seller.licenceNumber && <span>{t('listing.licenceNumber')} <bdi>{seller.licenceNumber}</bdi></span>}
+    </div>
+  )}
+
+  {!sold && (
+    <div class="agent-card-acts">
+      <a class="agent-card-wa" href={waHref}>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7A2.5 2.5 0 0 1 17.5 16H9l-4 3.2A.8.8 0 0 1 4 18.6V6.5Z"/></svg>
+        {t('listing.whatsappCta')}
+      </a>
+      {callHref && (
+        <a class="agent-card-call" href={callHref}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8.2 3.8c.4-.4 1-.5 1.5-.2l2.1 1.2c.5.3.7.9.5 1.4l-.8 2.1a1.2 1.2 0 0 0 .3 1.3l2.6 2.6c.4.4 1 .5 1.4.3l2.1-.8c.5-.2 1.1 0 1.4.5l1.2 2.1c.3.5.2 1.1-.2 1.5l-1.3 1.3c-.5.5-1.2.7-1.9.6-2.3-.4-5.2-2.1-7.6-4.5S4.6 8.7 4.2 6.4c-.1-.7.1-1.4.6-1.9l1.3-1.3Z"/></svg>
+          {t('listing.callCta')}
+        </a>
+      )}
+    </div>
+  )}
+
+  {phoneLabel && !sold && <p class="agent-card-phone"><bdi>{phoneLabel}</bdi></p>}
+</Tag>

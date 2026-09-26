@@ -9,9 +9,14 @@ interface Props {
   facts: Fact[];
   /** Reorders the grid. Defaults to the resident reading. */
   audience?: ListingAudience;
+  /**
+   * Keys already shown as the stage's numerals. Never a verified cell —
+   * ListingPage filters those out so the citation stays in the grid.
+   */
+  omit?: readonly string[];
 }
 
-const { category, facts, audience = 'resident' } = Astro.props;
+const { category, facts, audience = 'resident', omit = [] } = Astro.props;
 
 /**
  * Six present facts in the grid. Confirmed absences collapse into one
@@ -21,7 +26,7 @@ const { category, facts, audience = 'resident' } = Astro.props;
  * value:null still produces no cell. Only a boolean can be absent.
  */
 const cells = toCells(category, facts, audience);
-const present = cells.filter((cell) => !cell.absent);
+const present = cells.filter((cell) => !cell.absent && !omit.includes(cell.key));
 const absent = cells.filter((cell) => cell.absent);
 const lead = present.slice(0, 6);
 const rest = present.slice(6);

@@ -677,6 +677,9 @@ export const TEMPLATE_IDS = [
   'brochure',
   'linen',
   'studio',
+  'gallery',
+  'cinema',
+  'showcase',
 ] as const;
 
 export type TemplateId = (typeof TEMPLATE_IDS)[number];
