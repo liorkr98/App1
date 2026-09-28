@@ -1,0 +1,32 @@
+/*
+  M11 · page-to-page continuity (cross-document View Transitions).
+
+  Chrome 126+ and Safari 18.2+ morph between two pages of the same origin
+  when BOTH opt in with the rule below. Elsewhere navigation is an ordinary
+  page load, which is the fallback, not a failure.
+
+  The named element is the cover photograph: the dashboard card sets
+  view-transition-name: cover-{slug} on its image, and the listing page sets
+  the same name on its hero image, so opening a listing from the dashboard
+  grows the card's photo into the hero instead of cutting to a new page.
+  A name must be unique on a page, which is why it carries the slug.
+*/
+
+@view-transition {
+  navigation: auto;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-group(*) {
+    animation-duration: var(--ls-dur-2, 450ms);
+    animation-timing-function: var(--ls-ease-expo, cubic-bezier(0.16, 1, 0.3, 1));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

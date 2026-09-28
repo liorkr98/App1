@@ -18,6 +18,9 @@
 */
 
 @import './fonts.css';
+@import './system/tokens.css';
+@import '../motion/motion.css';
+@import '../motion/view-transitions.css';
 @import './walk.css';
 @import './templates/agency.css';
 @import './templates/editorial.css';

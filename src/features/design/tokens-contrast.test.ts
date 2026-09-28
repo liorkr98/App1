@@ -47,6 +47,7 @@ const LINEN = readFileSync(new URL('../../../web/src/styles/templates/linen.css'
 const GALLERY = readFileSync(new URL('../../../web/src/styles/templates/gallery.css', import.meta.url), 'utf8');
 const CINEMA = readFileSync(new URL('../../../web/src/styles/templates/cinema.css', import.meta.url), 'utf8');
 const SHOWCASE = readFileSync(new URL('../../../web/src/styles/templates/showcase.css', import.meta.url), 'utf8');
+const LS = readFileSync(new URL('../../../web/src/styles/system/tokens.css', import.meta.url), 'utf8');
 const MUTED_ON_DARK = tokenHex(TOKENS, '--muted-on-dark');
 
 const PLASTER = tokenHex(TOKENS, '--plaster');
@@ -136,6 +137,18 @@ describe('absent and muted tokens meet WCAG AA body', () => {
         const ink = scopedTokenHex(CINEMA, scope, label);
         const ratio = contrast(ink, ground);
         assert.ok(ratio >= 4.5, `cinema ${label} is ${ratio.toFixed(2)}:1 on ${token} ${ground}`);
+      }
+    }
+  });
+
+  it('Living Surfaces: ink and ink-2 clear 4.5:1 on ground and surface, in both modes', () => {
+    for (const mode of ['paper', 'onyx'] as const) {
+      const scope = `\\[data-ls='${mode}'\\]`;
+      for (const text of ['--ls-ink', '--ls-ink-2'] as const) {
+        for (const ground of ['--ls-ground', '--ls-surface'] as const) {
+          const ratio = contrast(scopedTokenHex(LS, scope, text), scopedTokenHex(LS, scope, ground));
+          assert.ok(ratio >= 4.5, `${mode} ${text} is ${ratio.toFixed(2)}:1 on ${ground}`);
+        }
       }
     }
   });

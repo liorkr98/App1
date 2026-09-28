@@ -642,6 +642,8 @@ export type Database = {
         Row: {
           day: string | null
           listing_id: string | null
+          read_to_agent: number | null
+          shares: number | null
           views: number | null
           wa_taps: number | null
         }

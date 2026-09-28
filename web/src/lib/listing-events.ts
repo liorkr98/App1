@@ -1,10 +1,11 @@
+import type { EventKind } from '@/features/analytics/events';
 import { isPreviewScraper } from '@/features/analytics/scrapers';
 import { isValidSlug } from '@/features/listings/slug';
 
 import { supabaseConfigured, supabasePublic } from './supabase';
 
 /**
- * Records a view or WhatsApp tap for a live listing.
+ * Records a listing event (view, WhatsApp tap, share, read-to-agent).
  *
  * Fail closed and silent: a missing client, a scraper, an invalid slug, or
  * an RPC error must not delay or break the page the buyer came to read.
@@ -12,7 +13,7 @@ import { supabaseConfigured, supabasePublic } from './supabase';
  */
 export async function recordListingEvent(
   slug: string,
-  kind: 'view' | 'wa',
+  kind: EventKind,
   userAgent: string | null | undefined,
 ): Promise<void> {
   if (!supabaseConfigured) return;

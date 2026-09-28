@@ -2,22 +2,30 @@
   Cinema — the cover full-bleed, a giant title over it, thin vertical rules,
   and a dark panel carrying the key numbers and the plan.
 
-  The whole page is dark. Its palette is the dark template's, which is
-  already contrast-checked (tokens-contrast.test.ts): the confirmed-absent
-  stop clears 4.5:1 on this ground and it is a solid colour, never opacity.
+  THE P2 PROOF of Living Surfaces. The template is registered as 'onyx' in
+  lib/living-surfaces.ts, so <html> carries data-ls="onyx" and the --ls-*
+  tokens, the condensed Noto Sans Hebrew display face and the shared motion
+  module (web/src/motion/) all apply. The 1.x tokens below are pinned to the
+  Onyx values rather than written as var(--ls-…): the contrast test and the
+  absent-contrast gate read these hexes directly, and must keep measuring
+  exactly what renders. Change one side, change the other.
 */
 
 html[data-template='cinema'] {
   --olive: var(--accent-lift, #7e9a62);
-  --plaster: #10110c;
-  --ink: #f3f1ea;
+  --plaster: #0b0c0a; /* = --ls-ground (onyx) */
+  --ink: #f2f0ea; /* = --ls-ink */
   --ink-deep: #070805;
   --stone: #2a2c22;
-  --stone-warm: #1a1b14;
-  --muted: #a3a498;
-  --muted-warm: #a3a498;
-  --absent: #a3a498;
+  --stone-warm: #161713; /* = --ls-surface */
+  --muted: #a7a89c; /* = --ls-ink-2 */
+  --muted-warm: #a7a89c;
+  --absent: #a7a89c;
   --heroWant: 100svh;
+}
+
+html[data-template='cinema'] body {
+  font-family: var(--ls-font-body);
 }
 
 html[data-template='cinema'] .agent-bar {
@@ -84,10 +92,12 @@ html[data-template='cinema'] .cine-head .stage-place {
 }
 
 html[data-template='cinema'] .cine-head .stage-title {
-  font-weight: 900;
-  font-size: clamp(3rem, 10.5vw, 8.4rem);
-  line-height: 0.94;
-  letter-spacing: -0.03em;
+  font-family: var(--ls-font-display);
+  font-variation-settings: 'wdth' var(--ls-wdth-display);
+  font-weight: 800;
+  font-size: clamp(3.2rem, 12vw, 9rem);
+  line-height: 0.92;
+  letter-spacing: -0.02em;
   max-inline-size: 11ch;
   text-shadow: 0 2px 40px rgba(0, 0, 0, 0.35);
 }
@@ -127,8 +137,9 @@ html[data-template='cinema'] .cine-metric-lbl {
 }
 
 html[data-template='cinema'] .cine-metric-val {
-  font-family: 'Frank Ruhl Libre', serif;
-  font-weight: 500;
+  font-family: var(--ls-font-display);
+  font-variation-settings: 'wdth' var(--ls-wdth-display);
+  font-weight: 300;
   font-size: clamp(2rem, 5vw, 2.8rem);
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -378,10 +389,7 @@ html[data-template='cinema'] .gallery img {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  /* The photograph breathes: a slow push in and back, like a held shot. */
-  html[data-template='cinema'] .cine-img {
-    animation: cine-breathe 26s ease-in-out 1.6s infinite alternate;
-  }
+  /* The photograph breathes via .ls-breathe (motion.css, M4). */
 
   html[data-template='cinema'] .cine-rules span {
     animation: cine-rule 1.6s var(--ease-out) both;
@@ -402,15 +410,6 @@ html[data-template='cinema'] .gallery img {
 
   html[data-template='cinema'] .cine-metric.is-on .cine-metric-val {
     animation: cine-swap 0.6s var(--ease-out) both;
-  }
-
-  @keyframes cine-breathe {
-    from {
-      transform: scale(1.02);
-    }
-    to {
-      transform: scale(1.1) translateY(-1.5%);
-    }
   }
 
   @keyframes cine-rule {
