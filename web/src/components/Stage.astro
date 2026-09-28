@@ -59,10 +59,16 @@ const roomLabel = (image: Image) => (image.room ? t(`editor.rooms.${image.room}`
 const mosaic = photos.slice(0, 5);
 const floorPlan = listing.media.floorPlan;
 
-const objectPosition =
+// The cover is named for the dashboard→listing morph (M11); the dashboard
+// card gives its image the same name.
+const objectPosition = [
   cover.focalX != null || cover.focalY != null
     ? `object-position:${cover.focalX ?? 50}% ${cover.focalY ?? 50}%`
-    : undefined;
+    : '',
+  `view-transition-name:cover-${listing.slug}`,
+]
+  .filter(Boolean)
+  .join(';');
 
 const priceProps = {
   price: listing.price,
@@ -136,10 +142,10 @@ const priceProps = {
 )}
 
 {layout === 'cinema' && (
-  <section class="stage stage-cinema">
+  <section class="stage stage-cinema ls-grain">
     <div class="cine-frame">
       <img
-        class="cine-img"
+        class="cine-img ls-breathe"
         src={largest(cover, HERO_WIDTHS)}
         srcset={srcset(cover, HERO_WIDTHS) || undefined}
         sizes="100vw"
@@ -153,9 +159,11 @@ const priceProps = {
       <span class="cine-rules" aria-hidden="true"><span></span><span></span><span></span></span>
       <div class="cine-head">
         {place && <p class="stage-place"><Prose text={place} /></p>}
-        <h1 class="stage-title">
-          {lines.map((line) => (
-            <span class="hero-line"><span><Prose text={line} /></span></span>
+        {/* Living Surfaces (P2 proof): condensed display face, lines rise
+            (M1) and the width axis tightens as the title scrolls away (M3). */}
+        <h1 class="stage-title ls-display ls-swell">
+          {lines.map((line, i) => (
+            <span class="ls-line"><span style={`--i:${i}`}><Prose text={line} /></span></span>
           ))}
         </h1>
       </div>
@@ -214,7 +222,7 @@ const priceProps = {
     <div class="cine-band">
       <PriceBar {...priceProps} />
       {!sold && (
-        <a class="cine-cta" href={waHref}>{t('listing.whatsappCta')}</a>
+        <a class="cine-cta ls-sheen" href={waHref}>{t('listing.whatsappCta')}</a>
       )}
       <HighlightChips highlights={listing.highlights} facts={listing.facts} />
     </div>

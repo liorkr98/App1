@@ -10,9 +10,11 @@ interface Props {
   location?: ListingLocation;
   /** Corner mark when the profile chose watermark. Empty alt: the agency name is in the bar. */
   watermarkUrl?: string;
+  /** Names the cover for the dashboard→listing morph (M11). */
+  slug?: string;
 }
 
-const { cover, title, location, watermarkUrl } = Astro.props;
+const { cover, title, location, watermarkUrl, slug } = Astro.props;
 
 const place = location?.street ? `${location.street}, ${location.city}` : (location?.city ?? '');
 
@@ -27,6 +29,11 @@ const focalX = focalPercent(cover.focalX);
 const focalY = focalPercent(cover.focalY);
 const objectPosition =
   focalX != null || focalY != null ? `${focalX ?? 50}% ${focalY ?? 50}%` : undefined;
+
+const imgStyle =
+  [objectPosition ? `object-position:${objectPosition}` : '', slug ? `view-transition-name:cover-${slug}` : '']
+    .filter(Boolean)
+    .join(';') || undefined;
 ---
 {/*
   The LCP element. fetchpriority="high", explicit dimensions, never lazy.
@@ -43,7 +50,7 @@ const objectPosition =
     width={cover.width}
     height={cover.height}
     alt={cover.alt ?? ''}
-    style={objectPosition ? `object-position:${objectPosition}` : undefined}
+    style={imgStyle}
     fetchpriority="high"
     decoding="async"
   >

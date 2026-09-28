@@ -3,6 +3,7 @@ import { shareMessage, whatsappShareUrl } from '@/features/listings/share-messag
 import { toCells } from '../../../lib/facts';
 import { ils } from '../../../lib/format';
 import { t } from '../../../lib/i18n';
+import { recordListingEvent } from '../../../lib/listing-events';
 import { publishedListing } from '../../../lib/listing-from-row';
 import '../../../styles/tokens.css';
 import '../../../styles/fonts.css';
@@ -34,6 +35,10 @@ const listing = await publishedListing(slug);
 if (!listing) {
   return Astro.rewrite('/404');
 }
+
+// The agent opened the share page for this listing: the dashboard's
+// "shares" count. Fail-silent, like every listing event.
+await recordListingEvent(listing.slug, 'share', Astro.request.headers.get('user-agent'));
 
 const site = Astro.site?.origin ?? '';
 const url = `${site}/a/${listing.slug}/`;

@@ -1,0 +1,133 @@
+/*
+  Living Surfaces — the 2.0 design tokens.
+
+  Every name is prefixed --ls- so the system can land beside the 1.x tokens
+  (tokens.css, listing.css) without either repainting the other. A surface
+  opts in with [data-ls] and picks a mode with [data-ls='paper'|'onyx'];
+  nothing changes for a page that does neither.
+
+  Two modes, one system (plan §3.1):
+    paper  warm paper, deep ink, soft long shadows
+    onyx   near-black, glowing type, glass instead of shadow
+
+  Contrast pairs are measured in src/features/design/tokens-contrast.test.ts
+  for BOTH modes: --ls-ink and --ls-ink-2 on --ls-ground and --ls-surface.
+  Change a hex here and that test tells you whether it still reads.
+*/
+
+:root {
+  /* Type. Self-hosted in /fonts (fonts.css); nothing calls Google Fonts. */
+  --ls-font-display: 'Noto Sans Hebrew', 'Heebo', system-ui, sans-serif;
+  --ls-font-body: 'Heebo', 'Assistant', system-ui, sans-serif;
+  --ls-font-serif: 'Frank Ruhl Libre', 'Times New Roman', serif;
+
+  /* Fluid scale. Display sizes are container-relative so a template in a
+     phone frame and on a desktop both set to their own width. */
+  --ls-fs-d1: clamp(3rem, 13cqi, 9rem);
+  --ls-fs-d2: clamp(2.2rem, 7cqi, 4.6rem);
+  --ls-fs-title: clamp(1.7rem, 5.5cqi, 2.8rem);
+  --ls-fs-num: clamp(2rem, 8cqi, 3.4rem);
+  --ls-fs-body: 1.02rem;
+  --ls-fs-label: 0.76rem;
+  --ls-lh-body: 1.6;
+
+  /* Display width: condensed titles are the signature. 62.5 is the axis
+     minimum; 75 reads as condensed without losing Hebrew counters. */
+  --ls-wdth-display: 75;
+  --ls-wdth-tight: 62.5;
+
+  /* Shape */
+  --ls-r-hero: 28px;
+  --ls-r-card: 20px;
+  --ls-r-pill: 999px;
+
+  /* Motion. Shared by CSS and the scripts in web/src/motion/. */
+  --ls-ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ls-ease-io: cubic-bezier(0.65, 0, 0.35, 1);
+  --ls-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ls-dur-1: 180ms;
+  --ls-dur-2: 450ms;
+  --ls-dur-3: 900ms;
+  --ls-dur-4: 1100ms;
+  --ls-stagger: 110ms;
+}
+
+/* ---------- Paper (light) — the default for [data-ls] ---------- */
+[data-ls],
+[data-ls='paper'] {
+  --ls-ground: #f6f4ef;
+  --ls-surface: #ffffff;
+  --ls-ink: #121310;
+  --ls-ink-2: #5e5f57;
+  --ls-line: rgba(18, 19, 16, 0.1);
+  --ls-glass: rgba(255, 255, 255, 0.72);
+  --ls-glass-edge: rgba(255, 255, 255, 0.9);
+  --ls-shadow: 0 30px 60px -30px rgba(17, 18, 8, 0.35);
+  --ls-accent: var(--accent, #2f5340);
+  --ls-accent-lift: var(--accent-lift, #86b79a);
+  --ls-on-accent: #ffffff;
+  --ls-grain-opacity: 0.03;
+  color-scheme: light;
+}
+
+/* ---------- Onyx (night) ---------- */
+[data-ls='onyx'] {
+  --ls-ground: #0b0c0a;
+  --ls-surface: #161713;
+  --ls-ink: #f2f0ea;
+  --ls-ink-2: #a7a89c;
+  --ls-line: rgba(242, 240, 234, 0.12);
+  --ls-glass: rgba(255, 255, 255, 0.06);
+  --ls-glass-edge: rgba(255, 255, 255, 0.16);
+  --ls-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.8);
+  /* On a dark ground the lifted accent is the readable one. */
+  --ls-accent: var(--accent-lift, #86b79a);
+  --ls-accent-lift: var(--accent-lift, #86b79a);
+  --ls-on-accent: #0b0c0a;
+  --ls-grain-opacity: 0.05;
+  color-scheme: dark;
+}
+
+[data-ls] {
+  background: var(--ls-ground);
+  color: var(--ls-ink);
+}
+
+/* ---------- Materials ---------- */
+
+/* Glass: a surface over a photograph. Blur + a 1px inner highlight. */
+.ls-glass {
+  background: var(--ls-glass);
+  border: 1px solid var(--ls-glass-edge);
+  box-shadow: inset 0 1px 0 var(--ls-glass-edge), var(--ls-shadow);
+  backdrop-filter: blur(20px) saturate(1.3);
+  -webkit-backdrop-filter: blur(20px) saturate(1.3);
+  border-radius: var(--ls-r-card);
+}
+
+/* Condensed display type — the kinetic face. */
+.ls-display {
+  font-family: var(--ls-font-display);
+  font-weight: 800;
+  font-stretch: calc(var(--ls-wdth-display) * 1%);
+  font-variation-settings: 'wdth' var(--ls-wdth-display);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+/* Film grain, 2 KB of SVG noise, laid over a whole surface. */
+.ls-grain {
+  position: relative;
+  isolation: isolate;
+}
+.ls-grain::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--ls-grain-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+  z-index: 1;
+}

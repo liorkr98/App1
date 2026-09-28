@@ -1,7 +1,10 @@
+import { observeCounts } from '../motion/counter';
+
 /**
  * Listing-page enhancement. Vanilla. No framework.
  *
  *   M3  in-view counters on m² only — the HTML already holds the final value.
+ *       Shared with every Living Surfaces page: web/src/motion/counter.ts.
  *   M4  gallery → lightbox morph via View Transitions, <dialog> fallback.
  *   M5  radio → snap the matching tour card (the track itself is CSS).
  *
@@ -10,48 +13,6 @@
  */
 const reduced =
   typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-function formatHe(value: number): string {
-  return new Intl.NumberFormat('he-IL').format(value);
-}
-
-function countUp(el: HTMLElement): void {
-  const raw = el.getAttribute('data-count');
-  if (raw === null) return;
-  const target = Number(raw);
-  if (!Number.isFinite(target)) return;
-  const finalText = el.textContent?.trim() || formatHe(target);
-  if (reduced) {
-    el.textContent = finalText;
-    return;
-  }
-  const start = performance.now();
-  const duration = 700;
-  const tick = (now: number) => {
-    const t = Math.min(1, (now - start) / duration);
-    const eased = 1 - (1 - t) ** 3;
-    el.textContent = formatHe(Math.round(target * eased));
-    if (t < 1) requestAnimationFrame(tick);
-    else el.textContent = finalText;
-  };
-  requestAnimationFrame(tick);
-}
-
-function observeCounts(): void {
-  const nodes = document.querySelectorAll<HTMLElement>('[data-count]');
-  if (nodes.length === 0) return;
-  const io = new IntersectionObserver(
-    (entries, obs) => {
-      for (const entry of entries) {
-        if (!entry.isIntersecting) continue;
-        countUp(entry.target as HTMLElement);
-        obs.unobserve(entry.target);
-      }
-    },
-    { threshold: 0.45 },
-  );
-  for (const node of nodes) io.observe(node);
-}
 
 function allGalleryButtons(): HTMLButtonElement[] {
   return Array.from(document.querySelectorAll<HTMLButtonElement>('[data-lightbox]'));
@@ -290,8 +251,32 @@ function bindMetric(): void {
   });
 }
 
+/**
+ * scroll_75 · the buyer read down to the agent.
+ *
+ * One beacon per page view, the first time the seller block is half in view.
+ * sendBeacon so it never delays anything and survives the tab closing. The
+ * route accepts no other kind from a browser (src/features/analytics/events.ts),
+ * and the table stores no user agent or IP.
+ */
+function beaconReadToAgent(): void {
+  const slug = document.documentElement.dataset.slug;
+  const target = document.querySelector('.seller');
+  if (!slug || !target || typeof navigator.sendBeacon !== 'function') return;
+  const io = new IntersectionObserver(
+    (entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return;
+      io.disconnect();
+      navigator.sendBeacon(`/a/${slug}/e`, 'scroll_75');
+    },
+    { threshold: 0.5 },
+  );
+  io.observe(target);
+}
+
 observeCounts();
 bindLightbox();
 bindWalk();
 bindMapDialog();
 bindMetric();
+beaconReadToAgent();
