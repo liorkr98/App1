@@ -66,7 +66,9 @@ const wow = [
   { key: 'Sun', live: true, href: `/template-check/${home.slug}-heliograph/`, drawing: 'sun' },
   { key: 'Walk', live: true, href: `/template-check/${home.slug}-walk/`, drawing: 'walk' },
   { key: 'Depth', live: false, image: photoOf(0) },
-  { key: 'Spin', live: false, image: largest(golfListing.media.cover, GALLERY_WIDTHS) },
+  // Built in P7 (the editor takes the frames, Showroom turns them); no demo
+  // listing has a real sequence yet, so the tile says so without a link.
+  { key: 'Spin', live: true, image: largest(golfListing.media.cover, GALLERY_WIDTHS) },
   { key: 'Video', live: false, image: photoOf(1) },
   { key: 'Staging', live: false, image: photoOf(2) },
 ] as const;

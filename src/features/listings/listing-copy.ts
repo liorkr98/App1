@@ -198,6 +198,34 @@ export function rewriteInstruction(previous: string): string {
   );
 }
 
+/**
+ * The three voices the agent can ask for (P6). Each is an instruction added
+ * to the user message; the system prompt — facts only, no surroundings, no
+ * value, no superlatives — is the same for all three, so no tone can buy its
+ * way past a rule. 'pro' is the default and adds nothing: it is the voice
+ * the prompt already asks for.
+ */
+export const COPY_TONES = ['pro', 'warm', 'refined'] as const;
+export type CopyTone = (typeof COPY_TONES)[number];
+
+export function isCopyTone(value: unknown): value is CopyTone {
+  return typeof value === 'string' && (COPY_TONES as readonly string[]).includes(value);
+}
+
+const TONE_INSTRUCTION: Record<CopyTone, string> = {
+  pro: '',
+  warm:
+    'טון: חם ואישי. לכתוב איך זה לחיות בנכס או להשתמש בו, רק מתוך העובדות ברשימה. ' +
+    'משפטים קצרים וקרובים, בלי מילות הפלגה.',
+  refined:
+    'טון: מאופק ומוקפד. ניסוח שקט ומדויק, אוצר מילים עשיר, בלי סופרלטיבים ובלי מילות הפלגה.',
+};
+
+export function appendTone(prompt: string, tone: CopyTone = 'pro'): string {
+  const extra = TONE_INSTRUCTION[tone];
+  return extra === '' ? prompt : `${prompt}\n\n${extra}`;
+}
+
 export function appendRewrite(prompt: string, previous?: string): string {
   const extra = previous ? rewriteInstruction(previous) : '';
   return extra === '' ? prompt : `${prompt}\n\n${extra}`;

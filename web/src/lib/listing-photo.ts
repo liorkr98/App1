@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { checkPixels, type PhotoCheck } from '@/features/listings/photo-quality';
 
 /**
  * Turning a phone photograph into something a public page can show.
@@ -38,7 +39,16 @@ export interface ProcessedPhoto {
   blob: Blob;
   width: number;
   height: number;
+  /** On-device quality measurement (features/listings/photo-quality). */
+  check?: PhotoCheck;
 }
+
+/** The long edge the quality check is measured at. */
+const CHECK_EDGE = 256;
+/** Sharpness is measured on the centre of a copy this long… */
+const DETAIL_EDGE = 1024;
+/** …in a square this wide. */
+const DETAIL_CROP = 384;
 
 /**
  * Decodes, resizes and re-encodes. Returns undefined when the browser cannot
@@ -68,13 +78,47 @@ export async function stripAndResize(
     }
 
     context.drawImage(bitmap, 0, 0, width, height);
+
+    // A second, tiny drawing for the quality check: dark, blurry, small,
+    // a repeat. Nothing leaves the phone for it. A failure here only means
+    // no advice for this photograph.
+    let check: PhotoCheck | undefined;
+    try {
+      const small = Math.min(1, CHECK_EDGE / Math.max(bitmap.width, bitmap.height));
+      const w = Math.max(3, Math.round(bitmap.width * small));
+      const h = Math.max(3, Math.round(bitmap.height * small));
+      const probe = document.createElement('canvas');
+      probe.width = w;
+      probe.height = h;
+      const pctx = probe.getContext('2d', { willReadFrequently: true });
+      if (pctx) {
+        pctx.drawImage(bitmap, 0, 0, w, h);
+        // Sharpness needs detail: the centre of a 1024px copy, 384px square.
+        const at = Math.min(1, DETAIL_EDGE / Math.max(bitmap.width, bitmap.height));
+        const dw = Math.round(bitmap.width * at);
+        const dh = Math.round(bitmap.height * at);
+        const side = Math.min(DETAIL_CROP, dw, dh);
+        const zoom = document.createElement('canvas');
+        zoom.width = side;
+        zoom.height = side;
+        const zctx = zoom.getContext('2d', { willReadFrequently: true });
+        let detail: { rgba: Uint8ClampedArray; width: number; height: number } | undefined;
+        if (zctx && side >= 3) {
+          zctx.drawImage(bitmap, -Math.round((dw - side) / 2), -Math.round((dh - side) / 2), dw, dh);
+          detail = { rgba: zctx.getImageData(0, 0, side, side).data, width: side, height: side };
+        }
+        check = checkPixels(pctx.getImageData(0, 0, w, h).data, w, h, bitmap, detail);
+      }
+    } catch {
+      check = undefined;
+    }
     bitmap.close();
 
     const blob = await new Promise<Blob | null>((resolve) =>
       canvas.toBlob(resolve, 'image/webp', QUALITY),
     );
 
-    return blob ? { blob, width, height } : undefined;
+    return blob ? { blob, width, height, ...(check ? { check } : {}) } : undefined;
   } catch {
     return undefined;
   }

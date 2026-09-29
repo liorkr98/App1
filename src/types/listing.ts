@@ -1,3 +1,4 @@
+import type { PlanRoom } from '@/features/listings/rich-media.js';
 import type { LogoPlacement } from '@/features/agents/logo-placement.js';
 import type { ListingCategory } from '@/features/listings/schemas/index.js';
 import type { PhotoRoom } from '@/features/listings/photo-rooms.js';
@@ -381,8 +382,26 @@ export interface Media {
   /**
    * Floor plan photograph. Rendered as a תשריט chip inside the tour — not a
    * fifth section (DESIGN-CONTRACT §5).
+   *
+   * P7: may carry the rooms the agent drew on it (rich-media.ts
+   * cleanPlanRooms), which Blueprint turns into buttons over the plan.
    */
-  floorPlan?: Image;
+  floorPlan?: Image & { rooms?: PlanRoom[] };
+
+  /** P7 · the story image (1080 × 1920), once render_story has made it. */
+  storyUrl?: string;
+  /** P7 · the A4 QR flyer PDF, once the flyer render has made it. */
+  flyerUrl?: string;
+  /**
+   * P7 · a 360° turn of a car, from 12 to 36 frames in order
+   * (rich-media.ts spinFrames). Fewer frames: absent.
+   */
+  spin?: Image[];
+  /**
+   * P7 · the cover's depth map, already checked against the cover it was
+   * made from (rich-media.ts depthFor). Absent means a flat photograph.
+   */
+  depthUrl?: string;
 }
 
 // ---------------------------------------------------------------------------

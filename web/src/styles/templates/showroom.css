@@ -86,6 +86,58 @@ html[data-template='showroom'] .sr-car img {
   mask-image: radial-gradient(120% 90% at 50% 45%, #000 60%, transparent 100%);
 }
 
+/* P7 · the 360° spin. */
+html[data-template='showroom'] .sr-spin {
+  position: relative;
+  display: grid;
+  gap: 0.6rem;
+  touch-action: pan-y;
+  cursor: grab;
+  user-select: none;
+}
+
+html[data-template='showroom'] .sr-spin:active {
+  cursor: grabbing;
+}
+
+html[data-template='showroom'] .sr-spin img {
+  inline-size: 100%;
+  block-size: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  display: block;
+  -webkit-mask-image: radial-gradient(120% 90% at 50% 45%, #000 60%, transparent 100%);
+  mask-image: radial-gradient(120% 90% at 50% 45%, #000 60%, transparent 100%);
+}
+
+html[data-template='showroom'] .sr-spin-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  color: var(--ls-ink-2);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+html[data-template='showroom'] .sr-spin-controls button {
+  inline-size: 44px;
+  block-size: 44px;
+  border-radius: 999px;
+  border: 1px solid var(--ls-line);
+  background: var(--ls-glass);
+  color: var(--ls-ink);
+  font: inherit;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+html[data-template='showroom'] .sr-spin:focus-visible {
+  outline: 2px solid var(--ls-accent);
+  outline-offset: 6px;
+  border-radius: 16px;
+}
+
 html[data-template='showroom'] .sr-scan {
   position: absolute;
   inset-block: 0;

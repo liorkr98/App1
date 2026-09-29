@@ -1100,3 +1100,26 @@ h1 {
   min-block-size: 44px;
   padding: 0.5rem 1.1rem;
 }
+
+.studio-made {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.9rem;
+}
+
+.studio-story {
+  display: grid;
+  gap: 0.3rem;
+  inline-size: 96px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  text-decoration: none;
+}
+
+.studio-story img {
+  inline-size: 96px;
+  aspect-ratio: 9 / 16;
+  object-fit: cover;
+  border-radius: 10px;
+  background: var(--stone-warm);
+}

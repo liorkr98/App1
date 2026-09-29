@@ -38,7 +38,16 @@ ENV PUPPETEER_CACHE_DIR=/app/.cache/puppeteer
 FROM base AS deps
 
 COPY worker/package.json worker/package-lock.json* ./
+# onnxruntime-node bundles its CPU binaries; its install script only fetches
+# optional GPU builds this image does not use.
+ENV ONNXRUNTIME_NODE_INSTALL=skip
 RUN npm install --omit=dev --no-audit --no-fund
+
+# The depth model (P7), baked in here so the depth_map job never reaches a
+# model hub at run time. Depth Anything V2 Small, 8-bit, Apache-2.0.
+ENV MODEL_CACHE_DIR=/app/.cache/models
+COPY worker/scripts/fetch-model.mjs ./scripts/fetch-model.mjs
+RUN node scripts/fetch-model.mjs
 
 # ---------------------------------------------------------------------------
 # Build
@@ -47,6 +56,7 @@ FROM base AS build
 
 # Nothing here needs a browser — this stage only runs tsc.
 ENV PUPPETEER_SKIP_DOWNLOAD=true
+ENV ONNXRUNTIME_NODE_INSTALL=skip
 
 COPY worker/package.json worker/package-lock.json* ./
 RUN npm install --no-audit --no-fund
@@ -60,6 +70,7 @@ RUN npm run build
 FROM base AS runtime
 
 ENV NODE_ENV=production
+ENV MODEL_CACHE_DIR=/app/.cache/models
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/.cache ./.cache

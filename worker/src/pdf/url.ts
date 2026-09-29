@@ -17,10 +17,27 @@
 /** Same alphabet as src/features/listings/slug.ts and migration 0002. */
 export const SLUG_PATTERN = /^[0-9A-HJKMNP-TV-Z]{5}$/;
 
+/**
+ * Which page of a listing the browser may open. A fixed map, so the payload
+ * picks one of these three paths and can never supply a path of its own.
+ */
+export const LISTING_PAGES = {
+  listing: '',
+  flyer: 'flyer/',
+  story: 'story/',
+} as const;
+
+export type ListingPage = keyof typeof LISTING_PAGES;
+
+export function isListingPage(value: unknown): value is ListingPage {
+  return typeof value === 'string' && Object.hasOwn(LISTING_PAGES, value);
+}
+
 export function listingPdfUrl(input: {
   slug: unknown;
   pageBaseUrl: string;
   baseUrl?: unknown;
+  page?: ListingPage;
 }): string | undefined {
   if (typeof input.slug !== 'string' || !SLUG_PATTERN.test(input.slug)) {
     return undefined;
@@ -44,5 +61,5 @@ export function listingPdfUrl(input: {
     if (candidate.origin !== allowed.origin) return undefined;
   }
 
-  return `${allowed.origin}/a/${input.slug}/`;
+  return `${allowed.origin}/a/${input.slug}/${LISTING_PAGES[input.page ?? 'listing']}`;
 }

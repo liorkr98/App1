@@ -1,6 +1,7 @@
 import type { Blocker, EditorState } from '@/features/listings/editor';
 
 import { t } from '../../lib/i18n';
+import { ADDONS } from '../../lib/tiers';
 
 interface Props {
   state: EditorState;
@@ -182,6 +183,25 @@ export function PublishStep({
       >
         {publishing ? t('editor.publish.working') : t('editor.publish.action')}
       </button>
+
+      {/*
+        The add-ons shelf (P6), UI only. Nothing here can be bought yet:
+        each is בקרוב, with no price, and it sits AFTER the publish button so
+        it never stands between an agent and their link. It reads nothing
+        and decides nothing (CLAUDE.md §8).
+      */}
+      <section className="addon-shelf" aria-labelledby="addon-shelf-title">
+        <h3 id="addon-shelf-title">{t('editor.addons.title')}</h3>
+        <ul>
+          {ADDONS.map((id) => (
+            <li key={id}>
+              <span className="addon-soon">{t('pricing.soon')}</span>
+              <b>{t(`pricing.addon_${id}`)}</b>
+              <span>{t(`pricing.addon_${id}Note`)}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
     </>
   );
 }

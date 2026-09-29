@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import { ACCENTS, type AccentId, isAccentId } from '@/features/agents/accents';
 import type { ListingCategory } from '@/features/listings/schemas';
 import { templateFits } from '@/features/templates/manifest';
+import type { SuggestReason } from '@/features/templates/suggest';
 import { TEMPLATE_IDS, type TemplateId } from '@/types/listing';
 
 import { t } from '../../lib/i18n';
@@ -16,6 +17,8 @@ interface Props {
   onAccent: (accent: AccentId) => void;
   /** The seller's own photos, so the picker is the page not a grey slab. */
   photos?: readonly string[];
+  /** "הבחירה של היעד" (features/templates/suggest), with its one-line why. */
+  suggestion?: { id: TemplateId; reason: SuggestReason } | undefined;
 }
 
 /**
@@ -24,7 +27,7 @@ interface Props {
  * The facsimile beside this step restyles from `data-template` and
  * `--accent`. These cards are the picker; that preview is the proof.
  */
-export function TemplateStep({ category, chosen, onChoose, accent, onAccent, photos = [] }: Props) {
+export function TemplateStep({ category, chosen, onChoose, accent, onAccent, photos = [], suggestion }: Props) {
   const palette = isAccentId(accent) ? accent : 'olive';
   // Every template when the category is not chosen yet; otherwise only those
   // drawn for it. Still enumerated from TEMPLATE_IDS, never a second list.
@@ -54,6 +57,23 @@ export function TemplateStep({ category, chosen, onChoose, accent, onAccent, pho
           ))}
         </div>
       </fieldset>
+
+      {suggestion ? (
+        <button
+          type="button"
+          className={suggestion.id === chosen ? 'magic-pick chosen' : 'magic-pick'}
+          aria-pressed={suggestion.id === chosen}
+          onClick={() => onChoose(suggestion.id)}
+        >
+          <span className="magic-mark" aria-hidden="true">✦</span>
+          <span className="magic-text">
+            <b>
+              {t('editor.magic.title')} · {t(`editor.templates.${suggestion.id}`)}
+            </b>
+            <span>{t(`editor.magic.${suggestion.reason}`)}</span>
+          </span>
+        </button>
+      ) : null}
 
       <p className="hint">{t('editor.templates.hint')}</p>
 

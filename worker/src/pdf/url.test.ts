@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { listingPdfUrl, SLUG_PATTERN } from './url.js';
+import { isListingPage, listingPdfUrl, SLUG_PATTERN } from './url.js';
 
 const PAGE = 'https://hasivuv.com';
 const SLUG = 'A7K2M';
@@ -93,5 +93,18 @@ describe('listingPdfUrl', () => {
     assert.equal(listingPdfUrl({ slug: '../etc', pageBaseUrl: PAGE }), undefined);
     assert.equal(listingPdfUrl({ slug: 'not-a-slug', pageBaseUrl: PAGE }), undefined);
     assert.equal(listingPdfUrl({ slug: 12, pageBaseUrl: PAGE }), undefined);
+  });
+});
+
+describe('listing pages', () => {
+  it('opens the flyer and story pages on the same origin', () => {
+    assert.equal(listingPdfUrl({ slug: SLUG, pageBaseUrl: PAGE, page: 'flyer' }), 'https://hasivuv.com/a/A7K2M/flyer/');
+    assert.equal(listingPdfUrl({ slug: SLUG, pageBaseUrl: PAGE, page: 'story' }), 'https://hasivuv.com/a/A7K2M/story/');
+  });
+
+  it('accepts only the three known pages from a payload', () => {
+    assert.equal(isListingPage('flyer'), true);
+    assert.equal(isListingPage('../admin'), false);
+    assert.equal(isListingPage('toString'), false);
   });
 });

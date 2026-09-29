@@ -258,24 +258,106 @@ function bindMetric(): void {
  * room's photograph and nothing on screen pretends to be interactive.
  */
 function bindBlueprint(): void {
-  const chips = document.querySelector<HTMLElement>('.bp-rooms');
   const viewer = document.querySelector<HTMLElement>('[data-bp-viewer]');
-  if (!chips || !viewer) return;
+  // Two ways to choose a room: the chips under the board, and (P7) the
+  // rooms drawn on the plan. Both carry data-bp-room with the same index.
+  const groups = [...document.querySelectorAll<HTMLElement>('.bp-rooms, .bp-spots')];
+  if (!viewer || groups.length === 0) return;
   const shots = [...viewer.querySelectorAll<HTMLImageElement>('[data-bp-shot]')];
   const label = viewer.querySelector('.bp-label');
-  chips.hidden = false;
-  chips.addEventListener('click', (event) => {
-    const chip = (event.target as Element).closest<HTMLButtonElement>('[data-bp-room]');
-    if (!chip) return;
-    const at = Number(chip.dataset.bpRoom);
+  const all = () => groups.flatMap((group) => [...group.querySelectorAll<HTMLElement>('[data-bp-room]')]);
+  const choose = (at: number, name: string) => {
     shots.forEach((shot, index) => {
       if (index === at) shot.loading = 'eager';
       shot.classList.toggle('is-on', index === at);
     });
-    chips.querySelectorAll('[data-bp-room]').forEach((other) => {
-      other.setAttribute('aria-pressed', String(other === chip));
+    all().forEach((other) => other.setAttribute('aria-pressed', String(Number(other.dataset.bpRoom) === at)));
+    if (label) label.textContent = name;
+  };
+  for (const group of groups) {
+    group.hidden = false;
+    group.addEventListener('click', (event) => {
+      const button = (event.target as Element).closest<HTMLButtonElement>('[data-bp-room]');
+      if (!button) return;
+      choose(Number(button.dataset.bpRoom), button.textContent?.trim() ?? '');
     });
-    if (label) label.textContent = chip.textContent?.trim() ?? '';
+  }
+}
+
+/**
+ * The 360° spin (P7, Showroom). Frames are a JSON list on the element; only
+ * the first is in the page. The first touch, key or button loads the rest,
+ * then dragging turns the car — about one frame per 14px, wrapping round.
+ * Arrow keys and the two buttons step one frame, and they are the whole of
+ * it under reduced motion (drag is the reader's own movement, not ours,
+ * so it stays too). A frame that fails to load is skipped, never a blank.
+ */
+function bindSpin(): void {
+  const stage = document.querySelector<HTMLElement>('[data-spin]');
+  if (!stage) return;
+  let frames: string[] = [];
+  try {
+    frames = JSON.parse(stage.dataset.spin ?? '[]');
+  } catch {
+    return;
+  }
+  if (frames.length < 2) return;
+  const img = stage.querySelector('img');
+  const controls = stage.querySelector<HTMLElement>('.sr-spin-controls');
+  if (!img || !controls) return;
+  controls.hidden = false;
+  const ready = new Set<number>([0]);
+  let loaded = false;
+  let at = 0;
+  const load = () => {
+    if (loaded) return;
+    loaded = true;
+    frames.forEach((src, index) => {
+      if (index === 0) return;
+      const probe = new Image();
+      probe.onload = () => ready.add(index);
+      probe.src = src;
+    });
+  };
+  const show = (next: number) => {
+    const n = frames.length;
+    let target = ((next % n) + n) % n;
+    // Skip frames that are not in yet rather than flash an empty box.
+    for (let tries = 0; tries < n && !ready.has(target); tries++) target = (target + (next >= at ? 1 : -1) + n) % n;
+    at = target;
+    img.src = frames[at]!;
+  };
+  let startX = 0;
+  let startAt = 0;
+  let dragging = false;
+  stage.addEventListener('pointerdown', (event) => {
+    if ((event.target as Element).closest('button')) return;
+    load();
+    dragging = true;
+    startX = event.clientX;
+    startAt = at;
+    stage.setPointerCapture(event.pointerId);
+  });
+  stage.addEventListener('pointermove', (event) => {
+    if (!dragging) return;
+    show(startAt + Math.round((event.clientX - startX) / 14));
+  });
+  const stop = () => {
+    dragging = false;
+  };
+  stage.addEventListener('pointerup', stop);
+  stage.addEventListener('pointercancel', stop);
+  controls.addEventListener('click', (event) => {
+    const button = (event.target as Element).closest<HTMLButtonElement>('[data-spin-step]');
+    if (!button) return;
+    load();
+    show(at + Number(button.dataset.spinStep));
+  });
+  stage.addEventListener('keydown', (event) => {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    load();
+    show(at + (event.key === 'ArrowRight' ? 1 : -1));
   });
 }
 
@@ -467,4 +549,9 @@ bindMetric();
 bindBlueprint();
 bindGlass();
 bindHeliograph();
+bindSpin();
 beaconReadToAgent();
+
+// The depth hero (P7): its module loads only on a page that has a map.
+const depthImage = document.querySelector<HTMLImageElement>('img[data-depth]');
+if (depthImage) void import('./depth').then(({ bindDepth }) => bindDepth(depthImage)).catch(() => undefined);

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { photoFlags, suggestedOrder, type PhotoCheck } from '@/features/listings/photo-quality';
 
 import { MAX_IMAGES } from '@/features/listings/editor';
 import { photoWarnings } from '@/features/listings/photo-guidance';
@@ -55,6 +56,9 @@ export interface EditorPhoto {
    * has no rooms, and the picker is not shown for one.
    */
   room?: PhotoRoom;
+
+  /** On-device quality measurement, when this browser could make one. */
+  check?: PhotoCheck;
 }
 
 interface Props {
@@ -160,6 +164,17 @@ export function PhotosStep({
     onChange(moveItem(photos, from, to));
   };
 
+  // Advice per thumbnail: dark, blurry, small, or the same shot twice (the
+  // later copy is the one flagged). Never a blocker.
+  const flags = photos.map((photo, index) =>
+    photo.check
+      ? photoFlags(
+          photo.check,
+          photos.slice(0, index).flatMap((earlier) => (earlier.check ? [earlier.check.hash] : [])),
+        )
+      : [],
+  );
+
   return (
     <>
       <p className="hint">
@@ -190,6 +205,19 @@ export function PhotosStep({
           ))}
         </ul>
       )}
+
+      {photos.length > 1 ? (
+        <div className="order-tools">
+          <button
+            type="button"
+            className="order-suggest"
+            onClick={() => onChange(suggestedOrder(photos))}
+          >
+            ✦ {t('editor.quality.suggestOrder')}
+          </button>
+          <span className="hint">{t('editor.quality.suggestOrderHint')}</span>
+        </div>
+      ) : null}
 
       {photos.length > 0 ? (
         <ul className="strip">
@@ -224,6 +252,16 @@ export function PhotosStep({
               />
 
               {index === 0 ? <span className="cover">{t('editor.coverPhoto')}</span> : null}
+
+              {flags[index] && flags[index]!.length > 0 ? (
+                <span className="shot-flags">
+                  {flags[index]!.map((flag) => (
+                    <span key={flag} className={`shot-flag flag-${flag}`}>
+                      {t(`editor.quality.${flag}`)}
+                    </span>
+                  ))}
+                </span>
+              ) : null}
 
               {photo.status && photo.status !== 'uploaded' ? (
                 <span className={`shot-state ${photo.status}`}>

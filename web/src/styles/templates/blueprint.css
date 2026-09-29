@@ -101,6 +101,57 @@ html[data-template='blueprint'] .bp-plan img {
   box-sizing: border-box;
 }
 
+/* P7 · a plan with rooms drawn on it. The image is fitted inside the 4:3
+   board by a size container, so the rectangles — percent of the IMAGE —
+   land on the rooms rather than on the letterbox around them. */
+html[data-template='blueprint'] .bp-plan.has-spots {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 0.8rem;
+  box-sizing: border-box;
+  container-type: size;
+}
+
+html[data-template='blueprint'] .bp-plan-fit {
+  position: relative;
+  inline-size: min(100cqi, 100cqb * var(--plan-r, 1.333));
+  aspect-ratio: var(--plan-r, 1.333);
+}
+
+html[data-template='blueprint'] .bp-plan.has-spots img {
+  padding: 0;
+  animation: none;
+}
+
+html[data-template='blueprint'] .bp-spot {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  min-block-size: 32px;
+  min-inline-size: 32px;
+  padding: 0;
+  border: 2px solid var(--bp-ink);
+  border-radius: 6px;
+  background: rgba(33, 72, 140, 0.08);
+  color: var(--bp-ink);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+html[data-template='blueprint'] .bp-spot span {
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  background: #fff;
+}
+
+html[data-template='blueprint'] .bp-spot[aria-pressed='true'] {
+  background: rgba(33, 72, 140, 0.22);
+  border-width: 3px;
+}
+
 html[data-template='blueprint'] .bp-plan-tag,
 html[data-template='blueprint'] .bp-label {
   position: absolute;

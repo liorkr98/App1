@@ -235,7 +235,11 @@
       "tear": "",
       "qr": "",
       "stop": ""
-    }
+    },
+    "spinLabel": "",
+    "spinHint": "",
+    "spinBack": "",
+    "spinOn": ""
   },
   "notFound": {
     "title": "",
@@ -472,7 +476,55 @@
     "plateLooking": "",
     "plateLookupFailed": "",
     "plateLookupOk": "",
-    "plateLookupNeedDeclare": ""
+    "plateLookupNeedDeclare": "",
+    "livePreview": {
+      "title": "",
+      "missing": "",
+      "unavailable": "",
+      "label": "",
+      "loading": ""
+    },
+    "magic": {
+      "title": "",
+      "verified": "",
+      "car": "",
+      "plan": "",
+      "sun": "",
+      "rooms": "",
+      "photo": ""
+    },
+    "quality": {
+      "dark": "",
+      "blurry": "",
+      "small": "",
+      "duplicate": "",
+      "suggestOrder": "",
+      "suggestOrderHint": ""
+    },
+    "tone": {
+      "label": "",
+      "pro": "",
+      "warm": "",
+      "refined": ""
+    },
+    "addons": {
+      "title": ""
+    },
+    "plan": {
+      "title": "",
+      "hint": "",
+      "upload": "",
+      "pick": "",
+      "clearRoom": "",
+      "remove": ""
+    },
+    "spin": {
+      "title": "",
+      "hint": "",
+      "upload": "",
+      "count": "",
+      "clear": ""
+    }
   },
   "home": {
     "tagline": "",
@@ -681,7 +733,9 @@
     "studioCard": "",
     "studioQr": "",
     "qrDownload": "",
-    "studioMessage": ""
+    "studioMessage": "",
+    "studioStory": "",
+    "studioFlyer": ""
   },
   "legal": {
     "terms": "",
@@ -856,5 +910,9 @@
     "coverTitle": "",
     "cover1": "",
     "cover2": ""
+  },
+  "flyer": {
+    "qrLabel": "",
+    "scan": ""
   }
 }

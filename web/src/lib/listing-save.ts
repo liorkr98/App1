@@ -3,7 +3,8 @@ import { DEFAULT_ACCENT, isAccentId } from '@/features/agents/accents';
 import { toSeller } from '@/features/agents/profile';
 import { schemaFor } from '@/features/listings/schemas';
 import type { EditorPhoto } from '../components/editor/PhotosStep';
-import type { PhotoRoom } from '@/features/listings/photo-rooms';
+
+import { editorColumns, savedPhotos, toMedia, type MediaExtras } from './listing-row';
 
 import { loadProfile } from './profile';
 import { supabase } from './supabase';
@@ -27,90 +28,6 @@ import { supabase } from './supabase';
  * and quietly become the security the day somebody edits the policy.
  */
 
-/** What the page needs to render one photograph. */
-export interface SavedPhoto {
-  id: string;
-  url: string;
-  alt: string;
-  width: number;
-  height: number;
-  room?: PhotoRoom;
-}
-
-/**
- * The media column's shape, matching `Media` in @/types/listing.
- *
- * The FIRST photo is the cover, because that is the frame the WhatsApp card
- * is cut from and the order the seller arranged is the order they meant
- * (CLAUDE.md §4.4 — in RTL the first item is the rightmost).
- */
-function toMedia(photos: readonly SavedPhoto[], tourUrl?: string) {
-  const [cover, ...rest] = photos;
-
-  /*
-   * NO COVER MEANS "DO NOT WRITE", not "write nothing".
-   *
-   * This returned `{}` and the callers wrote it, which is how an agent lost a
-   * whole listing's photographs: the files were in Storage — 41 of them, on
-   * the row that prompted this — and `listings.media` was `{}`, so the
-   * dashboard showed no pictures and the published page could not be built at
-   * all. Any save that ran before an upload finished overwrote the URLs of
-   * the uploads that HAD finished.
-   *
-   * Returning undefined lets `saveListing` leave the column alone, and the
-   * only place `{}` is now written is a seller who removed every photo.
-   */
-  if (!cover) return undefined;
-
-  const tour = tourUrl?.trim();
-
-  return {
-    cover: {
-      id: cover.id,
-      url: cover.url,
-      alt: cover.alt,
-      width: cover.width,
-      height: cover.height,
-      ...(cover.room ? { room: cover.room } : {}),
-    },
-    gallery: rest.map((photo) => ({
-      id: photo.id,
-      url: photo.url,
-      alt: photo.alt,
-      width: photo.width,
-      height: photo.height,
-      ...(photo.room ? { room: photo.room } : {}),
-    })),
-    ...(tour && tour.startsWith('https://') ? { tourUrl: tour } : {}),
-  };
-}
-
-/**
- * Columns the editor writes on every save, including the ones that used
- * to die with the tab: pre-portal, and the dated owner-consent record.
- */
-function editorColumns(state: EditorState) {
-  return {
-    title: state.title,
-    price: state.price,
-    description: state.description,
-    facts: state.facts,
-    location:
-      state.city || state.street
-        ? { city: state.city ?? '', ...(state.street ? { street: state.street } : {}) }
-        : null,
-    price_note: state.priceNote?.trim() ? state.priceNote.trim() : null,
-    ...(state.template ? { template: state.template } : {}),
-    ...(state.accent && isAccentId(state.accent) ? { accent: state.accent } : {}),
-    ...(state.audience ? { audience: state.audience } : {}),
-    ...(state.disclosures ? { disclosures: state.disclosures } : {}),
-    indexable: state.indexable === true,
-    pre_portal: state.prePortal === true,
-    owner_consent_declared_at: state.ownerConsentDeclaredAt ?? null,
-    owner_consent_name: state.ownerConsentName?.trim() ? state.ownerConsentName.trim() : null,
-  };
-}
-
 /**
  * Saves everything the editor knows.
  *
@@ -127,6 +44,7 @@ export async function saveListing(
   listingId: string,
   state: EditorState,
   photos: readonly EditorPhoto[],
+  extras: MediaExtras = {},
 ): Promise<{ ok: true } | { error: string }> {
   const saved = savedPhotos(photos);
 
@@ -139,7 +57,7 @@ export async function saveListing(
    *         what destroyed earlier uploads; the column keeps what it has and
    *         the save that follows the upload writes the real list.
    */
-  const media = toMedia(saved, state.tourUrl);
+  const media = toMedia(saved, state.tourUrl, extras);
   const mediaPatch =
     media !== undefined ? { media } : photos.length === 0 ? { media: {} } : {};
 
@@ -174,25 +92,6 @@ export async function saveListing(
   return error ? { error: error.message } : { ok: true };
 }
 
-/** The photos that have a public URL, in the seller's order. */
-function savedPhotos(photos: readonly EditorPhoto[]): SavedPhoto[] {
-  return photos
-    .filter((photo): photo is EditorPhoto & { publicUrl: string } => Boolean(photo.publicUrl))
-    .map((photo, index) => ({
-      id: photo.id,
-      url: photo.publicUrl,
-      // Empty is the correct value for "nobody wrote one" — inventing a
-      // description from the file name would be worse than silence.
-      alt: photo.alt?.trim() ?? '',
-      // Recorded at upload, so the page can reserve the box before the bytes
-      // arrive. Zero would produce a CLS penalty on every listing.
-      width: photo.width ?? 0,
-      height: photo.height ?? 0,
-      ...(photo.room ? { room: photo.room } : {}),
-      index,
-    }));
-}
-
 /**
  * Publishes the listing.
  *
@@ -210,6 +109,7 @@ export async function publishListing(
   listingId: string,
   state: EditorState,
   photos: readonly EditorPhoto[] = [],
+  extras: MediaExtras = {},
 ): Promise<{ ok: true; slug: string } | { error: string }> {
   // ============================ HUMAN REVIEW ============================
   // This function does not read entitlement. The editor's `canPublish` is
@@ -233,7 +133,7 @@ export async function publishListing(
    * A listing with no cover is not publishable: index 0 is the frame the
    * WhatsApp card is cut from (CLAUDE.md §6).
    */
-  const media = toMedia(savedPhotos(photos), state.tourUrl);
+  const media = toMedia(savedPhotos(photos), state.tourUrl, extras);
   if (!media) return { error: 'no_photos' };
 
   let seller: Record<string, unknown> | undefined;

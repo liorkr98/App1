@@ -1,0 +1,161 @@
+---
+import { accentFor } from '@/features/agents/accents';
+import { ogPriceFragment } from '@/features/listings/control-surface';
+import { templateSpec } from '@/features/templates/manifest';
+import Prose from '../../../components/Prose.astro';
+import { toCells } from '../../../lib/facts';
+import { ils } from '../../../lib/format';
+import { t } from '../../../lib/i18n';
+import { HERO_WIDTHS, largest } from '../../../lib/images';
+import { publishedListing } from '../../../lib/listing-from-row';
+import { coverStyle, stagePlace, titleLines } from '../../../lib/stage';
+import '../../../styles/tokens.css';
+import '../../../styles/fonts.css';
+import '../../../styles/system/tokens.css';
+
+/**
+ * The story image (P7): one 1080 × 1920 frame for a WhatsApp or Instagram
+ * status, rendered by the worker's render_story job (Puppeteer, viewport
+ * 1080 × 1920) and stored as story/{slug}-{hash}.webp.
+ *
+ * A PAGE, NOT A DRAWING in the worker, for the reason the PDF is one: the
+ * Hebrew, the <bdi> numbers and the template's own fonts render exactly as
+ * they do on the listing, with no second typesetting to drift.
+ *
+ * Same rules as the page: numbers in <bdi>, the plate is not a fact and so
+ * cannot appear, the licence number when the seller has one. Onyx or Paper
+ * follows the listing's template, the accent its own.
+ *
+ * Never indexed and never linked; it exists to be screenshotted.
+ */
+export const prerender = false;
+Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+
+const slug = Astro.params.slug ?? '';
+const listing = slug ? await publishedListing(slug) : undefined;
+if (!listing) {
+  return new Response('not found', { status: 404 });
+}
+
+const mode = templateSpec(listing.template).ls ?? 'onyx';
+const accent = accentFor(listing.accent);
+const cells = toCells(listing.category, listing.facts, listing.audience)
+  .filter((cell) => !cell.absent)
+  .slice(0, 3);
+// ogPriceFragment is written for og:title ("… · ₪x"); the separator is not ours.
+const price = ogPriceFragment(listing.price, listing.priceDisplay, ils(listing.price), t('listing.priceFrom')).replace(/^[\s·]+/, '');
+const place = stagePlace(listing);
+const host = new URL(Astro.url).host;
+const flatTitle = listing.title.replace(/\s*\n\s*/g, ' ');
+const titleSize = flatTitle.length > 60 ? 72 : flatTitle.length > 36 ? 86 : 104;
+---
+<!DOCTYPE html>
+<html lang="he" dir="rtl" data-ls={mode}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=1080" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>{listing.title.replace(/\s*\n\s*/g, ' ')}</title>
+    <style is:global>
+      html, body { margin: 0; }
+      body {
+        --acc: var(--accent-base);
+        inline-size: 1080px;
+        block-size: 1920px;
+        overflow: hidden;
+        background: var(--ls-ground);
+        color: var(--ls-ink);
+        font-family: var(--ls-font-body);
+        display: grid;
+        /* The photograph takes what the words leave: a long title shrinks the
+           picture, never pushes the agent off the bottom of the frame. */
+        grid-template-rows: minmax(640px, 1fr) auto;
+      }
+      .st-photo { position: relative; overflow: hidden; }
+      .st-photo img { inline-size: 100%; block-size: 100%; object-fit: cover; display: block; }
+      .st-photo::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to top, var(--ls-ground) 2%, transparent 45%);
+      }
+      .st-body {
+        display: grid;
+        align-content: start;
+        gap: 34px;
+        padding: 0 84px 90px;
+        margin-block-start: -150px;
+        position: relative;
+        z-index: 1;
+      }
+      .st-place { margin: 0; font-size: 34px; font-weight: 700; color: var(--ls-ink-2); }
+      .st-title {
+        margin: 0;
+        font-family: var(--ls-font-display);
+        font-weight: 800;
+        font-size: var(--title-size, 104px);
+        line-height: 1.02;
+        font-variation-settings: 'wdth' 75;
+        letter-spacing: -0.02em;
+        display: grid;
+      }
+      .st-price {
+        margin: 0;
+        font-family: var(--ls-font-display);
+        font-weight: 800;
+        font-size: 84px;
+        color: var(--accent-lift);
+      }
+      html[data-ls='paper'] .st-price { color: var(--accent-base); }
+      .st-cells { display: flex; gap: 56px; margin: 0; }
+      .st-cells div { display: grid; gap: 4px; }
+      .st-cells dt { order: 2; font-size: 30px; font-weight: 700; color: var(--ls-ink-2); }
+      .st-cells dd { margin: 0; font-family: var(--ls-font-display); font-size: 72px; font-weight: 700; line-height: 1; }
+      .st-foot {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 40px;
+        margin-block-start: 30px;
+        padding-block-start: 34px;
+        border-block-start: 2px solid var(--ls-line);
+        font-size: 32px;
+      }
+      .st-foot b { display: block; font-size: 38px; }
+      .st-foot span { color: var(--ls-ink-2); }
+      .st-link { font-weight: 800; font-size: 34px; }
+    </style>
+  </head>
+  <body style={`--accent-base:${accent.base};--accent-lift:${accent.lift}`}>
+    <div class="st-photo">
+      <img src={largest(listing.media.cover, HERO_WIDTHS)} alt="" style={coverStyle(listing)} />
+    </div>
+    <div class="st-body">
+      {place && <p class="st-place"><Prose text={place} /></p>}
+      <h1 class="st-title" style={`--title-size:${titleSize}px`}>{titleLines(listing).map((line) => <span><Prose text={line} /></span>)}</h1>
+      {price && <p class="st-price"><Prose text={price} /></p>}
+      {cells.length > 0 && (
+        <dl class="st-cells">
+          {cells.map((cell) => (
+            <div>
+              <dt>{cell.label}</dt>
+              <dd>{cell.bdi ? <bdi>{cell.displayValue}</bdi> : cell.displayValue}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      <div class="st-foot">
+        <div>
+          <b>{listing.seller.name}</b>
+          <span>
+            {listing.seller.agencyName ?? listing.seller.role}
+            {listing.seller.licenceNumber && (
+              <Fragment>{' · '}{t('listing.licenceNumber')}{' '}<bdi>{listing.seller.licenceNumber}</bdi></Fragment>
+            )}
+          </span>
+        </div>
+        <bdi class="st-link" dir="ltr">{host}/a/{listing.slug}</bdi>
+      </div>
+    </div>
+  </body>
+</html>

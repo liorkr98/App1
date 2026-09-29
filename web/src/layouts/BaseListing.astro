@@ -5,6 +5,7 @@ import { telHref } from '@/features/listings/phone';
 import type { Listing } from '@/types/listing';
 import { t } from '../lib/i18n';
 import { listingJsonLd } from '../lib/jsonld';
+import { scriptJson } from '@/features/listings/script-json';
 import { livingSurfacesMode } from '../lib/living-surfaces';
 import { templateStylesheet } from '../lib/template-styles';
 import { ogDescription, ogImageUrl, ogTitle } from '../lib/og';
@@ -102,7 +103,7 @@ const showBarLogo =
   lang="he"
   dir="rtl"
   data-template={listing.template}
-  data-slug={listing.slug}
+  data-slug={listing.status === 'draft' ? undefined : listing.slug}
   data-ls={lsMode}
   data-category={listing.category}
   data-logo={logoPlacement}
@@ -141,7 +142,7 @@ const showBarLogo =
 )}
 
 {jsonLd && (
-  <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+  <script is:inline type="application/ld+json" set:html={scriptJson(jsonLd)} />
 )}
 
 <style is:global>

@@ -41,6 +41,7 @@ const place = stagePlace(listing);
     <div class="mono-wipe" aria-hidden="true">
       <img
         class="mono-img ls-breathe"
+        data-depth={listing.media.depthUrl}
         src={largest(cover, HERO_WIDTHS)}
         srcset={srcset(cover, HERO_WIDTHS) || undefined}
         sizes="100vw"

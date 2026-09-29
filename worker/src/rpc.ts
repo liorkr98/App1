@@ -23,3 +23,15 @@ async function call(name: string, args: Record<string, unknown>): Promise<void> 
 export function attachPdf(listingId: string, url: string): Promise<void> {
   return call('attach_pdf', { p_listing_id: listingId, p_url: url });
 }
+
+/**
+ * A P7 output into listings.media (migration 0034). The key is an allow-list
+ * in the database function too: storyUrl, flyerUrl or depth.
+ */
+export function attachMediaUrl(
+  listingId: string,
+  key: 'storyUrl' | 'flyerUrl' | 'depth',
+  value: unknown,
+): Promise<void> {
+  return call('attach_media_url', { p_listing_id: listingId, p_key: key, p_value: value });
+}
