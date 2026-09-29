@@ -4,12 +4,15 @@ import { PHOTO_ROOMS, type PhotoRoom } from './photo-rooms.js';
  * What the phone can tell about a photograph without sending it anywhere
  * (P6, decided: on-device only — no vision vendor).
  *
- * Measured on a small copy (≈256 px on the long edge) the editor already
- * draws while stripping EXIF, so it costs one more drawImage, not a decode:
+ * Measured on copies the editor draws while stripping EXIF, so it costs two
+ * more drawImage calls, not a decode:
  *
- *   mean       average luminance, 0–255 (Rec. 709 weights)
- *   sharpness  variance of the Laplacian — the standard blur measure; a
- *              soft, shaken or out-of-focus frame has little edge energy
+ *   mean       average luminance, 0–255 (Rec. 709 weights), on ≈256 px
+ *   sharpness  variance of the Laplacian — the standard blur measure — on a
+ *              384 px centre crop of a 1024 px copy. Measured small, a
+ *              shaken frame looks sharp: shrinking a photo shrinks its blur
+ *              with it. Calibrated on the fixtures upscaled to 2400 px:
+ *              197–461 as shot, ≈30 after a 3 px blur, ≈6 after 8 px
  *   hash       a 64-bit difference hash (dHash) as 16 hex characters; two
  *              frames within a few bits are the same shot taken twice
  *
@@ -28,7 +31,7 @@ export interface PhotoCheck {
 export type PhotoFlag = 'dark' | 'blurry' | 'small' | 'duplicate';
 
 export const DARK_BELOW = 55;
-export const BLURRY_BELOW = 40;
+export const BLURRY_BELOW = 15;
 export const SMALL_BELOW = 900;
 export const DUPLICATE_WITHIN = 6;
 
@@ -119,11 +122,15 @@ export function checkPixels(
   width: number,
   height: number,
   original: { width: number; height: number },
+  detail?: { rgba: ArrayLike<number>; width: number; height: number },
 ): PhotoCheck {
   const gray = grayscale(rgba, width, height);
+  const sharpness = detail
+    ? laplacianVariance(grayscale(detail.rgba, detail.width, detail.height), detail.width, detail.height)
+    : laplacianVariance(gray, width, height);
   return {
     mean: Math.round(meanOf(gray)),
-    sharpness: Math.round(laplacianVariance(gray, width, height)),
+    sharpness: Math.round(sharpness),
     hash: differenceHash(gray, width, height),
     shortEdge: Math.min(original.width, original.height),
     landscape: original.width >= original.height,

@@ -43,6 +43,13 @@
 
 @import './walk.css';
 
+/* The page shell (pages/new): the 2.0 site header and footer around it. */
+.new-shell {
+  max-inline-size: 1180px;
+  margin-inline: auto;
+  border-block-start: 1px solid var(--stone);
+}
+
 .editor {
   display: flex;
   flex-direction: column;
@@ -1768,6 +1775,20 @@ textarea {
     display: grid;
     grid-template-columns: minmax(0, 28rem) minmax(0, 1fr);
     align-items: start;
+  }
+
+  /* Beside a live preview the dock belongs to the form column: sticky at
+     its foot, not fixed across the page and over the phone. */
+  .editor {
+    padding-block-end: 0;
+  }
+
+  .nav {
+    position: sticky;
+    inset-block-end: 0;
+    max-width: none;
+    margin-inline: 0;
+    margin-block-start: auto;
   }
 
   .facsimile {

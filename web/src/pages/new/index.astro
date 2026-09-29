@@ -1,12 +1,11 @@
 ---
 import Editor from '../../components/editor/Editor.tsx';
-import BrandMark from '../../components/BrandMark.astro';
+import Site from '../../layouts/Site.astro';
 import { t } from '../../lib/i18n';
-import '../../styles/tokens.css';
 import '../../styles/editor.css';
 
 /**
- * The editor (Stage E).
+ * The editor (Stage E), on the 2.0 site shell (P6).
  *
  * Static, like everything else here — the shell is a file on the CDN and the
  * island boots on the client. There is no server rendering to wait for, which
@@ -15,91 +14,18 @@ import '../../styles/editor.css';
  *
  * client:load, not client:visible: the island IS the page. Deferring it until
  * it scrolls into view would mean deferring it until after it is needed.
+ *
+ * PAPER, NOT ONYX, on purpose. The rest of the site went dark in P5; the
+ * editor stays light because it is a form an agent fills for four minutes,
+ * and editor.css says why a form should not shout. The drama is in the live
+ * preview beside it, which is the real page, dark templates and all.
+ *
+ * Never indexed: a private workspace holding unpublished drafts.
  */
 ---
 
-<!DOCTYPE html>
-<html lang="he" dir="rtl">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#FBFAF7" />
-    <title>{t('listing.create')}</title>
-
-    {/*
-      Never indexed, and not for the same reason a listing page might not be.
-      A listing page is noindex by default because the seller may not want
-      their address searchable; this page is a private workspace holding
-      unpublished drafts, and there is no version of it that belongs in a
-      search result.
-    */}
-    <meta name="robots" content="noindex,nofollow" />
-
-    {/* Without this the browser asks for /favicon.ico, which does not exist,
-        and every editor load carries a 404. */}
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Assistant:wght@400;600;700&display=swap"
-      rel="stylesheet"
-    />
-
-    <style is:global>
-      html {
-        background: var(--plaster);
-        /* Light-only: a dark-mode browser would otherwise invert the native
-           controls on a page with no dark palette. */
-        color-scheme: light;
-        /* Removes the 300ms double-tap delay on a form used with a thumb. */
-        touch-action: manipulation;
-        -webkit-tap-highlight-color: rgba(74, 93, 58, 0.18);
-      }
-
-      body {
-        font-family: 'Assistant', system-ui, sans-serif;
-        background: var(--plaster);
-        color: var(--ink);
-        font-size: var(--t-body);
-        line-height: 1.62;
-        max-inline-size: 1180px;
-        margin-inline: auto;
-        min-height: 100dvh;
-        -webkit-font-smoothing: antialiased;
-      }
-
-      .editor-chrome {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-        padding: 0.75rem var(--gut);
-        border-block-end: 1px solid var(--stone);
-      }
-
-      .editor-chrome .brand-mark {
-        color: var(--ink);
-      }
-
-      .editor-chrome > a:not(.brand-mark) {
-        display: inline-flex;
-        align-items: center;
-        min-block-size: 44px;
-        color: var(--muted);
-        font-size: 0.9rem;
-      }
-    </style>
-  </head>
-
-  <body>
-    <a class="skip" href="#main">{t('a11y.skip')}</a>
-    <header class="editor-chrome">
-      <BrandMark href="/" />
-      <a href="/">{t('legal.home')}</a>
-    </header>
-    <main id="main">
-      <Editor client:load />
-    </main>
-  </body>
-</html>
+<Site title={`${t('listing.create')} · ${t('common.brand')}`} robots="noindex,nofollow" ls="paper">
+  <div class="new-shell">
+    <Editor client:load />
+  </div>
+</Site>

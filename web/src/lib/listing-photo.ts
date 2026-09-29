@@ -45,6 +45,10 @@ export interface ProcessedPhoto {
 
 /** The long edge the quality check is measured at. */
 const CHECK_EDGE = 256;
+/** Sharpness is measured on the centre of a copy this long… */
+const DETAIL_EDGE = 1024;
+/** …in a square this wide. */
+const DETAIL_CROP = 384;
 
 /**
  * Decodes, resizes and re-encodes. Returns undefined when the browser cannot
@@ -89,7 +93,21 @@ export async function stripAndResize(
       const pctx = probe.getContext('2d', { willReadFrequently: true });
       if (pctx) {
         pctx.drawImage(bitmap, 0, 0, w, h);
-        check = checkPixels(pctx.getImageData(0, 0, w, h).data, w, h, bitmap);
+        // Sharpness needs detail: the centre of a 1024px copy, 384px square.
+        const at = Math.min(1, DETAIL_EDGE / Math.max(bitmap.width, bitmap.height));
+        const dw = Math.round(bitmap.width * at);
+        const dh = Math.round(bitmap.height * at);
+        const side = Math.min(DETAIL_CROP, dw, dh);
+        const zoom = document.createElement('canvas');
+        zoom.width = side;
+        zoom.height = side;
+        const zctx = zoom.getContext('2d', { willReadFrequently: true });
+        let detail: { rgba: Uint8ClampedArray; width: number; height: number } | undefined;
+        if (zctx && side >= 3) {
+          zctx.drawImage(bitmap, -Math.round((dw - side) / 2), -Math.round((dh - side) / 2), dw, dh);
+          detail = { rgba: zctx.getImageData(0, 0, side, side).data, width: side, height: side };
+        }
+        check = checkPixels(pctx.getImageData(0, 0, w, h).data, w, h, bitmap, detail);
       }
     } catch {
       check = undefined;
