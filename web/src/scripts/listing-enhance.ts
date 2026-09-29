@@ -285,6 +285,83 @@ function bindBlueprint(): void {
 }
 
 /**
+ * The 360° spin (P7, Showroom). Frames are a JSON list on the element; only
+ * the first is in the page. The first touch, key or button loads the rest,
+ * then dragging turns the car — about one frame per 14px, wrapping round.
+ * Arrow keys and the two buttons step one frame, and they are the whole of
+ * it under reduced motion (drag is the reader's own movement, not ours,
+ * so it stays too). A frame that fails to load is skipped, never a blank.
+ */
+function bindSpin(): void {
+  const stage = document.querySelector<HTMLElement>('[data-spin]');
+  if (!stage) return;
+  let frames: string[] = [];
+  try {
+    frames = JSON.parse(stage.dataset.spin ?? '[]');
+  } catch {
+    return;
+  }
+  if (frames.length < 2) return;
+  const img = stage.querySelector('img');
+  const controls = stage.querySelector<HTMLElement>('.sr-spin-controls');
+  if (!img || !controls) return;
+  controls.hidden = false;
+  const ready = new Set<number>([0]);
+  let loaded = false;
+  let at = 0;
+  const load = () => {
+    if (loaded) return;
+    loaded = true;
+    frames.forEach((src, index) => {
+      if (index === 0) return;
+      const probe = new Image();
+      probe.onload = () => ready.add(index);
+      probe.src = src;
+    });
+  };
+  const show = (next: number) => {
+    const n = frames.length;
+    let target = ((next % n) + n) % n;
+    // Skip frames that are not in yet rather than flash an empty box.
+    for (let tries = 0; tries < n && !ready.has(target); tries++) target = (target + (next >= at ? 1 : -1) + n) % n;
+    at = target;
+    img.src = frames[at]!;
+  };
+  let startX = 0;
+  let startAt = 0;
+  let dragging = false;
+  stage.addEventListener('pointerdown', (event) => {
+    if ((event.target as Element).closest('button')) return;
+    load();
+    dragging = true;
+    startX = event.clientX;
+    startAt = at;
+    stage.setPointerCapture(event.pointerId);
+  });
+  stage.addEventListener('pointermove', (event) => {
+    if (!dragging) return;
+    show(startAt + Math.round((event.clientX - startX) / 14));
+  });
+  const stop = () => {
+    dragging = false;
+  };
+  stage.addEventListener('pointerup', stop);
+  stage.addEventListener('pointercancel', stop);
+  controls.addEventListener('click', (event) => {
+    const button = (event.target as Element).closest<HTMLButtonElement>('[data-spin-step]');
+    if (!button) return;
+    load();
+    show(at + Number(button.dataset.spinStep));
+  });
+  stage.addEventListener('keydown', (event) => {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    load();
+    show(at + (event.key === 'ArrowRight' ? 1 : -1));
+  });
+}
+
+/**
  * Glass (M10): the cards lean toward the pointer and a light follows it.
  *
  * Pointer only — device-orientation would need an iOS permission prompt on a
@@ -472,4 +549,5 @@ bindMetric();
 bindBlueprint();
 bindGlass();
 bindHeliograph();
+bindSpin();
 beaconReadToAgent();

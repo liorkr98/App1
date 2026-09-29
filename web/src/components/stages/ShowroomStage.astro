@@ -22,13 +22,19 @@ interface Props {
  * style, and the seller's disclosures set as numbered cards (showroom.css;
  * the section itself is the shared one, so its rules hold).
  *
- * The 360° spin needs 24–36 photographs around the car; it lands in P7.
- * This is one photograph, and it does not pretend to turn.
+ * THE 360° SPIN (P7): when the agent uploaded 12–36 frames walking round the
+ * car (media.spin), the photograph becomes a turntable — drag it, use the
+ * arrow keys, or the two turn buttons. Only the first frame is in the page;
+ * the rest load the first time someone turns it (bindSpin), so the spin costs
+ * a buyer nothing until they ask for it. Without frames it is one photograph,
+ * and it does not pretend to turn.
  */
 const { listing, cells, perUnit } = Astro.props;
 const cover = listing.media.cover;
 const lines = titleLines(listing);
 const place = stagePlace(listing);
+const spin = listing.media.spin ?? [];
+const spinFrames = spin.map((frame) => largest(frame, HERO_WIDTHS));
 ---
 <section class="stage stage-showroom">
   <div class="sr-head">
@@ -40,6 +46,30 @@ const place = stagePlace(listing);
     </h1>
   </div>
   <div class="sr-platform">
+    {spin.length > 0 ? (
+      <div
+        class="sr-spin"
+        data-spin={JSON.stringify(spinFrames)}
+        tabindex="0"
+        role="img"
+        aria-label={t('listing.spinLabel')}
+      >
+        <img
+          src={spinFrames[0]}
+          width={spin[0]!.width}
+          height={spin[0]!.height}
+          alt=""
+          fetchpriority="high"
+          decoding="async"
+          draggable="false"
+        />
+        <div class="sr-spin-controls" hidden>
+          <button type="button" data-spin-step="-1" aria-label={t('listing.spinBack')}>⟲</button>
+          <span>{t('listing.spinHint')}</span>
+          <button type="button" data-spin-step="1" aria-label={t('listing.spinOn')}>⟳</button>
+        </div>
+      </div>
+    ) : (
     <button
       type="button"
       class="sr-car"
@@ -60,6 +90,7 @@ const place = stagePlace(listing);
       />
       <span class="sr-scan" aria-hidden="true"></span>
     </button>
+    )}
     <span class="sr-floor" aria-hidden="true"></span>
   </div>
   <div class="sr-band">
