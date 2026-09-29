@@ -714,7 +714,9 @@
     "studioCard": "",
     "studioQr": "",
     "qrDownload": "",
-    "studioMessage": ""
+    "studioMessage": "",
+    "studioStory": "",
+    "studioFlyer": ""
   },
   "legal": {
     "terms": "",
@@ -889,5 +891,9 @@
     "coverTitle": "",
     "cover1": "",
     "cover2": ""
+  },
+  "flyer": {
+    "qrLabel": "",
+    "scan": ""
   }
 }

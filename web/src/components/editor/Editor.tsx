@@ -764,6 +764,8 @@ export default function Editor() {
           originalPaths: originals,
           ...(photos[0]?.path ? { coverPath: photos[0].path } : {}),
           price: state.price,
+          ...(slug.current ? { slug: slug.current } : {}),
+          content: JSON.stringify([state.title, state.template, state.accent, state.facts, state.city, state.street]),
         });
         clearDraft();
       } else {

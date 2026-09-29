@@ -199,6 +199,9 @@ import '../styles/dash.css';
         media: {
           cover?: { url?: string; alt?: string };
           gallery?: { url?: string; alt?: string }[];
+          /** P7, written by the worker once rendered. */
+          storyUrl?: string;
+          flyerUrl?: string;
         } | null;
         location: { city?: string; street?: string } | null;
         views?: number;
@@ -930,6 +933,41 @@ import '../styles/dash.css';
             side.append(save);
           })
           .catch(() => qr.remove());
+
+        // The story image and the flyer, once the worker has made them.
+        // Before that they are simply not offered — never a dead link.
+        const https = (url: unknown) => (typeof url === 'string' && url.startsWith('https://') ? url : undefined);
+        const story = https(row.media?.storyUrl);
+        const flyer = https(row.media?.flyerUrl);
+        if (story || flyer) {
+          const made = document.createElement('div');
+          made.className = 'studio-made';
+          if (story) {
+            const figure = document.createElement('a');
+            figure.className = 'studio-story';
+            figure.href = story;
+            figure.target = '_blank';
+            figure.rel = 'noopener';
+            const image = document.createElement('img');
+            image.src = story;
+            image.alt = t('dash.studioStory');
+            image.loading = 'lazy';
+            const label = document.createElement('span');
+            label.textContent = t('dash.studioStory');
+            figure.append(image, label);
+            made.append(figure);
+          }
+          if (flyer) {
+            const file = document.createElement('a');
+            file.className = 'act';
+            file.href = flyer;
+            file.target = '_blank';
+            file.rel = 'noopener';
+            file.textContent = t('dash.studioFlyer');
+            made.append(file);
+          }
+          box.append(made);
+        }
 
         const acts = document.createElement('div');
         acts.className = 'd-acts';

@@ -5,7 +5,7 @@ import puppeteer, { type Browser } from 'puppeteer';
 import { env } from '../env.js';
 import { listingPdfUrl } from '../pdf/url.js';
 import { assertHebrewRenders, PdfMissingHebrew } from '../pdf/verify.js';
-import { attachPdf } from '../rpc.js';
+import { attachMediaUrl, attachPdf } from '../rpc.js';
 import { upload } from '../storage.js';
 import { JobFailure, type JobContext } from '../types.js';
 
@@ -31,10 +31,16 @@ interface PdfPayload {
    * SSRF this process must not perform (service-role key, --no-sandbox).
    */
   baseUrl?: string;
+  /**
+   * P7: 'flyer' renders /a/{slug}/flyer/ (the A4 QR flyer) and records it as
+   * media.flyerUrl instead of media.pdfUrl. Anything else is the listing.
+   */
+  page?: string;
 }
 
 export async function renderPdf({ job, progress }: JobContext): Promise<Record<string, unknown>> {
-  const { slug, baseUrl } = job.payload as PdfPayload;
+  const { slug, baseUrl, page } = job.payload as PdfPayload;
+  const flyer = page === 'flyer';
 
   // Resolved before Chrome starts. A client-supplied baseUrl is the attack;
   // listingPdfUrl refuses any origin that is not PAGE_BASE_URL and never
@@ -43,6 +49,7 @@ export async function renderPdf({ job, progress }: JobContext): Promise<Record<s
     slug,
     pageBaseUrl: env.pageBaseUrl,
     ...(typeof baseUrl === 'string' ? { baseUrl } : {}),
+    page: flyer ? 'flyer' : 'listing',
   });
 
   if (!url) {
@@ -69,10 +76,10 @@ export async function renderPdf({ job, progress }: JobContext): Promise<Record<s
       ],
     });
 
-    const page = await browser.newPage();
-    page.setDefaultNavigationTimeout(NAVIGATION_TIMEOUT_MS);
+    const tab = await browser.newPage();
+    tab.setDefaultNavigationTimeout(NAVIGATION_TIMEOUT_MS);
 
-    const response = await page.goto(url, { waitUntil: 'networkidle0' });
+    const response = await tab.goto(url, { waitUntil: 'networkidle0' });
 
     if (!response?.ok()) {
       // A 404 here means the page is not published yet. Permanent: retrying
@@ -82,7 +89,7 @@ export async function renderPdf({ job, progress }: JobContext): Promise<Record<s
 
     await progress(40);
 
-    await page.emulateMediaType('print');
+    await tab.emulateMediaType('print');
 
     // Chrome will happily print before the webfonts arrive, and the result is
     // a PDF set in the fallback face — which for Hebrew is often no face at
@@ -96,13 +103,18 @@ export async function renderPdf({ job, progress }: JobContext): Promise<Record<s
     // fonts.ready resolves when loading FINISHES, success or failure, so a
     // Google Fonts outage does not hang the render — it falls through to the
     // Noto Hebrew installed in the image, which is why that package is there.
-    await page.evaluate('document.fonts.ready.then(() => true)');
+    await tab.evaluate('document.fonts.ready.then(() => true)');
 
-    const pdf = await page.pdf({
-      format: 'a4',
-      printBackground: true,
-      margin: { top: '12mm', bottom: '12mm', left: '10mm', right: '10mm' },
-    });
+    // The flyer sets its own A4 page and bleed (@page in flyer.astro).
+    const pdf = await tab.pdf(
+      flyer
+        ? { format: 'a4', printBackground: true, preferCSSPageSize: true, margin: { top: '0', bottom: '0', left: '0', right: '0' } }
+        : {
+            format: 'a4',
+            printBackground: true,
+            margin: { top: '12mm', bottom: '12mm', left: '10mm', right: '10mm' },
+          },
+    );
 
     await progress(70);
 
@@ -113,12 +125,13 @@ export async function renderPdf({ job, progress }: JobContext): Promise<Record<s
 
     const hash = createHash('sha256').update(pdf).digest('hex').slice(0, 8);
     const { publicUrl } = await upload(
-      `${job.listing_id}/pdf/${slug}-${hash}.pdf`,
+      `${job.listing_id}/pdf/${slug}-${flyer ? 'flyer-' : ''}${hash}.pdf`,
       Buffer.from(pdf),
       'application/pdf',
     );
 
-    await attachPdf(job.listing_id, publicUrl);
+    if (flyer) await attachMediaUrl(job.listing_id, 'flyerUrl', publicUrl);
+    else await attachPdf(job.listing_id, publicUrl);
     await progress(100);
 
     return {

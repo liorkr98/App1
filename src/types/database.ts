@@ -1785,6 +1785,8 @@ export type Database = {
         | "build_sprite"
         | "generate_og"
         | "render_pdf"
+        | "render_story"
+        | "depth_map"
     }
     CompositeTypes: {
       geometry_dump: {
@@ -1928,6 +1930,8 @@ export const Constants = {
         "build_sprite",
         "generate_og",
         "render_pdf",
+        "render_story",
+        "depth_map",
       ],
     },
   },
