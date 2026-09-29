@@ -13,6 +13,20 @@ update public.listings
   set template = 'aurora'
   where template = 'cinema';
 
+-- The live database took a migration on 26 Sept 2026 that is not in this
+-- repo ("templates_that_differ"). It renamed brochure → postcard and
+-- studio → portrait and allowed two more ids, ledger and stack, that no code
+-- here knows. The code falls back to agency for all four. Rows go back to the
+-- id they held before that migration; the two with no predecessor go to the
+-- default. The check below would reject any of them otherwise.
+update public.listings
+  set template = case template
+    when 'postcard' then 'brochure'
+    when 'portrait' then 'studio'
+    else 'agency'
+  end
+  where template in ('postcard', 'portrait', 'ledger', 'stack');
+
 alter table public.listings
   drop constraint if exists listings_template_check;
 
