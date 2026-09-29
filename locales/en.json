@@ -505,6 +505,21 @@
     },
     "addons": {
       "title": ""
+    },
+    "plan": {
+      "title": "",
+      "hint": "",
+      "upload": "",
+      "pick": "",
+      "clearRoom": "",
+      "remove": ""
+    },
+    "spin": {
+      "title": "",
+      "hint": "",
+      "upload": "",
+      "count": "",
+      "clear": ""
     }
   },
   "home": {

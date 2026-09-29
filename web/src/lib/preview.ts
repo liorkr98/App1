@@ -43,7 +43,13 @@ function cleanMedia(value: unknown, origin: string, storage: string): Record<str
       })
     : [];
   const floorPlan = cleanImage(value.floorPlan, origin, storage);
-  return { cover, gallery, ...(floorPlan ? { floorPlan } : {}) };
+  const spin = Array.isArray(value.spin)
+    ? value.spin.slice(0, 40).flatMap((item) => {
+        const image = cleanImage(item, origin, storage);
+        return image ? [image] : [];
+      })
+    : [];
+  return { cover, gallery, ...(floorPlan ? { floorPlan } : {}), ...(spin.length > 0 ? { spin } : {}) };
 }
 
 function cleanLocation(value: unknown): Record<string, string> | null {

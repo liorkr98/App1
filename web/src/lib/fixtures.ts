@@ -144,6 +144,12 @@ export const tlvListing: Listing = {
       height: 280,
       alt: 'תשריט הדירה',
       caption: 'תשריט',
+      // P7 "חדר בלחיצה": the living room and the kitchen as drawn on
+      // tlv-plan.svg, measured from the inline-start (right) edge in percent.
+      rooms: [
+        { room: 'living', x: 54, y: 8.6, w: 40, h: 42.9 },
+        { room: 'kitchen', x: 6, y: 8.6, w: 48, h: 42.9 },
+      ],
     },
     tourUrl: 'https://my.matterport.com/show/?m=T4V7A',
   },

@@ -13,6 +13,8 @@ import { blankFacts, reconcileFacts } from '@/features/listings/fact-entry';
 import { isPhotoRoom } from '@/features/listings/photo-rooms';
 import { LISTING_CATEGORIES, schemaFor } from '@/features/listings/schemas';
 import { suggestTemplate } from '@/features/templates/suggest';
+import { cleanPlanRooms } from '@/features/listings/rich-media';
+import type { MediaExtras } from '../../lib/listing-row';
 import type { CopyTone } from '@/features/listings/listing-copy';
 
 import { isProfileComplete } from '@/features/agents/profile';
@@ -33,6 +35,8 @@ import { ConsentStep } from './ConsentStep';
 import { DescriptionStep } from './DescriptionStep';
 import { DetailsStep } from './DetailsStep';
 import { LivePreview } from './LivePreview';
+import { PlanEditor, type PlanDraft } from './PlanEditor';
+import { SpinEditor, type SpinFrame } from './SpinEditor';
 import { PublishStep } from './PublishStep';
 import { DisclosuresStep } from './DisclosuresStep';
 import { FactsStep } from './FactsStep';
@@ -112,6 +116,19 @@ export default function Editor() {
    * actual photos ever disagreeing.
    */
   const [photos, setPhotos] = useState<EditorPhoto[]>([]);
+
+  /**
+   * P7 extras, held beside the photographs for the same reason they are:
+   * URLs and sizes the rules do not need. The floor plan with the rooms drawn
+   * on it (property), and a car's 360° frames. Saved in `media` with the
+   * photographs (lib/listing-row.ts toMedia).
+   */
+  const [plan, setPlan] = useState<PlanDraft | undefined>(undefined);
+  const [spin, setSpin] = useState<SpinFrame[]>([]);
+  const [extraUploading, setExtraUploading] = useState(false);
+  const extras = useMemo<MediaExtras>(() => ({ plan, spin }), [plan, spin]);
+  const extrasRef = useRef(extras);
+  extrasRef.current = extras;
 
   /**
    * The plate and its ownership declaration.
@@ -242,6 +259,51 @@ export default function Editor() {
    * component's memory: advancing a step before `publicUrl` existed wrote
    * empty `media`, and the dashboard draft showed no photographs.
    */
+  /**
+   * One extra image (a floor plan, a spin frame) through the photographs'
+   * own path: the original to the private bucket, a re-encoded copy — no
+   * EXIF — to the public one. Undefined on any failure; the agent can retry.
+   */
+  const uploadExtra = async (file: File): Promise<{ url: string; width: number; height: number } | undefined> => {
+    if (!supabaseConfigured || !signedIn || !state.category) return undefined;
+    try {
+      if (!listingId.current) {
+        const draft = await createDraft(state.category);
+        listingId.current = draft.id;
+        slug.current = draft.slug;
+        setSavedRow({ id: draft.id, slug: draft.slug });
+      }
+      const original = await uploadOriginal(listingId.current, file);
+      if ('error' in original) return undefined;
+      const processed = await stripAndResize(file);
+      if (!processed) return undefined;
+      const published = await uploadDerived(listingId.current, original.path, processed);
+      if ('error' in published) return undefined;
+      return { url: published.url, width: processed.width, height: processed.height };
+    } catch {
+      return undefined;
+    }
+  };
+
+  const uploadPlan = async (file: File) => {
+    setExtraUploading(true);
+    const done = await uploadExtra(file);
+    setExtraUploading(false);
+    if (done) setPlan({ ...done, rooms: [] });
+    else setFailure(t('editor.uploadFailed'));
+  };
+
+  const uploadSpin = async (files: File[]) => {
+    setExtraUploading(true);
+    const frames: SpinFrame[] = [];
+    for (const [index, file] of files.entries()) {
+      const done = await uploadExtra(file);
+      if (done) frames.push({ id: `spin-${index}-${file.name}`, ...done });
+    }
+    setExtraUploading(false);
+    setSpin(frames);
+  };
+
   const uploadPending = async (current: EditorPhoto[], category: EditorState['category']) => {
     if (!supabaseConfigured || !signedIn || !category) return;
 
@@ -313,7 +375,7 @@ export default function Editor() {
 
     const id = listingId.current;
     if (id) {
-      const result = await saveListing(id, stateRef.current, latest).catch(
+      const result = await saveListing(id, stateRef.current, latest, extrasRef.current).catch(
         () => ({ error: 'failed' }) as const,
       );
       setFailure('error' in result ? t('errors.upload') : undefined);
@@ -673,6 +735,30 @@ export default function Editor() {
             })),
           );
           setState((current) => ({ ...current, photoCount: stored.length }));
+          const saved = row.media as {
+            floorPlan?: { url?: string; width?: number; height?: number; rooms?: unknown };
+            spin?: { id?: string; url?: string; width?: number; height?: number }[];
+          };
+          if (saved.floorPlan?.url) {
+            setPlan({
+              url: saved.floorPlan.url,
+              width: Number(saved.floorPlan.width ?? 4),
+              height: Number(saved.floorPlan.height ?? 3),
+              rooms: cleanPlanRooms(saved.floorPlan.rooms),
+            });
+          }
+          if (Array.isArray(saved.spin)) {
+            setSpin(
+              saved.spin
+                .filter((frame): frame is { id?: string; url: string; width?: number; height?: number } => Boolean(frame?.url))
+                .map((frame, index) => ({
+                  id: frame.id ?? `spin-${index}`,
+                  url: frame.url,
+                  width: Number(frame.width ?? 1),
+                  height: Number(frame.height ?? 1),
+                })),
+            );
+          }
         })
         .catch(() => undefined);
     },
@@ -694,7 +780,7 @@ export default function Editor() {
   const persist = () => {
     const id = listingId.current;
     if (!id || !supabaseConfigured || !signedIn) return;
-    void saveListing(id, stateRef.current, photos)
+    void saveListing(id, stateRef.current, photos, extrasRef.current)
       .then((result) => setFailure('error' in result ? t('editor.publish.saveFailed') : undefined))
       .catch(() => setFailure(t('editor.publish.saveFailed')));
   };
@@ -735,7 +821,7 @@ export default function Editor() {
     void (async () => {
       // Save first. Publishing a row that is one step behind what the agent
       // sees is how a page ships without the description they just wrote.
-      const saved = await saveListing(id, state, photos).catch(
+      const saved = await saveListing(id, state, photos, extrasRef.current).catch(
         () => ({ error: 'failed' }) as const,
       );
       if ('error' in saved) {
@@ -744,7 +830,7 @@ export default function Editor() {
         return;
       }
 
-      const result = await publishListing(id, state, photos).catch(
+      const result = await publishListing(id, state, photos, extrasRef.current).catch(
         () => ({ error: 'failed' }) as const,
       );
       setPublishing(false);
@@ -858,16 +944,26 @@ export default function Editor() {
         ) : null}
 
         {step === 'photos' ? (
-          <PhotosStep
-            photos={photos}
-            onChange={changePhotos}
-            signedIn={signedIn}
-            category={state.category}
-          />
+          <>
+            <PhotosStep
+              photos={photos}
+              onChange={changePhotos}
+              signedIn={signedIn}
+              category={state.category}
+            />
+            {state.category === 'vehicle' && signedIn ? (
+              <SpinEditor frames={spin} onFrames={setSpin} onUpload={uploadSpin} uploading={extraUploading} />
+            ) : null}
+          </>
         ) : null}
 
         {step === 'rooms' ? (
-          <RoomsStep photos={photos} onChange={changePhotos} />
+          <>
+            <RoomsStep photos={photos} onChange={changePhotos} />
+            {signedIn ? (
+              <PlanEditor plan={plan} onPlan={setPlan} onUpload={uploadPlan} uploading={extraUploading} />
+            ) : null}
+          </>
         ) : null}
 
         {step === 'plate' ? (
@@ -930,7 +1026,7 @@ export default function Editor() {
         ) : null}
 
         {step === 'preview' ? (
-          <LivePreview state={state} photos={photos} profile={profile} />
+          <LivePreview state={state} photos={photos} profile={profile} extras={extras} />
         ) : null}
 
         {step === 'publish' ? (
@@ -1052,7 +1148,7 @@ export default function Editor() {
             {t('editor.peekClose')}
           </button>
         ) : null}
-        <LivePreview state={state} photos={photos} profile={profile} />
+        <LivePreview state={state} photos={photos} profile={profile} extras={extras} />
       </aside>
     ) : null}
 

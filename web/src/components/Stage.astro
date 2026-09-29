@@ -85,6 +85,13 @@ const rooms = labeledWalkItems(photos).filter(
   (image, index, all) => all.findIndex((other) => other.room === image.room) === index,
 );
 const shots = rooms.length > 0 ? rooms : [cover];
+// P7: rooms drawn on the plan, matched to the viewer's rooms by name. A
+// rectangle for a room with no photograph has nothing to open, so it is not
+// drawn as a button.
+const planSpots = (floorPlan?.rooms ?? []).flatMap((drawn) => {
+  const index = rooms.findIndex((image) => image.room === drawn.room);
+  return index === -1 ? [] : [{ ...drawn, index, label: t(`editor.rooms.${drawn.room}`) }];
+});
 
 // The cover is named for the dashboard→listing morph (M11); the dashboard
 // card gives its image the same name.
@@ -272,7 +279,36 @@ const priceProps = {
     </div>
 
     <div class:list={['bp-board', { 'has-plan': Boolean(floorPlan) }]}>
-      {floorPlan && (
+      {floorPlan && planSpots.length > 0 && (
+        <div class="bp-plan has-spots" style={`--plan-r:${floorPlan.width / floorPlan.height}`}>
+          <div class="bp-plan-fit">
+            <img
+              src={largest(floorPlan, HERO_WIDTHS)}
+              alt={t('listing.floorPlan')}
+              width={floorPlan.width}
+              height={floorPlan.height}
+              decoding="async"
+            />
+            {/* "חדר בלחיצה" (P7): the rooms the agent drew. Hidden until the
+                script can act on them, like the chips. */}
+            <div class="bp-spots" role="group" aria-label={t('listing.blueprintRooms')} hidden>
+              {planSpots.map((spot) => (
+                <button
+                  type="button"
+                  class="bp-spot"
+                  data-bp-room={spot.index}
+                  aria-pressed={spot.index === 0 ? 'true' : 'false'}
+                  style={`inset-inline-start:${spot.x}%;inset-block-start:${spot.y}%;inline-size:${spot.w}%;block-size:${spot.h}%`}
+                >
+                  <span>{spot.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <span class="bp-plan-tag">{t('listing.floorPlan')}</span>
+        </div>
+      )}
+      {floorPlan && planSpots.length === 0 && (
         <button
           type="button"
           class="bp-plan"

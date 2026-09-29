@@ -258,25 +258,30 @@ function bindMetric(): void {
  * room's photograph and nothing on screen pretends to be interactive.
  */
 function bindBlueprint(): void {
-  const chips = document.querySelector<HTMLElement>('.bp-rooms');
   const viewer = document.querySelector<HTMLElement>('[data-bp-viewer]');
-  if (!chips || !viewer) return;
+  // Two ways to choose a room: the chips under the board, and (P7) the
+  // rooms drawn on the plan. Both carry data-bp-room with the same index.
+  const groups = [...document.querySelectorAll<HTMLElement>('.bp-rooms, .bp-spots')];
+  if (!viewer || groups.length === 0) return;
   const shots = [...viewer.querySelectorAll<HTMLImageElement>('[data-bp-shot]')];
   const label = viewer.querySelector('.bp-label');
-  chips.hidden = false;
-  chips.addEventListener('click', (event) => {
-    const chip = (event.target as Element).closest<HTMLButtonElement>('[data-bp-room]');
-    if (!chip) return;
-    const at = Number(chip.dataset.bpRoom);
+  const all = () => groups.flatMap((group) => [...group.querySelectorAll<HTMLElement>('[data-bp-room]')]);
+  const choose = (at: number, name: string) => {
     shots.forEach((shot, index) => {
       if (index === at) shot.loading = 'eager';
       shot.classList.toggle('is-on', index === at);
     });
-    chips.querySelectorAll('[data-bp-room]').forEach((other) => {
-      other.setAttribute('aria-pressed', String(other === chip));
+    all().forEach((other) => other.setAttribute('aria-pressed', String(Number(other.dataset.bpRoom) === at)));
+    if (label) label.textContent = name;
+  };
+  for (const group of groups) {
+    group.hidden = false;
+    group.addEventListener('click', (event) => {
+      const button = (event.target as Element).closest<HTMLButtonElement>('[data-bp-room]');
+      if (!button) return;
+      choose(Number(button.dataset.bpRoom), button.textContent?.trim() ?? '');
     });
-    if (label) label.textContent = chip.textContent?.trim() ?? '';
-  });
+  }
 }
 
 /**

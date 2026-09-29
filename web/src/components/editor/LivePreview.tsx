@@ -4,13 +4,14 @@ import type { EditorState } from '@/features/listings/editor';
 import type { AgentProfile } from '@/features/agents/profile';
 
 import { t } from '../../lib/i18n';
-import { previewPayload } from '../../lib/listing-row';
+import { previewPayload, type MediaExtras } from '../../lib/listing-row';
 import type { EditorPhoto } from './PhotosStep';
 
 interface Props {
   state: EditorState;
   photos: readonly EditorPhoto[];
   profile: AgentProfile;
+  extras?: MediaExtras;
 }
 
 /**
@@ -34,10 +35,10 @@ const PHONE_W = 390;
 const PHONE_H = 844;
 const DEBOUNCE_MS = 450;
 
-export function LivePreview({ state, photos, profile }: Props) {
+export function LivePreview({ state, photos, profile, extras }: Props) {
   const body = useMemo(
-    () => JSON.stringify(previewPayload(state, photos, profile, t('editor.livePreview.title'))),
-    [state, photos, profile],
+    () => JSON.stringify(previewPayload(state, photos, profile, t('editor.livePreview.title'), extras)),
+    [state, photos, profile, extras],
   );
   const [front, setFront] = useState(0);
   const [loading, setLoading] = useState(false);

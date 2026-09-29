@@ -3,6 +3,7 @@ import { isAccentId } from '@/features/agents/accents';
 import { toSeller, type AgentProfile } from '@/features/agents/profile';
 import { schemaFor } from '@/features/listings/schemas';
 import type { PhotoRoom } from '@/features/listings/photo-rooms';
+import type { PlanRoom } from '@/features/listings/rich-media';
 import type { EditorPhoto } from '../components/editor/PhotosStep';
 
 /**
@@ -31,7 +32,17 @@ export interface SavedPhoto {
  * is cut from and the order the seller arranged is the order they meant
  * (CLAUDE.md §4.4 — in RTL the first item is the rightmost).
  */
-export function toMedia(photos: readonly SavedPhoto[], tourUrl?: string) {
+/**
+ * The P7 extras the editor holds beside the photographs: the floor plan with
+ * the rooms drawn on it, and a car's 360° frames. Validated again on the way
+ * out of the row (rich-media.ts), so what is written here is a request.
+ */
+export interface MediaExtras {
+  plan?: { url: string; width: number; height: number; rooms: readonly PlanRoom[] } | undefined;
+  spin?: readonly { id: string; url: string; width: number; height: number }[] | undefined;
+}
+
+export function toMedia(photos: readonly SavedPhoto[], tourUrl?: string, extras: MediaExtras = {}) {
   const [cover, ...rest] = photos;
 
   /*
@@ -69,6 +80,21 @@ export function toMedia(photos: readonly SavedPhoto[], tourUrl?: string) {
       ...(photo.room ? { room: photo.room } : {}),
     })),
     ...(tour && tour.startsWith('https://') ? { tourUrl: tour } : {}),
+    ...(extras.plan
+      ? {
+          floorPlan: {
+            id: 'plan',
+            url: extras.plan.url,
+            alt: '',
+            width: extras.plan.width,
+            height: extras.plan.height,
+            rooms: extras.plan.rooms,
+          },
+        }
+      : {}),
+    ...(extras.spin && extras.spin.length > 0
+      ? { spin: extras.spin.map((frame) => ({ id: frame.id, url: frame.url, alt: '', width: frame.width, height: frame.height })) }
+      : {}),
   };
 }
 
@@ -144,6 +170,7 @@ export function previewPayload(
   photos: readonly EditorPhoto[],
   profile: AgentProfile,
   placeholderName: string,
+  extras: MediaExtras = {},
 ): Record<string, unknown> {
   const category = state.category ?? 'property';
   const ownerRole = schemaFor(category).ownerRole;
@@ -157,7 +184,7 @@ export function previewPayload(
     category,
     ...editorColumns(state),
     template: state.template ?? 'agency',
-    media: toMedia(savedPhotos(photos, { local: true }), state.tourUrl) ?? null,
+    media: toMedia(savedPhotos(photos, { local: true }), state.tourUrl, extras) ?? null,
     seller,
     ...(accent ? { accent } : {}),
     hyad_mark: state.entitlement !== 'paid',

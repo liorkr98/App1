@@ -4,7 +4,7 @@ import { toSeller } from '@/features/agents/profile';
 import { schemaFor } from '@/features/listings/schemas';
 import type { EditorPhoto } from '../components/editor/PhotosStep';
 
-import { editorColumns, savedPhotos, toMedia } from './listing-row';
+import { editorColumns, savedPhotos, toMedia, type MediaExtras } from './listing-row';
 
 import { loadProfile } from './profile';
 import { supabase } from './supabase';
@@ -44,6 +44,7 @@ export async function saveListing(
   listingId: string,
   state: EditorState,
   photos: readonly EditorPhoto[],
+  extras: MediaExtras = {},
 ): Promise<{ ok: true } | { error: string }> {
   const saved = savedPhotos(photos);
 
@@ -56,7 +57,7 @@ export async function saveListing(
    *         what destroyed earlier uploads; the column keeps what it has and
    *         the save that follows the upload writes the real list.
    */
-  const media = toMedia(saved, state.tourUrl);
+  const media = toMedia(saved, state.tourUrl, extras);
   const mediaPatch =
     media !== undefined ? { media } : photos.length === 0 ? { media: {} } : {};
 
@@ -108,6 +109,7 @@ export async function publishListing(
   listingId: string,
   state: EditorState,
   photos: readonly EditorPhoto[] = [],
+  extras: MediaExtras = {},
 ): Promise<{ ok: true; slug: string } | { error: string }> {
   // ============================ HUMAN REVIEW ============================
   // This function does not read entitlement. The editor's `canPublish` is
@@ -131,7 +133,7 @@ export async function publishListing(
    * A listing with no cover is not publishable: index 0 is the frame the
    * WhatsApp card is cut from (CLAUDE.md §6).
    */
-  const media = toMedia(savedPhotos(photos), state.tourUrl);
+  const media = toMedia(savedPhotos(photos), state.tourUrl, extras);
   if (!media) return { error: 'no_photos' };
 
   let seller: Record<string, unknown> | undefined;
