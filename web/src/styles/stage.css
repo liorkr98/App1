@@ -1,6 +1,7 @@
 /*
-  The composed first screens — gallery, cinema, showcase — and the parts they
-  share: the big numerals, the agent card, the wide desktop page.
+  The composed first screens — gallery, showcase, aurora (was cinema) and
+  blueprint (TEMPLATE_MANIFEST.composed) — and the parts they share: the big
+  numerals, the agent card, the wide desktop page.
 
   WHY WIDE. Every other template keeps the 620px column the page was drawn
   at, which on a laptop is a phone floating in an empty screen. Agents open
@@ -14,24 +15,24 @@
   page, never a hidden one.
 */
 
-html:is([data-template='gallery'], [data-template='cinema'], [data-template='showcase']) body {
+html:is([data-template='gallery'], [data-template='showcase'], [data-template='aurora'], [data-template='blueprint']) body {
   max-width: none;
 }
 
-html:is([data-template='gallery'], [data-template='cinema'], [data-template='showcase']) .agent-bar {
+html:is([data-template='gallery'], [data-template='showcase'], [data-template='aurora'], [data-template='blueprint']) .agent-bar {
   padding-inline: max(var(--gut), calc((100% - 1240px) / 2));
 }
 
-html:is([data-template='gallery'], [data-template='cinema'], [data-template='showcase']) .listing-flow {
+html:is([data-template='gallery'], [data-template='showcase'], [data-template='aurora'], [data-template='blueprint']) .listing-flow {
   max-inline-size: 1240px;
   margin-inline: auto;
 }
 
-html:is([data-template='gallery'], [data-template='cinema'], [data-template='showcase']) .compact-bar {
+html:is([data-template='gallery'], [data-template='showcase'], [data-template='aurora'], [data-template='blueprint']) .compact-bar {
   max-inline-size: 1240px;
 }
 
-html:is([data-template='gallery'], [data-template='cinema'], [data-template='showcase']) footer {
+html:is([data-template='gallery'], [data-template='showcase'], [data-template='aurora'], [data-template='blueprint']) footer {
   max-inline-size: 1240px;
   margin-inline: auto;
 }
@@ -141,18 +142,18 @@ html:is([data-template='gallery'], [data-template='cinema'], [data-template='sho
    references lay out amenities. Heading, lead and sources keep the full row. */
 
 @media (min-width: 960px) {
-  html:is([data-template='gallery'], [data-template='cinema'], [data-template='showcase']) .enrich {
+  html:is([data-template='gallery'], [data-template='showcase'], [data-template='aurora'], [data-template='blueprint']) .enrich {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
     column-gap: 2.6rem;
     align-items: start;
   }
 
-  html:is([data-template='gallery'], [data-template='cinema'], [data-template='showcase']) .enrich > :not(.egroup) {
+  html:is([data-template='gallery'], [data-template='showcase'], [data-template='aurora'], [data-template='blueprint']) .enrich > :not(.egroup) {
     grid-column: 1 / -1;
   }
 
-  html:is([data-template='gallery'], [data-template='cinema'], [data-template='showcase']) .enrich .egroup {
+  html:is([data-template='gallery'], [data-template='showcase'], [data-template='aurora'], [data-template='blueprint']) .enrich .egroup {
     margin-block-end: 2.1rem;
   }
 }
@@ -293,6 +294,7 @@ html:is([data-template='gallery'], [data-template='cinema'], [data-template='sho
 .mosaic-tile,
 .show-photo,
 .cine-plan,
+.bp-plan,
 .cine-thumbs button {
   appearance: none;
   border: 0;
@@ -326,6 +328,7 @@ html:is([data-template='gallery'], [data-template='cinema'], [data-template='sho
 .mosaic-tile:focus-visible,
 .show-photo:focus-visible,
 .cine-plan:focus-visible,
+.bp-plan:focus-visible,
 .cine-thumbs button:focus-visible {
   outline: 3px solid var(--olive);
   outline-offset: 3px;
@@ -406,7 +409,7 @@ html:is([data-template='gallery'], [data-template='cinema'], [data-template='sho
     /* Sections below the first screen rise as they arrive. Starting from a
        visible floor, not from nothing: a reader who lands mid-page sees
        text, never a blank. */
-    html:is([data-template='gallery'], [data-template='cinema'], [data-template='showcase'])
+    html:is([data-template='gallery'], [data-template='showcase'], [data-template='aurora'], [data-template='blueprint'])
       .listing-flow
       > :is(section, .facts, .monthly-cost):not(.stage) {
       animation: stage-rise linear both;
@@ -422,7 +425,7 @@ html:is([data-template='gallery'], [data-template='cinema'], [data-template='sho
     }
 
     /* The compact bar watches the stage as it watches the hero elsewhere. */
-    html:is([data-template='gallery'], [data-template='cinema'], [data-template='showcase']) .stage {
+    html:is([data-template='gallery'], [data-template='showcase'], [data-template='aurora'], [data-template='blueprint']) .stage {
       view-timeline-name: --listing-hero;
       view-timeline-axis: block;
     }

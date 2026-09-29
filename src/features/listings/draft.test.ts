@@ -200,6 +200,11 @@ describe('anything unrecognised starts clean', () => {
     assert.equal(fromDraft(bad), null);
   });
 
+  it('keeps a draft saved under a retired template id, under its new name', () => {
+    const old = JSON.stringify({ ...toDraft(state()), template: 'cinema' });
+    assert.equal(fromDraft(old)?.template, 'aurora');
+  });
+
   it('rejects a consent timestamp that is not a string', () => {
     const bad = JSON.stringify({ ...toDraft(state()), ownerConsentDeclaredAt: 12345 });
     assert.equal(fromDraft(bad), null);

@@ -175,7 +175,8 @@
     "licenceNumber": "",
     "metricPrev": "",
     "metricNext": "",
-    "keyFacts": ""
+    "keyFacts": "",
+    "blueprintRooms": ""
   },
   "notFound": {
     "title": "",
@@ -291,10 +292,12 @@
       "studioNote": "",
       "gallery": "",
       "galleryNote": "",
-      "cinema": "",
-      "cinemaNote": "",
       "showcase": "",
-      "showcaseNote": ""
+      "showcaseNote": "",
+      "aurora": "",
+      "auroraNote": "",
+      "blueprint": "",
+      "blueprintNote": ""
     },
     "photosHint": "",
     "photosGuide": "",

@@ -45,7 +45,8 @@ const DARK = readFileSync(new URL('../../../web/src/styles/templates/dark.css', 
 const AGENCY = readFileSync(new URL('../../../web/src/styles/templates/agency.css', import.meta.url), 'utf8');
 const LINEN = readFileSync(new URL('../../../web/src/styles/templates/linen.css', import.meta.url), 'utf8');
 const GALLERY = readFileSync(new URL('../../../web/src/styles/templates/gallery.css', import.meta.url), 'utf8');
-const CINEMA = readFileSync(new URL('../../../web/src/styles/templates/cinema.css', import.meta.url), 'utf8');
+const AURORA = readFileSync(new URL('../../../web/src/styles/templates/aurora.css', import.meta.url), 'utf8');
+const BLUEPRINT = readFileSync(new URL('../../../web/src/styles/templates/blueprint.css', import.meta.url), 'utf8');
 const SHOWCASE = readFileSync(new URL('../../../web/src/styles/templates/showcase.css', import.meta.url), 'utf8');
 const LS = readFileSync(new URL('../../../web/src/styles/system/tokens.css', import.meta.url), 'utf8');
 const MUTED_ON_DARK = tokenHex(TOKENS, '--muted-on-dark');
@@ -129,15 +130,29 @@ describe('absent and muted tokens meet WCAG AA body', () => {
     }
   });
 
-  it('cinema --absent and --muted clear 4.5:1 on its plaster and stone-warm', () => {
-    const scope = "html\\[data-template='cinema'\\]";
-    for (const token of ['--plaster', '--stone-warm'] as const) {
-      const ground = scopedTokenHex(CINEMA, scope, token);
-      for (const label of ['--absent', '--muted'] as const) {
-        const ink = scopedTokenHex(CINEMA, scope, label);
-        const ratio = contrast(ink, ground);
-        assert.ok(ratio >= 4.5, `cinema ${label} is ${ratio.toFixed(2)}:1 on ${token} ${ground}`);
+  it('aurora and blueprint --absent and --muted clear 4.5:1 on their plaster and stone-warm', () => {
+    for (const [name, source] of [
+      ['aurora', AURORA],
+      ['blueprint', BLUEPRINT],
+    ] as const) {
+      const scope = `html\\[data-template='${name}'\\]`;
+      for (const token of ['--plaster', '--stone-warm'] as const) {
+        const ground = scopedTokenHex(source, scope, token);
+        for (const label of ['--absent', '--muted'] as const) {
+          const ink = scopedTokenHex(source, scope, label);
+          const ratio = contrast(ink, ground);
+          assert.ok(ratio >= 4.5, `${name} ${label} is ${ratio.toFixed(2)}:1 on ${token} ${ground}`);
+        }
       }
+    }
+  });
+
+  it('blueprint --ink clears 4.5:1 on its plaster, and the chip blue on plaster', () => {
+    const scope = "html\\[data-template='blueprint'\\]";
+    const ground = scopedTokenHex(BLUEPRINT, scope, '--plaster');
+    for (const label of ['--ink', '--bp-ink'] as const) {
+      const ratio = contrast(scopedTokenHex(BLUEPRINT, scope, label), ground);
+      assert.ok(ratio >= 4.5, `blueprint ${label} is ${ratio.toFixed(2)}:1 on ${ground}`);
     }
   });
 

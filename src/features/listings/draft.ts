@@ -1,11 +1,10 @@
 import { isAccentId } from '../agents/accents.js';
+import { knownTemplateId } from '../templates/manifest.js';
 import {
-  TEMPLATE_IDS,
   type Fact,
   type FactType,
   type FactValue,
   type ListingAudience,
-  type TemplateId,
 } from '../../types/listing.js';
 import type { EditorState } from './editor.js';
 import { LISTING_CATEGORIES, type ListingCategory } from './schemas/index.js';
@@ -140,8 +139,10 @@ export function fromDraft(raw: unknown): Draft | null {
   const generated = parsed.generatedDescription;
   if (generated !== undefined && typeof generated !== 'string') return null;
 
-  const template = parsed.template;
-  if (template !== undefined && !(TEMPLATE_IDS as readonly string[]).includes(template as string)) {
+  // A draft saved before a template was renamed (cinema → aurora) keeps its
+  // look under the new id rather than being discarded.
+  const template = parsed.template === undefined ? undefined : knownTemplateId(parsed.template);
+  if (parsed.template !== undefined && template === undefined) {
     return null;
   }
 
@@ -207,7 +208,7 @@ export function fromDraft(raw: unknown): Draft | null {
     facts,
     description,
     ...(generated === undefined ? {} : { generatedDescription: generated }),
-    ...(template === undefined ? {} : { template: template as TemplateId }),
+    ...(template === undefined ? {} : { template }),
     ...(accent === undefined ? {} : { accent: String(accent) }),
     ...(audience === undefined ? {} : { audience: audience as ListingAudience }),
     ...(ownerConsentDeclaredAt === undefined ? {} : { ownerConsentDeclaredAt }),

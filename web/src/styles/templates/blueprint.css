@@ -1,0 +1,273 @@
+/*
+  Blueprint — the floor plan first. Title and price over a drafting grid,
+  the plan revealed as if drawn, and a room viewer beside it: pick a room,
+  see its photograph (M13, crossfade).
+
+  Living Surfaces, Paper (TEMPLATE_MANIFEST). The 1.x tokens below are pinned
+  to the Paper hexes for the same reason Aurora pins Onyx: the contrast test
+  and the absent-contrast gate read these values directly.
+
+  No plan: the plan card is simply not rendered and the viewer takes the
+  width. No room labels: the viewer shows the cover and no chips appear.
+  Tapping rooms ON the plan needs room geometry the editor does not capture
+  yet (P7, "interactive plan").
+*/
+
+html[data-template='blueprint'] {
+  --plaster: #f6f4ef; /* = --ls-ground (paper) */
+  --ink: #121310; /* = --ls-ink */
+  --stone: #dcd8cc;
+  --stone-warm: #ece8de;
+  --muted: #5e5f57; /* = --ls-ink-2 */
+  --muted-warm: #57584f;
+  --absent: #5e5f57;
+  --bp-line: rgba(31, 79, 160, 0.09);
+  --bp-line-strong: rgba(31, 79, 160, 0.16);
+  --bp-ink: #1f4fa0;
+  --heroWant: 60svh;
+}
+
+html[data-template='blueprint'] body {
+  font-family: var(--ls-font-body);
+}
+
+/* ---------- The drafting sheet ---------- */
+
+html[data-template='blueprint'] section.stage-blueprint {
+  padding: 0 0 1.4rem;
+  background-color: var(--plaster);
+  background-image:
+    linear-gradient(var(--bp-line-strong) 1px, transparent 1px),
+    linear-gradient(90deg, var(--bp-line-strong) 1px, transparent 1px),
+    linear-gradient(var(--bp-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--bp-line) 1px, transparent 1px);
+  background-size: 96px 96px, 96px 96px, 24px 24px, 24px 24px;
+  border-block-end: 1px solid var(--stone);
+}
+
+html[data-template='blueprint'] .bp-head {
+  padding: 2.4rem var(--gut) 1rem;
+}
+
+html[data-template='blueprint'] .bp-head .stage-title {
+  font-family: var(--ls-font-display);
+  font-variation-settings: 'wdth' 82;
+  font-weight: 800;
+  font-size: clamp(2.4rem, 8.4vw, 5.2rem);
+  line-height: 1;
+  max-inline-size: 14ch;
+}
+
+html[data-template='blueprint'] .bp-head .price-bar {
+  padding: 1rem 0 0;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 0.3rem 1.1rem;
+}
+
+html[data-template='blueprint'] .bp-head .price {
+  font-family: var(--ls-font-display);
+  font-variation-settings: 'wdth' 90;
+  font-weight: 600;
+  font-size: clamp(2.2rem, 6vw, 3.4rem);
+}
+
+html[data-template='blueprint'] .bp-head .price-note {
+  text-align: start;
+}
+
+/* ---------- Plan + viewer ---------- */
+
+html[data-template='blueprint'] .bp-board {
+  display: grid;
+  gap: 0.9rem;
+  padding: 0.6rem var(--gut) 0;
+}
+
+html[data-template='blueprint'] .bp-plan {
+  aspect-ratio: 4 / 3;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid var(--stone);
+  box-shadow: 0 30px 60px -36px rgba(18, 19, 16, 0.4);
+}
+
+html[data-template='blueprint'] .bp-plan img {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+  padding: 0.8rem;
+  box-sizing: border-box;
+}
+
+html[data-template='blueprint'] .bp-plan-tag,
+html[data-template='blueprint'] .bp-label {
+  position: absolute;
+  inset-block-start: 0.7rem;
+  inset-inline-start: 0.7rem;
+  padding: 0.2rem 0.75rem;
+  border-radius: 999px;
+  font-size: var(--t-label);
+  font-weight: 700;
+}
+
+html[data-template='blueprint'] .bp-plan-tag {
+  background: var(--bp-ink);
+  color: #fff;
+}
+
+html[data-template='blueprint'] .bp-viewer {
+  position: relative;
+  margin: 0;
+  aspect-ratio: 4 / 3;
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--stone);
+}
+
+html[data-template='blueprint'] .bp-shot {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transform: scale(1.04);
+  transition:
+    opacity 0.6s var(--ease-out),
+    transform 1.2s var(--ease-out);
+}
+
+html[data-template='blueprint'] .bp-shot.is-on {
+  opacity: 1;
+  transform: none;
+}
+
+html[data-template='blueprint'] .bp-label {
+  background: rgba(18, 19, 16, 0.74);
+  color: #fff;
+  backdrop-filter: blur(6px);
+}
+
+/* ---------- Room chips ---------- */
+
+html[data-template='blueprint'] .bp-rooms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  padding: 0.9rem var(--gut) 0;
+}
+
+html[data-template='blueprint'] .bp-rooms[hidden] {
+  display: none;
+}
+
+html[data-template='blueprint'] .bp-rooms button {
+  appearance: none;
+  min-block-size: 44px;
+  padding: 0.45rem 1.05rem;
+  border-radius: 999px;
+  border: 1px solid var(--bp-ink);
+  background: var(--plaster);
+  color: var(--bp-ink);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background var(--press) var(--ease-out),
+    color var(--press) var(--ease-out);
+}
+
+html[data-template='blueprint'] .bp-rooms button[aria-pressed='true'] {
+  background: var(--bp-ink);
+  color: #fff;
+}
+
+html[data-template='blueprint'] .bp-rooms button:focus-visible {
+  outline: 3px solid var(--bp-ink);
+  outline-offset: 3px;
+}
+
+html[data-template='blueprint'] .stage-blueprint .numerals,
+html[data-template='blueprint'] .stage-blueprint .highlights {
+  margin-inline: var(--gut);
+}
+
+html[data-template='blueprint'] .stage-blueprint .numerals {
+  background: rgba(246, 244, 239, 0.86);
+}
+
+html[data-template='blueprint'] .stage-blueprint .numerals dd {
+  font-family: var(--ls-font-display);
+  font-variation-settings: 'wdth' 80;
+  font-weight: 300;
+}
+
+html[data-template='blueprint'] .stage-blueprint .highlights {
+  padding: 1rem 0 0;
+}
+
+/* ---------- The rest of the page ---------- */
+
+html[data-template='blueprint'] .enrich {
+  background: #fff;
+  margin-inline: var(--gut);
+  border-radius: 22px;
+  border: 1px solid var(--stone);
+}
+
+html[data-template='blueprint'] .facts {
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+@media (min-width: 960px) {
+  html[data-template='blueprint'] .bp-head {
+    padding-block-start: 3.4rem;
+  }
+
+  /* Plan and photograph side by side, the plan on the start side: the
+     drawing is the argument, the photograph is the proof. */
+  html[data-template='blueprint'] .bp-board.has-plan {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 1.4rem;
+  }
+
+  html[data-template='blueprint'] .listing-flow > :not(.stage, .compact-bar) {
+    align-self: center;
+    inline-size: min(100%, 64rem);
+    max-width: none;
+    box-sizing: border-box;
+  }
+
+  html[data-template='blueprint'] :is(.enrich, .seller, .facts, .monthly-cost) {
+    margin-inline: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* The plan is drawn in: a sweep across it, start side first. */
+  html[data-template='blueprint'] .bp-plan img {
+    animation: bp-draw 1.8s var(--ease-in-out) 0.25s both;
+  }
+
+  html[data-template='blueprint'] .bp-viewer {
+    animation: stage-fade 1s var(--ease-out) 0.5s both;
+  }
+
+  html[data-template='blueprint'] .bp-rooms {
+    animation: stage-fade 0.9s var(--ease-out) 0.7s both;
+  }
+
+  @keyframes bp-draw {
+    from {
+      clip-path: inset(0 0 0 100%);
+    }
+
+    to {
+      clip-path: inset(0 0 0 0);
+    }
+  }
+}

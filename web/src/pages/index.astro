@@ -570,15 +570,31 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         --s-lift: #7e9a62;
       }
 
-      .device[data-tpl='cinema'] {
-        --s-ground: #10110c;
-        --s-ink: #f3f1ea;
+      .device[data-tpl='aurora'] {
+        --s-ground: #0b0c0a;
+        --s-ink: #f2f0ea;
         --s-deep: #070805;
         --s-line: #2a2c22;
-        --s-warm: #1a1b14;
-        --s-muted: #a3a498;
-        --s-accent: #f3f1ea;
-        --s-lift: #7e9a62;
+        --s-warm: #161713;
+        --s-muted: #a7a89c;
+        --s-accent: #f2f0ea;
+        --s-lift: #86b79a;
+      }
+
+      .device[data-tpl='blueprint'] {
+        --s-ground: #f6f4ef;
+        --s-ink: #121310;
+        --s-deep: #121310;
+        --s-line: #dcd8cc;
+        --s-warm: #ece8de;
+        --s-muted: #5e5f57;
+        --s-accent: #1f4fa0;
+        --s-lift: #1f4fa0;
+      }
+
+      .device[data-tpl='blueprint'] .s-hero img {
+        outline: 2px solid #1f4fa0;
+        outline-offset: -8px;
       }
 
       .device[data-tpl='showcase'] {
@@ -999,39 +1015,39 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         border-inline-start: 1px solid var(--s-line);
       }
 
-      .device[data-tpl='cinema'] .s-agent {
+      .device[data-tpl='aurora'] .s-agent {
         background: var(--s-deep);
       }
 
-      .device[data-tpl='cinema'] .s-hero {
+      .device[data-tpl='aurora'] .s-hero {
         aspect-ratio: 3 / 4;
       }
 
-      .device[data-tpl='cinema'] .s-hero img {
+      .device[data-tpl='aurora'] .s-hero img {
         filter: brightness(0.62);
       }
 
-      .device[data-tpl='cinema'] .s-title {
+      .device[data-tpl='aurora'] .s-title {
         font-size: 1.5em;
         font-weight: 900;
         line-height: 0.98;
       }
 
-      .device[data-tpl='cinema'] .s-price {
+      .device[data-tpl='aurora'] .s-price {
         font-weight: 500;
       }
 
-      .device[data-tpl='cinema'] .s-facts {
+      .device[data-tpl='aurora'] .s-facts {
         background: transparent;
         gap: 0;
         border-block: 1px solid var(--s-line);
       }
 
-      .device[data-tpl='cinema'] .s-fact {
+      .device[data-tpl='aurora'] .s-fact {
         background: transparent;
       }
 
-      .device[data-tpl='cinema'] .s-cta {
+      .device[data-tpl='aurora'] .s-cta {
         border-radius: 999px;
         background: var(--s-ink);
         color: var(--s-deep);

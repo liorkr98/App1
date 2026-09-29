@@ -231,7 +231,7 @@ function bindMapDialog(): void {
 }
 
 /**
- * The cinema panel's numbers, one at a time.
+ * The Aurora panel's numbers, one at a time.
  *
  * Without this every number shows in a row, which is the whole content; the
  * script only adds the stepping. RTL: the start-side button goes back.
@@ -248,6 +248,34 @@ function bindMetric(): void {
     items[at]?.classList.remove('is-on');
     at = (at + Number(step.getAttribute('data-metric-step')) + items.length) % items.length;
     items[at]?.classList.add('is-on');
+  });
+}
+
+/**
+ * Blueprint's room viewer: a room chip crossfades the viewer to that room.
+ *
+ * The chips ship hidden, so without this the viewer is simply the first
+ * room's photograph and nothing on screen pretends to be interactive.
+ */
+function bindBlueprint(): void {
+  const chips = document.querySelector<HTMLElement>('.bp-rooms');
+  const viewer = document.querySelector<HTMLElement>('[data-bp-viewer]');
+  if (!chips || !viewer) return;
+  const shots = [...viewer.querySelectorAll<HTMLImageElement>('[data-bp-shot]')];
+  const label = viewer.querySelector('.bp-label');
+  chips.hidden = false;
+  chips.addEventListener('click', (event) => {
+    const chip = (event.target as Element).closest<HTMLButtonElement>('[data-bp-room]');
+    if (!chip) return;
+    const at = Number(chip.dataset.bpRoom);
+    shots.forEach((shot, index) => {
+      if (index === at) shot.loading = 'eager';
+      shot.classList.toggle('is-on', index === at);
+    });
+    chips.querySelectorAll('[data-bp-room]').forEach((other) => {
+      other.setAttribute('aria-pressed', String(other === chip));
+    });
+    if (label) label.textContent = chip.textContent?.trim() ?? '';
   });
 }
 
@@ -279,4 +307,5 @@ bindLightbox();
 bindWalk();
 bindMapDialog();
 bindMetric();
+bindBlueprint();
 beaconReadToAgent();
