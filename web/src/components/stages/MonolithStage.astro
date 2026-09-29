@@ -1,0 +1,91 @@
+---
+import type { Image, Listing } from '@/types/listing';
+import { labeledWalkItems } from '@/features/listings/photo-rooms';
+import { GALLERY_WIDTHS, HERO_WIDTHS, largest, srcset } from '../../lib/images';
+import { t } from '../../lib/i18n';
+import type { FactCell } from '../../lib/facts';
+import type { PerUnitPrice } from '../../lib/price';
+import { coverStyle, letterOffsets, priceProps, stagePlace, titleLines } from '../../lib/stage';
+import HighlightChips from '../HighlightChips.astro';
+import Letters from '../Letters.astro';
+import PriceBar from '../PriceBar.astro';
+import Prose from '../Prose.astro';
+import Numerals from './Numerals.astro';
+
+interface Props {
+  listing: Listing;
+  photos: Image[];
+  cells: FactCell[];
+  perUnit?: PerUnitPrice | undefined;
+}
+
+/**
+ * Monolith (Onyx). A black screen; the title arrives letter by letter, right
+ * to left (M2, split at build time); the cover wipes in behind it, dimmed;
+ * then the key numbers, set enormous and thin.
+ *
+ * Then the pinned room-by-room story (M7), in CSS alone: where scroll
+ * timelines exist the rooms slide past a pinned frame as the page scrolls;
+ * everywhere else — and for a reader who asked for stillness — it is a
+ * swipeable strip. No scroll library. Fewer than two labelled rooms: omitted.
+ */
+const { listing, photos, cells, perUnit } = Astro.props;
+const rooms = labeledWalkItems(photos).filter((p, i, all) => all.findIndex((o) => o.room === p.room) === i);
+const cover = listing.media.cover;
+const lines = titleLines(listing);
+const offsets = letterOffsets(lines);
+const place = stagePlace(listing);
+---
+<section class="stage stage-monolith">
+  <div class="mono-hero">
+    <div class="mono-wipe" aria-hidden="true">
+      <img
+        class="mono-img ls-breathe"
+        src={largest(cover, HERO_WIDTHS)}
+        srcset={srcset(cover, HERO_WIDTHS) || undefined}
+        sizes="100vw"
+        width={cover.width}
+        height={cover.height}
+        alt=""
+        style={coverStyle(listing)}
+        fetchpriority="high"
+        decoding="async"
+      />
+    </div>
+    {place && <p class="stage-place"><Prose text={place} /></p>}
+    <h1 class="stage-title mono-title ls-display" aria-label={lines.join(' ')}>
+      <span aria-hidden="true">
+        {lines.map((line, n) => (
+          <span class="mono-line"><Letters text={line} start={offsets[n]} /></span>
+        ))}
+      </span>
+    </h1>
+    <div class="mono-meta">
+      <PriceBar {...priceProps(listing, perUnit)} />
+    </div>
+  </div>
+  <Numerals cells={cells} class="mono-giant" />
+  {rooms.length > 1 && (
+    <div class="mono-story" style={`--n:${rooms.length}`}>
+      <div class="mono-story-pin">
+        <ol class="mono-story-track">
+          {rooms.map((image, i) => (
+            <li>
+              <button
+                type="button"
+                class="mono-room"
+                data-lightbox={largest(image, HERO_WIDTHS)}
+                data-alt={image.alt ?? ''}
+                aria-label={t('listing.openPhoto')}
+              >
+                <img src={largest(image, GALLERY_WIDTHS)} alt={image.alt ?? ''} width={image.width} height={image.height} loading="lazy" decoding="async" />
+              </button>
+              <p><bdi>{String(i + 1).padStart(2, '0')}</bdi>{image.room ? t(`editor.rooms.${image.room}`) : ''}</p>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
+  )}
+  <HighlightChips highlights={listing.highlights} facts={listing.facts} />
+</section>

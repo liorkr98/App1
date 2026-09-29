@@ -1,11 +1,15 @@
 import type { CSSProperties } from 'react';
 
 import { ACCENTS, type AccentId, isAccentId } from '@/features/agents/accents';
+import type { ListingCategory } from '@/features/listings/schemas';
+import { templateFits } from '@/features/templates/manifest';
 import { TEMPLATE_IDS, type TemplateId } from '@/types/listing';
 
 import { t } from '../../lib/i18n';
 
 interface Props {
+  /** Showroom is offered for cars only (TEMPLATE_MANIFEST.categories). */
+  category?: ListingCategory | undefined;
   chosen?: TemplateId;
   onChoose: (template: TemplateId) => void;
   accent?: string | undefined;
@@ -20,8 +24,11 @@ interface Props {
  * The facsimile beside this step restyles from `data-template` and
  * `--accent`. These cards are the picker; that preview is the proof.
  */
-export function TemplateStep({ chosen, onChoose, accent, onAccent, photos = [] }: Props) {
+export function TemplateStep({ category, chosen, onChoose, accent, onAccent, photos = [] }: Props) {
   const palette = isAccentId(accent) ? accent : 'olive';
+  // Every template when the category is not chosen yet; otherwise only those
+  // drawn for it. Still enumerated from TEMPLATE_IDS, never a second list.
+  const offered = category ? TEMPLATE_IDS.filter((id) => templateFits(id, category)) : TEMPLATE_IDS;
   const cover = photos[0];
   const film = [0, 1, 2, 3].map((index) => photos[index]);
 
@@ -51,7 +58,7 @@ export function TemplateStep({ chosen, onChoose, accent, onAccent, photos = [] }
       <p className="hint">{t('editor.templates.hint')}</p>
 
       <ul className="template-grid">
-        {TEMPLATE_IDS.map((template) => (
+        {offered.map((template) => (
           <li key={template}>
             <button
               type="button"

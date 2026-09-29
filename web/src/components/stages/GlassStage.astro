@@ -1,0 +1,72 @@
+---
+import type { Listing } from '@/types/listing';
+import { GALLERY_WIDTHS, HERO_WIDTHS, largest, srcset } from '../../lib/images';
+import type { FactCell } from '../../lib/facts';
+import { t } from '../../lib/i18n';
+import type { PerUnitPrice } from '../../lib/price';
+import { coverStyle, priceProps, stagePlace, titleLines } from '../../lib/stage';
+import HighlightChips from '../HighlightChips.astro';
+import PriceBar from '../PriceBar.astro';
+import Prose from '../Prose.astro';
+import Numerals from './Numerals.astro';
+
+interface Props {
+  listing: Listing;
+  cells: FactCell[];
+  perUnit?: PerUnitPrice | undefined;
+}
+
+/**
+ * Glass (Onyx). The cover, blurred, becomes the room the cards float in;
+ * two glass cards — the photograph, and the facts — tilt toward the pointer
+ * and a soft light follows it (M10, listing-enhance.ts). Without the script,
+ * or for a reader who asked for stillness, the cards simply sit flat.
+ *
+ * No device-orientation tilt: iOS asks permission for it, and a permission
+ * prompt on a listing someone was forwarded is a worse first impression than
+ * a card that does not move.
+ */
+const { listing, cells, perUnit } = Astro.props;
+const cover = listing.media.cover;
+const lines = titleLines(listing);
+const place = stagePlace(listing);
+---
+<section class="stage stage-glass" data-glass>
+  <div class="gl-bg" aria-hidden="true">
+    <img src={largest(cover, GALLERY_WIDTHS)} alt="" width={cover.width} height={cover.height} decoding="async" />
+    <span class="gl-light"></span>
+  </div>
+  <div class="gl-grid">
+    <button
+      type="button"
+      class="gl-card gl-shot"
+      data-tilt
+      data-lightbox={largest(cover, HERO_WIDTHS)}
+      data-alt={cover.alt ?? ''}
+      aria-label={t('listing.openPhoto')}
+    >
+      <img
+        src={largest(cover, HERO_WIDTHS)}
+        srcset={srcset(cover, HERO_WIDTHS) || undefined}
+        sizes="(min-width: 960px) 55vw, 100vw"
+        width={cover.width}
+        height={cover.height}
+        alt={cover.alt ?? ''}
+        style={coverStyle(listing)}
+        fetchpriority="high"
+        decoding="async"
+      />
+    </button>
+    <div class="gl-card gl-info" data-tilt>
+      {place && <p class="stage-place"><Prose text={place} /></p>}
+      <h1 class="stage-title">
+        {lines.map((line, i) => (
+          <span class="ls-line"><span style={`--i:${i}`}><Prose text={line} /></span></span>
+        ))}
+      </h1>
+      <PriceBar {...priceProps(listing, perUnit)} />
+      <Numerals cells={cells} class="gl-nums" />
+      <HighlightChips highlights={listing.highlights} facts={listing.facts} />
+    </div>
+  </div>
+</section>

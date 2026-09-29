@@ -1,0 +1,1102 @@
+/*
+  The agent dashboard (pages/mine.astro), on Living Surfaces Onyx (P5).
+
+  The rules below are the September dashboard's, moved out of the page
+  unchanged in shape. What changed is the palette: the 1.x names the rules
+  use are pointed at the Onyx tokens here, once, so each rule keeps its
+  meaning ("a card", "the quiet text", "the dark emphasis") and gets the
+  night value. --ink-deep was the dark emphasis on a light page; on a dark
+  page the emphasis is the light ink, so it and --plaster swap places.
+*/
+
+.dash {
+  --shell: 1320px;
+  --pad: clamp(1.1rem, 4vw, 2.5rem);
+  --radius: 20px;
+  --rule: 1px solid var(--stone);
+  --ground: var(--ls-ground);
+  --card: var(--ls-surface);
+  --ink: var(--ls-ink);
+  --muted: var(--ls-ink-2);
+  --muted-warm: var(--ls-ink-2);
+  --stone: rgba(242, 240, 234, 0.14);
+  --stone-warm: rgba(242, 240, 234, 0.07);
+  --olive: var(--ls-accent);
+  --ink-deep: var(--ls-ink);
+  --plaster: var(--ls-ground);
+  -webkit-tap-highlight-color: rgba(134, 183, 154, 0.18);
+}
+
+.dash.shell,
+.dash .shell {
+  max-inline-size: var(--shell);
+  margin-inline: auto;
+  padding-inline: var(--pad);
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-block-size: 44px;
+  padding: 0.6rem 1.25rem;
+  background: var(--plaster);
+  color: var(--ink-deep);
+  font-size: 0.95rem;
+  font-weight: 800;
+  border: none;
+  border-radius: 999px;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition:
+    transform var(--press) var(--ease-out),
+    background var(--press) var(--ease-out);
+}
+
+.cta svg {
+  inline-size: 16px;
+  block-size: 16px;
+}
+
+.cta:hover {
+  background: var(--olive);
+}
+
+.cta:active {
+  transform: scale(0.97);
+}
+
+.cta.dark {
+  background: var(--ink-deep);
+  color: var(--plaster);
+}
+
+.cta.dark:hover {
+  background: var(--olive);
+}
+
+/* ---------- Head ---------- */
+
+.head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  flex-wrap: wrap;
+  padding-block: clamp(1.75rem, 4vw, 2.75rem) 1.4rem;
+}
+
+.hello {
+  font-size: var(--t-meta);
+  font-weight: 700;
+  color: var(--muted-warm);
+}
+
+h1 {
+  font-family: var(--ls-font-display);
+  font-weight: 700;
+  font-size: clamp(2rem, 4.6vw, 3.1rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+
+.lead {
+  color: var(--muted-warm);
+  font-weight: 600;
+  margin-block-start: 0.4rem;
+  max-inline-size: 60ch;
+}
+
+.lead bdi {
+  color: var(--ink);
+  font-weight: 800;
+}
+
+/* ---------- KPI tiles ----------
+   Four numbers an agent checks every morning. Big, few, and each one
+   says over what window it was counted. */
+
+/* Two by two on a phone, one row of four from 900px. */
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(0.7rem, 1.6vw, 1.1rem);
+  margin-block-end: 1.6rem;
+}
+
+/* The read-through tile appears only when 0030's column answered. With it
+   there are five: it spans the phone's two columns and joins the row on a
+   wide screen. */
+.kpi.is-wide {
+  grid-column: 1 / -1;
+  min-block-size: 0;
+}
+
+@media (min-width: 900px) {
+  .kpis {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .kpis.has-read {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .kpi.is-wide {
+    grid-column: auto;
+  }
+}
+
+.kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-inline-size: 0;
+  min-block-size: 9.5rem;
+  padding: clamp(0.9rem, 2vw, 1.15rem) clamp(0.9rem, 2vw, 1.25rem) 1rem;
+  background: var(--card);
+  border: 1px solid var(--stone);
+  border-radius: var(--radius);
+}
+
+.kpi-lbl {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: var(--t-label);
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.kpi-lbl svg {
+  inline-size: 15px;
+  block-size: 15px;
+  flex: 0 0 auto;
+}
+
+.kpi-num {
+  font-family: var(--ls-font-display);
+  font-weight: 500;
+  font-size: clamp(1.9rem, 3.6vw, 2.9rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.kpi-num small {
+  font-family: var(--ls-font-body);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0;
+  margin-inline-start: 0.35rem;
+}
+
+.kpi-note {
+  font-size: var(--t-label);
+  font-weight: 700;
+  color: var(--olive);
+}
+
+.kpi-note.plain {
+  color: var(--muted);
+}
+
+.spark {
+  margin-block-start: auto;
+  inline-size: 100%;
+  block-size: auto;
+  display: block;
+  overflow: visible;
+}
+
+/* Drawn only when the per-day view answered; an empty line is not a trend. */
+.spark[data-empty] {
+  display: none;
+}
+
+.meter {
+  margin-block-start: auto;
+  block-size: 8px;
+  border-radius: 999px;
+  background: var(--stone-warm);
+  overflow: hidden;
+}
+
+.meter span {
+  display: block;
+  block-size: 100%;
+  inline-size: var(--share, 0%);
+  border-radius: 999px;
+  background: var(--olive);
+}
+
+/* ---------- Filters ----------
+   Radios, not buttons: the filter is one choice out of five and a radio
+   group is what that is. It also means the whole thing works with no
+   JavaScript beyond the one line that reads which is checked. */
+
+.filters {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  align-items: center;
+  padding-block-end: 1.1rem;
+}
+
+.filters input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.filters label {
+  min-block-size: 40px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--card);
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    color var(--press) var(--ease-out),
+    background var(--press) var(--ease-out);
+}
+
+.filters input:checked + label {
+  color: var(--plaster);
+  background: var(--ink-deep);
+}
+
+.filters input:focus-visible + label {
+  outline: 2px solid var(--olive);
+  outline-offset: 2px;
+}
+
+.count {
+  margin-inline-start: auto;
+  font-size: var(--t-label);
+  font-weight: 700;
+  color: var(--muted-warm);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- First run ---------- */
+
+.onboard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 1.2rem 1.4rem;
+  margin-block-end: 1.5rem;
+}
+
+.onboard b {
+  font-family: var(--ls-font-display);
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+.onboard p {
+  color: var(--muted);
+  font-size: 0.92rem;
+  max-inline-size: 52ch;
+}
+
+/* ---------- Workspace ----------
+   Cards on the start side; from 1100px the chosen listing opens in a
+   panel on the end side, sticky, with its own chart. */
+
+.workspace {
+  display: grid;
+  gap: clamp(1rem, 2vw, 1.5rem);
+  padding-block-end: 3rem;
+  align-items: start;
+}
+
+.grid {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
+  gap: clamp(0.8rem, 1.6vw, 1.1rem);
+  padding: 0;
+  margin: 0;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--card);
+  border: 1px solid var(--stone);
+  outline: 2px solid transparent;
+  outline-offset: -2px;
+  transition:
+    box-shadow 0.35s var(--ease-out),
+    transform 0.35s var(--ease-out),
+    outline-color var(--press) var(--ease-out);
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 40px -24px rgba(0, 0, 0, 0.8);
+}
+
+.card.is-chosen {
+  outline-color: var(--ink-deep);
+}
+
+/* A card the agent cannot send yet reads as unfinished at a glance. */
+.card[data-status='draft'] {
+  outline: 2px dashed var(--stone);
+}
+
+.shot {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 3;
+  background: var(--stone-warm);
+  overflow: hidden;
+  margin: 0.5rem 0.5rem 0;
+  border-radius: 14px;
+  /* It is an <a> when the listing is sendable, so the placeholder text
+     inside it would otherwise render underlined and link-coloured. */
+  text-decoration: none;
+  color: inherit;
+}
+
+.shot img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.9s var(--ease-out);
+}
+
+.card:hover .shot img {
+  transform: scale(1.04);
+}
+
+.shot .none {
+  display: grid;
+  place-items: center;
+  block-size: 100%;
+  font-size: var(--t-label);
+  color: var(--muted);
+}
+
+.pill,
+.tpl {
+  position: absolute;
+  inset-block-start: 0.6rem;
+  padding: 0.18rem 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  border-radius: 999px;
+}
+
+.pill {
+  inset-inline-start: 0.6rem;
+  background: var(--plaster);
+  color: var(--ink);
+}
+
+.tpl {
+  inset-inline-end: 0.6rem;
+  background: rgba(11, 12, 10, 0.72);
+  color: #f2f0ea;
+}
+
+.card[data-status='published'] .pill {
+  background: var(--olive);
+  color: var(--plaster);
+}
+
+.card[data-status='sold'] .pill {
+  background: var(--ink-deep);
+  color: var(--plaster);
+}
+
+.card[data-status='archived'] .pill {
+  background: var(--stone-warm);
+  color: var(--muted);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.85rem 1rem 0.4rem;
+  flex: 1 1 auto;
+}
+
+.body b {
+  font-family: var(--ls-font-display);
+  font-weight: 500;
+  font-size: 1.08rem;
+  line-height: 1.3;
+  /* Two lines, then ellipsis: a title the agent typed can be long and
+     ragged card heights make a grid look broken. */
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.price-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.price {
+  font-family: var(--ls-font-display);
+  font-weight: 700;
+  font-size: 1.3rem;
+  letter-spacing: -0.015em;
+  font-variant-numeric: tabular-nums;
+}
+
+.where {
+  font-size: var(--t-label);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.9rem;
+  margin-block-start: 0.5rem;
+  padding-block-start: 0.6rem;
+  border-block-start: var(--rule);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.stats span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.stats svg {
+  inline-size: 14px;
+  block-size: 14px;
+}
+
+.stats bdi {
+  color: var(--ink);
+}
+
+.hint {
+  margin: 0.4rem 1rem 0;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border-radius: 10px;
+  color: var(--ink);
+  background: rgba(233, 216, 166, 0.14);
+}
+
+.card[data-status='draft'] .hint,
+.card[data-status='archived'] .hint {
+  background: var(--stone-warm);
+  color: var(--muted-warm);
+}
+
+/* ---------- Card actions ----------
+   Icon-free on purpose. Hebrew labels are short, an icon set is another
+   thing to get right in RTL (CLAUDE.md §4.3), and a row of glyphs an
+   agent has to decode is slower than words they can read. */
+
+.acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0.7rem 0.8rem 0.9rem;
+}
+
+.act {
+  min-block-size: 36px;
+  padding: 0.35rem 0.8rem;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--card);
+  border: var(--rule);
+  border-radius: 999px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  transition:
+    background var(--press) var(--ease-out),
+    border-color var(--press) var(--ease-out);
+}
+
+.act:hover {
+  background: var(--stone-warm);
+}
+
+.act.primary {
+  background: var(--ink-deep);
+  color: var(--plaster);
+  border-color: var(--ink-deep);
+}
+
+.act.primary:hover {
+  background: var(--olive);
+  border-color: var(--olive);
+}
+
+.act:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* ---------- Detail panel ---------- */
+
+/* On a phone the panel is a sheet over the page, opened by tapping a card
+   and closed with its own button. It used to be display:none below 1100px,
+   which hid the chart and every share tool from the agent on a phone. */
+.detail {
+  display: none;
+}
+
+.d-close {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 2;
+  align-self: flex-end;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 44px;
+  block-size: 44px;
+  border: 1px solid var(--stone);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.d-close svg {
+  inline-size: 18px;
+  block-size: 18px;
+}
+
+@media (max-width: 1099.98px) {
+  html.dash-sheet {
+    overflow: hidden;
+  }
+
+  .detail.is-open {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0.8rem 0.8rem 2rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--ground);
+  }
+
+  .detail.is-open[hidden] {
+    display: none;
+  }
+}
+
+@media (min-width: 1100px) {
+  .workspace {
+    grid-template-columns: minmax(0, 1fr) 25rem;
+  }
+
+  .detail {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    position: sticky;
+    inset-block-start: 1.2rem;
+    padding: 0.8rem 0.8rem 1.2rem;
+    background: var(--card);
+    border-radius: 24px;
+    border: 1px solid var(--stone);
+  }
+
+  .d-close {
+    display: none;
+  }
+
+  .detail[hidden] {
+    display: none;
+  }
+}
+
+.d-pics {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: repeat(2, 5.2rem);
+  gap: 0.45rem;
+}
+
+.d-pics img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  border-radius: 14px;
+  display: block;
+  background: var(--stone-warm);
+}
+
+.d-pics img:first-child {
+  grid-row: 1 / 3;
+}
+
+.d-pics[data-n='1'] {
+  grid-template-columns: 1fr;
+}
+
+.d-head {
+  padding-inline: 0.4rem;
+}
+
+.d-head h2 {
+  font-family: var(--ls-font-display);
+  font-weight: 700;
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+
+.d-head .price {
+  font-size: 1.6rem;
+  margin-block-start: 0.2rem;
+}
+
+.d-stats {
+  display: grid;
+  grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr));
+  margin-inline: 0.4rem;
+  border-block: var(--rule);
+}
+
+.d-stats div {
+  display: flex;
+  flex-direction: column-reverse;
+  padding: 0.8rem 0.2rem;
+}
+
+.d-stats div + div {
+  border-inline-start: var(--rule);
+  padding-inline-start: 0.8rem;
+}
+
+.d-stats dd {
+  margin: 0;
+  font-family: var(--ls-font-display);
+  font-size: 1.7rem;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.d-stats dt {
+  font-size: var(--t-label);
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.d-note {
+  padding-inline: 0.4rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+/* ---------- Chart ----------
+   One series — views per day — so no legend: the title names it.
+   Bars at most 24px, 4px rounded tops, a 2px gap, one hairline
+   baseline. Oldest day on the start side, which in Hebrew is the right:
+   time reads the way the page does. */
+
+.chart {
+  padding-inline: 0.4rem;
+}
+
+.chart h3 {
+  font-size: var(--t-label);
+  font-weight: 800;
+  color: var(--muted);
+  margin-block-end: 0.6rem;
+}
+
+.bars {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  block-size: 9rem;
+  padding-block-start: 1.4rem;
+  border-block-end: 1px solid var(--stone);
+  list-style: none;
+  margin: 0;
+  padding-inline: 0;
+}
+
+.bars li {
+  flex: 1 1 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  block-size: 100%;
+  position: relative;
+  cursor: default;
+}
+
+.bars .b {
+  inline-size: min(100%, 24px);
+  block-size: var(--h, 0%);
+  min-block-size: 2px;
+  border-radius: 4px 4px 0 0;
+  background: color-mix(in srgb, var(--olive) 38%, transparent);
+  transform-origin: bottom;
+  transition: background var(--press) var(--ease-out);
+}
+
+.bars li.is-last .b,
+.bars li:hover .b {
+  background: var(--olive);
+}
+
+.bars .cap {
+  position: absolute;
+  inset-block-end: calc(var(--h, 0%) + 0.3rem);
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.axis {
+  display: flex;
+  justify-content: space-between;
+  margin-block-start: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Centred over its bar; the outermost bars anchor theirs to the
+   chart's edge so a tooltip never spills past the panel. */
+.tip {
+  position: absolute;
+  inset-block-end: calc(100% + 0.4rem);
+  inset-inline-start: 50%;
+  z-index: 3;
+  padding: 0.35rem 0.6rem;
+  border-radius: 8px;
+  background: var(--ink-deep);
+  color: var(--plaster);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+  pointer-events: none;
+  /* Half its own width back towards the start edge, which centres it
+     on the bar. --dir makes that direction follow the page's. */
+  transform: translateX(calc(var(--dir) * -50%));
+}
+
+.tip.at-start {
+  inset-inline-start: 0;
+  transform: none;
+}
+
+.tip.at-end {
+  inset-inline-start: auto;
+  inset-inline-end: 0;
+  transform: none;
+}
+
+.table-view {
+  margin-block-start: 0.6rem;
+  font-size: 0.82rem;
+}
+
+.table-view summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.table-view table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  margin-block-start: 0.4rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.table-view th,
+.table-view td {
+  text-align: start;
+  padding: 0.2rem 0.3rem;
+  border-block-end: var(--rule);
+}
+
+.linkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-inline: 0.4rem;
+  padding-block: 0.45rem;
+  padding-inline-start: 0.9rem;
+  padding-inline-end: 0.45rem;
+  background: var(--stone-warm);
+  border-radius: 999px;
+}
+
+.linkbox span {
+  font-size: var(--t-label);
+  font-weight: 800;
+  color: var(--muted-warm);
+}
+
+.linkbox bdi {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.linkbox .act {
+  white-space: nowrap;
+}
+
+.d-acts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-inline: 0.4rem;
+}
+
+.d-acts .act {
+  justify-content: center;
+  min-block-size: 46px;
+  font-size: 0.9rem;
+}
+
+.d-acts .act.primary {
+  grid-column: 1 / -1;
+}
+
+/* ---------- States ---------- */
+
+.state {
+  padding-block: 3.5rem;
+  text-align: center;
+  color: var(--muted-warm);
+}
+
+.state b {
+  display: block;
+  font-family: var(--ls-font-display);
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: var(--ink);
+  margin-block-end: 0.4rem;
+}
+
+.state a {
+  color: var(--olive);
+  font-weight: 700;
+}
+
+/* Announces without moving the page: it is positioned, not in flow. */
+.say {
+  position: fixed;
+  inset-block-end: 1.25rem;
+  inset-inline: 0;
+  margin-inline: auto;
+  inline-size: fit-content;
+  max-inline-size: 90vw;
+  padding: 0.7rem 1.2rem;
+  background: var(--ink-deep);
+  color: var(--plaster);
+  font-size: 0.9rem;
+  font-weight: 700;
+  border-radius: 999px;
+  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6);
+  z-index: 50;
+}
+
+.say[data-tone='bad'] {
+  background: #e08a7a;
+}
+
+:focus-visible {
+  outline: 2px solid var(--olive);
+  outline-offset: 3px;
+}
+
+/* ---------- Motion ----------
+   Tiles and cards settle in; numbers count up to the value already in
+   the markup; the chart's bars grow from the baseline. None of it runs
+   for a reader who asked for less motion. */
+
+@media (prefers-reduced-motion: no-preference) {
+  .kpi,
+  .card {
+    animation: dash-in 0.7s var(--ease-out) both;
+    animation-delay: calc(var(--i, 0) * 70ms);
+  }
+
+  .spark path.line {
+    stroke-dasharray: 400;
+    animation: dash-draw 1.6s var(--ease-out) 0.2s both;
+  }
+
+  .bars .b {
+    animation: dash-grow 0.8s var(--ease-out) both;
+    animation-delay: calc(var(--i, 0) * 22ms);
+  }
+
+  .detail.is-new {
+    animation: dash-in 0.5s var(--ease-out) both;
+  }
+
+  @keyframes dash-in {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+  }
+
+  @keyframes dash-draw {
+    from {
+      stroke-dashoffset: 400;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  @keyframes dash-grow {
+    from {
+      transform: scaleY(0);
+    }
+  }
+}
+
+/* ---------- Share Studio ----------
+   What leaves the dashboard: the card WhatsApp will draw, the link, the
+   ready message (the share kit) and a QR for a flyer or a sign. */
+
+.studio {
+  display: grid;
+  gap: 0.8rem;
+  margin-inline: 0.4rem;
+  padding-block-start: 1rem;
+  border-block-start: var(--rule);
+}
+
+.studio h3 {
+  margin: 0;
+  font-size: var(--t-label);
+  font-weight: 800;
+  color: var(--muted);
+}
+
+.studio-card {
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0d1f1b;
+  color: #e9edef;
+}
+
+.studio-card img {
+  display: block;
+  inline-size: 100%;
+  aspect-ratio: 1.91;
+  object-fit: cover;
+  background: var(--stone-warm);
+}
+
+.studio-card div {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.55rem 0.7rem 0.65rem;
+}
+
+.studio-card b {
+  font-size: 0.88rem;
+}
+
+.studio-card small {
+  color: #8696a0;
+  font-size: 0.76rem;
+}
+
+.studio-cap {
+  margin: -0.4rem 0 0;
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+
+.studio-qr {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.studio-qr svg {
+  flex: 0 0 auto;
+  inline-size: 112px;
+  block-size: 112px;
+  border-radius: 10px;
+}
+
+.studio-qr .qr-slot {
+  flex: 0 0 auto;
+  inline-size: 112px;
+  block-size: 112px;
+  border-radius: 10px;
+  background: var(--stone-warm);
+}
+
+.studio-qr div {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: start;
+  font-size: 0.84rem;
+  color: var(--muted);
+}
+
+.dash-new svg {
+  inline-size: 16px;
+  block-size: 16px;
+}
+
+.site-nav .dash-new {
+  min-block-size: 44px;
+  padding: 0.5rem 1.1rem;
+}

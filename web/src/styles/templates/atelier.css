@@ -1,0 +1,185 @@
+/*
+  Atelier — a magazine cover. The agency's name as a serif masthead over a
+  rule, an asymmetric photograph, the title and the seller's first sentence
+  as the dek; below, the description opens with a drop cap.
+
+  Living Surfaces, Paper (TEMPLATE_MANIFEST); Frank Ruhl Libre carries the
+  editorial voice. 1.x tokens are pinned to the hexes the contrast test and
+  the absent-contrast gate measure.
+*/
+
+html[data-template='atelier'] {
+  --plaster: #f6f3ec;
+  --ink: #121310; /* = --ls-ink */
+  --stone: #ddd7ca;
+  --stone-warm: #ece7dc;
+  --muted: #5e5f57; /* = --ls-ink-2 */
+  --muted-warm: #57584f;
+  --absent: #5e5f57;
+  --heroWant: 60svh;
+}
+
+html[data-template='atelier'] body {
+  font-family: var(--ls-font-body);
+}
+
+html[data-template='atelier'] section.stage-atelier {
+  padding: 0 0 1.2rem;
+}
+
+/* ---------- Masthead ---------- */
+
+html[data-template='atelier'] .at-mast {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.4rem 1rem;
+  margin: 0 var(--gut);
+  padding: 2rem 0 0.7rem;
+  border-block-end: 2px solid var(--ink);
+}
+
+html[data-template='atelier'] .at-mast b {
+  font-family: 'Frank Ruhl Libre', serif;
+  font-weight: 900;
+  font-size: clamp(1.6rem, 6vw, 2.6rem);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+html[data-template='atelier'] .at-mast span {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+/* ---------- Cover ---------- */
+
+html[data-template='atelier'] .at-cover {
+  display: grid;
+  gap: 1.3rem;
+  padding: 1.4rem var(--gut) 0;
+}
+
+html[data-template='atelier'] .at-photo {
+  aspect-ratio: 4 / 5;
+  border-radius: 2px;
+}
+
+html[data-template='atelier'] .at-photo img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+html[data-template='atelier'] .at-copy .stage-title {
+  font-family: 'Frank Ruhl Libre', serif;
+  font-weight: 800;
+  font-size: clamp(2.6rem, 9vw, 5.6rem);
+  line-height: 1.02;
+}
+
+html[data-template='atelier'] .at-dek {
+  font-family: 'Frank Ruhl Libre', serif;
+  font-size: 1.15rem;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 1rem 0 1.2rem;
+  max-inline-size: 36ch;
+}
+
+html[data-template='atelier'] .at-copy .price-bar {
+  padding: 0;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: baseline;
+  gap: 0.3rem 1.1rem;
+}
+
+html[data-template='atelier'] .at-copy .price {
+  font-family: 'Frank Ruhl Libre', serif;
+  font-size: clamp(2rem, 6vw, 3rem);
+}
+
+html[data-template='atelier'] .at-copy .price-note {
+  text-align: start;
+}
+
+html[data-template='atelier'] .at-nums,
+html[data-template='atelier'] .stage-atelier .highlights {
+  margin-inline: var(--gut);
+}
+
+html[data-template='atelier'] .stage-atelier .highlights {
+  padding: 1rem 0 0;
+}
+
+/* ---------- The description, with a drop cap ----------
+   initial-letter rather than a float: floats are banned (CLAUDE.md §4.1),
+   and a browser without initial-letter simply shows an ordinary first
+   letter — the paragraph is whole either way. */
+
+html[data-template='atelier'] section.about > h2 + p::first-letter {
+  initial-letter: 3;
+  font-family: 'Frank Ruhl Libre', serif;
+  font-weight: 900;
+  color: var(--olive);
+  margin-inline-end: 0.12em;
+}
+
+html[data-template='atelier'] section.about > h2 {
+  font-family: 'Frank Ruhl Libre', serif;
+}
+
+html[data-template='atelier'] .facts {
+  border-radius: 0;
+}
+
+html[data-template='atelier'] .enrich {
+  background: transparent;
+  border-block: 2px solid var(--ink);
+  border-radius: 0;
+  margin-inline: var(--gut);
+}
+
+html[data-template='atelier'] .gallery img {
+  border-radius: 2px;
+}
+
+@media (min-width: 960px) {
+  html[data-template='atelier'] .at-cover {
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    gap: 3rem;
+    align-items: end;
+  }
+
+  /* Short enough that the price clears the WhatsApp dock on a laptop. */
+  html[data-template='atelier'] .at-photo {
+    aspect-ratio: 4 / 3.4;
+    max-block-size: 64svh;
+    inline-size: 100%;
+  }
+
+  html[data-template='atelier'] .listing-flow > :not(.stage, .compact-bar) {
+    align-self: center;
+    inline-size: min(100%, 60rem);
+    max-width: none;
+    box-sizing: border-box;
+  }
+
+  html[data-template='atelier'] :is(.enrich, .seller, .facts, .monthly-cost) {
+    margin-inline: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html[data-template='atelier'] .at-mast {
+    animation: stage-fade 0.9s var(--ease-out) both;
+  }
+
+  html[data-template='atelier'] .at-dek {
+    animation: stage-fade 0.9s var(--ease-out) 0.45s both;
+  }
+}

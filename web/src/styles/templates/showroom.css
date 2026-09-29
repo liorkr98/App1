@@ -1,0 +1,259 @@
+/*
+  Showroom — cars only (TEMPLATE_MANIFEST.categories). The car on a studio
+  floor under a slow scanning light, the spec strip, and the seller's
+  disclosures as numbered cards.
+
+  One photograph, presented, not spun: the 360° spin needs 24–36 photos
+  around the car and lands in P7. Living Surfaces, Onyx; 1.x tokens pinned.
+*/
+
+html[data-template='showroom'] {
+  --olive: var(--accent-lift, #7e9a62);
+  --plaster: #0c0d0f;
+  --ink: #f2f0ea; /* = --ls-ink */
+  --ink-deep: #07080a;
+  --stone: #272a2e;
+  --stone-warm: #15171a;
+  --muted: #a7a89c; /* = --ls-ink-2 */
+  --muted-warm: #a7a89c;
+  --absent: #a7a89c;
+  --heroWant: 70svh;
+}
+
+html[data-template='showroom'] body {
+  font-family: var(--ls-font-body);
+}
+
+html[data-template='showroom'] .agent-bar {
+  background: var(--ink-deep);
+}
+
+html[data-template='showroom'] section.stage-showroom {
+  padding: 2.4rem 0 1.4rem;
+  background: radial-gradient(80% 60% at 50% 45%, #1c1f23, var(--plaster) 72%);
+}
+
+html[data-template='showroom'] .sr-head {
+  text-align: center;
+  padding: 0 var(--gut);
+}
+
+html[data-template='showroom'] .sr-head .stage-place {
+  color: var(--muted);
+  text-align: center;
+}
+
+html[data-template='showroom'] .sr-head .stage-title {
+  font-family: var(--ls-font-display);
+  font-variation-settings: 'wdth' 70;
+  font-weight: 800;
+  font-size: clamp(2.2rem, 8vw, 4.6rem);
+  line-height: 1;
+  margin-inline: auto;
+}
+
+/* Line two ("יד שנייה, טסט לשנה") is the subtitle, not more headline. */
+html[data-template='showroom'] .sr-head .ls-line + .ls-line {
+  font-size: 0.42em;
+  font-weight: 600;
+  font-variation-settings: 'wdth' 100;
+  color: var(--muted);
+  margin-block-start: 0.5rem;
+}
+
+/* ---------- The platform ---------- */
+
+html[data-template='showroom'] .sr-platform {
+  position: relative;
+  padding: 1.4rem var(--gut) 0;
+  max-inline-size: 1000px;
+  margin-inline: auto;
+}
+
+html[data-template='showroom'] .sr-car {
+  inline-size: 100%;
+  background: transparent;
+  border-radius: 16px;
+}
+
+html[data-template='showroom'] .sr-car img {
+  inline-size: 100%;
+  block-size: auto; /* the height attribute would otherwise beat aspect-ratio */
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  display: block;
+  -webkit-mask-image: radial-gradient(120% 90% at 50% 45%, #000 60%, transparent 100%);
+  mask-image: radial-gradient(120% 90% at 50% 45%, #000 60%, transparent 100%);
+}
+
+html[data-template='showroom'] .sr-scan {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  inline-size: 30%;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent-lift, #86b79a) 28%, transparent), transparent);
+  mix-blend-mode: screen;
+  pointer-events: none;
+  opacity: 0;
+}
+
+html[data-template='showroom'] .sr-floor {
+  display: block;
+  block-size: 70px;
+  margin-block-start: -34px;
+  background: radial-gradient(50% 50% at 50% 50%, color-mix(in srgb, var(--accent-lift, #86b79a) 32%, transparent), transparent 70%);
+  filter: blur(8px);
+  pointer-events: none;
+}
+
+/* ---------- Price and spec ---------- */
+
+html[data-template='showroom'] .sr-band {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem 1.6rem;
+  padding: 1rem var(--gut) 0;
+}
+
+html[data-template='showroom'] .sr-band .price-bar {
+  padding: 0;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: baseline;
+  gap: 0.3rem 1rem;
+}
+
+html[data-template='showroom'] .sr-band .price {
+  font-family: var(--ls-font-display);
+  font-size: clamp(2.2rem, 7vw, 3.6rem);
+}
+
+html[data-template='showroom'] .sr-spec {
+  margin: 1.6rem var(--gut) 0;
+  border: 1px solid var(--stone);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+html[data-template='showroom'] .sr-spec > div {
+  padding-inline: 1rem;
+  border-color: var(--stone);
+}
+
+html[data-template='showroom'] .sr-spec > div:nth-child(odd) {
+  padding-inline-start: 1rem;
+}
+
+html[data-template='showroom'] .sr-spec dd {
+  font-family: var(--ls-font-display);
+  font-weight: 600;
+}
+
+html[data-template='showroom'] .stage-showroom .highlights {
+  padding: 1rem var(--gut) 0;
+  justify-content: center;
+}
+
+/* ---------- Disclosures as numbered cards ----------
+   The shared section (Disclosures.astro), restyled only: its heading, order
+   and wording are the seller's and stay exactly as written. */
+
+html[data-template='showroom'] section.flaws ul {
+  display: grid;
+  gap: 0.6rem;
+}
+
+html[data-template='showroom'] section.flaws li {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 1rem 1.1rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--stone);
+}
+
+html[data-template='showroom'] section.flaws .flaw-n {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  inline-size: 34px;
+  block-size: 34px;
+  border-radius: 50%;
+  background: var(--stone);
+  color: var(--ink);
+  font-weight: 800;
+}
+
+/* ---------- The rest of the page ---------- */
+
+html[data-template='showroom'] .facts {
+  gap: 0;
+  background: transparent;
+  border-block: 1px solid var(--stone);
+}
+
+html[data-template='showroom'] .fact {
+  background: transparent;
+}
+
+html[data-template='showroom'] .fact + .fact {
+  border-inline-start: 1px solid var(--stone);
+}
+
+html[data-template='showroom'] .cta {
+  background: var(--ink);
+  color: var(--plaster);
+}
+
+html[data-template='showroom'] .cta-dock {
+  background: linear-gradient(to top, var(--plaster) 70%, rgba(12, 13, 15, 0));
+}
+
+@media (min-width: 960px) {
+  html[data-template='showroom'] .listing-flow > :not(.stage, .compact-bar) {
+    align-self: center;
+    inline-size: min(100%, 64rem);
+    max-width: none;
+    box-sizing: border-box;
+  }
+
+  html[data-template='showroom'] :is(.enrich, .seller, .facts, .monthly-cost) {
+    margin-inline: 0;
+  }
+
+  html[data-template='showroom'] .sr-spec {
+    max-inline-size: 60rem;
+    margin-inline: auto;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* A slow light across the car, start side to end side. */
+  html[data-template='showroom'] .sr-scan {
+    animation: sr-scan 3.8s var(--ease-in-out) 1s infinite;
+  }
+
+  html[data-template='showroom'] .sr-car img {
+    animation: stage-fade 1.1s var(--ease-out) both;
+  }
+
+  @keyframes sr-scan {
+    0% {
+      opacity: 0;
+      transform: translateX(calc(var(--dir) * -20%));
+    }
+
+    15%,
+    85% {
+      opacity: 1;
+    }
+
+    100% {
+      opacity: 0;
+      transform: translateX(calc(var(--dir) * 330%));
+    }
+  }
+}

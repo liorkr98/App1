@@ -1,0 +1,101 @@
+---
+import type { Image, Listing } from '@/types/listing';
+import { GALLERY_WIDTHS, HERO_WIDTHS, largest } from '../../lib/images';
+import type { FactCell } from '../../lib/facts';
+import { t } from '../../lib/i18n';
+import type { PerUnitPrice } from '../../lib/price';
+import { coverStyle, priceProps, stagePlace, titleLines } from '../../lib/stage';
+import HighlightChips from '../HighlightChips.astro';
+import PriceBar from '../PriceBar.astro';
+import Prose from '../Prose.astro';
+import QrCode from '../QrCode.astro';
+
+interface Props {
+  listing: Listing;
+  photos: Image[];
+  cells: FactCell[];
+  perUnit?: PerUnitPrice | undefined;
+  waHref: string;
+  sold: boolean;
+}
+
+/**
+ * Ticket (Paper). The listing as a boarding pass: departs now, destination
+ * the address, the key numbers as the fields; a perforated stub carries a QR
+ * code to this page (drawn server-side, QrCode.astro) and the WhatsApp
+ * button that tears off. Playful — for agents with a light brand.
+ *
+ * The stub's button is the page's one other WhatsApp link besides the dock,
+ * kept because tearing it off IS the template. A sold listing has no stub
+ * button, as it has no dock.
+ */
+const { listing, photos, cells, perUnit, waHref, sold } = Astro.props;
+const lines = titleLines(listing);
+const place = stagePlace(listing);
+const pageUrl = new URL(`/a/${listing.slug}/`, Astro.site ?? 'https://hasivuv.com').href;
+const shortUrl = pageUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
+const stops = photos.slice(0, 5);
+---
+<section class="stage stage-ticket">
+  <div class="tk">
+    <div class="tk-main">
+      <p class="tk-band"><span>{t('listing.ticket.boarding')}</span><bdi>{listing.slug}</bdi></p>
+      <h1 class="stage-title">
+        {lines.map((line, i) => (
+          <span class="ls-line"><span style={`--i:${i}`}><Prose text={line} /></span></span>
+        ))}
+      </h1>
+      <dl class="tk-fields">
+        <div><dt>{t('listing.ticket.departs')}</dt><dd>{t('listing.ticket.now')}</dd></div>
+        {place && <div><dt>{t('listing.ticket.to')}</dt><dd><Prose text={place} /></dd></div>}
+        {cells.map((cell) => (
+          <div>
+            <dt>{cell.label}</dt>
+            <dd>{cell.bdi ? <bdi>{cell.displayValue}</bdi> : cell.displayValue}</dd>
+          </div>
+        ))}
+      </dl>
+      <div class="tk-price"><PriceBar {...priceProps(listing, perUnit)} /></div>
+    </div>
+    <div class="tk-stub" data-stub>
+      <QrCode text={pageUrl} label={t('listing.ticket.qr')} class="tk-qr" />
+      <p class="tk-url"><bdi>{shortUrl}</bdi></p>
+      {!sold && (
+        <a class="tk-tear" href={waHref} data-tear>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7A2.5 2.5 0 0 1 17.5 16H9l-4 3.2A.8.8 0 0 1 4 18.6V6.5Z" /></svg>
+          {t('listing.ticket.tear')}
+        </a>
+      )}
+    </div>
+  </div>
+  {stops.length > 0 && (
+    <div class="tk-stops">
+      {stops.map((image, i) => (
+        <figure>
+          <button
+            type="button"
+            class="tk-photo"
+            data-lightbox={largest(image, HERO_WIDTHS)}
+            data-alt={image.alt ?? ''}
+            aria-label={t('listing.openPhoto')}
+          >
+            <img
+              src={largest(image, GALLERY_WIDTHS)}
+              alt={image.alt ?? ''}
+              width={image.width}
+              height={image.height}
+              style={i === 0 ? coverStyle(listing) : undefined}
+              loading={i === 0 ? 'eager' : 'lazy'}
+              decoding="async"
+            />
+          </button>
+          <figcaption>
+            <span>{t('listing.ticket.stop')} <bdi>{i + 1}</bdi></span>
+            {image.room ? t(`editor.rooms.${image.room}`) : null}
+          </figcaption>
+        </figure>
+      ))}
+    </div>
+  )}
+  <HighlightChips highlights={listing.highlights} facts={listing.facts} />
+</section>

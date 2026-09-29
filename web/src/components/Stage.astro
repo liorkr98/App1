@@ -1,5 +1,7 @@
 ---
 import type { Image, Listing } from '@/types/listing';
+import type { ComposedLayout } from '@/features/templates/manifest';
+import { labeledWalkItems } from '@/features/listings/photo-rooms';
 import { GALLERY_WIDTHS, HERO_WIDTHS, largest, srcset } from '../lib/images';
 import type { FactCell } from '../lib/facts';
 import { t } from '../lib/i18n';
@@ -8,11 +10,21 @@ import AgentCard from './AgentCard.astro';
 import HighlightChips from './HighlightChips.astro';
 import PriceBar from './PriceBar.astro';
 import Prose from './Prose.astro';
+import AtelierStage from './stages/AtelierStage.astro';
+import GlassStage from './stages/GlassStage.astro';
+import MonolithStage from './stages/MonolithStage.astro';
+import ShowroomStage from './stages/ShowroomStage.astro';
+import DossierStage from './stages/DossierStage.astro';
+import HeliographStage from './stages/HeliographStage.astro';
+import PosterStage from './stages/PosterStage.astro';
+import TicketStage from './stages/TicketStage.astro';
+import WalkStage from './stages/WalkStage.astro';
+import ZineStage from './stages/ZineStage.astro';
 
 interface Props {
   listing: Listing;
-  /** Which of the three composed layouts. The other seven never reach here. */
-  layout: 'gallery' | 'cinema' | 'showcase';
+  /** Which composed layout (TEMPLATE_MANIFEST). Token templates never reach here. */
+  layout: ComposedLayout;
   /** Cover first, then the gallery — the same order the walk uses. */
   photos: Image[];
   /** The numerals, already chosen by ListingPage (so the grid can skip them). */
@@ -25,7 +37,7 @@ interface Props {
 const { listing, layout, photos, cells, perUnit, waHref, sold } = Astro.props;
 
 /**
- * THE FIRST SCREEN, three ways.
+ * THE FIRST SCREEN, composed per template (TEMPLATE_MANIFEST.composed).
  *
  * The seven token templates share one head — hero, thumbs, price bar — and
  * restyle it, which is why agents said they all looked the same. These three
@@ -34,10 +46,18 @@ const { listing, layout, photos, cells, perUnit, waHref, sold } = Astro.props;
  *   gallery   a photo mosaic, then title, price and big numerals beside a
  *             sticky agent card (the card is rendered by ListingPage so it can
  *             stick for the whole page, not just this section)
- *   cinema    the cover full-bleed, a giant title, and a dark panel with the
- *             key numbers and the plan
+ *   aurora    (was cinema) the cover full-bleed under a breathing accent
+ *             glow, a giant condensed title, and a glass panel with the key
+ *             numbers and the plan. Living Surfaces, Onyx.
+ *   blueprint the floor plan first, drawn onto a drafting grid, with a room
+ *             viewer: pick a room, see its photograph. Without a plan the
+ *             plan scene is omitted and the viewer runs on rooms alone.
+ *             Living Surfaces, Paper.
  *   showcase  headline, a rounded photograph and a card beside it carrying
  *             the numbers, the price and the agent
+ *   monolith, atelier, glass, showroom, heliograph, walk, poster, zine,
+ *   dossier, ticket
+ *             one component each in ./stages/ — see their headers.
  *
  * Everything below the first screen is the shared flow — facts, provenance,
  * enrichment, map, seller — so the rules those components enforce (absent vs
@@ -58,6 +78,13 @@ const key = cells;
 const roomLabel = (image: Image) => (image.room ? t(`editor.rooms.${image.room}`) : undefined);
 const mosaic = photos.slice(0, 5);
 const floorPlan = listing.media.floorPlan;
+
+// Blueprint's room viewer: the first photo of each labelled room, in walk
+// order. Unlabelled photos give no rooms, and the viewer shows the cover.
+const rooms = labeledWalkItems(photos).filter(
+  (image, index, all) => all.findIndex((other) => other.room === image.room) === index,
+);
+const shots = rooms.length > 0 ? rooms : [cover];
 
 // The cover is named for the dashboard→listing morph (M11); the dashboard
 // card gives its image the same name.
@@ -141,9 +168,12 @@ const priceProps = {
   </section>
 )}
 
-{layout === 'cinema' && (
-  <section class="stage stage-cinema ls-grain">
+{layout === 'aurora' && (
+  <section class="stage stage-aurora ls-grain">
     <div class="cine-frame">
+      {/* The accent, breathing behind the title. Depth parallax (M6) lands
+          here in P7, once the worker produces a depth map per cover. */}
+      <span class="aurora-glow" aria-hidden="true"></span>
       <img
         class="cine-img ls-breathe"
         src={largest(cover, HERO_WIDTHS)}
@@ -170,7 +200,7 @@ const priceProps = {
     </div>
 
     {key.length > 0 && (
-      <div class="cine-panel" data-metric>
+      <div class="cine-panel ls-glass" data-metric>
         <ol class="cine-metrics" aria-label={t('listing.keyFacts')}>
           {key.map((cell, index) => (
             <li class:list={['cine-metric', { 'is-on': index === 0 }]}>
@@ -229,6 +259,89 @@ const priceProps = {
   </section>
 )}
 
+{layout === 'blueprint' && (
+  <section class="stage stage-blueprint">
+    <div class="bp-head">
+      {place && <p class="stage-place"><Prose text={place} /></p>}
+      <h1 class="stage-title ls-display">
+        {lines.map((line, i) => (
+          <span class="ls-line"><span style={`--i:${i}`}><Prose text={line} /></span></span>
+        ))}
+      </h1>
+      <PriceBar {...priceProps} />
+    </div>
+
+    <div class:list={['bp-board', { 'has-plan': Boolean(floorPlan) }]}>
+      {floorPlan && (
+        <button
+          type="button"
+          class="bp-plan"
+          data-lightbox={largest(floorPlan, HERO_WIDTHS)}
+          data-alt={floorPlan.alt ?? t('listing.floorPlan')}
+          aria-label={t('listing.floorPlan')}
+        >
+          <img
+            src={largest(floorPlan, HERO_WIDTHS)}
+            alt=""
+            width={floorPlan.width}
+            height={floorPlan.height}
+            decoding="async"
+          />
+          <span class="bp-plan-tag">{t('listing.floorPlan')}</span>
+        </button>
+      )}
+      <figure class="bp-viewer" data-bp-viewer>
+        {shots.map((image, index) => (
+          <img
+            class:list={['bp-shot', { 'is-on': index === 0 }]}
+            src={largest(image, HERO_WIDTHS)}
+            srcset={srcset(image, HERO_WIDTHS) || undefined}
+            sizes="(min-width: 960px) 50vw, 100vw"
+            width={image.width}
+            height={image.height}
+            alt={image.alt ?? ''}
+            style={image === cover ? objectPosition : undefined}
+            fetchpriority={index === 0 ? 'high' : undefined}
+            loading={index === 0 ? 'eager' : 'lazy'}
+            decoding="async"
+            data-bp-shot={index}
+          />
+        ))}
+        {shots[0] && roomLabel(shots[0]) && (
+          <figcaption class="bp-label" aria-live="polite">{roomLabel(shots[0])}</figcaption>
+        )}
+      </figure>
+    </div>
+
+    {/* Rooms as chips. Hidden until the script can act on them: a button
+        that does nothing is worse than no button. Every photo is in the tour
+        and gallery below either way. */}
+    {rooms.length > 1 && (
+      <div class="bp-rooms" role="group" aria-label={t('listing.blueprintRooms')} hidden>
+        {rooms.map((image, index) => (
+          <button type="button" data-bp-room={index} aria-pressed={index === 0 ? 'true' : 'false'}>
+            {roomLabel(image)}
+          </button>
+        ))}
+      </div>
+    )}
+
+    {key.length > 0 && (
+      <dl class="numerals" aria-label={t('listing.keyFacts')}>
+        {key.map((cell) => (
+          <div>
+            <dt>{cell.label}</dt>
+            <dd>
+              {cell.bdi ? <bdi data-count={cell.countFrom}>{cell.displayValue}</bdi> : cell.displayValue}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    )}
+    <HighlightChips highlights={listing.highlights} facts={listing.facts} />
+  </section>
+)}
+
 {layout === 'showcase' && (
   <section class="stage stage-showcase">
     <div class="show-head">
@@ -280,3 +393,14 @@ const priceProps = {
     <HighlightChips highlights={listing.highlights} facts={listing.facts} />
   </section>
 )}
+
+{layout === 'monolith' && <MonolithStage listing={listing} photos={photos} cells={cells} perUnit={perUnit} />}
+{layout === 'atelier' && <AtelierStage listing={listing} cells={cells} perUnit={perUnit} />}
+{layout === 'glass' && <GlassStage listing={listing} cells={cells} perUnit={perUnit} />}
+{layout === 'showroom' && <ShowroomStage listing={listing} cells={cells} perUnit={perUnit} />}
+{layout === 'heliograph' && <HeliographStage listing={listing} cells={cells} perUnit={perUnit} />}
+{layout === 'walk' && <WalkStage listing={listing} photos={photos} cells={cells} perUnit={perUnit} />}
+{layout === 'poster' && <PosterStage listing={listing} photos={photos} cells={cells} perUnit={perUnit} />}
+{layout === 'zine' && <ZineStage listing={listing} photos={photos} cells={cells} perUnit={perUnit} />}
+{layout === 'dossier' && <DossierStage listing={listing} cells={cells} perUnit={perUnit} />}
+{layout === 'ticket' && <TicketStage listing={listing} photos={photos} cells={cells} perUnit={perUnit} waHref={waHref} sold={sold} />}

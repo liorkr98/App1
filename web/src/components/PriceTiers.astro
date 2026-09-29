@@ -1,6 +1,7 @@
 ---
 import { ils } from '../lib/format';
 import { t } from '../lib/i18n';
+import { PRICE_TIERS } from '../lib/tiers';
 
 interface Props {
   /** Home strip: no checkout controls, each card points at /pricing. */
@@ -9,12 +10,7 @@ interface Props {
 
 const { compact = false } = Astro.props;
 
-const tiers = [
-  { id: 'free', price: 0, featured: false },
-  { id: 'single', price: 79, featured: false },
-  { id: 'pack', price: 129, featured: false },
-  { id: 'agent', price: 249, featured: true },
-] as const;
+const tiers = PRICE_TIERS;
 ---
 
 {/*

@@ -950,6 +950,7 @@ export default function Editor() {
 
         {step === 'template' ? (
           <TemplateStep
+            category={state.category}
             chosen={state.template}
             onChoose={(template) => setState((current) => ({ ...current, template }))}
             accent={state.accent ?? profile.accent ?? undefined}

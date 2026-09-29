@@ -1,0 +1,25 @@
+---
+import type { FactCell } from '../../lib/facts';
+import { t } from '../../lib/i18n';
+
+interface Props {
+  cells: FactCell[];
+  class?: string;
+}
+
+/**
+ * The key numbers row every composed first screen carries. Numbers go in
+ * <bdi>; m² counts up (countFrom) from the value already in the HTML.
+ */
+const { cells, class: extra } = Astro.props;
+---
+{cells.length > 0 && (
+  <dl class:list={['numerals', extra]} aria-label={t('listing.keyFacts')}>
+    {cells.map((cell) => (
+      <div>
+        <dt>{cell.label}</dt>
+        <dd>{cell.bdi ? <bdi data-count={cell.countFrom}>{cell.displayValue}</bdi> : cell.displayValue}</dd>
+      </div>
+    ))}
+  </dl>
+)}

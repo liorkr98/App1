@@ -1,0 +1,204 @@
+/*
+  The site shell (layouts/Site.astro): header, footer, sections, buttons.
+  Living Surfaces tokens only, so an Onyx page and a Paper section inside it
+  are the same rules reading different values. Logical properties throughout.
+*/
+
+body.site {
+  margin: 0;
+  font-family: var(--ls-font-body);
+  font-size: var(--ls-fs-body);
+  line-height: var(--ls-lh-body);
+  background: var(--ls-ground);
+  color: var(--ls-ink);
+  -webkit-font-smoothing: antialiased;
+  touch-action: manipulation;
+}
+
+.site [hidden] {
+  display: none !important;
+}
+
+.site {
+  --site-gut: clamp(1rem, 5vw, 3rem);
+  --site-max: 1180px;
+}
+
+.site-shell {
+  box-sizing: border-box;
+  inline-size: 100%;
+  max-inline-size: calc(var(--site-max) + 2 * var(--site-gut));
+  margin-inline: auto;
+  padding-inline: var(--site-gut);
+}
+
+/* ---------- Header ---------- */
+
+.site-top {
+  position: relative;
+  z-index: 5;
+}
+
+.site-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 0.9rem;
+}
+
+.site-top .brand-mark {
+  color: inherit;
+}
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+}
+
+.site-link {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+  color: var(--ls-ink-2);
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+}
+
+.site-link:hover {
+  color: var(--ls-ink);
+}
+
+/* ---------- Sections ---------- */
+
+.site-sect {
+  padding-block: clamp(3.5rem, 9vw, 6.5rem);
+}
+
+.site-eyebrow {
+  margin: 0 0 0.7rem;
+  font-size: var(--ls-fs-label);
+  font-weight: 800;
+  color: var(--ls-accent);
+}
+
+.site-h2 {
+  margin: 0 0 1rem;
+  font-family: var(--ls-font-display);
+  font-weight: 800;
+  font-size: clamp(2rem, 6vw, 3.6rem);
+  font-variation-settings: 'wdth' var(--ls-wdth-display);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.site-sub {
+  margin: 0;
+  max-inline-size: 56ch;
+  color: var(--ls-ink-2);
+  font-size: 1.05rem;
+}
+
+/* ---------- Buttons ---------- */
+
+.site-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.site-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-block-size: 52px;
+  padding: 0.7rem 1.6rem;
+  border-radius: var(--ls-r-pill);
+  border: 1px solid transparent;
+  font: inherit;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.site-btn-primary {
+  background: var(--ls-ink);
+  color: var(--ls-ground);
+}
+
+.site-btn-ghost {
+  background: transparent;
+  color: var(--ls-ink);
+  border-color: var(--ls-line);
+}
+
+.site-btn-ghost:hover {
+  border-color: var(--ls-ink-2);
+}
+
+.site-note {
+  color: var(--ls-ink-2);
+  font-size: 0.9rem;
+}
+
+.site-tag {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  padding: 0.15rem 0.65rem;
+  border-radius: var(--ls-r-pill);
+  font-size: 0.74rem;
+  font-weight: 800;
+  background: var(--ls-ink);
+  color: var(--ls-ground);
+}
+
+.site-tag.is-soon {
+  background: transparent;
+  color: var(--ls-ink-2);
+  border: 1px solid var(--ls-line);
+}
+
+/* ---------- Footer ---------- */
+
+.site-foot {
+  border-block-start: 1px solid var(--ls-line);
+  color: var(--ls-ink-2);
+  font-size: 0.86rem;
+}
+
+.site-foot-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem 1.2rem;
+  padding-block: 1.4rem 2rem;
+}
+
+.site-foot a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+  color: inherit;
+}
+
+.site-foot-brand {
+  font-weight: 800;
+  text-decoration: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .site-btn {
+    transition: transform var(--ls-dur-1) var(--ls-spring);
+  }
+
+  .site-btn:hover {
+    transform: translateY(-2px);
+  }
+}

@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 /**
  * Every TEMPLATE_IDS value has a Hebrew reference HTML file, a homepage
- * mini-screen, and an editor card. A new template without those three is a
+ * mini-screen, and an editor card. Every Living Surfaces template (an `ls`
+ * entry in the manifest) also has the homepage's screenshot of its first
+ * screen, web/public/home/templates/{id}.webp — the row links to the live
+ * page, and a missing picture is a hole in the catalogue. A new template without those three is a
  * redesign CI cannot police (DESIGN-CONTRACT §8 / PHOTO-TOUR).
  *
  * Run: node scripts/verify-template-ids.mjs
@@ -24,6 +27,15 @@ if (ids.length === 0) {
   process.exit(1);
 }
 
+const manifest = fs.readFileSync(path.join(root, 'src/features/templates/manifest.ts'), 'utf8');
+const livingSurfaces = new Set(
+  [...manifest.matchAll(/^\s+(\w+): \{[^}]*\bls: '/gm)].map((item) => item[1]),
+);
+if (livingSurfaces.size === 0) {
+  console.error('Could not read any ls templates from the manifest');
+  process.exit(1);
+}
+
 const home = fs.readFileSync(path.join(root, 'web/src/pages/index.astro'), 'utf8');
 const picker = fs.readFileSync(path.join(root, 'web/src/components/editor/TemplateStep.tsx'), 'utf8');
 const problems = [];
@@ -36,6 +48,12 @@ for (const id of ids) {
   const tokens = path.join(root, 'web/src/styles/templates', `${id}.css`);
   if (!fs.existsSync(tokens)) {
     problems.push(`missing template token set web/src/styles/templates/${id}.css`);
+  }
+  if (livingSurfaces.has(id)) {
+    const poster = path.join(root, 'web/public/home/templates', `${id}.webp`);
+    if (!fs.existsSync(poster)) {
+      problems.push(`missing homepage screenshot web/public/home/templates/${id}.webp`);
+    }
   }
   if (!home.includes(id) && !home.includes('TEMPLATE_IDS')) {
     problems.push(`homepage does not mention ${id}`);

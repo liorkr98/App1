@@ -1,17 +1,21 @@
 /*
-  Cinema — the cover full-bleed, a giant title over it, thin vertical rules,
-  and a dark panel carrying the key numbers and the plan.
+  Aurora — the cover full-bleed under a breathing accent glow, a giant
+  condensed title, and a glass panel carrying the key numbers and the plan.
 
-  THE P2 PROOF of Living Surfaces. The template is registered as 'onyx' in
-  lib/living-surfaces.ts, so <html> carries data-ls="onyx" and the --ls-*
-  tokens, the condensed Noto Sans Hebrew display face and the shared motion
-  module (web/src/motion/) all apply. The 1.x tokens below are pinned to the
-  Onyx values rather than written as var(--ls-…): the contrast test and the
-  absent-contrast gate read these hexes directly, and must keep measuring
-  exactly what renders. Change one side, change the other.
+  Was `cinema` (P2's proof of Living Surfaces); renamed and extended in P3.
+  Rows and drafts still carrying 'cinema' resolve here through
+  LEGACY_TEMPLATE_ALIASES (src/features/templates/manifest.ts).
+
+  The template is 'onyx' in TEMPLATE_MANIFEST, so <html> carries
+  data-ls="onyx" and the --ls-* tokens, the condensed Noto Sans Hebrew display
+  face and the shared motion module (web/src/motion/) all apply. The 1.x
+  tokens below are pinned to the Onyx values rather than written as
+  var(--ls-…): the contrast test and the absent-contrast gate read these hexes
+  directly, and must keep measuring exactly what renders. Change one side,
+  change the other.
 */
 
-html[data-template='cinema'] {
+html[data-template='aurora'] {
   --olive: var(--accent-lift, #7e9a62);
   --plaster: #0b0c0a; /* = --ls-ground (onyx) */
   --ink: #f2f0ea; /* = --ls-ink */
@@ -24,22 +28,22 @@ html[data-template='cinema'] {
   --heroWant: 100svh;
 }
 
-html[data-template='cinema'] body {
+html[data-template='aurora'] body {
   font-family: var(--ls-font-body);
 }
 
-html[data-template='cinema'] .agent-bar {
+html[data-template='aurora'] .agent-bar {
   background: var(--ink-deep);
 }
 
 /* ---------- Frame ---------- */
 
-html[data-template='cinema'] section.stage-cinema {
+html[data-template='aurora'] section.stage-aurora {
   padding: 0;
   position: relative;
 }
 
-html[data-template='cinema'] .cine-frame {
+html[data-template='aurora'] .cine-frame {
   position: relative;
   overflow: hidden;
   /* Short enough on a phone that the title clears the WhatsApp dock. */
@@ -51,7 +55,7 @@ html[data-template='cinema'] .cine-frame {
   isolation: isolate;
 }
 
-html[data-template='cinema'] .cine-img {
+html[data-template='aurora'] .cine-img {
   position: absolute;
   inset: 0;
   inline-size: 100%;
@@ -60,7 +64,7 @@ html[data-template='cinema'] .cine-img {
   z-index: -2;
 }
 
-html[data-template='cinema'] .cine-frame::after {
+html[data-template='aurora'] .cine-frame::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -69,7 +73,20 @@ html[data-template='cinema'] .cine-frame::after {
     linear-gradient(to top, rgba(7, 8, 5, 0.94) 4%, rgba(7, 8, 5, 0.35) 48%, rgba(7, 8, 5, 0.2) 70%, rgba(7, 8, 5, 0.55));
 }
 
-html[data-template='cinema'] .cine-rules {
+/* The accent glow: the listing's own colour, lit from behind the title. */
+html[data-template='aurora'] .aurora-glow {
+  position: absolute;
+  inset: -20% -10% 10%;
+  z-index: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0.55;
+  background:
+    radial-gradient(50% 45% at 72% 62%, color-mix(in srgb, var(--accent-lift, #86b79a) 55%, transparent), transparent 70%),
+    radial-gradient(35% 30% at 20% 30%, color-mix(in srgb, var(--accent-lift, #86b79a) 30%, transparent), transparent 70%);
+}
+
+html[data-template='aurora'] .cine-rules {
   position: absolute;
   inset: 0;
   display: grid;
@@ -78,20 +95,22 @@ html[data-template='cinema'] .cine-rules {
   z-index: -1;
 }
 
-html[data-template='cinema'] .cine-rules span {
+html[data-template='aurora'] .cine-rules span {
   border-inline-start: 1px solid rgba(243, 241, 234, 0.13);
 }
 
-html[data-template='cinema'] .cine-head {
+html[data-template='aurora'] .cine-head {
+  position: relative;
+  z-index: 1;
   padding: 5rem var(--gut) 1.6rem;
   color: var(--on-dark);
 }
 
-html[data-template='cinema'] .cine-head .stage-place {
+html[data-template='aurora'] .cine-head .stage-place {
   color: #d6d4cb;
 }
 
-html[data-template='cinema'] .cine-head .stage-title {
+html[data-template='aurora'] .cine-head .stage-title {
   font-family: var(--ls-font-display);
   font-variation-settings: 'wdth' var(--ls-wdth-display);
   font-weight: 800;
@@ -102,20 +121,22 @@ html[data-template='cinema'] .cine-head .stage-title {
   text-shadow: 0 2px 40px rgba(0, 0, 0, 0.35);
 }
 
-/* ---------- Panel ---------- */
+/* ---------- Panel (glass) ---------- */
 
-html[data-template='cinema'] .cine-panel {
+html[data-template='aurora'] .cine-panel {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 1.2rem 1.4rem;
   padding: 1.6rem var(--gut);
-  background: var(--ink-deep);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)), var(--ink-deep);
   color: var(--on-dark);
+  border: 0;
   border-block-end: 1px solid var(--stone);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
-html[data-template='cinema'] .cine-metrics {
+html[data-template='aurora'] .cine-metrics {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -124,19 +145,19 @@ html[data-template='cinema'] .cine-metrics {
   gap: 1.2rem 2rem;
 }
 
-html[data-template='cinema'] .cine-metric {
+html[data-template='aurora'] .cine-metric {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
 }
 
-html[data-template='cinema'] .cine-metric-lbl {
+html[data-template='aurora'] .cine-metric-lbl {
   font-size: var(--t-label);
   font-weight: 700;
   color: var(--muted);
 }
 
-html[data-template='cinema'] .cine-metric-val {
+html[data-template='aurora'] .cine-metric-val {
   font-family: var(--ls-font-display);
   font-variation-settings: 'wdth' var(--ls-wdth-display);
   font-weight: 300;
@@ -146,25 +167,25 @@ html[data-template='cinema'] .cine-metric-val {
 }
 
 /* With the script, one number at a time, as large as the title. */
-html[data-template='cinema'] .cine-panel.is-cycling .cine-metric:not(.is-on) {
+html[data-template='aurora'] .cine-panel.is-cycling .cine-metric:not(.is-on) {
   display: none;
 }
 
-html[data-template='cinema'] .cine-panel.is-cycling .cine-metric-val {
+html[data-template='aurora'] .cine-panel.is-cycling .cine-metric-val {
   font-size: clamp(3.4rem, 9vw, 6.2rem);
 }
 
-html[data-template='cinema'] .cine-steps {
+html[data-template='aurora'] .cine-steps {
   display: none;
   gap: 0.5rem;
 }
 
-html[data-template='cinema'] .cine-panel.is-cycling .cine-steps {
+html[data-template='aurora'] .cine-panel.is-cycling .cine-steps {
   display: flex;
   grid-column: 1;
 }
 
-html[data-template='cinema'] .cine-steps button {
+html[data-template='aurora'] .cine-steps button {
   inline-size: 46px;
   block-size: 46px;
   display: grid;
@@ -177,22 +198,22 @@ html[data-template='cinema'] .cine-steps button {
   transition: background var(--press) var(--ease-out), color var(--press) var(--ease-out);
 }
 
-html[data-template='cinema'] .cine-steps button:hover {
+html[data-template='aurora'] .cine-steps button:hover {
   background: var(--on-dark);
   color: var(--ink-deep);
 }
 
-html[data-template='cinema'] .cine-steps button:focus-visible {
+html[data-template='aurora'] .cine-steps button:focus-visible {
   outline: 3px solid var(--olive);
   outline-offset: 3px;
 }
 
-html[data-template='cinema'] .cine-steps svg {
+html[data-template='aurora'] .cine-steps svg {
   inline-size: 20px;
   block-size: 20px;
 }
 
-html[data-template='cinema'] .cine-plan {
+html[data-template='aurora'] .cine-plan {
   grid-row: 1 / 3;
   grid-column: 2;
   inline-size: clamp(7rem, 22vw, 13rem);
@@ -201,30 +222,30 @@ html[data-template='cinema'] .cine-plan {
   background: #f3f1ea;
 }
 
-html[data-template='cinema'] .cine-plan img {
+html[data-template='aurora'] .cine-plan img {
   object-fit: contain;
 }
 
-html[data-template='cinema'] .cine-thumbs {
+html[data-template='aurora'] .cine-thumbs {
   grid-row: 1 / 3;
   grid-column: 2;
   display: flex;
 }
 
-html[data-template='cinema'] .cine-thumbs button {
+html[data-template='aurora'] .cine-thumbs button {
   inline-size: 3.6rem;
   block-size: 3.6rem;
   border-radius: 50%;
   border: 2px solid var(--ink-deep);
 }
 
-html[data-template='cinema'] .cine-thumbs button + button {
+html[data-template='aurora'] .cine-thumbs button + button {
   margin-inline-start: -0.9rem;
 }
 
 /* ---------- Price band ---------- */
 
-html[data-template='cinema'] .cine-band {
+html[data-template='aurora'] .cine-band {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -232,7 +253,7 @@ html[data-template='cinema'] .cine-band {
   padding: 2.2rem var(--gut) 1rem;
 }
 
-html[data-template='cinema'] .cine-band .price-bar {
+html[data-template='aurora'] .cine-band .price-bar {
   padding: 0;
   flex: 1 1 18rem;
   flex-wrap: wrap;
@@ -241,16 +262,16 @@ html[data-template='cinema'] .cine-band .price-bar {
   gap: 0.4rem 1.2rem;
 }
 
-html[data-template='cinema'] .cine-band .price {
+html[data-template='aurora'] .cine-band .price {
   font-size: clamp(2.6rem, 7vw, 5.2rem);
   font-weight: 500;
 }
 
-html[data-template='cinema'] .cine-band .price-note {
+html[data-template='aurora'] .cine-band .price-note {
   text-align: start;
 }
 
-html[data-template='cinema'] .cine-cta {
+html[data-template='aurora'] .cine-cta {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -264,124 +285,132 @@ html[data-template='cinema'] .cine-cta {
   transition: background var(--press) var(--ease-out), transform var(--press) var(--ease-out);
 }
 
-html[data-template='cinema'] .cine-cta:hover {
+html[data-template='aurora'] .cine-cta:hover {
   background: var(--olive);
 }
 
-html[data-template='cinema'] .cine-cta:active {
+html[data-template='aurora'] .cine-cta:active {
   transform: scale(0.97);
 }
 
-html[data-template='cinema'] .cine-band .highlights {
+html[data-template='aurora'] .cine-band .highlights {
   flex-basis: 100%;
   padding: 0;
 }
 
-html[data-template='cinema'] .highlights li {
+html[data-template='aurora'] .highlights li {
   border-color: rgba(243, 241, 234, 0.35);
 }
 
 /* ---------- The rest of the page, on the dark ground ---------- */
 
-html[data-template='cinema'] .enrich {
+html[data-template='aurora'] .enrich {
   background: var(--stone-warm);
   margin-inline: var(--gut);
   border-radius: 22px;
+  border: 1px solid rgba(242, 240, 234, 0.08);
 }
 
-html[data-template='cinema'] .source {
+html[data-template='aurora'] .source {
   color: var(--muted);
 }
 
-html[data-template='cinema'] .cta {
+html[data-template='aurora'] .cta {
   background: var(--ink);
   color: var(--plaster);
 }
 
-html[data-template='cinema'] .cta:hover,
-html[data-template='cinema'] .cta:active {
+html[data-template='aurora'] .cta:hover,
+html[data-template='aurora'] .cta:active {
   background: var(--olive-lift);
   color: var(--ink-deep);
 }
 
-html[data-template='cinema'] .cta-dock {
+html[data-template='aurora'] .cta-dock {
   background: linear-gradient(to top, var(--plaster) 70%, rgba(16, 17, 12, 0));
 }
 
-html[data-template='cinema'] .facts {
+html[data-template='aurora'] .facts {
   gap: 0;
   background: transparent;
   border-block: 1px solid var(--stone);
 }
 
-html[data-template='cinema'] .fact {
+html[data-template='aurora'] .fact {
   background: transparent;
   padding-block: 1.7rem;
 }
 
-html[data-template='cinema'] .fact + .fact {
+html[data-template='aurora'] .fact + .fact {
   border-inline-start: 1px solid var(--stone);
 }
 
-html[data-template='cinema'] .fact-val {
+html[data-template='aurora'] .fact-val {
   font-size: clamp(1.7rem, 3.4vw, 2.4rem);
 }
 
-html[data-template='cinema'] .gallery img {
+html[data-template='aurora'] .gallery img {
   border-radius: 10px;
 }
 
 @media (min-width: 960px) {
-  html[data-template='cinema'] .cine-frame {
+  html[data-template='aurora'] .cine-frame {
     min-block-size: min(88svh, 60rem);
   }
 
-  html[data-template='cinema'] .cine-head {
+  html[data-template='aurora'] .cine-head {
     padding-block-end: 3.2rem;
     padding-inline: var(--gut) 34%;
   }
 
   /* The panel rides up into the photograph, on the end side: frame and
      panel share one grid cell, and the panel sits on its bottom edge. */
-  html[data-template='cinema'] section.stage-cinema {
+  html[data-template='aurora'] section.stage-aurora {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
   }
 
-  html[data-template='cinema'] .cine-frame,
-  html[data-template='cinema'] .cine-panel {
+  html[data-template='aurora'] .cine-frame,
+  html[data-template='aurora'] .cine-panel {
     grid-row: 1;
     grid-column: 1;
   }
 
-  html[data-template='cinema'] .cine-panel {
+  /* Glass over the photograph. Dark enough that --muted keeps its contrast
+     whatever the cover is bright with; the blur does the rest. */
+  html[data-template='aurora'] .cine-panel {
     align-self: end;
     justify-self: end;
     inline-size: min(34rem, 42%);
     border-block-end: 0;
     padding: 2rem 2.2rem;
-    background: rgba(7, 8, 5, 0.92);
-    backdrop-filter: blur(6px);
+    margin: 0 var(--gut) 2rem;
+    border-radius: 24px;
+    background: rgba(7, 8, 5, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 40px 80px -40px rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(18px) saturate(1.2);
+    z-index: 1;
   }
 
   /* .listing-flow is a flex column, so a width has to be given: auto
      margins alone would shrink each block to its content. */
-  html[data-template='cinema'] .listing-flow > :not(.stage, .compact-bar) {
+  html[data-template='aurora'] .listing-flow > :not(.stage, .compact-bar) {
     align-self: center;
     inline-size: min(100%, 64rem);
     max-width: none;
     box-sizing: border-box;
   }
 
-  html[data-template='cinema'] :is(.enrich, .seller, .facts, .monthly-cost) {
+  html[data-template='aurora'] :is(.enrich, .seller, .facts, .monthly-cost) {
     margin-inline: 0;
   }
 
-  html[data-template='cinema'] .listing-flow {
+  html[data-template='aurora'] .listing-flow {
     max-inline-size: none;
   }
 
-  html[data-template='cinema'] .cine-band {
+  html[data-template='aurora'] .cine-band {
     max-inline-size: 64rem;
     margin-inline: auto;
     padding-block: 3rem 1.4rem;
@@ -391,25 +420,41 @@ html[data-template='cinema'] .gallery img {
 @media (prefers-reduced-motion: no-preference) {
   /* The photograph breathes via .ls-breathe (motion.css, M4). */
 
-  html[data-template='cinema'] .cine-rules span {
+  html[data-template='aurora'] .aurora-glow {
+    animation: aurora-glow 9s ease-in-out infinite alternate;
+  }
+
+  html[data-template='aurora'] .cine-rules span {
     animation: cine-rule 1.6s var(--ease-out) both;
     transform-origin: top;
   }
 
-  html[data-template='cinema'] .cine-rules span:nth-child(2) {
+  html[data-template='aurora'] .cine-rules span:nth-child(2) {
     animation-delay: 120ms;
   }
 
-  html[data-template='cinema'] .cine-rules span:nth-child(3) {
+  html[data-template='aurora'] .cine-rules span:nth-child(3) {
     animation-delay: 240ms;
   }
 
-  html[data-template='cinema'] .cine-panel {
+  html[data-template='aurora'] .cine-panel {
     animation: stage-fade 1s var(--ease-out) 520ms both;
   }
 
-  html[data-template='cinema'] .cine-metric.is-on .cine-metric-val {
+  html[data-template='aurora'] .cine-metric.is-on .cine-metric-val {
     animation: cine-swap 0.6s var(--ease-out) both;
+  }
+
+  @keyframes aurora-glow {
+    from {
+      opacity: 0.4;
+      transform: scale(1);
+    }
+
+    to {
+      opacity: 0.7;
+      transform: scale(1.1) translateY(-3%);
+    }
   }
 
   @keyframes cine-rule {

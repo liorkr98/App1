@@ -1,0 +1,98 @@
+---
+import type { Image, Listing } from '@/types/listing';
+import { GALLERY_WIDTHS, HERO_WIDTHS, largest } from '../../lib/images';
+import type { FactCell } from '../../lib/facts';
+import { t } from '../../lib/i18n';
+import type { PerUnitPrice } from '../../lib/price';
+import { coverStyle, priceProps, stagePlace, titleLines } from '../../lib/stage';
+import HighlightChips from '../HighlightChips.astro';
+import PriceBar from '../PriceBar.astro';
+import Prose from '../Prose.astro';
+
+interface Props {
+  listing: Listing;
+  photos: Image[];
+  cells: FactCell[];
+  perUnit?: PerUnitPrice | undefined;
+}
+
+/**
+ * Poster (Paper). The numbers are the layout: one numeral spans the screen,
+ * the rest sit on a hard twelve-column grid, everything in ONE ink (the
+ * listing's accent), photographs as small single-ink prints. Swiss, tactile.
+ *
+ * The giant numeral is the first cell that counts (m²) or else the first
+ * number; its size is set from its length so 128,000 fits where 108 does.
+ */
+const { listing, photos, cells, perUnit } = Astro.props;
+const lines = titleLines(listing);
+const place = stagePlace(listing);
+const numeric = cells.filter((cell) => cell.bdi && !cell.absent);
+const big = numeric.find((cell) => cell.countFrom !== undefined) ?? numeric[0] ?? cells[0];
+const rest = cells.filter((cell) => cell !== big).slice(0, 3);
+const prints = photos.slice(0, 4);
+const idx = (n: number) => String(n).padStart(2, '0');
+---
+<section class="stage stage-poster">
+  <div class="po-grid" aria-hidden="true">{Array.from({ length: 12 }, () => <span></span>)}</div>
+  <header class="po-head">
+    <bdi>{listing.slug}</bdi>
+    {place && <span><Prose text={place} /></span>}
+  </header>
+  {big && (
+    <div class="po-giant">
+      <span class="po-idx"><bdi>{idx(1)}</bdi> — {big.label}</span>
+      <b class="po-num" style={`--len:${big.displayValue.length}`}>
+        {big.bdi ? <bdi data-count={big.countFrom}>{big.displayValue}</bdi> : big.displayValue}
+      </b>
+      <span class="po-unit">{big.label}</span>
+    </div>
+  )}
+  {rest.length > 0 && (
+    <dl class="po-row">
+      {rest.map((cell, i) => (
+        <div>
+          <dt class="po-idx"><bdi>{idx(i + 2)}</bdi> — {cell.label}</dt>
+          <dd>{cell.bdi ? <bdi>{cell.displayValue}</bdi> : cell.displayValue}</dd>
+        </div>
+      ))}
+    </dl>
+  )}
+  <div class="po-title">
+    <h1 class="stage-title">
+      {lines.map((line, i) => (
+        <span class="ls-line"><span style={`--i:${i}`}><Prose text={line} /></span></span>
+      ))}
+    </h1>
+    <PriceBar {...priceProps(listing, perUnit)} />
+  </div>
+  {prints.length > 0 && (
+    <div class="po-prints">
+      {prints.map((image, i) => (
+        <figure>
+          <button
+            type="button"
+            class="po-print"
+            data-lightbox={largest(image, HERO_WIDTHS)}
+            data-alt={image.alt ?? ''}
+            aria-label={t('listing.openPhoto')}
+          >
+            <img
+              src={largest(image, GALLERY_WIDTHS)}
+              alt={image.alt ?? ''}
+              width={image.width}
+              height={image.height}
+              style={i === 0 ? coverStyle(listing) : undefined}
+              loading={i === 0 ? 'eager' : 'lazy'}
+              decoding="async"
+            />
+          </button>
+          <figcaption>
+            {t('listing.poster.fig')} <bdi>{i + 1}</bdi>{image.room ? <Fragment> · {t(`editor.rooms.${image.room}`)}</Fragment> : null}
+          </figcaption>
+        </figure>
+      ))}
+    </div>
+  )}
+  <HighlightChips highlights={listing.highlights} facts={listing.facts} />
+</section>

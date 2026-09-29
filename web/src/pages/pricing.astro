@@ -1,109 +1,93 @@
 ---
-import BrandMark from '../components/BrandMark.astro';
-import PriceTiers from '../components/PriceTiers.astro';
+import { ils } from '../lib/format';
 import { t } from '../lib/i18n';
-import '../styles/tokens.css';
+import { ADDONS, PRICE_TIERS } from '../lib/tiers';
+import Site from '../layouts/Site.astro';
+import '../styles/pricing.css';
 
 /**
- * Cost page. Checkout is a disabled control until an Israeli PSP is wired
- * (ADR 0003). Numbers in <bdi> via `ils()`. The agent tier is a dark panel
- * with a text flag — not colour-only, and not the same outlined box thrice.
+ * The price list (P5, Onyx). Glass cards over a slow aurora.
+ *
+ * DISPLAY ONLY — CLAUDE.md §8. The numbers come from lib/tiers.ts, the same
+ * list the homepage strip reads. Checkout is a disabled control until an
+ * Israeli PSP is signed (ADR 0003): "עדיין לא פתוח", not a fake pay button.
+ * Nothing on this page reads or decides entitlement.
+ *
+ * Add-ons are listed with בקרוב and no price: their vendors and prices are
+ * still the owner's decision, and a number published here is a promise.
+ * The FAQ states the product rules as they are — no subscription trial, the
+ * mark comes off every page with one purchase, AI images are always
+ * labelled with the original beside them.
  */
 ---
 
-<!DOCTYPE html>
-<html lang="he" dir="rtl">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#FBFAF7" />
-    <title>{t('pricing.title')} · {t('common.brand')}</title>
-    <meta name="description" content={t('pricing.lead')} />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Assistant:wght@400;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <style is:global>
-      html { background: var(--plaster); color-scheme: light; }
-      body {
-        font-family: 'Assistant', system-ui, sans-serif;
-        background: var(--plaster);
-        color: var(--ink);
-        font-size: var(--t-body);
-        line-height: 1.7;
-        max-inline-size: 56rem;
-        margin-inline: auto;
-        padding: 1.5rem var(--gut) 3rem;
-      }
-      header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 1rem;
-        margin-block-end: 2.4rem;
-        padding-block-end: 1rem;
-        border-block-end: 1px solid var(--stone);
-      }
-      header > a:not(.brand-mark) {
-        display: inline-flex;
-        align-items: center;
-        min-block-size: 44px;
-        color: var(--muted);
-        font-size: 0.92rem;
-      }
-      h1 {
-        font-family: 'Frank Ruhl Libre', serif;
-        font-weight: 700;
-        font-size: var(--t-h2);
-        margin-block-end: 0.45rem;
-        letter-spacing: -0.02em;
-      }
-      .lead {
-        color: var(--muted);
-        max-inline-size: 48ch;
-        margin-block-end: 2rem;
-      }
-      .note {
-        color: var(--muted);
-        font-size: 0.92rem;
-        margin-block-start: 1.5rem;
-        max-inline-size: 52ch;
-      }
-      footer { margin-block-start: 2.5rem; color: var(--muted); font-size: 0.85rem; }
-      footer a {
-        display: inline-flex;
-        align-items: center;
-        min-block-size: 44px;
-        color: var(--muted);
-      }
-    </style>
-  </head>
-  <body>
-    <a class="skip" href="#main">{t('a11y.skip')}</a>
-    <header>
-      <BrandMark />
-      <a href="/">{t('legal.home')}</a>
-    </header>
-    <main id="main">
-      <h1>{t('pricing.title')}</h1>
-      <p class="lead">{t('pricing.lead')}</p>
-      <p class="lead">{t('pricing.freeLine')}</p>
-      <PriceTiers />
-      <p class="note">{t('pricing.checkoutOff')}</p>
-    </main>
-    <footer>
-      <a href="/about/">{t('legal.about')}</a>
-      {' · '}
-      <a href="/contact/">{t('legal.contact')}</a>
-      {' · '}
-      <a href="/legal/terms/">{t('legal.terms')}</a>
-      {' · '}
-      <a href="/legal/privacy/">{t('legal.privacy')}</a>
-      {' · '}
-      <a href="/legal/accessibility/">{t('legal.accessibility')}</a>
-    </footer>
-  </body>
-</html>
+<Site title={`${t('pricing.title')} · ${t('common.brand')}`} description={t('pricing.lead')}>
+  <section class="pr-hero">
+    <div class="pr-aurora" aria-hidden="true"></div>
+    <div class="site-shell pr-head">
+      <p class="site-eyebrow">{t('pricing.eyebrow')}</p>
+      <h1 class="site-h2 pr-title">{t('pricing.headline')}</h1>
+      <p class="site-sub">{t('pricing.freeLine')}</p>
+    </div>
+
+    <ul class="site-shell pr-tiers">
+      {PRICE_TIERS.map((tier, i) => (
+        <li class:list={['pr-tier ls-fade', tier.featured && 'is-featured']} style={`--i:${i}`}>
+          {tier.featured && <p class="pr-flag">{t('pricing.agentFlag')}</p>}
+          {!tier.featured && <p class="pr-name">{t(`pricing.${tier.id}`)}</p>}
+          <p class="pr-sum">{tier.price === 0 ? t('pricing.freePrice') : <bdi>{ils(tier.price)}</bdi>}</p>
+          <p class="pr-note">{t(`pricing.${tier.id}Note`)}</p>
+          {tier.price === 0 ? (
+            <a class="site-btn site-btn-primary pr-go" href="/new/?fresh=1">{t('pricing.start')}</a>
+          ) : (
+            <button type="button" class="site-btn pr-go" disabled>{t('pricing.disabled')}</button>
+          )}
+        </li>
+      ))}
+    </ul>
+    <p class="site-shell site-note pr-off">{t('pricing.checkoutOff')}</p>
+  </section>
+
+  <section class="site-sect ls-sect">
+    <div class="site-shell">
+      <p class="site-eyebrow">{t('pricing.addonsLabel')}</p>
+      <h2 class="site-h2">{t('pricing.addonsTitle')}</h2>
+      <p class="site-sub">{t('pricing.addonsBody')}</p>
+      <ul class="pr-addons">
+        {ADDONS.map((id) => (
+          <li>
+            <span class="site-tag is-soon">{t('pricing.soon')}</span>
+            <b>{t(`pricing.addon_${id}`)}</b>
+            <span>{t(`pricing.addon_${id}Note`)}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <section class="site-sect" data-ls="paper">
+    <div class="site-shell pr-faq">
+      <h2 class="site-h2">{t('pricing.faqTitle')}</h2>
+      <details>
+        <summary>{t('pricing.faqMark')}</summary>
+        <p>{t('pricing.faqMarkA')}</p>
+      </details>
+      <details>
+        <summary>{t('pricing.faqTrial')}</summary>
+        <p>{t('pricing.faqTrialA')}</p>
+      </details>
+      <details>
+        <summary>{t('pricing.faqListing')}</summary>
+        <p>{t('pricing.faqListingA')} <bdi>25</bdi> {t('pricing.faqListingB')}</p>
+      </details>
+      <details>
+        <summary>{t('pricing.faqAi')}</summary>
+        <p>{t('pricing.faqAiA')}</p>
+      </details>
+      <details>
+        <summary>{t('pricing.faqPay')}</summary>
+        <p>{t('pricing.faqPayA')}</p>
+      </details>
+    </div>
+  </section>
+</Site>

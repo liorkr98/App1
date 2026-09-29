@@ -475,24 +475,281 @@
   block-size: 1.3rem;
 }
 
-.thumb-cinema {
+.thumb-aurora {
   background: #070805;
 }
 
-.thumb-cinema .thumb-hero,
-.thumb-cinema .thumb-hero-photo {
+.thumb-aurora .thumb-hero,
+.thumb-aurora .thumb-hero-photo {
   block-size: 70%;
   filter: brightness(0.6);
 }
 
-.thumb-cinema .thumb-price {
+.thumb-aurora .thumb-price {
   background: #f3f1ea;
   inline-size: 70%;
   block-size: 0.9rem;
 }
 
-.thumb-cinema .thumb-facts > span {
-  background: #2a2c22;
+.thumb-aurora .thumb-facts > span {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.thumb-monolith {
+  background: #050505;
+}
+
+.thumb-monolith .thumb-hero,
+.thumb-monolith .thumb-hero-photo {
+  block-size: 58%;
+  filter: brightness(0.45) grayscale(0.3);
+}
+
+.thumb-monolith .thumb-price {
+  background: #f2f0ea;
+  inline-size: 80%;
+  block-size: 1.1rem;
+}
+
+.thumb-monolith .thumb-facts > span {
+  background: transparent;
+  border-block: 1px solid #262620;
+}
+
+.thumb-atelier {
+  background: #f6f3ec;
+  border-block-start: 3px solid #121310;
+}
+
+.thumb-atelier .thumb-hero,
+.thumb-atelier .thumb-hero-photo {
+  block-size: 48%;
+  inline-size: 62%;
+  border-radius: 2px;
+}
+
+.thumb-atelier .thumb-price {
+  background: #121310;
+  inline-size: 52%;
+}
+
+.thumb-atelier .thumb-facts > span {
+  background: transparent;
+  border-block-end: 1px solid #ddd7ca;
+  border-radius: 0;
+}
+
+.thumb-glass {
+  background: radial-gradient(90% 70% at 70% 20%, #3a3f36, #0a0b0a);
+}
+
+.thumb-glass .thumb-hero,
+.thumb-glass .thumb-hero-photo {
+  block-size: 44%;
+  border-radius: 10px;
+  outline: 3px solid rgba(255, 255, 255, 0.14);
+}
+
+.thumb-glass .thumb-price {
+  background: rgba(255, 255, 255, 0.7);
+  inline-size: 58%;
+}
+
+.thumb-glass .thumb-facts > span {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+}
+
+.thumb-showroom {
+  background: radial-gradient(80% 60% at 50% 40%, #1c1f23, #0c0d0f 72%);
+}
+
+.thumb-showroom .thumb-hero,
+.thumb-showroom .thumb-hero-photo {
+  block-size: 40%;
+  margin-block-start: 0.6rem;
+  border-radius: 8px;
+}
+
+.thumb-showroom .thumb-price {
+  background: #f2f0ea;
+  inline-size: 46%;
+  margin-inline: auto;
+}
+
+.thumb-showroom .thumb-facts > span {
+  background: transparent;
+  border: 1px solid #272a2e;
+}
+
+/* Round two. */
+.thumb-heliograph {
+  background: linear-gradient(180deg, #f0b872, #f6f4ef 60%);
+}
+
+.thumb-heliograph .thumb-hero,
+.thumb-heliograph .thumb-hero-photo {
+  block-size: 40%;
+  border-radius: 8px;
+  filter: sepia(0.35) saturate(1.2);
+}
+
+.thumb-heliograph .thumb-price {
+  background: #121310;
+  inline-size: 50%;
+}
+
+.thumb-heliograph .thumb-facts > span {
+  border-radius: 50%;
+  background: #f5a524;
+}
+
+.thumb-walk {
+  background: #f3f1ea;
+  border-inline-start: 4px dotted #2f5340;
+}
+
+.thumb-walk .thumb-hero,
+.thumb-walk .thumb-hero-photo {
+  block-size: 38%;
+  border-radius: 12px;
+}
+
+.thumb-walk .thumb-price {
+  background: #121310;
+  inline-size: 54%;
+}
+
+.thumb-walk .thumb-facts > span {
+  background: #fff;
+  border: 2px solid #2f5340;
+  border-radius: 50%;
+}
+
+.thumb-poster {
+  background: #eeece5;
+  color: #2f5340;
+}
+
+.thumb-poster .thumb-hero,
+.thumb-poster .thumb-hero-photo {
+  block-size: 30%;
+  inline-size: 50%;
+  border-radius: 0;
+  filter: grayscale(1) contrast(1.2);
+}
+
+.thumb-poster .thumb-price {
+  background: #2f5340;
+  inline-size: 90%;
+  block-size: 1.6rem;
+  border-radius: 0;
+}
+
+.thumb-poster .thumb-facts > span {
+  background: transparent;
+  border-block-start: 2px solid #2f5340;
+  border-radius: 0;
+}
+
+.thumb-zine {
+  background: #f4efe6;
+}
+
+.thumb-zine .thumb-hero,
+.thumb-zine .thumb-hero-photo {
+  block-size: 42%;
+  border-radius: 0;
+  filter: grayscale(1) contrast(1.3) sepia(1) hue-rotate(290deg) saturate(3);
+  transform: rotate(-2deg);
+}
+
+.thumb-zine .thumb-price {
+  background: #0078bf;
+  inline-size: 60%;
+}
+
+.thumb-zine .thumb-facts > span {
+  background: transparent;
+  border: 2px solid #ff48b0;
+  border-radius: 50%;
+}
+
+.thumb-dossier {
+  background: #e9dcc0;
+}
+
+.thumb-dossier .thumb-hero,
+.thumb-dossier .thumb-hero-photo {
+  block-size: 36%;
+  border-radius: 0;
+  outline: 6px solid #fff;
+  outline-offset: -6px;
+  transform: rotate(1.5deg);
+}
+
+.thumb-dossier .thumb-price {
+  background: transparent;
+  border: 2px solid #a3221b;
+  inline-size: 46%;
+  transform: rotate(-6deg);
+}
+
+.thumb-dossier .thumb-facts > span {
+  background: #fbf8f0;
+  border-radius: 0;
+}
+
+.thumb-ticket {
+  background: #e8e4da;
+}
+
+.thumb-ticket .thumb-hero,
+.thumb-ticket .thumb-hero-photo {
+  block-size: 34%;
+  border-radius: 10px 10px 0 0;
+}
+
+.thumb-ticket .thumb-price {
+  background: #2f5340;
+  inline-size: 100%;
+  border-radius: 0;
+}
+
+.thumb-ticket .thumb-facts > span {
+  background: #fffaf0;
+  border-block-start: 2px dashed #cfc9bb;
+  border-radius: 0;
+}
+
+/* Blueprint: a drafting grid, the plan's frame, and the photo beside it. */
+.thumb-blueprint {
+  background-color: #f6f4ef;
+  background-image:
+    linear-gradient(rgba(31, 79, 160, 0.14) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(31, 79, 160, 0.14) 1px, transparent 1px);
+  background-size: 10px 10px;
+}
+
+.thumb-blueprint .thumb-hero,
+.thumb-blueprint .thumb-hero-photo {
+  block-size: 42%;
+  border-radius: 6px;
+  outline: 2px solid #1f4fa0;
+  outline-offset: 2px;
+}
+
+.thumb-blueprint .thumb-price {
+  background: #121310;
+  inline-size: 56%;
+}
+
+.thumb-blueprint .thumb-facts > span {
+  background: transparent;
+  border: 1px solid #1f4fa0;
+  border-radius: 99px;
 }
 
 .thumb-showcase {
@@ -1558,6 +1815,23 @@ textarea {
 .preview-page[data-template='agency'] .fact-lbl {
   margin-block-start: 0;
   order: 1;
+}
+
+/* Aurora is on Onyx: the facsimile shows it dark too, not as the default. */
+.preview-page[data-template='aurora'] {
+  --plaster: #0b0c0a;
+  --ink: #f2f0ea;
+  --ink-deep: #070805;
+  --stone: #2a2c22;
+  --stone-warm: #161713;
+  --muted: #a7a89c;
+  --heroH: min(62svh, 520px);
+  color: var(--ink);
+  background: var(--plaster);
+}
+.preview-page[data-template='aurora'] :is(.prev-cta, .s-cta) {
+  background: var(--ink);
+  color: var(--plaster);
 }
 
 .preview-page[data-template='dark'] {

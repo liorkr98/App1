@@ -1,0 +1,137 @@
+---
+import BrandMark from '../components/BrandMark.astro';
+import { t } from '../lib/i18n';
+import '../styles/tokens.css';
+import '../styles/fonts.css';
+import '../styles/system/tokens.css';
+import '../motion/motion.css';
+import '../motion/view-transitions.css';
+import '../styles/site.css';
+
+/**
+ * The site shell for the 2.0 site pages (plan §12e): homepage, pricing,
+ * sign-in, onboarding, the dashboard and /me.
+ *
+ * WHY ONE LAYOUT. Each of those pages carried its own copy of the head, the
+ * header, the fonts and the legal footer, so restyling the site meant five
+ * edits that could each drift. The Living Surfaces mode is a prop here and a
+ * `data-ls` attribute on <html>; a section can switch mode on its own with
+ * `data-ls` (tokens are scoped by the attribute, not the page).
+ *
+ * Faces are the self-hosted ones (fonts.css). The site no longer calls
+ * Google Fonts, which the listing pages already stopped doing.
+ *
+ * The account link is sign-in by default and swaps to "my listings" once a
+ * session exists. Static pages cannot know who is looking, so the default
+ * paint is the logged-out one and a stranger never sees a flash of the other.
+ */
+interface Props {
+  /** The whole <title>, brand included. */
+  title: string;
+  description?: string | undefined;
+  robots?: string;
+  ls?: 'onyx' | 'paper';
+  og?: { image: string; title: string; description: string } | undefined;
+  /** Show the sign-in / my-listings link in the header. */
+  account?: boolean;
+}
+
+const { title, description, robots = 'index,follow', ls = 'onyx', og, account = true } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const themeColor = ls === 'onyx' ? '#0b0c0a' : '#f6f4ef';
+---
+
+<!DOCTYPE html>
+<html lang="he" dir="rtl" data-ls={ls}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content={themeColor} />
+    <title>{title}</title>
+    {description && <meta name="description" content={description} />}
+    <meta name="robots" content={robots} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    {og && (
+      <>
+        <meta property="og:type" content="website" />
+        <meta property="og:locale" content="he_IL" />
+        <meta property="og:url" content={canonical} />
+        <meta property="og:site_name" content={t('common.brand')} />
+        <meta property="og:title" content={og.title} />
+        <meta property="og:description" content={og.description} />
+        <meta property="og:image" content={og.image} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image" />
+      </>
+    )}
+    <link rel="preload" href="/fonts/noto-sans-hebrew-hebrew.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/heebo-hebrew.woff2" as="font" type="font/woff2" crossorigin />
+    <slot name="head" />
+  </head>
+
+  <body class="site">
+    <a class="skip" href="#main">{t('a11y.skip')}</a>
+    <header class="site-top">
+      <div class="site-shell site-top-row">
+        <BrandMark href="/" />
+        <nav class="site-nav">
+          <slot name="nav" />
+          {account && (
+            <>
+              <a class="site-link" id="nav-enter" href="/enter/">{t('home.ctaSecond')}</a>
+              <a class="site-link" id="nav-mine" href="/mine/" hidden>{t('dash.title')}</a>
+            </>
+          )}
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <slot />
+    </main>
+
+    <footer class="site-foot">
+      <div class="site-shell site-foot-row">
+        <a href="/" class="site-foot-brand">{t('common.brand')}</a>
+        <span>
+          <a href="/pricing/">{t('pricing.title')}</a>
+          {' · '}
+          <a href="/guide/photos/">{t('guide.photosTitle')}</a>
+          {' · '}
+          <a href="/about/">{t('legal.about')}</a>
+          {' · '}
+          <a href="/contact/">{t('legal.contact')}</a>
+          {' · '}
+          <a href="/legal/terms/">{t('legal.terms')}</a>
+          {' · '}
+          <a href="/legal/privacy/">{t('legal.privacy')}</a>
+          {' · '}
+          <a href="/legal/accessibility/">{t('legal.accessibility')}</a>
+        </span>
+        <slot name="foot" />
+      </div>
+    </footer>
+
+    {account && (
+      <script>
+        import { supabase, supabaseConfigured } from '../lib/supabase';
+
+        if (supabaseConfigured) {
+          const enter = document.getElementById('nav-enter');
+          const mine = document.getElementById('nav-mine');
+          const client = supabase();
+          const paint = async () => {
+            const { data } = await client.auth.getSession();
+            const signedIn = Boolean(data.session);
+            if (enter) enter.hidden = signedIn;
+            if (mine) mine.hidden = !signedIn;
+          };
+          void paint();
+          client.auth.onAuthStateChange(() => void paint());
+        }
+      </script>
+    )}
+  </body>
+</html>

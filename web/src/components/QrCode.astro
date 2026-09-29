@@ -1,0 +1,21 @@
+---
+import { qrDrawing } from '../lib/qr';
+
+interface Props {
+  /** What the code opens. An absolute https URL. */
+  text: string;
+  label: string;
+  class?: string;
+}
+
+/**
+ * A QR code, drawn at build/render time as one SVG path (lib/qr) — no image
+ * request, no script, no canvas, crisp at any size.
+ */
+const { text, label, class: extra } = Astro.props;
+const { box, d } = qrDrawing(text);
+---
+<svg class:list={['qr', extra]} viewBox={`0 0 ${box} ${box}`} role="img" aria-label={label} shape-rendering="crispEdges">
+  <rect width={box} height={box} fill="#fffaf0" />
+  <path d={d} fill="#15140f" />
+</svg>

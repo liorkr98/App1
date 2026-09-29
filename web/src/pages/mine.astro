@@ -1,8 +1,7 @@
 ---
-import BrandMark from '../components/BrandMark.astro';
 import { t } from '../lib/i18n';
-import '../styles/tokens.css';
-import '../motion/view-transitions.css';
+import Site from '../layouts/Site.astro';
+import '../styles/dash.css';
 
 /**
  * The agent's dashboard.
@@ -38,1194 +37,150 @@ import '../motion/view-transitions.css';
  * /me shipped the other way round and rendered a blank page the first time a
  * stale dependency made the module fail. A dashboard that can go blank is a
  * dashboard an agent cannot trust in front of a client.
+ *
+ * V2 (P5, September 2026): Living Surfaces Onyx through layouts/Site.astro
+ * (styles/dash.css), a read-through tile (scroll_75, migration 0030), the
+ * panel as a sheet on phones — it was display:none below 1100px — and Share
+ * Studio in the panel. Queries, RLS assumptions and actions are unchanged.
  */
 ---
 
-<!DOCTYPE html>
-<html lang="he" dir="rtl">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#111208" />
-    <title>{t('dash.title')} · {t('common.brand')}</title>
-
-    {/* A private workspace holding unpublished drafts. There is no version of
-        it that belongs in a search result. */}
-    <meta name="robots" content="noindex,nofollow" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Assistant:wght@400;600;700;800&display=swap"
-      rel="stylesheet"
-    />
-
-    <style is:global>
-      :root {
-        --rule: 1px solid var(--stone);
-        --shell: 1320px;
-        --pad: clamp(1.1rem, 4vw, 2.5rem);
-        /* The workspace ground. Text set directly on it uses --muted-warm
-           (4.91:1); the white cards keep --muted (5.09:1). */
-        --ground: #eef0ea;
-        --card: #ffffff;
-        --radius: 20px;
-      }
-
-      html {
-        background: var(--ground);
-        color-scheme: light;
-        touch-action: manipulation;
-        -webkit-tap-highlight-color: rgba(74, 93, 58, 0.18);
-      }
-
-      @view-transition {
-        navigation: auto;
-      }
-
-      body {
-        font-family: 'Assistant', system-ui, sans-serif;
-        background: var(--ground);
-        color: var(--ink);
-        font-size: var(--t-body);
-        /* Hebrew carries no ascenders or descenders to separate its lines. */
-        line-height: 1.6;
-        min-height: 100dvh;
-        -webkit-font-smoothing: antialiased;
-      }
-
-      .shell {
-        max-inline-size: var(--shell);
-        margin-inline: auto;
-        padding-inline: var(--pad);
-      }
-
-      /* ---------- Masthead ----------
-         Dark, matching the agent bar that sits on top of every page this
-         dashboard produces. The workspace and the artefact are the same
-         product and should not look like two. */
-
-      .bar {
-        background: var(--ink-deep);
-        color: var(--plaster);
-      }
-
-      .bar .shell {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        padding-block: 0.9rem;
-      }
-
-      .bar .brand-mark {
-        color: var(--plaster);
-      }
-
-      .bar nav {
-        margin-inline-start: auto;
-        display: flex;
-        align-items: center;
-        gap: clamp(0.7rem, 2vw, 1.25rem);
-        min-inline-size: 0;
-      }
-
-      .bar nav a:not(.cta) {
-        /* 6.94:1 on --ink-deep. --olive-lift is 3.83:1 and would fail here. */
-        display: inline-flex;
-        align-items: center;
-        min-block-size: 44px;
-        color: #9c9d93;
-        font-size: var(--t-label);
-        font-weight: 600;
-        line-height: 1.25;
-        text-decoration: none;
-      }
-
-      .bar nav a:not(.cta):hover {
-        color: var(--plaster);
-      }
-
-      .cta {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.45rem;
-        min-block-size: 44px;
-        padding: 0.6rem 1.25rem;
-        background: var(--plaster);
-        color: var(--ink-deep);
-        font-size: 0.95rem;
-        font-weight: 800;
-        border: none;
-        border-radius: 999px;
-        white-space: nowrap;
-        text-decoration: none;
-        cursor: pointer;
-        font-family: inherit;
-        transition:
-          transform var(--press) var(--ease-out),
-          background var(--press) var(--ease-out);
-      }
-
-      .cta svg {
-        inline-size: 16px;
-        block-size: 16px;
-      }
-
-      .cta:hover {
-        background: #fff;
-      }
-
-      .cta:active {
-        transform: scale(0.97);
-      }
-
-      .cta.dark {
-        background: var(--ink-deep);
-        color: var(--plaster);
-      }
-
-      .cta.dark:hover {
-        background: var(--olive);
-      }
-
-      /* ---------- Head ---------- */
-
-      .head {
-        display: flex;
-        align-items: flex-end;
-        justify-content: space-between;
-        gap: 1rem 2rem;
-        flex-wrap: wrap;
-        padding-block: clamp(1.75rem, 4vw, 2.75rem) 1.4rem;
-      }
-
-      .hello {
-        font-size: var(--t-meta);
-        font-weight: 700;
-        color: var(--muted-warm);
-      }
-
-      h1 {
-        font-family: 'Frank Ruhl Libre', serif;
-        font-weight: 700;
-        font-size: clamp(2rem, 4.6vw, 3.1rem);
-        line-height: 1.08;
-        letter-spacing: -0.02em;
-      }
-
-      .lead {
-        color: var(--muted-warm);
-        font-weight: 600;
-        margin-block-start: 0.4rem;
-        max-inline-size: 60ch;
-      }
-
-      .lead bdi {
-        color: var(--ink);
-        font-weight: 800;
-      }
-
-      /* ---------- KPI tiles ----------
-         Four numbers an agent checks every morning. Big, few, and each one
-         says over what window it was counted. */
-
-      /* Two by two on a phone, one row of four from 900px. */
-      .kpis {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: clamp(0.7rem, 1.6vw, 1.1rem);
-        margin-block-end: 1.6rem;
-      }
-
-      @media (min-width: 900px) {
-        .kpis {
-          grid-template-columns: repeat(4, minmax(0, 1fr));
-        }
-      }
-
-      .kpi {
-        display: flex;
-        flex-direction: column;
-        gap: 0.35rem;
-        min-inline-size: 0;
-        min-block-size: 9.5rem;
-        padding: clamp(0.9rem, 2vw, 1.15rem) clamp(0.9rem, 2vw, 1.25rem) 1rem;
-        background: var(--card);
-        border-radius: var(--radius);
-        box-shadow: 0 1px 2px rgba(17, 18, 8, 0.04);
-      }
-
-      .kpi-lbl {
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
-        font-size: var(--t-label);
-        font-weight: 700;
-        color: var(--muted);
-      }
-
-      .kpi-lbl svg {
-        inline-size: 15px;
-        block-size: 15px;
-        flex: 0 0 auto;
-      }
-
-      .kpi-num {
-        font-family: 'Frank Ruhl Libre', serif;
-        font-weight: 500;
-        font-size: clamp(1.9rem, 3.6vw, 2.9rem);
-        line-height: 1;
-        letter-spacing: -0.02em;
-        font-variant-numeric: tabular-nums;
-        white-space: nowrap;
-      }
-
-      .kpi-num small {
-        font-family: 'Assistant', sans-serif;
-        font-size: 0.9rem;
-        font-weight: 700;
-        color: var(--muted);
-        letter-spacing: 0;
-        margin-inline-start: 0.35rem;
-      }
-
-      .kpi-note {
-        font-size: var(--t-label);
-        font-weight: 700;
-        color: var(--olive);
-      }
-
-      .kpi-note.plain {
-        color: var(--muted);
-      }
-
-      .spark {
-        margin-block-start: auto;
-        inline-size: 100%;
-        block-size: auto;
-        display: block;
-        overflow: visible;
-      }
-
-      /* Drawn only when the per-day view answered; an empty line is not a trend. */
-      .spark[data-empty] {
-        display: none;
-      }
-
-      .meter {
-        margin-block-start: auto;
-        block-size: 8px;
-        border-radius: 999px;
-        background: var(--stone-warm);
-        overflow: hidden;
-      }
-
-      .meter span {
-        display: block;
-        block-size: 100%;
-        inline-size: var(--share, 0%);
-        border-radius: 999px;
-        background: var(--olive);
-      }
-
-      /* ---------- Filters ----------
-         Radios, not buttons: the filter is one choice out of five and a radio
-         group is what that is. It also means the whole thing works with no
-         JavaScript beyond the one line that reads which is checked. */
-
-      .filters {
-        display: flex;
-        gap: 0.45rem;
-        flex-wrap: wrap;
-        align-items: center;
-        padding-block-end: 1.1rem;
-      }
-
-      .filters input {
-        position: absolute;
-        opacity: 0;
-        pointer-events: none;
-      }
-
-      .filters label {
-        min-block-size: 40px;
-        display: inline-flex;
-        align-items: center;
-        padding: 0.35rem 1rem;
-        font-size: 0.9rem;
-        font-weight: 700;
-        color: var(--ink);
-        background: var(--card);
-        border-radius: 999px;
-        cursor: pointer;
-        transition:
-          color var(--press) var(--ease-out),
-          background var(--press) var(--ease-out);
-      }
-
-      .filters input:checked + label {
-        color: var(--plaster);
-        background: var(--ink-deep);
-      }
-
-      .filters input:focus-visible + label {
-        outline: 2px solid var(--olive);
-        outline-offset: 2px;
-      }
-
-      .count {
-        margin-inline-start: auto;
-        font-size: var(--t-label);
-        font-weight: 700;
-        color: var(--muted-warm);
-        font-variant-numeric: tabular-nums;
-      }
-
-      /* ---------- First run ---------- */
-
-      .onboard {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1.25rem;
-        flex-wrap: wrap;
-        background: var(--card);
-        border-radius: var(--radius);
-        padding: 1.2rem 1.4rem;
-        margin-block-end: 1.5rem;
-      }
-
-      .onboard b {
-        font-family: 'Frank Ruhl Libre', serif;
-        font-weight: 700;
-        font-size: 1.2rem;
-      }
-
-      .onboard p {
-        color: var(--muted);
-        font-size: 0.92rem;
-        max-inline-size: 52ch;
-      }
-
-      /* ---------- Workspace ----------
-         Cards on the start side; from 1100px the chosen listing opens in a
-         panel on the end side, sticky, with its own chart. */
-
-      .workspace {
-        display: grid;
-        gap: clamp(1rem, 2vw, 1.5rem);
-        padding-block-end: 3rem;
-        align-items: start;
-      }
-
-      .grid {
-        list-style: none;
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
-        gap: clamp(0.8rem, 1.6vw, 1.1rem);
-        padding: 0;
-        margin: 0;
-      }
-
-      .card {
-        display: flex;
-        flex-direction: column;
-        border-radius: var(--radius);
-        overflow: hidden;
-        background: var(--card);
-        outline: 2px solid transparent;
-        outline-offset: -2px;
-        transition:
-          box-shadow 0.35s var(--ease-out),
-          transform 0.35s var(--ease-out),
-          outline-color var(--press) var(--ease-out);
-      }
-
-      .card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 18px 40px -24px rgba(17, 18, 8, 0.45);
-      }
-
-      .card.is-chosen {
-        outline-color: var(--ink-deep);
-      }
-
-      /* A card the agent cannot send yet reads as unfinished at a glance. */
-      .card[data-status='draft'] {
-        outline: 2px dashed var(--stone);
-      }
-
-      .shot {
-        position: relative;
-        display: block;
-        aspect-ratio: 4 / 3;
-        background: var(--stone-warm);
-        overflow: hidden;
-        margin: 0.5rem 0.5rem 0;
-        border-radius: 14px;
-        /* It is an <a> when the listing is sendable, so the placeholder text
-           inside it would otherwise render underlined and link-coloured. */
-        text-decoration: none;
-        color: inherit;
-      }
-
-      .shot img {
-        inline-size: 100%;
-        block-size: 100%;
-        object-fit: cover;
-        display: block;
-        transition: transform 0.9s var(--ease-out);
-      }
-
-      .card:hover .shot img {
-        transform: scale(1.04);
-      }
-
-      .shot .none {
-        display: grid;
-        place-items: center;
-        block-size: 100%;
-        font-size: var(--t-label);
-        color: var(--muted);
-      }
-
-      .pill,
-      .tpl {
-        position: absolute;
-        inset-block-start: 0.6rem;
-        padding: 0.18rem 0.65rem;
-        font-size: 0.72rem;
-        font-weight: 800;
-        border-radius: 999px;
-      }
-
-      .pill {
-        inset-inline-start: 0.6rem;
-        background: var(--plaster);
-        color: var(--ink);
-      }
-
-      .tpl {
-        inset-inline-end: 0.6rem;
-        background: rgba(17, 18, 8, 0.72);
-        color: var(--plaster);
-      }
-
-      .card[data-status='published'] .pill {
-        background: var(--olive);
-        color: var(--plaster);
-      }
-
-      .card[data-status='sold'] .pill {
-        background: var(--ink-deep);
-        color: var(--plaster);
-      }
-
-      .card[data-status='archived'] .pill {
-        background: var(--stone-warm);
-        color: var(--muted);
-      }
-
-      .body {
-        display: flex;
-        flex-direction: column;
-        gap: 0.2rem;
-        padding: 0.85rem 1rem 0.4rem;
-        flex: 1 1 auto;
-      }
-
-      .body b {
-        font-family: 'Frank Ruhl Libre', serif;
-        font-weight: 500;
-        font-size: 1.08rem;
-        line-height: 1.3;
-        /* Two lines, then ellipsis: a title the agent typed can be long and
-           ragged card heights make a grid look broken. */
-        overflow: hidden;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-      }
-
-      .price-row {
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        gap: 0.6rem;
-        flex-wrap: wrap;
-      }
-
-      .price {
-        font-family: 'Frank Ruhl Libre', serif;
-        font-weight: 700;
-        font-size: 1.3rem;
-        letter-spacing: -0.015em;
-        font-variant-numeric: tabular-nums;
-      }
-
-      .where {
-        font-size: var(--t-label);
-        font-weight: 600;
-        color: var(--muted);
-      }
-
-      .stats {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.35rem 0.9rem;
-        margin-block-start: 0.5rem;
-        padding-block-start: 0.6rem;
-        border-block-start: var(--rule);
-        font-size: 0.8rem;
-        font-weight: 700;
-        color: var(--muted);
-        font-variant-numeric: tabular-nums;
-      }
-
-      .stats span {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.3rem;
-      }
-
-      .stats svg {
-        inline-size: 14px;
-        block-size: 14px;
-      }
-
-      .stats bdi {
-        color: var(--ink);
-      }
-
-      .hint {
-        margin: 0.4rem 1rem 0;
-        padding: 0.5rem 0.75rem;
-        font-size: 0.78rem;
-        font-weight: 700;
-        border-radius: 10px;
-        color: var(--ink);
-        background: #f7efd9;
-      }
-
-      .card[data-status='draft'] .hint,
-      .card[data-status='archived'] .hint {
-        background: var(--stone-warm);
-        color: var(--muted-warm);
-      }
-
-      /* ---------- Card actions ----------
-         Icon-free on purpose. Hebrew labels are short, an icon set is another
-         thing to get right in RTL (CLAUDE.md §4.3), and a row of glyphs an
-         agent has to decode is slower than words they can read. */
-
-      .acts {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.35rem;
-        padding: 0.7rem 0.8rem 0.9rem;
-      }
-
-      .act {
-        min-block-size: 36px;
-        padding: 0.35rem 0.8rem;
-        font: inherit;
-        font-size: 0.82rem;
-        font-weight: 700;
-        color: var(--ink);
-        background: var(--card);
-        border: var(--rule);
-        border-radius: 999px;
-        cursor: pointer;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        transition:
-          background var(--press) var(--ease-out),
-          border-color var(--press) var(--ease-out);
-      }
-
-      .act:hover {
-        background: var(--stone-warm);
-      }
-
-      .act.primary {
-        background: var(--ink-deep);
-        color: var(--plaster);
-        border-color: var(--ink-deep);
-      }
-
-      .act.primary:hover {
-        background: var(--olive);
-        border-color: var(--olive);
-      }
-
-      .act:disabled {
-        opacity: 0.45;
-        cursor: default;
-      }
-
-      /* ---------- Detail panel ---------- */
-
-      .detail {
-        display: none;
-      }
-
-      @media (min-width: 1100px) {
-        .workspace {
-          grid-template-columns: minmax(0, 1fr) 25rem;
-        }
-
-        .detail {
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-          position: sticky;
-          inset-block-start: 1.2rem;
-          padding: 0.8rem 0.8rem 1.2rem;
-          background: var(--card);
-          border-radius: 24px;
-          box-shadow: 0 30px 60px -40px rgba(17, 18, 8, 0.45);
-        }
-
-        .detail[hidden] {
-          display: none;
-        }
-      }
-
-      .d-pics {
-        display: grid;
-        grid-template-columns: 2fr 1fr;
-        grid-template-rows: repeat(2, 5.2rem);
-        gap: 0.45rem;
-      }
-
-      .d-pics img {
-        inline-size: 100%;
-        block-size: 100%;
-        object-fit: cover;
-        border-radius: 14px;
-        display: block;
-        background: var(--stone-warm);
-      }
-
-      .d-pics img:first-child {
-        grid-row: 1 / 3;
-      }
-
-      .d-pics[data-n='1'] {
-        grid-template-columns: 1fr;
-      }
-
-      .d-head {
-        padding-inline: 0.4rem;
-      }
-
-      .d-head h2 {
-        font-family: 'Frank Ruhl Libre', serif;
-        font-weight: 700;
-        font-size: 1.35rem;
-        line-height: 1.2;
-      }
-
-      .d-head .price {
-        font-size: 1.6rem;
-        margin-block-start: 0.2rem;
-      }
-
-      .d-stats {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        margin-inline: 0.4rem;
-        border-block: var(--rule);
-      }
-
-      .d-stats div {
-        display: flex;
-        flex-direction: column-reverse;
-        padding: 0.8rem 0.2rem;
-      }
-
-      .d-stats div + div {
-        border-inline-start: var(--rule);
-        padding-inline-start: 0.8rem;
-      }
-
-      .d-stats dd {
-        margin: 0;
-        font-family: 'Frank Ruhl Libre', serif;
-        font-size: 1.7rem;
-        line-height: 1.1;
-        font-variant-numeric: tabular-nums;
-      }
-
-      .d-stats dt {
-        font-size: var(--t-label);
-        font-weight: 700;
-        color: var(--muted);
-      }
-
-      .d-note {
-        padding-inline: 0.4rem;
-        font-size: 0.9rem;
-        color: var(--muted);
-      }
-
-      /* ---------- Chart ----------
-         One series — views per day — so no legend: the title names it.
-         Bars at most 24px, 4px rounded tops, a 2px gap, one hairline
-         baseline. Oldest day on the start side, which in Hebrew is the right:
-         time reads the way the page does. */
-
-      .chart {
-        padding-inline: 0.4rem;
-      }
-
-      .chart h3 {
-        font-size: var(--t-label);
-        font-weight: 800;
-        color: var(--muted);
-        margin-block-end: 0.6rem;
-      }
-
-      .bars {
-        position: relative;
-        display: flex;
-        align-items: flex-end;
-        gap: 2px;
-        block-size: 9rem;
-        padding-block-start: 1.4rem;
-        border-block-end: 1px solid var(--stone);
-        list-style: none;
-        margin: 0;
-        padding-inline: 0;
-      }
-
-      .bars li {
-        flex: 1 1 0;
-        display: flex;
-        justify-content: center;
-        align-items: flex-end;
-        block-size: 100%;
-        position: relative;
-        cursor: default;
-      }
-
-      .bars .b {
-        inline-size: min(100%, 24px);
-        block-size: var(--h, 0%);
-        min-block-size: 2px;
-        border-radius: 4px 4px 0 0;
-        background: color-mix(in srgb, var(--olive) 34%, #fff);
-        transform-origin: bottom;
-        transition: background var(--press) var(--ease-out);
-      }
-
-      .bars li.is-last .b,
-      .bars li:hover .b {
-        background: var(--olive);
-      }
-
-      .bars .cap {
-        position: absolute;
-        inset-block-end: calc(var(--h, 0%) + 0.3rem);
-        font-size: 0.72rem;
-        font-weight: 800;
-        color: var(--ink);
-        font-variant-numeric: tabular-nums;
-        white-space: nowrap;
-      }
-
-      .axis {
-        display: flex;
-        justify-content: space-between;
-        margin-block-start: 0.35rem;
-        font-size: 0.72rem;
-        font-weight: 700;
-        color: var(--muted);
-        font-variant-numeric: tabular-nums;
-      }
-
-      /* Centred over its bar; the outermost bars anchor theirs to the
-         chart's edge so a tooltip never spills past the panel. */
-      .tip {
-        position: absolute;
-        inset-block-end: calc(100% + 0.4rem);
-        inset-inline-start: 50%;
-        z-index: 3;
-        padding: 0.35rem 0.6rem;
-        border-radius: 8px;
-        background: var(--ink-deep);
-        color: var(--plaster);
-        font-size: 0.75rem;
-        font-weight: 700;
-        white-space: nowrap;
-        pointer-events: none;
-        /* Half its own width back towards the start edge, which centres it
-           on the bar. --dir makes that direction follow the page's. */
-        transform: translateX(calc(var(--dir) * -50%));
-      }
-
-      .tip.at-start {
-        inset-inline-start: 0;
-        transform: none;
-      }
-
-      .tip.at-end {
-        inset-inline-start: auto;
-        inset-inline-end: 0;
-        transform: none;
-      }
-
-      .table-view {
-        margin-block-start: 0.6rem;
-        font-size: 0.82rem;
-      }
-
-      .table-view summary {
-        cursor: pointer;
-        font-weight: 700;
-        color: var(--muted);
-      }
-
-      .table-view table {
-        inline-size: 100%;
-        border-collapse: collapse;
-        margin-block-start: 0.4rem;
-        font-variant-numeric: tabular-nums;
-      }
-
-      .table-view th,
-      .table-view td {
-        text-align: start;
-        padding: 0.2rem 0.3rem;
-        border-block-end: var(--rule);
-      }
-
-      .linkbox {
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-        margin-inline: 0.4rem;
-        padding-block: 0.45rem;
-        padding-inline-start: 0.9rem;
-        padding-inline-end: 0.45rem;
-        background: var(--stone-warm);
-        border-radius: 999px;
-      }
-
-      .linkbox span {
-        font-size: var(--t-label);
-        font-weight: 800;
-        color: var(--muted-warm);
-      }
-
-      .linkbox bdi {
-        flex: 1 1 auto;
-        min-inline-size: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        font-weight: 700;
-        font-size: 0.9rem;
-      }
-
-      .linkbox .act {
-        white-space: nowrap;
-      }
-
-      .d-acts {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 0.5rem;
-        margin-inline: 0.4rem;
-      }
-
-      .d-acts .act {
-        justify-content: center;
-        min-block-size: 46px;
-        font-size: 0.9rem;
-      }
-
-      .d-acts .act.primary {
-        grid-column: 1 / -1;
-      }
-
-      /* ---------- States ---------- */
-
-      .state {
-        padding-block: 3.5rem;
-        text-align: center;
-        color: var(--muted-warm);
-      }
-
-      .state b {
-        display: block;
-        font-family: 'Frank Ruhl Libre', serif;
-        font-weight: 700;
-        font-size: 1.5rem;
-        color: var(--ink);
-        margin-block-end: 0.4rem;
-      }
-
-      .state a {
-        color: var(--olive);
-        font-weight: 700;
-      }
-
-      /* Announces without moving the page: it is positioned, not in flow. */
-      .say {
-        position: fixed;
-        inset-block-end: 1.25rem;
-        inset-inline: 0;
-        margin-inline: auto;
-        inline-size: fit-content;
-        max-inline-size: 90vw;
-        padding: 0.7rem 1.2rem;
-        background: var(--ink-deep);
-        color: var(--plaster);
-        font-size: 0.9rem;
-        font-weight: 700;
-        border-radius: 999px;
-        box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.6);
-        z-index: 50;
-      }
-
-      .say[data-tone='bad'] {
-        background: #8c2f1e;
-      }
-
-      :focus-visible {
-        outline: 2px solid var(--olive);
-        outline-offset: 3px;
-      }
-
-      .bar :focus-visible {
-        outline-color: var(--plaster);
-      }
-
-      .skip {
-        position: absolute;
-        inset-inline-start: 1rem;
-        inset-block-start: -3rem;
-        padding: 0.5rem 1rem;
-        background: var(--ink-deep);
-        color: var(--plaster);
-        z-index: 60;
-      }
-
-      .skip:focus {
-        inset-block-start: 1rem;
-      }
-
-      .dash-foot {
-        padding-block: 1.5rem 2.5rem;
-        font-size: var(--t-label);
-        color: var(--muted-warm);
-        text-align: center;
-      }
-
-      .dash-foot a {
-        color: inherit;
-      }
-
-      /* ---------- Motion ----------
-         Tiles and cards settle in; numbers count up to the value already in
-         the markup; the chart's bars grow from the baseline. None of it runs
-         for a reader who asked for less motion. */
-
-      @media (prefers-reduced-motion: no-preference) {
-        .kpi,
-        .card {
-          animation: dash-in 0.7s var(--ease-out) both;
-          animation-delay: calc(var(--i, 0) * 70ms);
-        }
-
-        .spark path.line {
-          stroke-dasharray: 400;
-          animation: dash-draw 1.6s var(--ease-out) 0.2s both;
-        }
-
-        .bars .b {
-          animation: dash-grow 0.8s var(--ease-out) both;
-          animation-delay: calc(var(--i, 0) * 22ms);
-        }
-
-        .detail.is-new {
-          animation: dash-in 0.5s var(--ease-out) both;
-        }
-
-        @keyframes dash-in {
-          from {
-            opacity: 0;
-            transform: translateY(14px);
-          }
-        }
-
-        @keyframes dash-draw {
-          from {
-            stroke-dashoffset: 400;
-          }
-          to {
-            stroke-dashoffset: 0;
-          }
-        }
-
-        @keyframes dash-grow {
-          from {
-            transform: scaleY(0);
-          }
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <a class="skip" href="#main">{t('a11y.skip')}</a>
-
-    <header class="bar">
-      <div class="shell">
-        <BrandMark />
-        <nav>
-          <a href="/me/">{t('agent.editDetails')}</a>
-          <a id="nav-admin" href="/admin/" hidden>{t('admin.link')}</a>
-          <a class="cta" href="/new/?fresh=1">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
-            {t('dash.new')}
-          </a>
-        </nav>
+<Site title={`${t('dash.title')} · ${t('common.brand')}`} robots="noindex,nofollow" account={false}>
+  <Fragment slot="nav">
+    <a class="site-link" href="/me/">{t('agent.editDetails')}</a>
+    <a class="site-link" id="nav-admin" href="/admin/" hidden>{t('admin.link')}</a>
+    <a class="site-btn site-btn-primary dash-new" href="/new/?fresh=1">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+      {t('dash.new')}
+    </a>
+  </Fragment>
+
+  <div class="dash shell">
+    <div class="head">
+      <div>
+        <p class="hello" id="hello" hidden></p>
+        <h1>{t('dash.title')}</h1>
+        <p class="lead" id="lead">{t('dash.lead')}</p>
       </div>
-    </header>
+    </div>
 
-    <main id="main" class="shell">
-      <div class="head">
-        <div>
-          <p class="hello" id="hello" hidden></p>
-          <h1>{t('dash.title')}</h1>
-          <p class="lead" id="lead">{t('dash.lead')}</p>
-        </div>
+    {/*
+      FIRST-RUN ONBOARDING. Shown only while the profile is genuinely
+      untouched (isProfileEmpty), not while it is merely incomplete: nagging
+      somebody who has already been to the page is how a banner gets
+      ignored.
+    */}
+    <div class="onboard" id="onboard" hidden>
+      <div>
+        <b>{t('dash.onboardTitle')}</b>
+        <p>{t('dash.onboardBody')}</p>
       </div>
+      <a class="cta dark" href="/me/?welcome">{t('dash.onboardCta')}</a>
+    </div>
 
-      {/*
-        FIRST-RUN ONBOARDING. Shown only while the profile is genuinely
-        untouched (isProfileEmpty), not while it is merely incomplete: nagging
-        somebody who has already been to the page is how a banner gets
-        ignored.
-      */}
-      <div class="onboard" id="onboard" hidden>
-        <div>
-          <b>{t('dash.onboardTitle')}</b>
-          <p>{t('dash.onboardBody')}</p>
-        </div>
-        <a class="cta dark" href="/me/">{t('dash.onboardCta')}</a>
+    {/*
+      The four tiles. In the markup from the start and filled by script;
+      hidden until there is at least one listing, because a zero on every
+      tile is not information.
+    */}
+    <section class="kpis" id="kpis" aria-label={t('dash.title')} hidden>
+      <div class="kpi" style="--i:0">
+        <span class="kpi-lbl">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>
+          {t('dash.kpiViews')} · <span data-window></span>
+        </span>
+        <span class="kpi-num"><bdi id="k-views">0</bdi></span>
+        <span class="kpi-note plain">{t('dash.kpiViewsNote')}</span>
+        <svg class="spark" id="s-views" viewBox="0 0 200 44" aria-hidden="true" data-empty></svg>
       </div>
-
-      {/*
-        The four tiles. In the markup from the start and filled by script;
-        hidden until there is at least one listing, because a zero on every
-        tile is not information.
-      */}
-      <section class="kpis" id="kpis" aria-label={t('dash.title')} hidden>
-        <div class="kpi" style="--i:0">
-          <span class="kpi-lbl">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>
-            {t('dash.kpiViews')} · <span data-window></span>
-          </span>
-          <span class="kpi-num"><bdi id="k-views">0</bdi></span>
-          <span class="kpi-note plain">{t('dash.kpiViewsNote')}</span>
-          <svg class="spark" id="s-views" viewBox="0 0 200 44" aria-hidden="true" data-empty></svg>
-        </div>
-        <div class="kpi" style="--i:1">
-          <span class="kpi-lbl">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7A2.5 2.5 0 0 1 17.5 16H9l-4 3.2A.8.8 0 0 1 4 18.6V6.5Z"/></svg>
-            {t('dash.kpiTaps')} · <span data-window></span>
-          </span>
-          <span class="kpi-num"><bdi id="k-taps">0</bdi></span>
-          <span class="kpi-note">{t('dash.kpiTapsNote')}</span>
-          <svg class="spark" id="s-taps" viewBox="0 0 200 44" aria-hidden="true" data-empty></svg>
-        </div>
-        <div class="kpi" style="--i:2">
-          <span class="kpi-lbl">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M7.5 9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM16.5 18a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-            {t('dash.kpiRate')}
-          </span>
-          <span class="kpi-num"><bdi id="k-rate">—</bdi></span>
-          <span class="kpi-note plain" id="k-rate-note">{t('dash.kpiRateNote')}</span>
-        </div>
-        <div class="kpi" style="--i:3">
-          <span class="kpi-lbl">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
-            {t('dash.kpiLive')}
-          </span>
-          <span class="kpi-num"><bdi id="k-live">0</bdi><small id="k-of"></small></span>
-          <span class="kpi-note plain" id="k-live-note"></span>
-          <div class="meter" aria-hidden="true"><span id="k-meter"></span></div>
-        </div>
-      </section>
-
-      {/*
-        Present from the start, hidden by script. The filter is a radio group
-        so the browser owns the "one of five" behaviour; the script only reads
-        which one is checked.
-      */}
-      <div class="filters" id="filters" hidden>
-        <input type="radio" name="filter" id="f-all" value="all" checked />
-        <label for="f-all">{t('dash.filterAll')}</label>
-        <input type="radio" name="filter" id="f-published" value="published" />
-        <label for="f-published">{t('dash.filterPublished')}</label>
-        <input type="radio" name="filter" id="f-draft" value="draft" />
-        <label for="f-draft">{t('dash.filterDraft')}</label>
-        <input type="radio" name="filter" id="f-sold" value="sold" />
-        <label for="f-sold">{t('dash.filterSold')}</label>
-        <input type="radio" name="filter" id="f-archived" value="archived" />
-        <label for="f-archived">{t('dash.filterArchived')}</label>
-        <span class="count" id="count"></span>
+      <div class="kpi" style="--i:1">
+        <span class="kpi-lbl">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7A2.5 2.5 0 0 1 17.5 16H9l-4 3.2A.8.8 0 0 1 4 18.6V6.5Z"/></svg>
+          {t('dash.kpiTaps')} · <span data-window></span>
+        </span>
+        <span class="kpi-num"><bdi id="k-taps">0</bdi></span>
+        <span class="kpi-note">{t('dash.kpiTapsNote')}</span>
+        <svg class="spark" id="s-taps" viewBox="0 0 200 44" aria-hidden="true" data-empty></svg>
       </div>
-
-      <p class="state" id="loading">{t('common.loading')}</p>
-      <div class="state" id="anon" hidden>
-        <b>{t('dash.signedOut')}</b>
-        <a href="/enter/">{t('dash.signIn')}</a>
+      <div class="kpi" style="--i:2">
+        <span class="kpi-lbl">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M7.5 9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM16.5 18a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          {t('dash.kpiRate')}
+        </span>
+        <span class="kpi-num"><bdi id="k-rate">—</bdi></span>
+        <span class="kpi-note plain" id="k-rate-note">{t('dash.kpiRateNote')}</span>
       </div>
-      <div class="state" id="empty" hidden>
-        <b>{t('dash.emptyTitle')}</b>
-        {t('dash.emptyBody')} <a href="/new/?fresh=1">{t('dash.new')}</a>
+      <div class="kpi" style="--i:3">
+        <span class="kpi-lbl">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+          {t('dash.kpiLive')}
+        </span>
+        <span class="kpi-num"><bdi id="k-live">0</bdi><small id="k-of"></small></span>
+        <span class="kpi-note plain" id="k-live-note"></span>
+        <div class="meter" aria-hidden="true"><span id="k-meter"></span></div>
       </div>
-      <p class="state" id="none" hidden>{t('dash.emptyFiltered')}</p>
-      <p class="state" id="failed" hidden>{t('dash.failed')}</p>
-
-      <div class="workspace" id="workspace" hidden>
-        <ul class="grid" id="grid"></ul>
-        <aside class="detail" id="detail" aria-live="polite" hidden></aside>
+      <div class="kpi is-wide" id="k-read-tile" style="--i:4" hidden>
+        <span class="kpi-lbl">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v13M6 11l6 6 6-6M5 20h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          {t('dash.kpiRead')} · <span data-window></span>
+        </span>
+        <span class="kpi-num"><bdi id="k-read">—</bdi></span>
+        <span class="kpi-note plain">{t('dash.kpiReadNote')}</span>
       </div>
-    </main>
+    </section>
 
-    <footer class="dash-foot">
-      <div class="shell">
-        <a href="/about/">{t('legal.about')}</a>
-        {' · '}
-        <a href="/contact/">{t('legal.contact')}</a>
-        {' · '}
-        <a href="/legal/accessibility/">{t('legal.accessibility')}</a>
-        {' · '}
-        <a href="/legal/terms/">{t('legal.terms')}</a>
-        {' · '}
-        <a href="/legal/privacy/">{t('legal.privacy')}</a>
-      </div>
-    </footer>
+    {/*
+      Present from the start, hidden by script. The filter is a radio group
+      so the browser owns the "one of five" behaviour; the script only reads
+      which one is checked.
+    */}
+    <div class="filters" id="filters" hidden>
+      <input type="radio" name="filter" id="f-all" value="all" checked />
+      <label for="f-all">{t('dash.filterAll')}</label>
+      <input type="radio" name="filter" id="f-published" value="published" />
+      <label for="f-published">{t('dash.filterPublished')}</label>
+      <input type="radio" name="filter" id="f-draft" value="draft" />
+      <label for="f-draft">{t('dash.filterDraft')}</label>
+      <input type="radio" name="filter" id="f-sold" value="sold" />
+      <label for="f-sold">{t('dash.filterSold')}</label>
+      <input type="radio" name="filter" id="f-archived" value="archived" />
+      <label for="f-archived">{t('dash.filterArchived')}</label>
+      <span class="count" id="count"></span>
+    </div>
 
-    <p class="say" id="say" role="status" aria-live="polite" hidden></p>
+    <p class="state" id="loading">{t('common.loading')}</p>
+    <div class="state" id="anon" hidden>
+      <b>{t('dash.signedOut')}</b>
+      <a href="/enter/">{t('dash.signIn')}</a>
+    </div>
+    <div class="state" id="empty" hidden>
+      <b>{t('dash.emptyTitle')}</b>
+      {t('dash.emptyBody')} <a href="/new/?fresh=1">{t('dash.new')}</a>
+    </div>
+    <p class="state" id="none" hidden>{t('dash.emptyFiltered')}</p>
+    <p class="state" id="failed" hidden>{t('dash.failed')}</p>
 
-    <script>
+    <div class="workspace" id="workspace" hidden>
+      <ul class="grid" id="grid"></ul>
+      <aside class="detail" id="detail" aria-live="polite" hidden></aside>
+    </div>
+  </div>
+
+  <p class="say dash" id="say" role="status" aria-live="polite" hidden></p>
+
+  <script>
       import { isProfileEmpty } from '@/features/agents/profile';
       import {
         contactRate,
         daysSincePublished,
         lastDays,
+        readRate,
+        readThrough,
         series,
         totals,
         type DailyRow,
         type DayPoint,
+        type ReadRow,
       } from '@/features/analytics/dashboard-stats';
       import { formatValue, parts, t, type Values } from '../lib/i18n';
       import { loadProfile } from '../lib/profile';
@@ -1304,6 +259,8 @@ import '../motion/view-transitions.css';
       let rows: Row[] = [];
       /** Per-day rows, or undefined when the daily view could not be read. */
       let daily: DailyRow[] | undefined;
+      /** Read-through rows (0030), or undefined where that column is missing. */
+      let reads: ReadRow[] | undefined;
       let chosen: string | undefined;
 
       const statusLabel = (status: string) =>
@@ -1525,6 +482,19 @@ import '../motion/view-transitions.css';
         );
         const share = kept.length > 0 ? Math.round((live.length / kept.length) * 100) : 0;
         $('k-meter').style.setProperty('--share', `${share}%`);
+
+        const readTile = $('k-read-tile');
+        if (reads) {
+          const own = reads.filter((row) => liveIds.has(row.listing_id));
+          const through = readThrough(own, windowDays);
+          const rate = readRate(through.views, through.reads);
+          $('k-read').textContent = rate === undefined ? '—' : `${rate}%`;
+          readTile.hidden = false;
+          $('kpis').classList.add('has-read');
+        } else {
+          readTile.hidden = true;
+          $('kpis').classList.remove('has-read');
+        }
 
         $('lead').replaceChildren(
           ...sentence(daily ? 'dash.leadLive' : 'dash.leadLiveAll', { live: live.length, taps }),
@@ -1775,6 +745,15 @@ import '../motion/view-transitions.css';
         detail.hidden = false;
         detail.classList.toggle('is-new', fresh);
 
+        // Only seen on a phone, where the panel is a sheet over the page.
+        const close = document.createElement('button');
+        close.type = 'button';
+        close.className = 'd-close';
+        close.setAttribute('aria-label', t('dash.close'));
+        close.append(icon('M6 6l12 12M18 6 6 18'));
+        close.addEventListener('click', closeSheet);
+        detail.append(close);
+
         const pics = document.createElement('div');
         pics.className = 'd-pics';
         const images = [row.media?.cover, ...(row.media?.gallery ?? [])]
@@ -1818,11 +797,18 @@ import '../motion/view-transitions.css';
           const rate = contactRate(views, taps);
           const stats = document.createElement('dl');
           stats.className = 'd-stats';
-          for (const [label, value] of [
+          const cells: [string, string][] = [
             [t('dash.views'), num(views)],
             [t('dash.waTaps'), num(taps)],
             [t('dash.rateShort'), rate === undefined ? '—' : `${rate.toFixed(1)}%`],
-          ] as const) {
+          ];
+          if (reads && row.id) {
+            const through = readThrough(reads, windowDays, row.id);
+            const read = readRate(through.views, through.reads);
+            cells.push([t('dash.readShort'), read === undefined ? '—' : `${read}%`]);
+          }
+          stats.style.setProperty('--n', String(cells.length));
+          for (const [label, value] of cells) {
             const cell = document.createElement('div');
             const dt = document.createElement('dt');
             dt.textContent = label;
@@ -1841,22 +827,10 @@ import '../motion/view-transitions.css';
           }
         }
 
-        if (row.status === 'published') {
-          const box = document.createElement('div');
-          box.className = 'linkbox';
-          const label = document.createElement('span');
-          label.textContent = t('dash.linkLabel');
-          const url = document.createElement('bdi');
-          url.textContent = publicUrl(row.slug).replace(/^https?:\/\//, '');
-          box.append(label, url, button(t('dash.copyLink'), 'act primary', () => void copy(publicUrl(row.slug))));
-          detail.append(box);
-        }
+        if (row.status === 'published') detail.append(studio(row));
 
         const acts = document.createElement('div');
         acts.className = 'd-acts';
-        if (row.status === 'published') {
-          acts.append(link(t('dash.share'), 'act primary', `/a/${row.slug}/share/`));
-        }
         acts.append(link(t('dash.edit'), 'act', `/new/?id=${encodeURIComponent(row.slug)}`));
         if (row.status === 'published') {
           acts.append(button(t('dash.markSold'), 'act', (self) => void markSold(row.slug, self)));
@@ -1864,12 +838,128 @@ import '../motion/view-transitions.css';
         detail.append(acts);
       };
 
+      // ------------------------------------------------------------------
+      // Share Studio
+      // ------------------------------------------------------------------
+
+      /**
+       * Everything that leaves the dashboard, in one place: the card WhatsApp
+       * will draw, the link, the ready message (the share kit page) and a QR
+       * for a flyer or a sign. The QR encoder is imported only here, so the
+       * dashboard's first load carries none of it.
+       */
+      const studio = (row: Row) => {
+        const box = document.createElement('section');
+        box.className = 'studio';
+        const heading = document.createElement('h3');
+        heading.textContent = t('dash.studio');
+        box.append(heading);
+
+        const card = document.createElement('div');
+        card.className = 'studio-card';
+        const cover = row.media?.cover?.url;
+        if (cover) {
+          const image = document.createElement('img');
+          image.src = cover;
+          image.alt = '';
+          image.loading = 'lazy';
+          card.append(image);
+        }
+        const text = document.createElement('div');
+        const title = document.createElement('b');
+        title.append(document.createTextNode(`${flatTitle(row)} · `));
+        const price = document.createElement('bdi');
+        price.textContent = money.format(Number(row.price ?? 0));
+        title.append(price);
+        const domain = document.createElement('small');
+        domain.dir = 'ltr';
+        domain.textContent = window.location.host;
+        text.append(title, domain);
+        card.append(text);
+        const cap = document.createElement('p');
+        cap.className = 'studio-cap';
+        cap.textContent = t('dash.studioCard');
+        box.append(card, cap);
+
+        const linkBox = document.createElement('div');
+        linkBox.className = 'linkbox';
+        const label = document.createElement('span');
+        label.textContent = t('dash.linkLabel');
+        const url = document.createElement('bdi');
+        url.textContent = publicUrl(row.slug).replace(/^https?:\/\//, '');
+        linkBox.append(label, url, button(t('dash.copyLink'), 'act primary', () => void copy(publicUrl(row.slug))));
+        box.append(linkBox);
+
+        const qr = document.createElement('div');
+        qr.className = 'studio-qr';
+        const slot = document.createElement('span');
+        slot.className = 'qr-slot';
+        slot.setAttribute('aria-hidden', 'true');
+        const side = document.createElement('div');
+        const about = document.createElement('span');
+        about.textContent = t('dash.studioQr');
+        side.append(about);
+        qr.append(slot, side);
+        box.append(qr);
+
+        void import('../lib/qr')
+          .then(({ qrDrawing, qrSvgFile }) => {
+            const target = publicUrl(row.slug);
+            const { box: size, d } = qrDrawing(target);
+            const svg = document.createElementNS(svgNS, 'svg');
+            svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
+            svg.setAttribute('role', 'img');
+            svg.setAttribute('aria-label', t('dash.studioQr'));
+            svg.setAttribute('shape-rendering', 'crispEdges');
+            const paper = document.createElementNS(svgNS, 'rect');
+            paper.setAttribute('width', String(size));
+            paper.setAttribute('height', String(size));
+            paper.setAttribute('fill', '#ffffff');
+            const ink = document.createElementNS(svgNS, 'path');
+            ink.setAttribute('d', d);
+            ink.setAttribute('fill', '#0b0c0a');
+            svg.append(paper, ink);
+            slot.replaceWith(svg);
+
+            const file = new Blob([qrSvgFile(target)], { type: 'image/svg+xml' });
+            const save = document.createElement('a');
+            save.className = 'act';
+            save.href = URL.createObjectURL(file);
+            save.download = `hasivuv-${row.slug}-qr.svg`;
+            save.textContent = t('dash.qrDownload');
+            side.append(save);
+          })
+          .catch(() => qr.remove());
+
+        const acts = document.createElement('div');
+        acts.className = 'd-acts';
+        acts.append(link(t('dash.studioMessage'), 'act primary', `/a/${row.slug}/share/`));
+        box.append(acts);
+        return box;
+      };
+
+      const closeSheet = () => {
+        detail.classList.remove('is-open');
+        document.documentElement.classList.remove('dash-sheet');
+        grid.querySelector<HTMLElement>(`.card[data-slug="${CSS.escape(chosen ?? '')}"]`)?.focus();
+      };
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && detail.classList.contains('is-open')) closeSheet();
+      });
+
       const choose = (slug: string) => {
         chosen = slug;
         for (const node of grid.querySelectorAll<HTMLElement>('.card')) {
           node.classList.toggle('is-chosen', node.dataset.slug === slug);
         }
         paintDetail(true);
+        // A phone gets the panel as a sheet; a wide screen already shows it.
+        if (!matchMedia('(min-width: 1100px)').matches) {
+          detail.classList.add('is-open');
+          document.documentElement.classList.add('dash-sheet');
+          detail.querySelector<HTMLElement>('.d-close')?.focus();
+        }
       };
 
       /** Renders whatever the current filter selects. */
@@ -1923,12 +1013,18 @@ import '../motion/view-transitions.css';
         if (error) return show('failed');
         rows = (data ?? []) as Row[];
 
-        const [counts, perDay] = await Promise.all([
+        const [counts, perDay, perDayReads] = await Promise.all([
           client.from('listing_event_counts').select('listing_id, views, wa_taps'),
           // The same RLS: listing_event_daily is security_invoker (0029).
           client
             .from('listing_event_daily')
             .select('listing_id, day, views, wa_taps')
+            .gte('day', windowDays[0] ?? ''),
+          // Its own request: a database without 0030 answers this with an
+          // error, and only the read-through numbers go missing.
+          client
+            .from('listing_event_daily')
+            .select('listing_id, day, views, read_to_agent')
             .gte('day', windowDays[0] ?? ''),
         ]);
 
@@ -1947,6 +1043,7 @@ import '../motion/view-transitions.css';
         // Unavailable (0029 not applied, or an error) leaves daily undefined:
         // the tiles then say "since publishing" and the charts are omitted.
         daily = perDay.error ? undefined : ((perDay.data ?? []) as DailyRow[]);
+        reads = perDayReads.error ? undefined : ((perDayReads.data ?? []) as ReadRow[]);
 
         /*
          * The first-run prompt and the greeting, decided by the profile.
@@ -1977,5 +1074,4 @@ import '../motion/view-transitions.css';
       // state they can act on instead of a page that never resolves.
       void load().catch(() => show('failed'));
     </script>
-  </body>
-</html>
+</Site>

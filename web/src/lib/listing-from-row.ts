@@ -1,5 +1,4 @@
 import {
-  TEMPLATE_IDS,
   type Fact,
   type Listing,
   type ListingStatus,
@@ -13,6 +12,7 @@ import { descriptionOrArea } from '@/features/listings/neighborhood-note';
 import { OSM_ATTRIBUTION, type AreaPlace, type AreaPlaces } from '@/features/listings/area-note';
 import { applyPicks, rankEveryday } from '@/features/listings/place-rank';
 import { isPhotoRoom } from '@/features/listings/photo-rooms';
+import { resolveTemplateId } from '@/features/templates/manifest';
 
 import { listingBySlug } from './listings';
 import { supabaseConfigured, supabasePublic } from './supabase';
@@ -198,10 +198,9 @@ function asMedia(value: unknown): Media | undefined {
   };
 }
 
+/** Retired ids render as their successor (cinema → aurora), never as the default. */
 function asTemplate(value: string): TemplateId {
-  return (TEMPLATE_IDS as readonly string[]).includes(value)
-    ? (value as TemplateId)
-    : 'agency';
+  return resolveTemplateId(value);
 }
 
 /**

@@ -31,6 +31,7 @@ import {
   showListingMap,
   whatsappPrefill,
 } from '@/features/listings/control-surface';
+import { templateFor, templateSpec } from '@/features/templates/manifest';
 import { toCells } from '../lib/facts';
 import SectionLabel from './SectionLabel.astro';
 
@@ -56,7 +57,11 @@ interface Props {
  * only category lookup on the page, which is what keeps a fifth divergence
  * from appearing by accident.
  */
-const { listing, robots } = Astro.props;
+const { listing: given, robots } = Astro.props;
+// A template drawn for the other category (Showroom on a flat) is drawn as
+// its fallback instead — here, once, so BaseListing's data-template and every
+// Stage below agree on what the page actually is.
+const listing: Listing = { ...given, template: templateFor(given.template, given.category) };
 const presentation = CATEGORY_PRESENTATION[listing.category];
 
 const paragraphs = listing.description.split('\n\n');
@@ -109,15 +114,14 @@ const homeLabel = listing.category === 'property' ? t('listing.section.home') : 
 const shareCells = toCells(listing.category, listing.facts, listing.audience);
 
 /**
- * gallery, cinema and showcase compose their own first screen (Stage) from
- * the same data; the other seven keep the shared hero and restyle it. The
- * choice rides on the TEMPLATE, never on the category, so the property and
- * vehicle pages still differ only in the four allowed ways.
+ * gallery, showcase, aurora and blueprint compose their own first screen
+ * (Stage) from the same data; the rest keep the shared hero and restyle it.
+ * The choice rides on the TEMPLATE (its manifest entry), never on the
+ * category, so the property and vehicle pages still differ only in the four
+ * allowed ways.
  */
-const composed =
-  listing.template === 'gallery' || listing.template === 'cinema' || listing.template === 'showcase'
-    ? listing.template
-    : undefined;
+const spec = templateSpec(listing.template);
+const composed = spec.composed;
 /*
  * The stage's big numerals. Numbers first: a row of numerals reads as a spec
  * sheet, and "יש" set at 3rem does not; word-valued cells only fill in when
@@ -129,7 +133,7 @@ const presentCells = shareCells.filter((cell) => !cell.absent);
 const stageCells = composed
   ? [...presentCells.filter((cell) => cell.bdi), ...presentCells.filter((cell) => !cell.bdi)].slice(
       0,
-      composed === 'showcase' ? 3 : 4,
+      spec.keyCells ?? 4,
     )
   : [];
 const stageKeys = stageCells.filter((cell) => !cell.verified).map((cell) => cell.key);
@@ -241,7 +245,7 @@ const shareHref = whatsappShareUrl(
   />
   <MonthlyCost facts={listing.facts} />
 
-  <section class="reveal">
+  <section class="reveal about">
     <SectionLabel text={homeLabel} />
     <h2>{heading}</h2>
     {paragraphs[0] ? <p><Prose text={paragraphs[0]} /></p> : null}

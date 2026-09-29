@@ -668,6 +668,9 @@ export type ListingStatus = 'draft' | 'published' | 'sold' | 'archived';
  * anything else need to enumerate them at runtime. draft.ts previously
  * carried its own hand-written copy of this list, which is exactly the kind
  * of second definition that agrees right up until someone adds a template.
+ *
+ * What each id means to the page is in src/features/templates/manifest.ts,
+ * along with the aliases for ids that were retired (cinema → aurora).
  */
 export const TEMPLATE_IDS = [
   'agency',
@@ -678,8 +681,19 @@ export const TEMPLATE_IDS = [
   'linen',
   'studio',
   'gallery',
-  'cinema',
   'showcase',
+  'aurora',
+  'blueprint',
+  'monolith',
+  'atelier',
+  'glass',
+  'showroom',
+  'heliograph',
+  'walk',
+  'poster',
+  'zine',
+  'dossier',
+  'ticket',
 ] as const;
 
 export type TemplateId = (typeof TEMPLATE_IDS)[number];

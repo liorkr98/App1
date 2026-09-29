@@ -1,0 +1,53 @@
+---
+import { clusters } from '@/features/motion/clusters';
+import { splitBdi } from '../lib/format';
+
+interface Props {
+  text: string;
+  /** Stagger offset, so a second line continues the first line's cascade. */
+  start?: number;
+}
+
+/**
+ * M2 · letter cascade, split at build time.
+ *
+ * The same rules as web/src/motion/split.ts, done on the server so the page
+ * needs no script for it and the first paint is already split:
+ *   - one unbreakable .ls-word per word, real spaces between, so a line
+ *     never wraps inside a word;
+ *   - marks ride on their letter (clusters());
+ *   - numbers and Latin runs stay inside <bdi> (splitBdi, as Prose does) —
+ *     the bidi gate reads the built HTML and a split number is still a
+ *     number.
+ * The caller puts the plain text in aria-label and this markup is hidden
+ * from screen readers, which hear the words, not a spelling.
+ */
+const { text, start = 0 } = Astro.props;
+
+type Part = { kind: 'space' } | { kind: 'word'; bdi: boolean; letters: { ch: string; i: number }[] };
+let index = start;
+const parts: Part[] = [];
+for (const segment of splitBdi(text)) {
+  for (const piece of segment.text.split(/(\s+)/)) {
+    if (piece === '') continue;
+    if (/^\s+$/.test(piece)) {
+      parts.push({ kind: 'space' });
+      continue;
+    }
+    parts.push({
+      kind: 'word',
+      bdi: segment.bdi,
+      letters: clusters(piece).map((ch) => ({ ch, i: index++ })),
+    });
+  }
+}
+---
+{parts.map((part) =>
+  part.kind === 'space' ? (
+    ' '
+  ) : part.bdi ? (
+    <bdi class="ls-word">{part.letters.map((l) => <span class="ls-letter" style={`--i:${l.i}`}>{l.ch}</span>)}</bdi>
+  ) : (
+    <span class="ls-word">{part.letters.map((l) => <span class="ls-letter" style={`--i:${l.i}`}>{l.ch}</span>)}</span>
+  ),
+)}

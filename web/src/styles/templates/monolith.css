@@ -1,0 +1,306 @@
+/*
+  Monolith — a black screen; the title arrives letter by letter, right to
+  left (M2, split at build time by Letters.astro); the cover wipes in behind
+  it, dimmed; the key numbers follow, enormous and thin.
+
+  Living Surfaces, Onyx (TEMPLATE_MANIFEST). The 1.x tokens are pinned to the
+  Onyx hexes because the contrast test and the absent-contrast gate read
+  these values directly — change one side, change the other.
+*/
+
+html[data-template='monolith'] {
+  --olive: var(--accent-lift, #7e9a62);
+  --plaster: #050505;
+  --ink: #f2f0ea; /* = --ls-ink */
+  --ink-deep: #050505;
+  --stone: #262620;
+  --stone-warm: #141412;
+  --muted: #a7a89c; /* = --ls-ink-2 */
+  --muted-warm: #a7a89c;
+  --absent: #a7a89c;
+  --heroWant: 100svh;
+}
+
+html[data-template='monolith'] body {
+  font-family: var(--ls-font-body);
+}
+
+html[data-template='monolith'] .agent-bar {
+  background: var(--ink-deep);
+}
+
+html[data-template='monolith'] section.stage-monolith {
+  padding: 0 0 1.4rem;
+}
+
+html[data-template='monolith'] .mono-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-block-size: min(86svh, 58rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 5rem var(--gut) 2.2rem;
+  background: var(--plaster);
+  color: var(--on-dark);
+}
+
+html[data-template='monolith'] .mono-wipe {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+
+html[data-template='monolith'] .mono-wipe::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, #050505 6%, rgba(5, 5, 5, 0.55) 45%, rgba(5, 5, 5, 0.35));
+}
+
+html[data-template='monolith'] .mono-img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  opacity: 0.6;
+  filter: grayscale(0.25) contrast(1.05);
+}
+
+html[data-template='monolith'] .mono-hero .stage-place {
+  color: #d6d4cb;
+}
+
+html[data-template='monolith'] .mono-title {
+  font-family: var(--ls-font-display);
+  font-variation-settings: 'wdth' 62.5;
+  font-weight: 900;
+  font-size: clamp(3.4rem, 15vw, 11rem);
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+  margin: 0.4rem 0 0;
+  max-inline-size: none;
+}
+
+html[data-template='monolith'] .mono-line {
+  display: block;
+}
+
+/* The second line steps back: the same weight, in the secondary ink. */
+html[data-template='monolith'] .mono-line + .mono-line {
+  color: #bdbdb2;
+}
+
+html[data-template='monolith'] .mono-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem 1.6rem;
+  margin-block-start: 2rem;
+}
+
+html[data-template='monolith'] .mono-meta .price-bar {
+  padding: 0;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: baseline;
+  gap: 0.3rem 1.1rem;
+}
+
+html[data-template='monolith'] .mono-meta .price {
+  font-family: var(--ls-font-display);
+  font-weight: 300;
+  font-size: clamp(2.2rem, 7vw, 4rem);
+}
+
+html[data-template='monolith'] .mono-meta .price-note {
+  color: #d6d4cb;
+  text-align: start;
+}
+
+/* ---------- Giant numerals ---------- */
+
+html[data-template='monolith'] .mono-giant {
+  margin: 0 var(--gut);
+  border-color: var(--stone);
+}
+
+html[data-template='monolith'] .mono-giant > div {
+  border-color: var(--stone);
+  padding-block: 1.8rem;
+}
+
+html[data-template='monolith'] .mono-giant dd {
+  font-family: var(--ls-font-display);
+  font-weight: 200;
+  font-size: clamp(3rem, 13vw, 7rem);
+  line-height: 0.95;
+}
+
+html[data-template='monolith'] .stage-monolith .highlights {
+  padding: 1.2rem var(--gut) 0;
+}
+
+/* ---------- The pinned room story (M7) ----------
+   Resting state: a swipeable strip. With scroll timelines and motion, the
+   frame pins and the rooms slide past it as the page scrolls (below). */
+
+html[data-template='monolith'] .mono-story {
+  padding-block: 2.6rem 0.6rem;
+}
+
+html[data-template='monolith'] .mono-story-pin {
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: inline mandatory;
+  scrollbar-width: none;
+}
+
+html[data-template='monolith'] .mono-story-track {
+  list-style: none;
+  display: flex;
+  gap: 1rem;
+  inline-size: max-content;
+  margin: 0;
+  padding: 0 var(--gut);
+}
+
+html[data-template='monolith'] .mono-story-track li {
+  inline-size: min(78vw, 620px);
+  scroll-snap-align: start;
+}
+
+html[data-template='monolith'] .mono-room {
+  inline-size: 100%;
+  aspect-ratio: 4 / 5;
+  border-radius: 4px;
+}
+
+html[data-template='monolith'] .mono-room img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+html[data-template='monolith'] .mono-story-track p {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 0.6rem 0 0;
+  font-family: var(--ls-font-display);
+  font-weight: 300;
+  font-size: 1.5rem;
+}
+
+html[data-template='monolith'] .mono-story-track p bdi {
+  font-weight: 800;
+  color: var(--olive);
+}
+
+@media (min-width: 960px) {
+  html[data-template='monolith'] .mono-room {
+    aspect-ratio: 16 / 10;
+  }
+}
+
+/* ---------- The rest of the page ---------- */
+
+html[data-template='monolith'] .facts {
+  gap: 0;
+  background: transparent;
+  border-block: 1px solid var(--stone);
+}
+
+html[data-template='monolith'] .fact {
+  background: transparent;
+}
+
+html[data-template='monolith'] .fact + .fact {
+  border-inline-start: 1px solid var(--stone);
+}
+
+html[data-template='monolith'] .enrich {
+  background: var(--stone-warm);
+  margin-inline: var(--gut);
+  border-radius: 4px;
+}
+
+html[data-template='monolith'] .cta {
+  background: var(--ink);
+  color: var(--plaster);
+}
+
+html[data-template='monolith'] .cta-dock {
+  background: linear-gradient(to top, var(--plaster) 70%, rgba(5, 5, 5, 0));
+}
+
+html[data-template='monolith'] .gallery img {
+  border-radius: 4px;
+}
+
+@media (min-width: 960px) {
+  html[data-template='monolith'] .listing-flow > :not(.stage, .compact-bar) {
+    align-self: center;
+    inline-size: min(100%, 64rem);
+    max-width: none;
+    box-sizing: border-box;
+  }
+
+  html[data-template='monolith'] :is(.enrich, .seller, .facts, .monthly-cost) {
+    margin-inline: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* The cover arrives after the letters have: a wipe down from the top. */
+  html[data-template='monolith'] .mono-wipe {
+    animation: mono-wipe 1.6s var(--ease-in-out) 0.9s both;
+  }
+
+  html[data-template='monolith'] .mono-meta {
+    animation: stage-fade 1s var(--ease-out) 1.2s both;
+  }
+
+  @supports (animation-timeline: view()) {
+    html[data-template='monolith'] .mono-story {
+      block-size: calc(var(--n, 3) * 70svh);
+      view-timeline-name: --mono-story;
+      view-timeline-axis: block;
+    }
+
+    html[data-template='monolith'] .mono-story-pin {
+      position: sticky;
+      inset-block-start: 0;
+      block-size: 100svh;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    /* RTL: the track overflows to the left, so it travels right (--dir is
+       -1) until its far end reaches the screen. */
+    html[data-template='monolith'] .mono-story-track {
+      animation: mono-slide linear both;
+      animation-timeline: --mono-story;
+      animation-range: contain 0% contain 100%;
+    }
+
+    @keyframes mono-slide {
+      to {
+        transform: translateX(calc(var(--dir) * (100vw - 100%)));
+      }
+    }
+  }
+
+  @keyframes mono-wipe {
+    from {
+      clip-path: inset(0 0 100% 0);
+    }
+
+    to {
+      clip-path: inset(0 0 0 0);
+    }
+  }
+}

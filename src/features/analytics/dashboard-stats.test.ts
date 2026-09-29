@@ -6,9 +6,12 @@ import {
   daysSincePublished,
   israelDay,
   lastDays,
+  readRate,
+  readThrough,
   series,
   totals,
   type DailyRow,
+  type ReadRow,
 } from './dashboard-stats.js';
 
 const TODAY = new Date('2026-09-24T09:00:00Z');
@@ -85,5 +88,37 @@ describe('daysSincePublished', () => {
 
   it('is empty for an unreadable date', () => {
     assert.deepEqual(daysSincePublished('not a date', TODAY), []);
+  });
+});
+
+describe('readThrough', () => {
+  const rows: ReadRow[] = [
+    { listing_id: 'a', day: '2026-09-23', views: 10, read_to_agent: 6 },
+    { listing_id: 'b', day: '2026-09-23', views: 4, read_to_agent: 1 },
+    { listing_id: 'a', day: '2026-09-24', views: 5, read_to_agent: 2 },
+    { listing_id: 'a', day: '2026-08-01', views: 500, read_to_agent: 400 },
+  ];
+  const days = lastDays(TODAY, 3);
+
+  it('sums one listing inside the window only', () => {
+    assert.deepEqual(readThrough(rows, days, 'a'), { views: 15, reads: 8 });
+  });
+
+  it('sums every listing without an id', () => {
+    assert.deepEqual(readThrough(rows, days), { views: 19, reads: 9 });
+  });
+});
+
+describe('readRate', () => {
+  it('is absent with no views, not 0%', () => {
+    assert.equal(readRate(0, 0), undefined);
+  });
+
+  it('rounds to a whole percent', () => {
+    assert.equal(readRate(15, 8), 53);
+  });
+
+  it('never claims more than every reader', () => {
+    assert.equal(readRate(3, 5), 100);
   });
 });
