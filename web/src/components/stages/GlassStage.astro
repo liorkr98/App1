@@ -46,6 +46,7 @@ const place = stagePlace(listing);
       aria-label={t('listing.openPhoto')}
     >
       <img
+        data-depth={listing.media.depthUrl}
         src={largest(cover, HERO_WIDTHS)}
         srcset={srcset(cover, HERO_WIDTHS) || undefined}
         sizes="(min-width: 960px) 55vw, 100vw"

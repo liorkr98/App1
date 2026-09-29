@@ -178,11 +178,12 @@ const priceProps = {
 {layout === 'aurora' && (
   <section class="stage stage-aurora ls-grain">
     <div class="cine-frame">
-      {/* The accent, breathing behind the title. Depth parallax (M6) lands
-          here in P7, once the worker produces a depth map per cover. */}
+      {/* The accent, breathing behind the title. With a depth map (P7) the
+          cover moves with the pointer or the phone (scripts/depth.ts). */}
       <span class="aurora-glow" aria-hidden="true"></span>
       <img
         class="cine-img ls-breathe"
+        data-depth={listing.media.depthUrl}
         src={largest(cover, HERO_WIDTHS)}
         srcset={srcset(cover, HERO_WIDTHS) || undefined}
         sizes="100vw"

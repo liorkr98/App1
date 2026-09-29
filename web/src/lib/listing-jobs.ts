@@ -48,6 +48,12 @@ export async function enqueuePublishJobs(input: {
     });
   }
 
+  // The depth map of the cover (P7). The worker reads the cover from the
+  // row, not from here, and only from our own storage.
+  if (input.coverPath) {
+    await enqueue(input.listingId, 'depth_map', `${hash}:depth`, {});
+  }
+
   if (input.slug) {
     const shown = `${hash}:${await sha256(input.content ?? '')}`;
     await enqueue(input.listingId, 'render_story', `${shown}:story`, { slug: input.slug });

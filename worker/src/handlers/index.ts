@@ -1,5 +1,6 @@
 import type { JobHandler, JobType } from '../types.js';
 
+import { depthMap } from './depth.js';
 import { enhanceImages } from './enhance.js';
 import { generateOg } from './og.js';
 import { renderPdf } from './pdf.js';
@@ -17,6 +18,7 @@ import { renderStory } from './story.js';
 export const WORKER_HANDLERS: Partial<Record<JobType, JobHandler>> = {
   enhance_images: enhanceImages,
   generate_og: generateOg,
+  depth_map: depthMap,
 };
 
 /** Puppeteer only. Concurrency 1, memory capped, aggressive restart. */

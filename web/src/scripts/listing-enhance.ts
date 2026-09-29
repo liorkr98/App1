@@ -551,3 +551,7 @@ bindGlass();
 bindHeliograph();
 bindSpin();
 beaconReadToAgent();
+
+// The depth hero (P7): its module loads only on a page that has a map.
+const depthImage = document.querySelector<HTMLImageElement>('img[data-depth]');
+if (depthImage) void import('./depth').then(({ bindDepth }) => bindDepth(depthImage)).catch(() => undefined);

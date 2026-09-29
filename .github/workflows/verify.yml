@@ -187,6 +187,9 @@ jobs:
         env:
           # Nothing here launches a browser, and the download is ~150MB.
           PUPPETEER_SKIP_DOWNLOAD: 'true'
+          # onnxruntime-node (depth_map, P7) bundles its CPU binaries; its
+          # install script only fetches optional GPU builds.
+          ONNXRUNTIME_NODE_INSTALL: 'skip'
         run: npm install --no-audit --no-fund --prefix worker
 
       - name: Worker typecheck
