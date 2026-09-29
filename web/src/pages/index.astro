@@ -1,2255 +1,353 @@
 ---
 import { t } from '../lib/i18n';
-import { toCells } from '../lib/facts';
-import { perUnitPrice } from '../lib/price';
+import { ils } from '../lib/format';
 import { ogDescription, ogTitle } from '../lib/og';
 import { CATEGORY_PRESENTATION } from '../lib/category-presentation';
-import { HERO_WIDTHS, largest } from '../lib/images';
-import MiniScreen from '../components/MiniScreen.astro';
-import BrandMark from '../components/BrandMark.astro';
+import { GALLERY_WIDTHS, HERO_WIDTHS, largest } from '../lib/images';
+import { golfListing, tlvListing } from '../lib/fixtures';
 import Prose from '../components/Prose.astro';
 import PriceTiers from '../components/PriceTiers.astro';
-import SectionLabel from '../components/SectionLabel.astro';
-import WalkMinutes from '../components/WalkMinutes.astro';
+import Site from '../layouts/Site.astro';
 import { TEMPLATE_IDS } from '@/types/listing';
-import { templateFits } from '@/features/templates/manifest';
-import { propertyListing, vehicleListing, withNamedRooms } from '../lib/listings';
-import '../styles/tokens.css';
+import { templateFits, templateSpec } from '@/features/templates/manifest';
+import '../styles/home.css';
 
 /**
- * The homepage.
+ * The homepage (היעד 2.0, plan §7.1). Onyx: the product demo is the page.
  *
- * REWRITTEN 11 September 2026 for the pivot. The previous version sold the
- * enrichment layer: three provenance states shown as worked examples, copy
- * about what is verified and what the seller declared, a section arguing that
- * what we do not know we do not write.
+ * REWRITTEN for P5 from the approved prototype. The September version sold
+ * "a few professional options" with miniature re-drawings of the 1.x
+ * templates; the catalogue is now twelve composed templates, and a
+ * re-drawing of those would be a second implementation of each, drifting
+ * from the first.
  *
- * That was a faithful rendering of CLAUDE.md §1 — "the moat is the data, not
- * the page" — and the market said otherwise. An agent does not want validated
- * data. They want a page that looks professional and a link they can send
- * before the viewing ends. The doctrine has been updated to match rather than
- * left to contradict the product; see CLAUDE.md §1 and docs/PRODUCT.md.
+ * WHAT IS REAL, WHAT IS A PICTURE
+ *   - The hero phone assembles the Tel Aviv fixture: its own photographs,
+ *     room labels, title and price. The motion is a demonstration of the
+ *     editor's steps, and the aria-label says so.
+ *   - The template row shows SCREENSHOTS of the real pages
+ *     (/home/templates/{id}.webp, the first screen of /template-check at 390
+ *     px, Hebrew, reduced motion). Each one links to that live page. When a
+ *     template's first screen changes, its screenshot is retaken —
+ *     scripts/verify-template-ids.mjs fails if one is missing.
+ *   - The WhatsApp card is built by ogTitle/ogDescription, the functions
+ *     that write the real meta tags, so it cannot promise a card the product
+ *     does not make.
+ *   - "Wow" features that do not exist yet say בקרוב. Nothing on this page
+ *     sells a feature before it is built.
  *
- * WHAT THAT CHANGES HERE. The provenance section is gone. The centrepiece is
- * now the thing an agent is actually choosing between: the SAME listing
- * rendered in all three templates, side by side. "A few options, all of them
- * professional" is the offer, and three screens make it in less time than a
- * sentence about it would take to read.
- *
- * THE SCREENS ARE STILL COMPOSED FROM REAL DATA. `propertyListing` comes from
- * the module `/a/{slug}` renders, through the same `toCells`, `ils` and
- * `perUnitPrice` the real pages use. The palettes below mirror the template
- * layer in BaseListing.astro. Those are two copies of the same eight colours
- * and they can drift — the reason it is a copy rather than an import is that
- * BaseListing's tokens are scoped to a whole document, and this page needs
- * three of them side by side inside one. If a fourth template is added, both
- * places need it.
- *
- * THE VALUE RHYTHM stays dark → light → tinted → dark, which is what the
- * listing page does on its own. The scene has not changed: an agent on a
- * phone, between viewings, in sunlight, where a plaster-on-plaster hierarchy
- * collapses to one flat sheet.
+ * No OSM-derived data is shown here any more (the "around" section went with
+ * the redesign), so there is no ODbL line to carry.
  */
 
-const cells = toCells('property', propertyListing.facts).slice(0, 3);
-const perUnit = perUnitPrice('property', propertyListing.facts, propertyListing.price);
-const propertyShowcase = withNamedRooms(propertyListing);
-const propertyEnrich = propertyListing.enrichment?.category === 'property'
-  ? propertyListing.enrichment
-  : undefined;
-const sampleSchool = propertyEnrich?.schools[0];
-const sampleBus = propertyEnrich?.transit.find((item) => item.mode === 'bus');
-const sampleGrocery = propertyEnrich?.summary.nearestGrocery;
-const odblLine = propertyEnrich?.attributions[0] ?? t('legal.odbl');
+const home = tlvListing;
+const builderPhotos = [home.media.cover, ...home.media.gallery].slice(0, 4);
+const titleLines = home.title.split('\n');
 
-/*
-  The WhatsApp card, built by the SAME two functions the real one is.
-  `ogTitle` and `ogDescription` are what BaseListing writes into the meta tags,
-  so the card shown on the homepage cannot promise a shape the product does not
-  produce. The image is the demo listing's own cover.
-*/
-const cardTitle = ogTitle(propertyShowcase);
-const cardFacts = ogDescription(
-  propertyShowcase,
-  CATEGORY_PRESENTATION.property.ogFactKeys,
-);
-const cardImage = largest(propertyShowcase.media.cover, HERO_WIDTHS);
+// The catalogue: the Living Surfaces templates, in TEMPLATE_IDS order.
+const catalogue = TEMPLATE_IDS.filter((id) => templateSpec(id).ls !== undefined).map((id) => {
+  const forHomes = templateFits(id, 'property');
+  const slug = forHomes ? home.slug : golfListing.slug;
+  return { id, car: !forHomes, href: `/template-check/${slug}-${id}/` };
+});
+
+const cardTitle = ogTitle(home);
+const cardFacts = ogDescription(home, CATEGORY_PRESENTATION.property.ogFactKeys);
+const cardImage = largest(home.media.cover, HERO_WIDTHS);
+
+const photoOf = (index: number) => {
+  const image = [home.media.cover, ...home.media.gallery][index] ?? home.media.cover;
+  return largest(image, GALLERY_WIDTHS);
+};
+const plan = home.media.floorPlan;
+
+const wow = [
+  { key: 'Plan', live: true, href: `/template-check/${home.slug}-blueprint/`, image: plan ? largest(plan, GALLERY_WIDTHS) : photoOf(0), contain: Boolean(plan) },
+  { key: 'Sun', live: true, href: `/template-check/${home.slug}-heliograph/`, drawing: 'sun' },
+  { key: 'Walk', live: true, href: `/template-check/${home.slug}-walk/`, drawing: 'walk' },
+  { key: 'Depth', live: false, image: photoOf(0) },
+  { key: 'Spin', live: false, image: largest(golfListing.media.cover, GALLERY_WIDTHS) },
+  { key: 'Video', live: false, image: photoOf(1) },
+  { key: 'Staging', live: false, image: photoOf(2) },
+] as const;
 
 const title = `${t('common.brand')} — ${t('home.tagline')}`;
-const canonical = new URL('/', Astro.site).href;
 const ogImage = new URL('/og-home.webp', Astro.site).href;
-// The showcase listing is a flat, so the template row skips car-only ones.
-const homeTemplates = TEMPLATE_IDS.filter((id) => templateFits(id, 'property'));
-// The hero phone's cycle is timed for exactly five screens (20% of the loop
-// each), so it plays the five 2.0 templates rather than every id.
-const HERO_PICKS = new Set(['aurora', 'blueprint', 'monolith', 'atelier', 'glass']);
-const heroTemplates = homeTemplates.filter((id) => HERO_PICKS.has(id));
 ---
 
-<!DOCTYPE html>
-<html lang="he" dir="rtl">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#FBFAF7" />
-
-    <title>{title}</title>
-    <meta name="description" content={t('home.subTagline')} />
-    <meta name="robots" content="index,follow" />
-    <link rel="canonical" href={canonical} />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-
-    <meta property="og:type" content="website" />
-    <meta property="og:locale" content="he_IL" />
-    <meta property="og:url" content={canonical} />
-    <meta property="og:site_name" content={t('common.brand')} />
-    <meta property="og:title" content={t('common.brand')} />
-    <meta property="og:description" content={t('home.subTagline')} />
-    <meta property="og:image" content={ogImage} />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta name="twitter:card" content="summary_large_image" />
-
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Assistant:wght@400;600;700;800&display=swap"
-      rel="stylesheet"
-    />
-
-    <style is:global>
-      :root {
-        --display: var(--t-display);
-        --lead: var(--t-lead);
-        --heading: var(--t-heading);
-        --body: var(--t-body);
-        --meta: var(--t-meta);
-
-        --gutter: clamp(1.25rem, 5vw, 3rem);
-        --rule: 1px solid var(--stone);
-        --rule-dark: 1px solid rgba(251, 250, 247, 0.14);
-        --dim: #9c9d93;
-      }
-
-      html {
-        background: var(--plaster);
-        color-scheme: light;
-        touch-action: manipulation;
-        -webkit-tap-highlight-color: rgba(74, 93, 58, 0.18);
-      }
-
-      body {
-        font-family: 'Assistant', system-ui, sans-serif;
-        background: var(--plaster);
-        color: var(--ink);
-        font-size: var(--body);
-        /* Hebrew has no ascenders or descenders to separate its lines. */
-        line-height: 1.7;
-        -webkit-font-smoothing: antialiased;
-      }
-
-      ::selection {
-        background: var(--olive);
-        color: var(--plaster);
-      }
-
-      :focus-visible {
-        outline: 2px solid var(--olive);
-        outline-offset: 3px;
-      }
-
-      .dark :focus-visible {
-        outline-color: var(--on-dark);
-      }
-
-      .shell {
-        max-inline-size: 1120px;
-        margin-inline: auto;
-        padding-inline: var(--gutter);
-      }
-
-      /*
-        THE DARK SECTIONS HAVE A GROUND, not a flat fill.
-        The verdict on the first version was "empty, no background", and it was
-        right: #111208 edge to edge is a void, and in the sunlight this page is
-        read in it flattens completely. Two soft radials off-centre give it a
-        light source, and a hairline grid gives the eye something to measure
-        the depth against. Both are cheap — no image, no blur filter, no
-        element. They are painted by the background property itself.
-      */
-      .dark {
-        position: relative;
-        background:
-          radial-gradient(120% 90% at 82% 8%, rgba(126, 154, 98, 0.16), transparent 60%),
-          radial-gradient(90% 70% at 10% 95%, rgba(126, 154, 98, 0.09), transparent 62%),
-          var(--ink-deep);
-        color: var(--on-dark);
-      }
-
-      .dark > * {
-        position: relative;
-      }
-
-      /* The light band gets the quieter half of the same idea, so the page does
-         not go from textured to blank at the fold. */
-      .lit {
-        background:
-          radial-gradient(95% 70% at 78% 0%, rgba(74, 93, 58, 0.06), transparent 58%),
-          var(--plaster);
-      }
-
-      h1,
-      h2,
-      h3 {
-        font-family: 'Frank Ruhl Libre', serif;
-        text-wrap: balance;
-      }
-
-      /* Hebrew takes no positive tracking and its counters close up past
-         -.015em. That is the floor, not a preference. */
-      h1 {
-        font-weight: 900;
-        font-size: var(--display);
-        line-height: 1.04;
-        letter-spacing: -0.015em;
-        overflow-wrap: break-word;
-      }
-
-      h2 {
-        font-weight: 700;
-        font-size: var(--heading);
-        line-height: 1.15;
-        letter-spacing: -0.01em;
-      }
-
-      /* ---------- Masthead ---------- */
-
-      .top {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-        padding-block: 1.35rem;
-      }
-
-      .mark {
-        font-family: 'Frank Ruhl Libre', serif;
-        font-weight: 700;
-        font-size: 1.4rem;
-        letter-spacing: -0.01em;
-      }
-
-      .top .brand-mark {
-        color: inherit;
-      }
-
-      .top nav {
-        display: flex;
-        align-items: center;
-        gap: 1.1rem;
-      }
-
-      .top-link {
-        display: inline-flex;
-        align-items: center;
-        min-block-size: 44px;
-        font-size: var(--meta);
-        font-weight: 800;
-        /* 6.94:1 on --ink-deep. --olive-lift is 3.83:1 and fails here. */
-        color: var(--dim);
-        text-decoration: none;
-      }
-
-      /* Default show sign-in; the session script hides it after a login.
-         Flex would otherwise keep the hidden link in the row. */
-      .top nav [hidden] {
-        display: none !important;
-      }
-
-        .lit .top-link {
-          color: var(--muted);
-        }
-        .lit .top-link:hover {
-          color: var(--ink);
-        }
-        .lit .hero-sub,
-        .lit .hero-lead,
-        .lit .actions-note {
-          color: var(--muted);
-        }
-
-      /* ---------- Hero ----------
-         In RTL the grid fills from the right, so the first child lands where a
-         Hebrew reader starts. Nothing computes that; dir="rtl" does. */
-
-      .hero {
-        display: grid;
-        gap: clamp(2rem, 4vw, 3rem);
-        padding-block: clamp(2.25rem, 4.5vw, 3.25rem) clamp(2.25rem, 4.5vw, 3.25rem);
-      }
-
-      /*
-        WIDER PHONE, TIGHTER SHELL.
-        The stage column was capped at 330px and the copy at 32rem, which on a
-        1280px screen left a column of nothing between them and a band of
-        nothing under both — the "empty, a lot of blank spaces" the homepage
-        was reported for. The two columns now claim the width they are given.
-      */
-      @media (min-width: 1000px) {
-        .hero {
-          grid-template-columns: minmax(0, 1fr) minmax(300px, 25rem);
-          align-items: center;
-          gap: clamp(2rem, 4vw, 3.5rem);
-        }
-      }
-
-      .hero-copy {
-        max-inline-size: 34rem;
-      }
-
-      .hero-sub {
-        font-size: var(--lead);
-        color: var(--dim);
-        margin-block-start: 1.1rem;
-        max-inline-size: 26ch;
-        text-wrap: balance;
-      }
-
-      .hero-lead {
-        margin-block-start: 1.5rem;
-        max-inline-size: 46ch;
-        color: rgba(251, 250, 247, 0.86);
-      }
-
-      .actions {
-        display: flex;
-        align-items: center;
-        gap: 1.1rem;
-        flex-wrap: wrap;
-        margin-block-start: 2rem;
-      }
-
-      /*
-        BOLDER, because they were not bold enough and that was the note.
-        Three changes, and the weight is the one that mattered: Assistant goes
-        to 800 and the page was only loading 700, so the button was asking for
-        a weight the browser had to fake by not faking it.
-
-        Then size — 1.15rem and a taller box — and a shadow tinted with the
-        accent rather than with black, so the button reads as sitting on the
-        page rather than cut out of it.
-      */
-      .cta {
-        display: inline-block;
-        padding: 1.1rem 2.6rem;
-        background: var(--olive);
-        color: var(--plaster);
-        font-size: 1.15rem;
-        font-weight: 800;
-        letter-spacing: -0.01em;
-        border: none;
-        border-radius: 6px;
-        text-decoration: none;
-        box-shadow: 0 10px 24px -12px rgba(74, 93, 58, 0.9);
-        transition:
-          transform var(--press) var(--ease-out),
-          box-shadow var(--press) var(--ease-out),
-          background var(--press) var(--ease-out);
-      }
-
-      .cta:hover {
-        background: var(--olive-lift);
-        transform: scale(0.99);
-        box-shadow: 0 14px 30px -12px rgba(74, 93, 58, 1);
-      }
-
-      /* 100–160ms is the band where a press reads as physical. */
-      .cta:active {
-        transform: scale(0.97);
-        box-shadow: 0 4px 12px -8px rgba(74, 93, 58, 0.9);
-      }
-
-      .actions-note {
-        font-size: var(--meta);
-        color: var(--dim);
-        max-inline-size: 22ch;
-      }
-
-      /* ---------- Device screens ----------
-         Composed from the real listing data through the real formatters, so
-         they cannot drift from the product. */
-
-      /*
-        One grid cell, three screens stacked in it. Grid rather than absolute
-        positioning so the container still sizes to the tallest — nothing has
-        to be measured and there is no fixed height to get wrong.
-      */
-      /*
-        A PHONE-SHAPED WINDOW, and the shape is the fix.
-
-        The five templates are genuinely different heights — that is what they
-        are for — and this cell was auto-sized to the TALLEST while showing
-        whichever one the cycle had reached. On a phone that left 296px of bare
-        dark ground under the shortest of them: a third of the screen, directly
-        below the headline, which reads as a page that failed to load. It is
-        most of what "the homepage looks empty" was about.
-
-        An aspect-ratio rather than a fixed height, so one rule holds at every
-        width and the window is the same shape on a phone as on a desktop.
-        `grid-template-rows` is the half that actually constrains it: a grid
-        ROW is sized by its content regardless of the container's height, so
-        without this the screens overflowed a 480px stage at 715px tall and
-        nothing appeared to change.
-      */
-      .stage {
-        display: grid;
-        grid-template-rows: minmax(0, 1fr);
-        justify-items: center;
-        inline-size: 100%;
-        aspect-ratio: 1 / 1.3;
-        max-block-size: 70vh;
-        overflow: hidden;
-      }
-
-      /* The screen takes the window's height and the caption keeps its own, so
-         the five captions still sit on one line as they did. */
-      .stage > .device {
-        block-size: 100%;
-        min-block-size: 0;
-        grid-template-rows: minmax(0, 1fr) auto;
-      }
-
-      .stage .screen {
-        block-size: 100%;
-        min-block-size: 0;
-        /* The crop, and the fade that admits to it: a listing page continues
-           past the fold, and this says so instead of ending in a hard line. */
-        mask-image: linear-gradient(to bottom, #000 86%, transparent 100%);
-      }
-
-      .stage > .device {
-        grid-area: 1 / 1;
-        /* Each screen hangs from the top of the cell rather than stretching to
-           fill it: a stretched miniature is a listing page with its type in
-           the wrong place. */
-        align-content: start;
-        /* A grid item under justify-items:center sizes to its CONTENT, and the
-           content is a screen at inline-size:100% — which resolves against the
-           item, which has no width yet. That circularity collapsed all three
-           screens to zero. An explicit width breaks it. */
-        inline-size: 100%;
-      }
-
-      /*
-        The two screens SPLIT whatever width they are given rather than each
-        claiming a width from the viewport. Flexing from a zero basis cannot
-        overflow, because the basis is the space that actually exists — and a
-        vw-based clamp has a floor problem below about 340px where the two
-        minimums plus the gap exceed the shell.
-
-        The type then follows a width only flex knows, which is what
-        container-type is for: 6.25cqi is a sixteenth of the device's resolved
-        width, so the screen scales as one object instead of shrinking its box
-        while its type stays put.
-      */
-      .device {
-        flex: 1 1 0;
-        max-inline-size: 300px;
-        min-inline-size: 140px;
-        container-type: inline-size;
-        display: grid;
-        gap: 0.6rem;
-        justify-items: center;
-        text-decoration: none;
-        color: inherit;
-      }
-
-      .screen {
-        display: block;
-        text-decoration: none;
-        color: var(--s-ink);
-        font-size: 6.25cqi;
-        inline-size: 100%;
-        border-radius: 1em;
-        overflow: hidden;
-        background: var(--s-ground);
-        line-height: 1.5;
-        box-shadow:
-          0 0 0 1px rgba(251, 250, 247, 0.12),
-          0 1.4em 3em -1em rgba(0, 0, 0, 0.55);
-      }
-
-      /*
-        THE THREE PALETTES, mirroring the template layer in BaseListing.astro.
-        Prefixed --s- because they style a miniature inside another document
-        and must not collide with the page's own tokens.
-
-        This IS a second copy of those colours. BaseListing's version is scoped
-        to a whole document via [data-template] on <html>, and this page needs
-        three of them side by side inside one document, so the values are
-        repeated rather than imported. A fourth template needs both.
-      */
-      .device[data-tpl='editorial'] {
-        --s-ground: #f3eee4;
-        --s-ink: #191a15;
-        --s-deep: #111208;
-        --s-line: #e4e0d6;
-        --s-warm: #f1ede3;
-        --s-muted: #67685f;
-        --s-accent: #2f5340;
-        --s-lift: #6e9b80;
-      }
-
-      .device[data-tpl='agency'] {
-        --s-ground: #ffffff;
-        --s-ink: #191a15;
-        --s-deep: #1c1917;
-        --s-line: #e7e2da;
-        --s-warm: #faf6f0;
-        --s-muted: #6b6259;
-        --s-accent: #4a5d3a;
-        --s-lift: #7e9a62;
-      }
-
-      .device[data-tpl='dark'] {
-        --s-ground: #14150f;
-        --s-ink: #f3f1ea;
-        --s-deep: #0a0b06;
-        --s-line: #2c2e24;
-        --s-warm: #1d1f16;
-        --s-muted: #a3a498;
-        --s-accent: #c7a24e;
-        --s-lift: #c7a24e;
-      }
-
-      .device[data-tpl='walkFirst'] {
-        --s-ground: #fbfaf7;
-        --s-ink: #191a15;
-        --s-deep: #111208;
-        --s-line: #e4e0d6;
-        --s-warm: #f1ede3;
-        --s-muted: #67685f;
-        --s-accent: #8c4a2f;
-        --s-lift: #c17a55;
-      }
-
-      .device[data-tpl='brochure'] {
-        --s-ground: #f7f1e4;
-        --s-ink: #191a15;
-        --s-deep: #111208;
-        --s-line: #e4e0d6;
-        --s-warm: #f1ede3;
-        --s-muted: #67685f;
-        --s-accent: #6e2639;
-        --s-lift: #b06b80;
-      }
-
-      .device[data-tpl='linen'] {
-        --s-ground: #f4e6cf;
-        --s-ink: #2a1d12;
-        --s-deep: #23180f;
-        --s-line: #e2ccab;
-        --s-warm: #efe0c4;
-        --s-muted: #6d5844;
-        --s-accent: #8c4a2f;
-        --s-lift: #c17a55;
-      }
-
-      .device[data-tpl='studio'] {
-        --s-ground: #f7f3ea;
-        --s-ink: #1a1916;
-        --s-deep: #141310;
-        --s-line: #d9d2c4;
-        --s-warm: #ece6d8;
-        --s-muted: #67685f;
-        --s-accent: #3a3a34;
-        --s-lift: #9a9a90;
-      }
-
-      .device[data-tpl='gallery'] {
-        --s-ground: #fcfbf8;
-        --s-ink: #191a15;
-        --s-deep: #111208;
-        --s-line: #e6e2d8;
-        --s-warm: #f3f0e8;
-        --s-muted: #67685f;
-        --s-accent: #4a5d3a;
-        --s-lift: #7e9a62;
-      }
-
-      .device[data-tpl='aurora'] {
-        --s-ground: #0b0c0a;
-        --s-ink: #f2f0ea;
-        --s-deep: #070805;
-        --s-line: #2a2c22;
-        --s-warm: #161713;
-        --s-muted: #a7a89c;
-        --s-accent: #f2f0ea;
-        --s-lift: #86b79a;
-      }
-
-      .device[data-tpl='blueprint'] {
-        --s-ground: #f6f4ef;
-        --s-ink: #121310;
-        --s-deep: #121310;
-        --s-line: #dcd8cc;
-        --s-warm: #ece8de;
-        --s-muted: #5e5f57;
-        --s-accent: #1f4fa0;
-        --s-lift: #1f4fa0;
-      }
-
-      .device[data-tpl='monolith'] {
-        --s-ground: #050505;
-        --s-ink: #f2f0ea;
-        --s-deep: #050505;
-        --s-line: #262620;
-        --s-warm: #141412;
-        --s-muted: #a7a89c;
-        --s-accent: #f2f0ea;
-        --s-lift: #86b79a;
-      }
-
-      .device[data-tpl='atelier'] {
-        --s-ground: #f6f3ec;
-        --s-ink: #121310;
-        --s-deep: #121310;
-        --s-line: #ddd7ca;
-        --s-warm: #ece7dc;
-        --s-muted: #5e5f57;
-        --s-accent: #121310;
-        --s-lift: #4a5d3a;
-      }
-
-      .device[data-tpl='glass'] {
-        --s-ground: #0a0b0a;
-        --s-ink: #f2f0ea;
-        --s-deep: #070805;
-        --s-line: #2a2c22;
-        --s-warm: #161713;
-        --s-muted: #a7a89c;
-        --s-accent: #f2f0ea;
-        --s-lift: #86b79a;
-      }
-
-      .device[data-tpl='blueprint'] .s-hero img {
-        outline: 2px solid #1f4fa0;
-        outline-offset: -8px;
-      }
-
-      .device[data-tpl='showcase'] {
-        --s-ground: #f7f5f0;
-        --s-ink: #191a15;
-        --s-deep: #111208;
-        --s-line: #e3dfd5;
-        --s-warm: #efebe2;
-        --s-muted: #67685f;
-        --s-accent: #111208;
-        --s-lift: #4a5d3a;
-      }
-
-      .s-agent {
-        display: flex;
-        align-items: center;
-        gap: 0.4em;
-        padding: 0.5em 0.7em;
-        background: var(--s-deep);
-        /* Never --s-ink: on the dark template that is the light ground, and
-           this strip is dark in all three. The same trap BaseListing hit. */
-        color: #fbfaf7;
-        font-size: 0.55em;
-      }
-
-      .s-agent .dot {
-        inline-size: 1.6em;
-        block-size: 1.6em;
-        border-radius: 50%;
-        background: var(--s-lift);
-        flex: 0 0 auto;
-      }
-
-      .s-agent .who {
-        font-weight: 600;
-      }
-
-      .s-agent .brand {
-        margin-inline-start: auto;
-        color: #9c9d93;
-      }
-
-      /*
-        The miniature is built from <span>s, not <div>s: the hero device wraps
-        the whole screen in one element and nesting flow content inside it was
-        not worth the argument. The cost is that every structural piece has to
-        be told it is a block — an inline element ignores aspect-ratio, which
-        clipped the price, the facts and the button off the bottom of all four
-        screens. Caught on the running page.
-      */
-      .s-veil,
-      .s-place,
-      .s-title,
-      .s-fact-val,
-      .s-fact-lbl,
-      .s-price,
-      .s-price-note,
-      .s-cta,
-      .s-walk,
-      .s-walk-film,
-      .s-chips,
-      .s-chip {
-        display: block;
-      }
-
-      .s-hero {
-        display: block;
-        position: relative;
-        aspect-ratio: 4 / 5;
-        overflow: hidden;
-        background: var(--s-line);
-      }
-
-      .s-hero img {
-        inline-size: 100%;
-        block-size: 100%;
-        object-fit: cover;
-        display: block;
-      }
-
-      .s-veil {
-        position: absolute;
-        inset-inline: 0;
-        inset-block-end: 0;
-        padding: 2.4em 0.75em 0.7em;
-        background: linear-gradient(
-          to top,
-          rgba(17, 18, 8, 0.9) 12%,
-          rgba(17, 18, 8, 0.55) 48%,
-          transparent
-        );
-        color: #fbfaf7;
-      }
-
-      .s-place {
-        font-size: 0.5em;
-        opacity: 0.88;
-      }
-
-      .s-title {
-        font-family: 'Frank Ruhl Libre', serif;
-        font-weight: 900;
-        font-size: 0.95em;
-        line-height: 1.05;
-        letter-spacing: -0.015em;
-        margin-block-start: 0.15em;
-        overflow-wrap: anywhere;
-        max-inline-size: 100%;
-      }
-
-      .s-price-bar {
-        display: flex;
-        align-items: flex-end;
-        justify-content: space-between;
-        gap: 0.5em;
-        padding: 0.8em 0.75em 0.7em;
-      }
-
-      .s-price {
-        font-family: 'Frank Ruhl Libre', serif;
-        font-weight: 700;
-        font-size: 1.15em;
-        line-height: 1;
-        letter-spacing: -0.02em;
-        font-variant-numeric: tabular-nums;
-      }
-
-      .s-price-note {
-        font-size: 0.48em;
-        color: var(--s-muted);
-        text-align: end;
-        padding-block-end: 0.2em;
-      }
-
-      .s-facts {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 1px;
-        background: var(--s-line);
-        border-block-start: 1px solid var(--s-line);
-      }
-
-      .s-fact {
-        background: var(--s-ground);
-        padding: 0.6em 0.3em 0.7em;
-        text-align: center;
-        /* The agency template cards its cells; mirrored so the miniature
-           shows the structural difference and not only the colour one. */
-        min-block-size: 3.6em;
-      }
-
-      /* Agency: a shorter photograph, a filled price band, and facts as a
-         labelled two-column list. The same three moves the real template
-         makes — see BaseListing. Without them these read as one design in
-         three colours, which was the verdict on the first version. */
-      .device[data-tpl='agency'] .s-hero {
-        aspect-ratio: 4 / 3;
-      }
-
-      .device[data-tpl='agency'] .s-price-bar {
-        background: var(--s-warm);
-        border-block-end: 1px solid var(--s-line);
-        align-items: center;
-      }
-
-      .device[data-tpl='agency'] .s-facts {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 0.3em;
-        background: transparent;
-        border-block-start: 0;
-        padding: 0.35em;
-      }
-
-      .device[data-tpl='agency'] .s-fact {
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        gap: 0.3em;
-        text-align: start;
-        padding: 0.4em 0.5em;
-        border: 1px solid var(--s-line);
-        border-radius: 0.45em;
-        min-block-size: 0;
-      }
-
-      .device[data-tpl='agency'] .s-fact-val {
-        font-size: 0.62em;
-        order: 2;
-      }
-
-      .device[data-tpl='agency'] .s-fact-lbl {
-        margin-block-start: 0;
-        order: 1;
-      }
-
-      /* Dark: the photograph takes more of the screen and the facts lose their
-         cells entirely — three bare numbers with a hairline between. */
-      .device[data-tpl='dark'] .s-hero {
-        aspect-ratio: 3 / 5;
-      }
-
-      .device[data-tpl='dark'] .s-facts {
-        gap: 0;
-        background: transparent;
-        border-block-start: 1px solid var(--s-line);
-      }
-
-      .device[data-tpl='dark'] .s-fact {
-        background: transparent;
-      }
-
-      .device[data-tpl='dark'] .s-fact + .s-fact {
-        border-inline-start: 1px solid var(--s-line);
-      }
-
-      .s-fact.off {
-        background: var(--s-warm);
-      }
-
-      .s-fact-val {
-        font-family: 'Frank Ruhl Libre', serif;
-        font-weight: 500;
-        font-size: 0.8em;
-        line-height: 1.1;
-        font-variant-numeric: tabular-nums;
-      }
-
-      .s-fact-lbl {
-        font-size: 0.44em;
-        color: var(--s-muted);
-        margin-block-start: 0.2em;
-      }
-
-      .s-cta {
-        margin: 0.55em 0.7em 0.8em;
-        padding: 0.55em;
-        text-align: center;
-        font-size: 0.52em;
-        font-weight: 700;
-        border-radius: 0.4em;
-        background: var(--s-accent);
-        color: #fbfaf7;
-      }
-
-      /* On the dark template the accent is pale, so a pale fill with pale type
-         would vanish. The button inverts — the only element that does. */
-      .device[data-tpl='dark'] .s-cta {
-        background: var(--s-ink);
-        color: var(--s-ground);
-      }
-
-      /* Walk-first: the filmstrip is the page. Room chips name the stills;
-         facts and the WhatsApp pill wait below the fold on the real listing. */
-      .device[data-tpl='walkFirst'] .s-walk {
-        display: grid;
-        grid-template-columns: 2.15em minmax(0, 1fr);
-        gap: 0.28em;
-        padding: 0.32em;
-        background: var(--s-deep);
-      }
-
-      .device[data-tpl='walkFirst'] .s-walk-film {
-        display: flex;
-        flex-direction: column;
-        gap: 0.18em;
-      }
-
-      .device[data-tpl='walkFirst'] .s-walk-film img {
-        display: block;
-        inline-size: 100%;
-        aspect-ratio: 1;
-        object-fit: cover;
-        border-radius: 0.12em;
-      }
-
-      .device[data-tpl='walkFirst'] .s-hero {
-        aspect-ratio: 3 / 4;
-      }
-
-      .device[data-tpl='walkFirst'] .s-chips {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.22em;
-        padding: 0.4em 0.55em 0.1em;
-      }
-
-      .device[data-tpl='walkFirst'] .s-chip {
-        font-size: 0.58em;
-        font-weight: 700;
-        padding: 0.22em 0.55em;
-        border-radius: 999px;
-        background: var(--s-deep);
-        color: #fbfaf7;
-      }
-
-      .device[data-tpl='walkFirst'] .s-facts,
-      .device[data-tpl='walkFirst'] .s-cta {
-        display: none;
-      }
-
-      .device[data-tpl='walkFirst'] .s-price-bar {
-        padding-block: 0.5em 0.65em;
-      }
-
-      /* Brochure: one photograph owns the screen; facts are a caption. */
-      .device[data-tpl='brochure'] .s-hero {
-        aspect-ratio: 3 / 5;
-      }
-
-      .device[data-tpl='brochure'] .s-title {
-        font-size: 1.05em;
-        font-weight: 700;
-      }
-
-      .device[data-tpl='brochure'] .s-facts {
-        display: flex;
-        background: transparent;
-        border-block-start: 0;
-        gap: 0;
-        padding-inline: 0.2em;
-      }
-
-      .device[data-tpl='brochure'] .s-fact {
-        flex: 1 1 0;
-        background: transparent;
-        min-block-size: 0;
-        padding: 0.45em 0.15em 0.5em;
-      }
-
-      .device[data-tpl='brochure'] .s-cta {
-        display: none;
-      }
-
-      .device[data-tpl='linen'] .s-hero {
-        aspect-ratio: 4 / 5;
-      }
-
-      .device[data-tpl='linen'] .s-title {
-        font-size: 1.05em;
-        font-weight: 700;
-      }
-
-      .device[data-tpl='linen'] .s-price {
-        color: var(--s-accent);
-      }
-
-      .device[data-tpl='linen'] .s-facts {
-        grid-template-columns: 1fr 1fr;
-        gap: 0.28em;
-        background: transparent;
-        padding: 0.35em;
-      }
-
-      .device[data-tpl='linen'] .s-fact {
-        background: var(--s-warm);
-        border-radius: 0.45em;
-        text-align: start;
-        min-block-size: 0;
-        padding: 0.45em 0.5em;
-      }
-
-      .device[data-tpl='studio'] .s-hero {
-        aspect-ratio: 1;
-        margin: 0.4em;
-        border-radius: 0.55em;
-        overflow: hidden;
-      }
-
-      .device[data-tpl='studio'] .s-price-bar {
-        border-inline-start: 0.28em solid var(--s-accent);
-        margin-inline: 0.5em;
-        padding-inline-start: 0.55em;
-      }
-
-      .device[data-tpl='studio'] .s-facts {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.22em;
-        background: transparent;
-        border-block-start: 0;
-        padding: 0.35em 0.5em 0.6em;
-      }
-
-      .device[data-tpl='studio'] .s-fact {
-        background: var(--s-deep);
-        color: #fbfaf7;
-        border-radius: 999px;
-        min-block-size: 0;
-        padding: 0.28em 0.55em;
-      }
-
-      .device[data-tpl='studio'] .s-fact-lbl {
-        color: rgba(251, 250, 247, 0.7);
-      }
-
-      .device[data-tpl='gallery'] .s-hero {
-        aspect-ratio: 4 / 3;
-        margin: 0.35em 0.35em 0;
-        border-radius: 0.45em;
-        overflow: hidden;
-      }
-
-      .device[data-tpl='gallery'] .s-price {
-        font-size: 1.25em;
-      }
-
-      .device[data-tpl='gallery'] .s-facts {
-        background: transparent;
-        gap: 0;
-        border-block: 1px solid var(--s-line);
-      }
-
-      .device[data-tpl='gallery'] .s-fact {
-        background: transparent;
-      }
-
-      .device[data-tpl='gallery'] .s-fact + .s-fact {
-        border-inline-start: 1px solid var(--s-line);
-      }
-
-      .device[data-tpl='aurora'] .s-agent {
-        background: var(--s-deep);
-      }
-
-      .device[data-tpl='aurora'] .s-hero {
-        aspect-ratio: 3 / 4;
-      }
-
-      .device[data-tpl='aurora'] .s-hero img {
-        filter: brightness(0.62);
-      }
-
-      .device[data-tpl='aurora'] .s-title {
-        font-size: 1.5em;
-        font-weight: 900;
-        line-height: 0.98;
-      }
-
-      .device[data-tpl='aurora'] .s-price {
-        font-weight: 500;
-      }
-
-      .device[data-tpl='aurora'] .s-facts {
-        background: transparent;
-        gap: 0;
-        border-block: 1px solid var(--s-line);
-      }
-
-      .device[data-tpl='aurora'] .s-fact {
-        background: transparent;
-      }
-
-      .device[data-tpl='aurora'] .s-cta {
-        border-radius: 999px;
-        background: var(--s-ink);
-        color: var(--s-deep);
-      }
-
-      .device[data-tpl='showcase'] .s-hero {
-        aspect-ratio: 4 / 3;
-        margin: 0.45em;
-        border-radius: 0.9em;
-        overflow: hidden;
-      }
-
-      .device[data-tpl='showcase'] .s-price-bar {
-        margin-inline: 0.45em;
-        padding: 0.5em;
-        border-radius: 0.8em;
-        background: #fff;
-      }
-
-      .device[data-tpl='showcase'] .s-facts {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.22em;
-        background: transparent;
-        border-block-start: 0;
-        padding: 0.35em 0.45em 0.6em;
-      }
-
-      .device[data-tpl='showcase'] .s-fact {
-        background: #fff;
-        border-radius: 999px;
-        min-block-size: 0;
-        padding: 0.28em 0.55em;
-      }
-
-      .device[data-tpl='showcase'] .s-cta {
-        border-radius: 999px;
-        background: var(--s-deep);
-      }
-
-      .device-label {
-        font-size: var(--meta);
-        font-weight: 600;
-        color: var(--muted);
-      }
-
-      .dark .device-label {
-        color: var(--dim);
-      }
-
-      /* ---------- Section furniture ----------
-         More space above a heading than below it: the heading belongs to what
-         follows, and even spacing leaves it floating between two blocks. */
-
-      /* Tightened from 5rem. Six sections each holding a screen of padding is
-         how a page with plenty in it reads as sparse. */
-      section > .shell {
-        padding-block: clamp(2.75rem, 5vw, 4rem);
-      }
-
-      .section-head {
-        max-inline-size: 36rem;
-        margin-block-end: clamp(2rem, 3.5vw, 2.75rem);
-      }
-
-      .section-head p {
-        margin-block-start: 0.85rem;
-        color: var(--muted);
-        max-inline-size: 60ch;
-        text-wrap: pretty;
-      }
-
-      .dark .section-head p {
-        color: rgba(251, 250, 247, 0.84);
-      }
-
-      /* ---------- Templates ---------- */
-
-      /*
-        Stretch, not flex-start. The three templates are now genuinely
-        different heights — that is the point of them — but their LABELS were
-        floating at three different heights, which read as broken rather than
-        as deliberate. Stretching the wrapper and pushing the label to the
-        bottom keeps the screens honest and the captions on one line.
-      */
-      .tpl-row {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(11.5rem, 1fr));
-        gap: clamp(1.4rem, 3vw, 2.4rem);
-        align-items: stretch;
-        justify-content: center;
-        inline-size: 100%;
-        padding-block: 0.6rem 0.2rem;
-      }
-
-      @media (max-width: 719px) {
-        .tpl-row {
-          display: flex;
-          flex-wrap: nowrap;
-          justify-content: start;
-          overflow-x: auto;
-          overscroll-behavior-inline: contain;
-          scroll-snap-type: inline mandatory;
-          padding-block-end: 0.4rem;
-          gap: 1.1rem;
-        }
-        .tpl-row .device {
-          flex: 0 0 13.5rem;
-          max-inline-size: none;
-          min-inline-size: 13.5rem;
-          scroll-snap-align: start;
-        }
-      }
-
-      .tpl-row .device {
-        grid-template-rows: auto 1fr;
-        max-inline-size: 16.5rem;
-        min-inline-size: 0;
-        padding: 0.45rem;
-        background: var(--stone-warm);
-        border: var(--rule);
-        border-radius: 22px;
-      }
-
-      .tpl-row .device[data-tpl='dark'] {
-        max-inline-size: 17rem;
-      }
-
-      .tpl-row .device[data-tpl='walkFirst'] {
-        max-inline-size: 17.5rem;
-      }
-
-      .tpl-row .device[data-tpl='brochure'] {
-        max-inline-size: 15.5rem;
-      }
-
-      .tpl-row .device-label,
-      .cycle-name {
-        align-self: end;
-      }
-
-      .cycle-name {
-        font-size: var(--meta);
-        font-weight: 600;
-        color: var(--dim);
-      }
-
-      /* ---------- The WhatsApp card ----------
-         A thread, not a screenshot: the bubble is built from the same markup
-         the real card's metadata describes, so it stays true by construction
-         and costs no image. */
-
-      .link-grid {
-        display: grid;
-        gap: clamp(2rem, 4vw, 3rem);
-        align-items: center;
-      }
-
-      @media (min-width: 900px) {
-        .link-grid {
-          grid-template-columns: minmax(0, 1fr) minmax(280px, 26rem);
-        }
-      }
-
-      /* The chat ground. Muted on purpose — the card is the subject and a
-         saturated green would make the mock the subject instead. */
-      .thread {
-        padding: clamp(1rem, 2.5vw, 1.5rem);
-        background: var(--stone-warm);
-        border: var(--rule);
-        border-radius: 10px;
-      }
-
-      .bubble {
-        max-inline-size: 22rem;
-        /* Outgoing: the inline end of the thread. In Hebrew that is the left,
-           and nothing here has to know that. */
-        margin-inline-start: auto;
-        padding: 0.4rem;
-        background: #e7f3d8;
-        border-radius: 10px 10px 4px 10px;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
-      }
-
-      .card {
-        background: var(--plaster);
-        border-radius: 6px;
-        overflow: hidden;
-      }
-
-      .card img {
-        display: block;
-        inline-size: 100%;
-        /* The card is 1200x630 and WhatsApp crops nothing (§6). */
-        aspect-ratio: 1200 / 630;
-        /* NOT redundant. The element carries width/height attributes for the
-           no-CSS case, and the height one is a presentational hint that beats
-           `aspect-ratio` unless the height is explicitly released — which
-           rendered the preview 630px tall and three times too deep. */
-        block-size: auto;
-        object-fit: cover;
-      }
-
-      .card-text {
-        display: grid;
-        gap: 0.15rem;
-        padding: 0.5rem 0.6rem 0.6rem;
-        line-height: 1.45;
-      }
-
-      .card-text strong {
-        font-size: 0.9rem;
-        font-weight: 700;
-      }
-
-      .card-text span {
-        font-size: 0.78rem;
-        color: var(--muted);
-      }
-
-      .card-text em {
-        font-style: normal;
-        font-size: 0.7rem;
-        color: var(--muted);
-      }
-
-      .bubble-link {
-        display: block;
-        padding: 0.4rem 0.3rem 0.15rem;
-        font-size: 0.78rem;
-        color: #2c5a8a;
-        text-decoration: underline;
-        text-underline-offset: 2px;
-        overflow-wrap: anywhere;
-      }
-
-      .thread-note {
-        margin-block-start: 0.8rem;
-        font-size: var(--meta);
-        color: var(--muted);
-        text-align: center;
-      }
-
-      /* ---------- Steps ----------
-         A real sequence, so the numerals carry information rather than
-         decorating a heading. */
-
-      .steps-band {
-        background: var(--stone-warm);
-        border-block: var(--rule);
-        /* --muted is 4.87:1 on plaster and 4.35:1 on this tinted ground.
-           Carried down until it clears AA. */
-        --muted: #67685f;
-      }
-
-      .steps {
-        display: grid;
-        gap: clamp(1.6rem, 3vw, 2.5rem);
-        list-style: none;
-        counter-reset: step;
-        padding: 0;
-        margin: 0;
-      }
-
-      @media (min-width: 760px) {
-        .steps {
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-        }
-      }
-
-      .steps li {
-        counter-increment: step;
-        display: grid;
-        grid-template-columns: auto minmax(0, 1fr);
-        gap: 0 0.9rem;
-        align-items: baseline;
-        padding-block-start: 1rem;
-        border-block-start: 1px solid var(--stone);
-      }
-
-      .steps li::before {
-        content: counter(step);
-        grid-row: span 2;
-        font-family: 'Frank Ruhl Libre', serif;
-        font-weight: 700;
-        font-size: 1.9rem;
-        line-height: 1;
-        color: var(--ink);
-        font-variant-numeric: tabular-nums;
-      }
-
-      .steps h3 {
-        font-size: 1.1rem;
-        font-weight: 700;
-        line-height: 1.3;
-      }
-
-      .steps p {
-        grid-column: 2;
-        color: var(--muted);
-        margin-block-start: 0.3rem;
-        text-wrap: pretty;
-      }
-
-      /* ---------- Dashboard ---------- */
-
-      .dash-grid {
-        display: grid;
-        gap: clamp(2rem, 4vw, 3.25rem);
-        align-items: center;
-      }
-
-      @media (min-width: 900px) {
-        .dash-grid {
-          grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
-        }
-      }
-
-      .dash-shot {
-        border: var(--rule-dark);
-        border-radius: 8px;
-        overflow: hidden;
-        background: var(--plaster);
-        box-shadow: 0 1.2rem 3rem -1.2rem rgba(0, 0, 0, 0.7);
-      }
-
-      .dash-shot-bar {
-        background: var(--ink-deep);
-        padding: 0.5rem 0.7rem;
-        font-size: 0.72rem;
-        font-weight: 700;
-        color: var(--on-dark);
-        font-family: 'Frank Ruhl Libre', serif;
-      }
-
-      .dash-cards {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 0.4rem;
-        padding: 0.55rem;
-      }
-
-      .dash-card {
-        border: 1px solid var(--stone);
-        border-radius: 4px;
-        overflow: hidden;
-        background: var(--plaster);
-      }
-
-      .dash-card img {
-        inline-size: 100%;
-        aspect-ratio: 16 / 10;
-        object-fit: cover;
-        display: block;
-      }
-
-      .dash-card .none {
-        aspect-ratio: 16 / 10;
-        background: var(--stone-warm);
-      }
-
-      .dash-card span {
-        display: block;
-        padding: 0.3rem 0.4rem 0.45rem;
-        font-size: 0.58rem;
-        font-weight: 700;
-        color: var(--ink);
-      }
-
-      .dash-card em {
-        display: block;
-        font-style: normal;
-        font-size: 0.52rem;
-        font-weight: 600;
-        color: var(--plaster);
-        background: var(--olive);
-        padding: 0.04rem 0.3rem;
-        border-radius: 2px;
-        inline-size: fit-content;
-        margin: 0 0.4rem 0.4rem;
-      }
-
-      /* ---------- Closing ---------- */
-
-      .closing .shell {
-        display: grid;
-        gap: 1.25rem;
-        justify-items: center;
-        text-align: center;
-        padding-block: clamp(3.5rem, 7vw, 5.5rem);
-      }
-
-      .closing h2 {
-        max-inline-size: 18ch;
-      }
-
-      footer {
-        border-block-start: var(--rule);
-      }
-
-      footer .shell {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-        flex-wrap: wrap;
-        padding-block: 1.75rem;
-        font-size: var(--meta);
-        color: var(--muted);
-      }
-
-      footer a {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-block-size: 44px;
-        min-inline-size: 44px;
-        color: var(--muted);
-        text-underline-offset: 3px;
-      }
-
-      footer a:hover {
-        color: var(--olive);
-      }
-
-      .hero-title {
-        font-family: 'Frank Ruhl Libre', serif;
-        font-weight: 700;
-        font-size: var(--display);
-        line-height: 1.08;
-        letter-spacing: -0.03em;
-      }
-      .hero-line {
-        display: block;
-        overflow: hidden;
-      }
-      .hero-line > span {
-        display: block;
-      }
-      .phone {
-        inline-size: min(100%, 320px);
-        margin-inline: auto;
-        padding: 0.7rem;
-        background: #1a1b16;
-        border-radius: 28px;
-        box-shadow: 0 24px 50px -24px rgba(0, 0, 0, 0.55);
-        container-type: inline-size;
-      }
-      .phone .stage {
-        aspect-ratio: 9 / 16;
-        max-block-size: none;
-        inline-size: 100%;
-        --n: 7;
-      }
-      .phone .device {
-        max-inline-size: none;
-        min-inline-size: 0;
-        gap: 0;
-      }
-      .phone .screen {
-        display: block;
-        overflow: hidden;
-        border-radius: 20px;
-        background: var(--s-ground, var(--plaster));
-        box-shadow: none;
-      }
-      .phone-caption {
-        margin-block-start: 0.7rem;
-        text-align: center;
-        color: var(--dim);
-        font-size: var(--meta);
-      }
-
-      .proof-track {
-        display: grid;
-        gap: clamp(2.4rem, 5vw, 4rem);
-      }
-      .proof-chapter {
-        display: grid;
-        gap: clamp(1.2rem, 3vw, 2rem);
-        align-items: center;
-      }
-      @media (min-width: 880px) {
-        .proof-chapter {
-          grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.15fr);
-        }
-        .proof-chapter:nth-child(even) .proof-copy {
-          order: 2;
-        }
-      }
-      .proof-copy h3 {
-        font-family: 'Frank Ruhl Libre', serif;
-        font-size: var(--heading);
-        margin-block: 0.35rem 0.5rem;
-      }
-      .proof-copy p {
-        color: var(--muted);
-        max-inline-size: 42ch;
-      }
-      .proof-index {
-        font-variant-numeric: tabular-nums;
-        color: var(--olive);
-        font-weight: 700;
-      }
-      .proof-visual {
-        border-radius: 18px;
-        overflow: hidden;
-        background: var(--stone-warm);
-        border: var(--rule);
-        min-block-size: 14rem;
-      }
-      .proof-mosaic {
-        display: grid;
-        grid-template-columns: 1.45fr 1fr;
-        grid-template-rows: 1fr 1fr;
-        gap: 0.28rem;
-        padding: 0.45rem;
-        min-block-size: 16rem;
-      }
-      .proof-mosaic img {
-        display: block;
-        inline-size: 100%;
-        block-size: 100%;
-        object-fit: cover;
-        border-radius: 10px;
-      }
-      .proof-mosaic img:first-child {
-        grid-row: 1 / -1;
-      }
-      .proof-form {
-        display: grid;
-        gap: 0.7rem;
-        padding: 1.1rem 1rem;
-      }
-      .proof-field {
-        display: grid;
-        gap: 0.28rem;
-        padding: 0.7rem 0.8rem;
-        background: var(--plaster);
-        border: var(--rule);
-        border-radius: 10px;
-      }
-      .proof-field span {
-        font-size: var(--meta);
-        color: var(--muted);
-      }
-      .proof-field strong {
-        font-size: 1.02rem;
-      }
-      .proof-phones {
-        display: flex;
-        gap: 0.7rem;
-        padding: 0.85rem 0.7rem;
-        overflow-x: auto;
-        overscroll-behavior-inline: contain;
-      }
-      .proof-phones .device {
-        flex: 0 0 8.4rem;
-        max-inline-size: 8.4rem;
-        min-inline-size: 8.4rem;
-      }
-      .proof-thread {
-        padding: 1rem;
-      }
-
-      .compare {
-        position: relative;
-        isolation: isolate;
-        max-inline-size: 320px;
-        margin-inline: auto;
-        aspect-ratio: 9 / 16;
-        background: var(--stone-warm);
-        overflow: hidden;
-        --split: 50%;
-        container-type: inline-size;
-      }
-      .compare-layer {
-        position: absolute;
-        inset: 0;
-      }
-      .compare-dump {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 2px;
-        padding: 0.4rem;
-        background: #d9d4c8;
-      }
-      .compare-dump img {
-        inline-size: 100%;
-        aspect-ratio: 1;
-        object-fit: cover;
-      }
-      .compare-reveal {
-        clip-path: inset(0 0 0 calc(100% - var(--split)));
-      }
-      .compare-reveal .device {
-        max-inline-size: none;
-        min-inline-size: 0;
-        inline-size: 100%;
-        gap: 0;
-      }
-      .compare-reveal .screen {
-        border-radius: 0;
-        box-shadow: none;
-      }
-      .compare input[type='range'] {
-        position: absolute;
-        inset-inline: 0.6rem;
-        inset-block-end: 0.6rem;
-        z-index: 2;
-        inline-size: calc(100% - 1.2rem);
-        min-block-size: 44px;
-      }
-      .compare-hint {
-        color: var(--muted);
-        font-size: var(--meta);
-        margin-block-start: 0.7rem;
-        max-inline-size: 46ch;
-      }
-
-      .around-list {
-        list-style: none;
-        padding: 0;
-        margin: 1rem 0 0;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-        gap: 0.8rem;
-      }
-      .around-list li {
-        padding: 1.05rem 1.15rem;
-        background: var(--stone-warm);
-        border-radius: 16px;
-        border-block-end: 0;
-      }
-      .around-list strong {
-        font-family: 'Frank Ruhl Libre', serif;
-        font-weight: 500;
-        display: block;
-        font-size: 1.05rem;
-      }
-      .around-walk {
-        display: block;
-        font-family: 'Frank Ruhl Libre', serif;
-        font-weight: 700;
-        font-size: 2rem;
-        line-height: 1.1;
-        color: var(--olive);
-        margin-block-start: 0.35rem;
-      }
-      .cite {
-        display: block;
-        color: var(--muted);
-        font-size: var(--meta);
-        margin-block-start: 0.35rem;
-      }
-
-      /* ---------- Motion ----------
-         ONE authored entrance, capped at three steps, and nothing below the
-         fold animates. The content is visible by default — animation only ever
-         moves something that would already be on screen without it, because a
-         reveal gated on a transition ships blank in a headless renderer. */
-
-      /*
-        THE DEFAULT STATE IS VISIBLE. Every rule below only ever moves
-        something that is already on the page — nothing here can leave the
-        homepage blank in a headless renderer, a background tab, or a browser
-        that drops the feature.
-
-        Only the first cycling screen shows without motion, which is correct:
-        the other two are the same listing in another palette, so no content is
-        lost, and a reader who asked for less movement gets one still page.
-      */
-      .stage > .device + .device {
-        opacity: 0;
-      }
-
-      @media (prefers-reduced-motion: no-preference) {
-        .hero-copy,
-        .hero .phone {
-          animation: arrive 0.62s both cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .hero-line > span {
-          animation: line-rise var(--dur-reveal) var(--ease-out) both;
-        }
-        .hero-line:nth-child(2) > span {
-          animation-delay: 80ms;
-        }
-        @keyframes line-rise {
-          from {
-            transform: translateY(110%);
-          }
-          to {
-            transform: none;
-          }
-        }
-
-        .hero .stage {
-          animation-delay: 0.1s;
-        }
-
-        @keyframes arrive {
-          from {
-            opacity: 0;
-            transform: translateY(14px);
-          }
-        }
-
-        /*
-          The cycle. 22.5s for five screens is 4.5s each — long enough to read
-          a price and short enough that a reader who arrived for the headline
-          sees a second one before they scroll.
-
-          The fade is 4% of the loop on each side, which is about 540ms: slower
-          than a UI transition because this is a scene change, not a response
-          to a press.
-        */
-        .stage > .device {
-          animation: cycle calc(var(--n, 5) * 4.5s) calc(var(--i) * 4.5s) infinite both;
-        }
-
-        @keyframes cycle {
-          0% {
-            opacity: 0;
-            transform: translateY(10px) scale(0.985);
-          }
-          3%,
-          17% {
-            opacity: 1;
-            transform: none;
-          }
-          20%,
-          100% {
-            opacity: 0;
-            transform: translateY(-10px) scale(0.985);
-          }
-        }
-
-        /* A card lifts toward the reader on hover. Transform only — animating
-           a layout property here would reflow the whole row. */
-        .tpl-row .device {
-          transition: transform 0.35s var(--ease-out);
-        }
-
-        .tpl-row .device:hover {
-          transform: translateY(-6px);
-        }
-      }
-
-      /*
-        SCROLL-DRIVEN REVEALS, and every rule is inside BOTH wrappers.
-
-        @supports is the feature detection: outside it the declaration is
-        dropped and whatever opacity it was driving is left applied, which is
-        how a third of a page goes invisible in a browser that cannot animate
-        it back. The reduced-motion query is the other half.
-        scripts/verify-motion-fallbacks.mjs asserts both against the BUILT
-        stylesheet, because the nesting is the whole difference and it looks
-        correct either way in review.
-      */
-      @media (prefers-reduced-motion: no-preference) {
-        @supports (animation-timeline: view()) {
-          .reveal {
-            animation: rise linear both;
-            animation-timeline: view();
-            animation-range: entry 5% cover 26%;
-          }
-
-          .reveal:nth-child(2) {
-            animation-range: entry 2% cover 28%;
-          }
-
-          .reveal:nth-child(3) {
-            animation-range: entry 0% cover 30%;
-          }
-
-          @keyframes rise {
-            from {
-              opacity: 0;
-              transform: translateY(26px);
-            }
-          }
-        }
-      }
-
-      @media (prefers-reduced-motion: reduce) {
-        .hero-copy,
-        .hero .phone {
-          animation: fade 0.4s both;
-        }
-        .hero-line > span {
-          animation: none;
-        }
-
-        @keyframes fade {
-          from {
-            opacity: 0;
-          }
-        }
-
-        .cta,
-        .tpl-row .device {
-          transition: none;
-        }
-      }
-    </style>
-  </head>
-
-  <body>
-    <a class="skip" href="#main">{t('a11y.skip')}</a>
-    <main id="main">
-    <div class="dark">
-      <div class="shell">
-        <header class="top">
-          <BrandMark href="/" />
-          <nav>
-            {/* Logged out: only sign-in. Logged in: only my listings.
-                The homepage is static, so sign-in is the default paint and
-                a client script swaps after getSession. Both must never show. */}
-            <a class="top-link" id="nav-enter" href="/enter/">{t('home.ctaSecond')}</a>
-            <a class="top-link" id="nav-mine" href="/mine/" hidden>{t('dash.title')}</a>
-          </nav>
-        </header>
+<Site
+  title={title}
+  description={t('home.subTagline')}
+  og={{ image: ogImage, title: t('common.brand'), description: t('home.subTagline') }}
+>
+  <section class="hm-hero ls-grain">
+    <div class="hm-aurora" aria-hidden="true"></div>
+    <div class="site-shell hm-hero-grid">
+      <div class="hm-copy">
+        <p class="site-eyebrow ls-fade" style="--i:0">{t('home.eyebrow')}</p>
+        <h1 class="hm-title">
+          <span class="ls-line"><span style="--i:0">{t('home.heroLine1')}</span></span>
+          <span class="ls-line"><span class="hm-glow" style="--i:1">{t('home.heroLine2')}</span></span>
+        </h1>
+        <p class="site-sub ls-fade" style="--i:2">{t('home.heroSub')}</p>
+        <div class="site-actions hm-actions ls-fade" style="--i:3">
+          <a class="site-btn site-btn-primary ls-sheen" href="/new/?fresh=1">{t('home.cta')}</a>
+          <a class="site-btn site-btn-ghost" href="#templates">{t('home.ctaTemplates')}</a>
+        </div>
+        <p class="site-note ls-fade" style="--i:4">{t('home.ctaNote')}</p>
       </div>
 
-      <div class="shell">
-        <div class="hero">
-          <div class="hero-copy">
-            <h1 class="hero-title">
-              <span class="hero-line"><span>{t('home.taglineLine1')}</span></span>
-              <span class="hero-line"><span>{t('home.taglineLine2')}</span></span>
-            </h1>
-            <p class="hero-sub">{t('home.subTagline')}</p>
-            <p class="hero-lead">{t('home.lead')}</p>
-
-            <div class="actions">
-              <a class="cta" href="/new/?fresh=1">{t('home.cta')}</a>
-              <span class="actions-note">{t('home.ctaNote')}</span>
+      {/* Rests on the finished listing (state 3). The script plays the steps
+          only when motion is allowed and the phone is on screen. */}
+      <div class="hm-phone" role="img" aria-label={t('home.builderLabel')}>
+        <div class="hm-screen" data-builder data-state="3">
+          <p class="hm-step" data-step aria-hidden="true">
+            <span data-n="0">{t('home.build1')}</span>
+            <span data-n="1">{t('home.build2')}</span>
+            <span data-n="2">{t('home.build3')}</span>
+            <span data-n="3">{t('home.build4')}</span>
+          </p>
+          {builderPhotos.map((image, i) => (
+            <div class="hm-photo" data-i={i}>
+              <img
+                src={largest(image, GALLERY_WIDTHS)}
+                alt=""
+                width={image.width}
+                height={image.height}
+                decoding="async"
+                fetchpriority={i === 0 ? 'high' : undefined}
+                loading={i === 0 ? 'eager' : 'lazy'}
+              />
+              {image.room && <span class="hm-room">{t(`editor.rooms.${image.room}`)}</span>}
             </div>
-          </div>
-
-          <div class="phone">
-            <div class="stage">
-              {
-                heroTemplates.map((tpl, index) => (
-                  <div class="device" data-tpl={tpl} style={`--i: ${index}`}>
-                    <MiniScreen
-                      listing={{ ...propertyShowcase, template: tpl }}
-                      cells={cells}
-                      perUnit={perUnit}
-                      eager={index === 0}
-                    />
-                  </div>
-                ))
-              }
-            </div>
-            <p class="phone-caption">{t('home.phoneCaption')}</p>
+          ))}
+          <div class="hm-shade"></div>
+          <div class="hm-ui">
+            <p class="hm-ui-title">{titleLines.map((line) => <span><Prose text={line} /></span>)}</p>
+            <p class="hm-ui-price"><bdi>{ils(home.price)}</bdi></p>
+            <span class="hm-ui-wa">{t('home.waButton')}</span>
           </div>
         </div>
       </div>
     </div>
+  </section>
 
-    {/*
-      The centrepiece. One listing, five templates — the offer made in less
-      time than a sentence about it would take to read.
-    */}
-    <section>
-      <div class="shell">
-        <div class="section-head">
-          <h2>{t('home.templatesTitle')}</h2>
-          <p>{t('home.templatesBody')}</p>
+  <section class="site-sect ls-sect">
+    <div class="site-shell">
+      <p class="site-eyebrow">{t('home.raceLabel')}</p>
+      <h2 class="site-h2">{t('home.raceTitle')}</h2>
+      <div class="hm-race" data-race>
+        <div class="hm-race-card">
+          <h3>{t('home.raceOld')}</h3>
+          <p class="hm-clock hm-clock-old">{t('home.raceOldClock')}</p>
+          <ul>
+            <li>{t('home.raceOld1')}</li>
+            <li>{t('home.raceOld2')}</li>
+            <li>{t('home.raceOld3')}</li>
+            <li><Prose text={t('home.raceOld4')} /></li>
+          </ul>
         </div>
-
-        <div class="tpl-row">
-          {
-            homeTemplates.map((tpl) => (
-              <a class="device reveal" data-tpl={tpl} href={`/template-check/${tpl}/`}>
-                <MiniScreen
-                  listing={{ ...propertyShowcase, template: tpl }}
-                  cells={cells}
-                  perUnit={perUnit}
-                />
-                <span class="device-label">{t(`editor.templates.${tpl}`)}</span>
-              </a>
-            ))
-          }
+        <div class="hm-race-card is-us">
+          <h3>{t('home.raceNew')}</h3>
+          <p class="hm-clock"><bdi data-clock>4:00</bdi></p>
+          <ul data-race-steps>
+            <li class="is-done">{t('home.raceNew1')}</li>
+            <li class="is-done">{t('home.raceNew2')}</li>
+            <li class="is-done">{t('home.raceNew3')}</li>
+            <li class="is-done">{t('home.raceNew4')}</li>
+            <li class="is-done">{t('home.raceNew5')}</li>
+          </ul>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <section class="proof">
-      <div class="shell">
-        <div class="section-head">
-          <SectionLabel text={t('home.proofLabel')} />
-          <h2>{t('home.proofTitle')}</h2>
-        </div>
-        <div class="proof-track">
-          <article class="proof-chapter">
-            <div class="proof-copy">
-              <p class="proof-index"><bdi>1 / 4</bdi></p>
-              <h3>{t('home.proof1')}</h3>
-              <p>{t('home.proof1Body')}</p>
-            </div>
-            <div class="proof-visual proof-mosaic" aria-hidden="true">
-              <img src={largest(propertyListing.media.cover, HERO_WIDTHS)} alt="" />
-              {propertyListing.media.gallery.slice(0, 2).map((image) => (
-                <img src={largest(image, HERO_WIDTHS)} alt="" />
-              ))}
-            </div>
-          </article>
-          <article class="proof-chapter">
-            <div class="proof-copy">
-              <p class="proof-index"><bdi>2 / 4</bdi></p>
-              <h3>{t('home.proof2')}</h3>
-              <p>{t('home.proof2Body')}</p>
-            </div>
-            <div class="proof-visual proof-form" aria-hidden="true">
-              {cells.map((cell) => (
-                <div class="proof-field">
-                  <span>{cell.label}</span>
-                  <strong>
-                    {cell.bdi ? <bdi>{cell.displayValue}</bdi> : cell.displayValue}
-                  </strong>
-                </div>
-              ))}
-            </div>
-          </article>
-          <article class="proof-chapter">
-            <div class="proof-copy">
-              <p class="proof-index"><bdi>3 / 4</bdi></p>
-              <h3>{t('home.proof3')}</h3>
-              <p>{t('home.proof3Body')}</p>
-            </div>
-            <div class="proof-visual proof-phones" aria-hidden="true">
-              {(['editorial', 'dark', 'walkFirst'] as const).map((tpl) => (
-                <div class="device" data-tpl={tpl}>
-                  <MiniScreen
-                    listing={{ ...propertyShowcase, template: tpl }}
-                    cells={cells}
-                    perUnit={perUnit}
+  <section class="site-sect hm-templates" id="templates">
+    <div class="site-shell">
+      <p class="site-eyebrow">{t('home.templatesLabel')} · <bdi>{catalogue.length}</bdi></p>
+      <h2 class="site-h2">{t('home.templatesTitle')}</h2>
+      <p class="site-sub">{t('home.templatesBody')}</p>
+    </div>
+    <ul class="hm-row">
+      {catalogue.map((tpl) => (
+        <li>
+          <a class="hm-device" href={tpl.href} aria-label={`${t('home.templatesOpen')} ${t(`editor.templates.${tpl.id}`)}`}>
+            <span class="hm-device-screen">
+              <img
+                src={`/home/templates/${tpl.id}.webp`}
+                alt=""
+                width="400"
+                height="866"
+                loading="lazy"
+                decoding="async"
+              />
+            </span>
+            <span class="hm-device-name">
+              {t(`editor.templates.${tpl.id}`)}
+              {tpl.car && <span class="hm-car">{t('home.templatesCar')}</span>}
+            </span>
+            <span class="hm-device-note">{t(`editor.templates.${tpl.id}Note`)}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <section class="site-sect ls-sect" data-ls="paper">
+    <div class="site-shell">
+      <p class="site-eyebrow">{t('home.wowLabel')}</p>
+      <h2 class="site-h2">{t('home.wowTitle')}</h2>
+      <ul class="hm-wow">
+        {wow.map((item) => {
+          const body = (
+            <>
+              <span class="hm-wow-vis" aria-hidden="true">
+                {'image' in item && item.image && (
+                  <img
+                    src={item.image}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    class:list={['contain' in item && item.contain ? 'is-plan' : 'ls-breathe']}
                   />
-                </div>
-              ))}
-            </div>
-          </article>
-          <article class="proof-chapter">
-            <div class="proof-copy">
-              <p class="proof-index"><bdi>4 / 4</bdi></p>
-              <h3>{t('home.proof4')}</h3>
-              <p>{t('home.proof4Body')}</p>
-            </div>
-            <div class="proof-visual proof-thread">
-              <div class="thread">
-                <div class="bubble">
-                  <div class="card">
-                    <img src={cardImage} alt="" loading="lazy" decoding="async" width="1200" height="630" />
-                    <div class="card-text">
-                      <strong><Prose text={cardTitle} /></strong>
-                      <span><Prose text={cardFacts} /></span>
-                      <em dir="ltr">hasivuv.com</em>
-                    </div>
-                  </div>
-                  <span class="bubble-link"><bdi dir="ltr">hasivuv.com/a/A7K2M</bdi></span>
-                </div>
-                <p class="thread-note">{t('home.linkCaption')}</p>
-              </div>
-            </div>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <section>
-      <div class="shell">
-        <div class="section-head">
-          <SectionLabel text={t('home.compareLabel')} />
-          <h2>{t('home.compareTitle')}</h2>
-          <p>{t('home.compareAfter')}</p>
-        </div>
-        <div class="compare" style="--split: 50%">
-          <div class="compare-layer compare-dump" aria-hidden="true">
-            <img src={largest(propertyListing.media.cover, HERO_WIDTHS)} alt="" />
-            {propertyListing.media.gallery.map((image) => (
-              <img src={largest(image, HERO_WIDTHS)} alt="" />
-            ))}
-          </div>
-          <div class="compare-layer compare-reveal">
-            <div class="device" data-tpl="editorial">
-              <MiniScreen listing={propertyShowcase} cells={cells} perUnit={perUnit} />
-            </div>
-          </div>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value="50"
-            dir="ltr"
-            aria-label={t('home.compareHint')}
-          />
-        </div>
-        <p class="compare-hint">{t('home.compareBefore')} {t('home.compareHint')}</p>
-      </div>
-    </section>
-
-    <section>
-      <div class="shell">
-        <div class="section-head">
-          <SectionLabel text={t('listing.section.around')} />
-          <h2>{t('home.aroundTitle')}</h2>
-          <p>{t('home.aroundBody')}</p>
-        </div>
-        <ul class="around-list">
-          {sampleSchool && (
-            <li>
-              <strong>{sampleSchool.name}</strong>
-              <span class="around-walk">
-                <WalkMinutes minutes={sampleSchool.walkMinutes} walking />
+                )}
+                {'drawing' in item && item.drawing === 'sun' && (
+                  <svg viewBox="0 0 200 120" class="hm-draw">
+                    <path d="M16 110 A84 84 0 0 1 184 110" class="hm-draw-arc" />
+                    <path d="M100 110 L60 118 L140 118 Z" class="hm-draw-wedge" />
+                    <circle cx="146" cy="44" r="10" class="hm-draw-sun" />
+                    <line x1="8" y1="110" x2="192" y2="110" class="hm-draw-ground" />
+                  </svg>
+                )}
+                {'drawing' in item && item.drawing === 'walk' && (
+                  <svg viewBox="0 0 200 120" class="hm-draw">
+                    <path d="M24 100 C70 100 60 40 108 44 S170 24 180 18" class="hm-draw-route" />
+                    <circle cx="24" cy="100" r="7" class="hm-draw-home" />
+                    <circle cx="74" cy="72" r="5" class="hm-draw-stop" />
+                    <circle cx="124" cy="40" r="5" class="hm-draw-stop" />
+                    <circle cx="180" cy="18" r="5" class="hm-draw-stop" />
+                  </svg>
+                )}
               </span>
-              <span class="cite">
-                {sampleSchool.sourceName} · {t('source.asOf')}
-                <bdi>{sampleSchool.sourceDate}</bdi>
+              <span class:list={['site-tag', !item.live && 'is-soon']}>
+                {item.live ? t('home.liveTag') : t('home.soonTag')}
               </span>
+              <b>{t(`home.wow${item.key}`)}</b>
+              <span>{t(`home.wow${item.key}Body`)}</span>
+            </>
+          );
+          return (
+            <li class:list={['hm-wow-card', item.live && 'is-live']}>
+              {'href' in item ? <a href={item.href}>{body}</a> : <div>{body}</div>}
             </li>
-          )}
-          {sampleBus && (
-            <li>
-              <strong>{sampleBus.name}</strong>
-              <span class="around-walk">
-                <WalkMinutes minutes={sampleBus.walkMinutes} walking />
-              </span>
-              <span class="cite">
-                {sampleBus.sourceName} · {t('source.asOf')}
-                <bdi>{sampleBus.sourceDate}</bdi>
-              </span>
-            </li>
-          )}
-          {sampleGrocery && (
-            <li>
-              <strong>{sampleGrocery.name}</strong>
-              <span class="around-walk">
-                <WalkMinutes minutes={sampleGrocery.walkMinutes} walking />
-              </span>
-            </li>
-          )}
-        </ul>
-        <p class="compare-hint">{odblLine}</p>
+          );
+        })}
+      </ul>
+    </div>
+  </section>
+
+  <section class="site-sect ls-sect">
+    <div class="site-shell hm-wa-grid">
+      <div>
+        <p class="site-eyebrow">{t('home.waLabel')}</p>
+        <h2 class="site-h2">{t('home.waTitle')}</h2>
+        <p class="site-sub">{t('home.waNote')}</p>
       </div>
-    </section>
-
-    <section class="pricing-band">
-      <div class="shell">
-        <div class="section-head">
-          <h2>{t('home.pricingTitle')}</h2>
-        </div>
-        <PriceTiers compact />
-      </div>
-    </section>
-
-    {/* Sign in, and the library that is the reason to. */}
-    <section class="dark">
-      <div class="shell">
-        <div class="dash-grid">
-          <div>
-            <div class="section-head">
-              <h2>{t('home.dashTitle')}</h2>
-              <p>{t('home.dashBody')}</p>
-            </div>
-            <a class="cta" href="/mine/">{t('home.dashCta')}</a>
-          </div>
-
-          <div class="dash-shot" aria-hidden="true">
-            <div class="dash-shot-bar">{t('common.brand')}</div>
-            <div class="dash-cards">
-              <div class="dash-card">
-                <img
-                  src={largest(propertyListing.media.cover, HERO_WIDTHS)}
-                  alt=""
-                  loading="lazy"
-                  decoding="async"
-                />
-                <em>פורסם</em>
-              </div>
-              <div class="dash-card">
-                <img
-                  src={largest(vehicleListing.media.cover, HERO_WIDTHS)}
-                  alt=""
-                  loading="lazy"
-                  decoding="async"
-                />
-                <em>פורסם</em>
-              </div>
-              <div class="dash-card">
-                <div class="none"></div>
-                <em>טיוטה</em>
+      <div class="hm-chat" aria-hidden="true">
+        <p class="hm-chat-top">{t('home.waBuyer')}</p>
+        <div class="hm-chat-body">
+          <p class="hm-bubble is-them">{t('home.waAsk')}</p>
+          <div class="hm-bubble">
+            <div class="hm-card">
+              <img src={cardImage} alt="" loading="lazy" decoding="async" width="1200" height="630" />
+              <div>
+                <b><Prose text={cardTitle} /></b>
+                <small><Prose text={cardFacts} /></small>
+                <small dir="ltr">hasivuv.com</small>
               </div>
             </div>
+            <p>{t('home.waReply')}</p>
           </div>
+          <p class="hm-bubble is-them">{t('home.waBack')}</p>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <section class="closing">
-      <div class="shell">
-        <h2>{t('home.closingTitle')}</h2>
-        <a class="cta" href="/new/?fresh=1">{t('home.cta')}</a>
-        <span class="actions-note" style="color:var(--muted)">{t('home.ctaNote')}</span>
+  <section class="site-sect" data-ls="paper">
+    <div class="site-shell">
+      <h2 class="site-h2">{t('home.pricingTitle')}</h2>
+      <PriceTiers compact />
+      <p class="hm-more"><a class="site-link" href="/pricing/">{t('home.pricingLink')}</a></p>
+    </div>
+  </section>
+
+  <section class="site-sect hm-closing">
+    <div class="site-shell">
+      <h2 class="site-h2">{t('home.closingTitle')}</h2>
+      <p class="site-sub">{t('home.closingBody')}</p>
+      <div class="site-actions">
+        <a class="site-btn site-btn-primary" href="/new/?fresh=1">{t('home.cta')}</a>
+        <a class="site-btn site-btn-ghost" href="/pricing/">{t('pricing.title')}</a>
       </div>
-    </section>
-    </main>
+    </div>
+  </section>
 
-    <footer>
-      <div class="shell">
-        <span><a href="/">{t('common.brand')}</a></span>
-        <span>
-          <a href="/about/">{t('legal.about')}</a>
-          {' · '}
-          <a href="/contact/">{t('legal.contact')}</a>
-          {' · '}
-          <a href="/legal/terms/">{t('legal.terms')}</a>
-          {' · '}
-          <a href="/legal/privacy/">{t('legal.privacy')}</a>
-          {' · '}
-          <a href="/legal/accessibility/">{t('legal.accessibility')}</a>
-          {' · '}
-          <a href="/pricing/">{t('pricing.title')}</a>
-          {' · '}
-          <a href="/guide/photos/">{t('guide.photosTitle')}</a>
-          {' · '}
-          <a href="/new/?fresh=1">{t('home.cta')}</a>
-        </span>
-      </div>
-    </footer>
+  <script>
+    /**
+     * Two small pieces of motion, both off for reduced motion, both
+     * starting from — and resting on — a finished state already in the
+     * markup, so a script that never runs leaves a whole page.
+     */
+    const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    <script>
-      import { supabase, supabaseConfigured } from '../lib/supabase';
+    // The hero phone: scattered → tagged → cover and title → ready, looped
+    // while it is on screen.
+    const builder = document.querySelector<HTMLElement>('[data-builder]');
+    if (builder && !still) {
+      const HOLD = [1500, 1900, 1900, 3400];
+      let state = 3;
+      let timer = 0;
+      const step = () => {
+        state = (state + 1) % 4;
+        builder.dataset.state = String(state);
+        timer = window.setTimeout(step, HOLD[state]);
+      };
+      new IntersectionObserver(([entry]) => {
+        window.clearTimeout(timer);
+        if (entry?.isIntersecting) {
+          state = 3;
+          step();
+        } else {
+          builder.dataset.state = '3';
+        }
+      }, { threshold: 0.3 }).observe(builder);
+    }
 
-      /**
-       * One header link, not two. Sign-in is the static default so a logged-out
-       * first paint never flashes "המודעות שלי". After a session exists the
-       * script hides sign-in and shows the library.
-       */
-      if (supabaseConfigured) {
-        const enter = document.getElementById('nav-enter');
-        const mine = document.getElementById('nav-mine');
-        const client = supabase();
-
-        const paint = async () => {
-          const { data } = await client.auth.getSession();
-          const signedIn = Boolean(data.session);
-          if (enter) enter.hidden = signedIn;
-          if (mine) mine.hidden = !signedIn;
+    // The race clock: counts to 4:00 the first time it scrolls into view.
+    // A reader who arrives with it already on screen sees the result.
+    const race = document.querySelector<HTMLElement>('[data-race]');
+    const clock = race?.querySelector<HTMLElement>('[data-clock]');
+    const steps = [...(race?.querySelectorAll<HTMLElement>('[data-race-steps] li') ?? [])];
+    if (race && clock && !still && race.getBoundingClientRect().top > innerHeight) {
+      const END = 240;
+      const paint = (seconds: number) => {
+        clock.textContent = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+        steps.forEach((li, i) => li.classList.toggle('is-done', seconds >= (END / steps.length) * (i + 0.6)));
+      };
+      paint(0);
+      const io = new IntersectionObserver(([entry]) => {
+        if (!entry?.isIntersecting) return;
+        io.disconnect();
+        const start = performance.now();
+        const tick = (now: number) => {
+          const seconds = Math.min(END, Math.round(((now - start) / 3200) * END));
+          paint(seconds);
+          if (seconds < END) requestAnimationFrame(tick);
         };
-
-        void paint();
-        client.auth.onAuthStateChange(() => void paint());
-      }
-
-      const compare = document.querySelector<HTMLElement>('.compare');
-      const slider = compare?.querySelector<HTMLInputElement>('input[type="range"]');
-      slider?.addEventListener('input', () => {
-        compare?.style.setProperty('--split', `${slider.value}%`);
-      });
-    </script>
-  </body>
-</html>
+        requestAnimationFrame(tick);
+      }, { threshold: 0.5 });
+      io.observe(race);
+    }
+  </script>
+</Site>
