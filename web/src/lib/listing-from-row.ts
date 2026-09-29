@@ -12,6 +12,7 @@ import { descriptionOrArea } from '@/features/listings/neighborhood-note';
 import { OSM_ATTRIBUTION, type AreaPlace, type AreaPlaces } from '@/features/listings/area-note';
 import { applyPicks, rankEveryday } from '@/features/listings/place-rank';
 import { isPhotoRoom } from '@/features/listings/photo-rooms';
+import { cleanPlanRooms, depthFor, spinFrames } from '@/features/listings/rich-media';
 import { resolveTemplateId } from '@/features/templates/manifest';
 
 import { listingBySlug } from './listings';
@@ -188,6 +189,26 @@ function asMedia(value: unknown): Media | undefined {
         return [asImage(item, String(item.id ?? item.url))];
       })
     : [];
+  // P7 media (rich-media.ts validates each; anything off is simply absent).
+  const floorPlan =
+    isRecord(value.floorPlan) && typeof value.floorPlan.url === 'string'
+      ? (() => {
+          const rooms = cleanPlanRooms(value.floorPlan.rooms);
+          return { ...asImage(value.floorPlan, 'plan'), ...(rooms.length > 0 ? { rooms } : {}) };
+        })()
+      : undefined;
+  const spin = spinFrames(
+    Array.isArray(value.spin)
+      ? value.spin.flatMap((item, index) =>
+          isRecord(item) && typeof item.url === 'string' ? [asImage(item, `spin-${index}`)] : [],
+        )
+      : [],
+  );
+  const depthUrl = depthFor(value.depth, cover.url);
+  const https = (url: unknown) => (typeof url === 'string' && url.startsWith('https://') ? url : undefined);
+  const storyUrl = https(value.storyUrl);
+  const flyerUrl = https(value.flyerUrl);
+
   return {
     cover,
     gallery,
@@ -195,6 +216,11 @@ function asMedia(value: unknown): Media | undefined {
     ...(typeof value.tourUrl === 'string' && value.tourUrl.startsWith('https://')
       ? { tourUrl: value.tourUrl }
       : {}),
+    ...(floorPlan ? { floorPlan } : {}),
+    ...(spin.length > 0 ? { spin } : {}),
+    ...(depthUrl ? { depthUrl } : {}),
+    ...(storyUrl ? { storyUrl } : {}),
+    ...(flyerUrl ? { flyerUrl } : {}),
   };
 }
 
