@@ -28,8 +28,17 @@ change. Deploy:
 
 ```
 fly secrets set --app app1-mmbfma SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... PAGE_BASE_URL=https://besivov.liorkr98.workers.dev
-fly deploy --app app1-mmbfma --config worker/fly.toml --dockerfile worker/Dockerfile --ha=false
+fly deploy --app app1-mmbfma --config worker/fly.toml --dockerfile worker/Dockerfile \
+  --process-groups worker,pdf --ha=false --remote-only
 ```
+
+Without a shell (the Windows machine): GitHub → Actions → **Deploy worker** →
+Run workflow. It runs the same deploy from `main` only, and needs the
+repository secret `FLY_API_TOKEN` (a deploy token for `app1-mmbfma`). The app's
+own secrets can be added in the Fly dashboard under the app's **Secrets**.
+
+`--process-groups worker,pdf` is not optional: the OSRM router is a third
+machine on this app (docs/OSRM.md) and a deploy without the flag removes it.
 
 Secrets stay **Staged** until a machine exists. `fly secrets set` on an empty
 app does not boot anything — deploy is what creates the worker and pdf
