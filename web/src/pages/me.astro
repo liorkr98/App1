@@ -1,8 +1,12 @@
 ---
 import { ACCENTS } from '@/features/agents/accents';
-import BrandMark from '../components/BrandMark.astro';
+import { ils } from '../lib/format';
+import { tlvListing } from '../lib/fixtures';
+import { GALLERY_WIDTHS, largest } from '../lib/images';
 import { t } from '../lib/i18n';
-import '../styles/tokens.css';
+import Prose from '../components/Prose.astro';
+import Site from '../layouts/Site.astro';
+import '../styles/me.css';
 
 /**
  * The agent's own details.
@@ -30,476 +34,81 @@ import '../styles/tokens.css';
  * the strip above it fill in with their own name does. It is also the honest
  * way to show what happens when the agency is left blank — the bar falls back
  * to נבנה בהיעד — rather than explaining that in a hint nobody reads.
+ *
+ * V2 (P5): the brand kit and the first-run flow. The preview is now a
+ * miniature listing (the Tel Aviv fixture) whose agent bar, button and
+ * watermark take the agent's name, office, logo and accent as they type.
+ * `?welcome` — where the dashboard's first-run banner points — adds the
+ * three steps (details, brand, first listing) and, once saved, the way on
+ * to the editor. The same form, the same profile columns; no new table.
  */
+const sample = tlvListing;
+const sampleTitle = sample.title.split('\n');
+
 ---
 
-<!DOCTYPE html>
-<html lang="he" dir="rtl">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#FBFAF7" />
-    <title>{t('agent.title')} · {t('common.brand')}</title>
+<Site title={`${t('agent.title')} · ${t('common.brand')}`} robots="noindex,nofollow" account={false}>
+  <Fragment slot="nav">
+    <a class="site-link" href="/mine/">{t('auth.myListings')}</a>
+    <a class="site-link" id="nav-admin" href="/admin/" hidden>{t('admin.link')}</a>
+  </Fragment>
 
-    {/* A private settings page. There is no version of it that belongs in a
-        search result. */}
-    <meta name="robots" content="noindex,nofollow" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <div class="site-shell me">
+    <ol class="me-steps" id="steps" aria-label={t('agent.steps')} hidden>
+      <li id="step-details" data-state="on"><bdi>1</bdi> {t('agent.stepDetails')}</li>
+      <li id="step-brand"><bdi>2</bdi> {t('agent.stepBrand')}</li>
+      <li id="step-first"><bdi>3</bdi> {t('agent.stepFirst')}</li>
+    </ol>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Assistant:wght@400;600;700;800&display=swap"
-      rel="stylesheet"
-    />
+    <header class="me-head" id="plain-head">
+      <h1 class="site-h2">{t('agent.title')}</h1>
+      <p class="site-sub">{t('agent.lead')}</p>
+    </header>
+    <header class="me-head" id="welcome-head" hidden>
+      <p class="site-h2 me-welcome">{t('agent.welcomeTitle')}</p>
+      <p class="site-sub">{t('agent.welcomeLead')}</p>
+    </header>
 
-    <style is:global>
-      html {
-        background: var(--stone);
-        color-scheme: light;
-        touch-action: manipulation;
-        -webkit-tap-highlight-color: rgba(74, 93, 58, 0.18);
-      }
+    {/* Shown instead of the form when nobody is signed in. */}
+    <div class="gate" id="gate" hidden>
+      <p>{t('agent.signedOut')}</p>
+      <p><a href="/enter/">{t('agent.signIn')}</a></p>
+    </div>
 
-      body {
-        font-family: 'Assistant', system-ui, sans-serif;
-        background: var(--plaster);
-        color: var(--ink);
-        font-size: var(--t-body);
-        /* Hebrew needs more leading than a Latin page at the same size. */
-        line-height: 1.7;
-        max-width: 620px;
-        margin-inline: auto;
-        min-height: 100dvh;
-        -webkit-font-smoothing: antialiased;
-      }
+    {/*
+      VISIBLE BY DEFAULT, and the script hides it if nobody is signed in.
 
-      main {
-        padding: 2.25rem var(--gut) 3rem;
-      }
-
-      footer {
-        padding: 0 var(--gut) 2rem;
-        font-size: 0.85rem;
-        color: var(--muted);
-        text-align: center;
-      }
-
-      footer a {
-        display: inline-flex;
-        align-items: center;
-        min-block-size: 44px;
-        color: var(--muted);
-      }
-
-      .top .brand-mark {
-        color: var(--ink);
-      }
-
-      .top {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-        margin-block-end: 2rem;
-      }
-
-      .top nav {
-        display: flex;
-        align-items: center;
-        gap: 1.15rem;
-      }
-
-      .top nav a {
-        display: inline-flex;
-        align-items: center;
-        min-block-size: 44px;
-        font-size: var(--t-label);
-        font-weight: 600;
-        color: var(--muted);
-        text-underline-offset: 3px;
-      }
-
-      h1 {
-        font-family: 'Frank Ruhl Libre', serif;
-        font-weight: 700;
-        font-size: var(--t-h2);
-        line-height: 1.2;
-        letter-spacing: -0.015em;
-      }
-
-      .lead {
-        color: var(--muted);
-        margin-block-start: 0.4rem;
-        max-inline-size: 46ch;
-        text-wrap: pretty;
-      }
-
-      /* ---------- The live preview ----------
-         The agent bar exactly as BaseListing renders it, so what is shown here
-         is what ships. Its values are the only thing that changes. */
-
-      .preview {
-        margin-block: 1.75rem;
-      }
-
-      .preview-label {
-        font-size: var(--t-label);
-        font-weight: 600;
-        color: var(--muted);
-        margin-block-end: 0.45rem;
-      }
-
-      .agent-bar {
-        display: flex;
-        align-items: center;
-        gap: 0.65rem;
-        padding: 0.7rem var(--gut);
-        background: var(--ink-deep);
-        color: var(--plaster);
-        font-size: 0.86rem;
-        border-radius: 4px;
-      }
-
-      .agent-bar .dot {
-        inline-size: 26px;
-        block-size: 26px;
-        border-radius: 50%;
-        background: var(--olive-lift);
-        flex: 0 0 auto;
-        overflow: hidden;
-      }
-
-      .agent-bar[data-logo='barWide'] .dot {
-        inline-size: 42px;
-        block-size: 42px;
-        border-radius: 8px;
-      }
-      .agent-bar[data-logo='footerOnly'] .dot,
-      .agent-bar[data-logo='watermark'] .dot {
-        display: none;
-      }
-      .preview-watermark {
-        display: none;
-        margin-block-start: 0.5rem;
-        inline-size: 4.5rem;
-        opacity: 0.35;
-      }
-      .preview[data-logo='watermark'] .preview-watermark {
-        display: block;
-      }
-
-      .agent-bar .dot img {
-        inline-size: 100%;
-        block-size: 100%;
-        object-fit: contain;
-        border-radius: 50%;
-        display: block;
-      }
-
-      .agent-bar strong {
-        font-weight: 600;
-      }
-
-      .agent-bar .brand {
-        color: #9c9d93;
-        margin-inline-start: auto;
-        font-size: 0.8rem;
-      }
-
-      /* Nothing typed yet: the value is shown as a slot rather than as a
-         name, so an empty bar does not read as a finished one. */
-      .agent-bar strong[data-empty='true'] {
-        color: #9c9d93;
-        font-weight: 400;
-        border-block-end: 1px dashed #6f7066;
-      }
-
-      /* ---------- The palette ----------
-         Radios, because it is one choice out of six and the browser already
-         knows how to do that with a keyboard. The swatch IS the label: a
-         colour needs no name to be chosen, and the Hebrew name is there for a
-         screen reader and for anyone who wants to say which one they picked. */
-
-      .swatches {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.6rem;
-      }
-
-      .swatches input {
-        position: absolute;
-        opacity: 0;
-        pointer-events: none;
-      }
-
-      .swatches label {
-        display: grid;
-        gap: 0.35rem;
-        justify-items: center;
-        margin: 0;
-        cursor: pointer;
-        font-size: 0.72rem;
-        font-weight: 600;
-        color: var(--muted);
-      }
-
-      .swatches .chip {
-        inline-size: 40px;
-        block-size: 40px;
-        border-radius: 50%;
-        background: var(--chip);
-        /* The ring is drawn OUTSIDE the circle, so selecting one does not
-           change its size and shift the whole row sideways. */
-        box-shadow: 0 0 0 1px rgba(25, 26, 21, 0.14);
-        transition: box-shadow var(--press) var(--ease-out);
-      }
-
-      .swatches label:hover .chip {
-        box-shadow: 0 0 0 2px rgba(25, 26, 21, 0.3);
-      }
-
-      .swatches input:checked + label .chip {
-        box-shadow:
-          0 0 0 2px var(--plaster),
-          0 0 0 4px var(--ink);
-      }
-
-      .swatches input:checked + label {
-        color: var(--ink);
-      }
-
-      .swatches input:focus-visible + label .chip {
-        outline: 2px solid var(--ink);
-        outline-offset: 4px;
-      }
-
-      @media (prefers-reduced-motion: reduce) {
-        .swatches .chip {
-          transition: none;
-        }
-      }
-
-      /* ---------- Form ---------- */
-
-      fieldset {
-        border: none;
-        padding: 0;
-        margin: 0;
-      }
-
-      .field {
-        margin-block-start: 1.35rem;
-      }
-
-      label {
-        display: block;
-        font-size: var(--t-label);
-        font-weight: 600;
-        color: var(--muted);
-        margin-block-end: 0.35rem;
-      }
-
-      input {
-        inline-size: 100%;
-        min-block-size: 44px;
-        padding: 0.75rem 0.85rem;
-        font: inherit;
-        color: var(--ink);
-        background: var(--plaster);
-        border: 1px solid var(--stone);
-        border-radius: 3px;
-      }
-
-      input:focus-visible {
-        border-color: var(--olive);
-      }
-
-      .hint {
-        font-size: 0.82rem;
-        /* NOT --muted: 4.87:1 on plaster is fine for body, but this is 13px
-           supporting text and the darker value keeps a margin. */
-        color: #62635b;
-        margin-block-start: 0.35rem;
-        max-inline-size: 52ch;
-        line-height: 1.55;
-        text-wrap: pretty;
-      }
-
-      .field[data-bad='true'] input {
-        border-color: #8c2f1e;
-      }
-
-      .bad {
-        display: none;
-        font-size: 0.82rem;
-        font-weight: 600;
-        color: #8c2f1e;
-        margin-block-start: 0.35rem;
-      }
-
-      .field[data-bad='true'] .bad {
-        display: block;
-      }
-
-      button {
-        inline-size: 100%;
-        min-block-size: 44px;
-        margin-block-start: 1.75rem;
-        padding: 0.95rem;
-        font: inherit;
-        font-size: 1.08rem;
-        font-weight: 800;
-        color: var(--plaster);
-        background: var(--olive);
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-        transition:
-          transform var(--press) var(--ease-out),
-          background var(--press) var(--ease-out);
-      }
-
-      button:hover:not(:disabled) {
-        background: var(--olive-lift);
-      }
-
-      button:active:not(:disabled) {
-        transform: scale(0.97);
-      }
-
-      button:disabled {
-        background: var(--stone);
-        color: var(--muted);
-        cursor: default;
-      }
-
-      button.quiet {
-        inline-size: auto;
-        min-block-size: 44px;
-        margin-block-start: 0.5rem;
-        padding-block: 0.5rem;
-        padding-inline: 0.85rem;
-        font-size: 0.9rem;
-        font-weight: 600;
-        color: var(--ink);
-        background: transparent;
-        border: 1px solid var(--stone);
-      }
-
-      button.quiet:hover:not(:disabled) {
-        background: var(--stone);
-      }
-
-      input[type='file'] {
-        padding-block: 0.45rem;
-        padding-inline: 0.45rem;
-      }
-
-      :focus-visible {
-        outline: 2px solid var(--olive);
-        outline-offset: 3px;
-      }
-
-      /* Reserves its line before it speaks, so nothing jumps when it does. */
-      .said {
-        min-block-size: 1.5em;
-        margin-block-start: 0.9rem;
-        font-size: 0.9rem;
-        font-weight: 600;
-        color: var(--olive);
-      }
-
-      .said[data-tone='bad'] {
-        color: #8c2f1e;
-      }
-
-      .gate {
-        padding: 1.25rem 0;
-      }
-
-      .gate a {
-        color: var(--olive);
-        font-weight: 700;
-      }
-
-      [hidden] {
-        display: none !important;
-      }
-
-      @media (prefers-reduced-motion: reduce) {
-        button {
-          transition: none;
-        }
-      }
-    </style>
-  </head>
-
-  <body>
-    <a class="skip" href="#main">{t('a11y.skip')}</a>
-    <main id="main">
-      <div class="top">
-        <BrandMark />
-        <nav>
-          <a href="/mine/">{t('auth.myListings')}</a>
-          <a id="nav-admin" href="/admin/" hidden>{t('admin.link')}</a>
-        </nav>
-      </div>
-
-      <h1>{t('agent.title')}</h1>
-      <p class="lead">{t('agent.lead')}</p>
-
-      {/* Shown instead of the form when nobody is signed in. */}
-      <div class="gate" id="gate" hidden>
-        <p>{t('agent.signedOut')}</p>
-        <p><a href="/enter/">{t('agent.signIn')}</a></p>
-      </div>
-
-      {/*
-        VISIBLE BY DEFAULT, and the script hides it if nobody is signed in.
-
-        The other way round — everything hidden until a successful load —
-        renders a blank page whenever the script fails, and it failed here on
-        the first try: a stale Vite dependency returned 504, `loadProfile`
-        never resolved, and the page showed a heading and nothing else. The
-        same doctrine is written into mine.astro.
-      */}
-      <div id="panel">
-        <div class="preview">
-          <p class="preview-label">{t('agent.previewTitle')}</p>
+      The other way round — everything hidden until a successful load —
+      renders a blank page whenever the script fails, and it failed here on
+      the first try: a stale Vite dependency returned 504, `loadProfile`
+      never resolved, and the page showed a heading and nothing else. The
+      same doctrine is written into mine.astro.
+    */}
+    <div class="me-grid" id="panel">
+      <aside class="preview" aria-label={t('agent.previewTitle')}>
+        <div class="pv-phone">
           <div class="agent-bar" id="pv-bar">
             <span class="dot" aria-hidden="true"><img id="pv-logo" hidden alt="" /></span>
             <strong id="pv-name" data-empty="true">{t('agent.name')}</strong>
             <span class="brand" id="pv-brand">{t('agent.previewFallback')}</span>
           </div>
-          <img class="preview-watermark" id="pv-mark" alt="" />
-        </div>
-
-        <form id="form" novalidate>
-          <fieldset id="fields">
-            <div class="field" id="f-accent">
-              <label for="accent-olive">{t('agent.accent')}</label>
-              <div class="swatches">
-                {
-                  ACCENTS.map((accent) => (
-                    <Fragment>
-                      <input
-                        type="radio"
-                        name="accent"
-                        id={`accent-${accent.id}`}
-                        value={accent.id}
-                        checked={accent.id === 'olive'}
-                      />
-                      <label for={`accent-${accent.id}`}>
-                        <span class="chip" style={`--chip:${accent.base}`} />
-                        {t(`agent.accents.${accent.id}`)}
-                      </label>
-                    </Fragment>
-                  ))
-                }
-              </div>
-              <p class="hint">{t('agent.accentHint')}</p>
+          <div class="pv-hero">
+            <img src={largest(sample.media.cover, GALLERY_WIDTHS)} alt="" width={sample.media.cover.width} height={sample.media.cover.height} decoding="async" />
+            <img class="preview-watermark" id="pv-mark" alt="" />
+            <div class="pv-copy">
+              <p class="pv-title">{sampleTitle.map((line) => <span><Prose text={line} /></span>)}</p>
+              <p class="pv-price"><bdi>{ils(sample.price)}</bdi></p>
             </div>
+          </div>
+          <span class="pv-wa">{t('agent.previewWa')}</span>
+        </div>
+        <p class="pv-note">{t('agent.previewNote')}</p>
+      </aside>
+
+      <form id="form" novalidate>
+        <fieldset id="fields">
+          <section class="me-group" id="g-details">
+            <h2>{t('agent.groupDetails')}</h2>
 
             <div class="field" id="f-name">
               <label for="name">{t('agent.name')}</label>
@@ -530,10 +139,55 @@ import '../styles/tokens.css';
               <p class="bad" id="e-phone"></p>
             </div>
 
+            <div class="field" id="f-role">
+              <span class="label">{t('agent.role')}</span>
+              <div class="swatches pills">
+                <input type="radio" name="role" id="role-agent" value="מתווך" />
+                <label for="role-agent">{t('agent.roleAgent')}</label>
+                <input type="radio" name="role" id="role-owner" value="בעל הנכס" checked />
+                <label for="role-owner">{t('agent.roleOwner')}</label>
+              </div>
+              <p class="hint">{t('agent.roleHint')}</p>
+            </div>
+
+            <div class="field" id="f-licence">
+              <label for="licence">{t('agent.licence')}</label>
+              <input id="licence" name="licence" type="text" inputmode="numeric" dir="ltr" />
+              <p class="hint">{t('agent.licenceHint')}</p>
+            </div>
+          </section>
+
+          <section class="me-group" id="g-brand">
+            <h2>{t('agent.groupBrand')}</h2>
+
             <div class="field" id="f-agency">
               <label for="agency">{t('agent.agency')}</label>
               <input id="agency" name="agency" type="text" autocomplete="organization" />
               <p class="hint">{t('agent.agencyHint')}</p>
+            </div>
+
+            <div class="field" id="f-accent">
+              <span class="label">{t('agent.accent')}</span>
+              <div class="swatches">
+                {
+                  ACCENTS.map((accent) => (
+                    <Fragment>
+                      <input
+                        type="radio"
+                        name="accent"
+                        id={`accent-${accent.id}`}
+                        value={accent.id}
+                        checked={accent.id === 'olive'}
+                      />
+                      <label for={`accent-${accent.id}`}>
+                        <span class="chip" style={`--chip:${accent.base}`} />
+                        {t(`agent.accents.${accent.id}`)}
+                      </label>
+                    </Fragment>
+                  ))
+                }
+              </div>
+              <p class="hint">{t('agent.accentHint')}</p>
             </div>
 
             <div class="field" id="f-logo">
@@ -546,8 +200,8 @@ import '../styles/tokens.css';
             </div>
 
             <div class="field" id="f-placement">
-              <label>{t('agent.logoPlacement')}</label>
-              <div class="swatches">
+              <span class="label">{t('agent.logoPlacement')}</span>
+              <div class="swatches pills">
                 {
                   (
                     [
@@ -572,45 +226,19 @@ import '../styles/tokens.css';
               </div>
               <p class="hint">{t('agent.logoPlacementHint')}</p>
             </div>
+          </section>
+        </fieldset>
 
-            <div class="field" id="f-role">
-              <span class="label">{t('agent.role')}</span>
-              <div class="swatches">
-                <input type="radio" name="role" id="role-agent" value="מתווך" />
-                <label for="role-agent">{t('agent.roleAgent')}</label>
-                <input type="radio" name="role" id="role-owner" value="בעל הנכס" checked />
-                <label for="role-owner">{t('agent.roleOwner')}</label>
-              </div>
-              <p class="hint">{t('agent.roleHint')}</p>
-            </div>
-
-            <div class="field" id="f-licence">
-              <label for="licence">{t('agent.licence')}</label>
-              <input id="licence" name="licence" type="text" inputmode="numeric" dir="ltr" />
-              <p class="hint">{t('agent.licenceHint')}</p>
-            </div>
-          </fieldset>
-
-          <button type="submit" id="save">{t('agent.save')}</button>
-        </form>
-
+        <button type="submit" id="save" class="site-btn site-btn-primary me-save">{t('agent.save')}</button>
         <p class="said" role="status" aria-live="polite" id="said"></p>
-      </div>
-    </main>
+        <p class="me-next" id="next" hidden>
+          <a class="site-btn site-btn-primary" href="/new/?fresh=1">{t('agent.nextCta')}</a>
+        </p>
+      </form>
+    </div>
+  </div>
 
-    <footer>
-      <a href="/about/">{t('legal.about')}</a>
-      {' · '}
-      <a href="/contact/">{t('legal.contact')}</a>
-      {' · '}
-      <a href="/legal/terms/">{t('legal.terms')}</a>
-      {' · '}
-      <a href="/legal/privacy/">{t('legal.privacy')}</a>
-      {' · '}
-      <a href="/legal/accessibility/">{t('legal.accessibility')}</a>
-    </footer>
-
-    <script>
+  <script>
       import { ACCENTS } from '@/features/agents/accents';
       import { asLogoPlacement } from '@/features/agents/logo-placement';
       import { profileBlockers, type ProfileBlockerCode } from '@/features/agents/profile';
@@ -651,6 +279,7 @@ import '../styles/tokens.css';
       const pvBar = $('pv-bar');
       const pvMark = $<HTMLImageElement>('pv-mark');
       const preview = document.querySelector('.preview') as HTMLElement | null;
+      const welcome = new URLSearchParams(window.location.search).has('welcome');
 
       // Kept beside the form, not in an input: the file control's value is
       // the local path, and the public URL is what the page actually stamps.
@@ -705,6 +334,10 @@ import '../styles/tokens.css';
         // read as a colour at all.
         const accent = ACCENT_MAP.get(chosenAccent());
         if (accent && pvDot) pvDot.style.background = accent.lift;
+        if (accent && preview) {
+          preview.style.setProperty('--pv-accent', accent.base);
+          preview.style.setProperty('--pv-lift', accent.lift);
+        }
 
         if (logoUrl) {
           pvLogo.src = logoUrl;
@@ -877,16 +510,32 @@ import '../styles/tokens.css';
 
         if ('ok' in result) {
           say(t('agent.saved'));
+          if (welcome) {
+            $('next').hidden = false;
+            $('step-first').dataset.state = 'on';
+            for (const id of ['step-details', 'step-brand']) $(id).dataset.state = 'done';
+            $('next').querySelector('a')?.focus();
+          }
           return;
         }
 
         say('signedOut' in result ? t('agent.signedOut') : t('agent.failed'), 'bad');
       });
 
+      if (welcome) {
+        $('steps').hidden = false;
+        $('welcome-head').hidden = false;
+        $('plain-head').hidden = true;
+        // The step follows the part of the form being filled.
+        $('g-brand').addEventListener('focusin', () => {
+          $('step-details').dataset.state = 'done';
+          $('step-brand').dataset.state = 'on';
+        });
+      }
+
       // A rejection here must not leave a form the seller cannot use. The
       // fields are already on the page and already typeable; all that is lost
       // is whatever was saved before, so say so and let them re-enter it.
       void start().catch(() => say(t('agent.loadFailed'), 'bad'));
     </script>
-  </body>
-</html>
+</Site>

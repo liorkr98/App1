@@ -588,7 +588,18 @@
     "logoBar": "",
     "logoBarWide": "",
     "logoFooterOnly": "",
-    "logoWatermark": ""
+    "logoWatermark": "",
+    "stepDetails": "",
+    "stepBrand": "",
+    "stepFirst": "",
+    "steps": "",
+    "welcomeTitle": "",
+    "welcomeLead": "",
+    "groupDetails": "",
+    "groupBrand": "",
+    "previewNote": "",
+    "nextCta": "",
+    "previewWa": ""
   },
   "dash": {
     "title": "",

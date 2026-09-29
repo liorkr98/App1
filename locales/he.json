@@ -587,7 +587,18 @@
     "logoBar": "סרגל",
     "logoBarWide": "סרגל רחב",
     "logoFooterOnly": "תחתית בלבד",
-    "logoWatermark": "סימן מים"
+    "logoWatermark": "סימן מים",
+    "stepDetails": "פרטים",
+    "stepBrand": "המותג",
+    "stepFirst": "מודעה ראשונה",
+    "steps": "שלבי ההצטרפות",
+    "welcomeTitle": "שתי דקות, ומתחילים",
+    "welcomeLead": "השם והטלפון שלכם יופיעו בראש כל מודעה, והצבע והלוגו יהפכו אותה לשלכם. אפשר לשנות הכל אחר כך.",
+    "groupDetails": "הפרטים שלכם",
+    "groupBrand": "המותג שלכם",
+    "previewNote": "כל שינוי מופיע מיד על המודעה לדוגמה.",
+    "nextCta": "להמשיך למודעה הראשונה",
+    "previewWa": "שליחת הודעה בוואטסאפ"
   },
   "dash": {
     "title": "המודעות שלי",
