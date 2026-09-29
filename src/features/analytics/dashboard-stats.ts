@@ -98,3 +98,46 @@ export function daysSincePublished(publishedAt: string, today: Date, max = 30): 
   const span = Math.floor((today.getTime() - published) / 86_400_000) + 1;
   return lastDays(today, Math.max(1, Math.min(max, span)));
 }
+
+/**
+ * Read-through: how many buyers who opened the page reached the agent block.
+ *
+ * One row of listing_event_daily's newer columns (migration 0030). Fetched on
+ * its own so a database without 0030 still draws every other number.
+ */
+export interface ReadRow {
+  listing_id: string;
+  day: string;
+  views: number;
+  read_to_agent: number;
+}
+
+/** Views and reads in the window, for one listing or (with no id) for all. */
+export function readThrough(
+  rows: readonly ReadRow[],
+  days: readonly string[],
+  listingId?: string,
+): { views: number; reads: number } {
+  const window = new Set(days);
+  let views = 0;
+  let reads = 0;
+  for (const row of rows) {
+    if (listingId !== undefined && row.listing_id !== listingId) continue;
+    if (!window.has(row.day)) continue;
+    views += Number(row.views) || 0;
+    reads += Number(row.read_to_agent) || 0;
+  }
+  return { views, reads };
+}
+
+/**
+ * Reads per view as a whole percentage, capped at 100.
+ *
+ * A reader who reloads the page can send the beacon twice for one view, so
+ * the raw ratio can pass 100% and would claim more than happened. Undefined
+ * with no views, like contactRate.
+ */
+export function readRate(views: number, reads: number): number | undefined {
+  if (!(views > 0)) return undefined;
+  return Math.min(100, Math.round((Math.max(0, reads) / views) * 100));
+}
