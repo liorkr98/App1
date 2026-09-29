@@ -27,11 +27,26 @@ redirects when `media.pdfUrl` exists, and the worker is not deployed from this
 change. Deploy:
 
 ```
-fly deploy --config worker/fly.toml --dockerfile worker/Dockerfile
-fly secrets set SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=...
+fly secrets set --app app1-mmbfma SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... PAGE_BASE_URL=https://besivov.liorkr98.workers.dev
+fly deploy --app app1-mmbfma --config worker/fly.toml --dockerfile worker/Dockerfile \
+  --process-groups worker,pdf --ha=false --remote-only
 ```
 
-Do not set `PAGE_BASE_URL` until `hasivuv.com` is the live origin.
+Without a shell (the Windows machine): GitHub → Actions → **Deploy worker** →
+Run workflow. It runs the same deploy from `main` only, and needs the
+repository secret `FLY_API_TOKEN` (a deploy token for `app1-mmbfma`). The app's
+own secrets can be added in the Fly dashboard under the app's **Secrets**.
+
+`--process-groups worker,pdf` is not optional: the OSRM router is a third
+machine on this app (docs/OSRM.md) and a deploy without the flag removes it.
+
+Secrets stay **Staged** until a machine exists. `fly secrets set` on an empty
+app does not boot anything — deploy is what creates the worker and pdf
+machines. `--ha=false` is required on the first deploy; the default two
+machines per group would be standbys with no HTTP failover.
+
+`PAGE_BASE_URL` is the origin the pdf group opens in Chrome. Until
+`hasivuv.com` resolves, that is the Workers.dev URL, not a placeholder.
 
 The two groups claim **disjoint** job types. Chrome is the only thing here that
 routinely runs out of memory, and when it does it takes its machine with it.
@@ -100,9 +115,9 @@ Set on the Fly app. None of it is in the repo.
 | `IDLE_POLL_MS` | both | queue sleep when empty |
 | `STALE_CLAIM_MS` | both | a claim older than this is treated as abandoned |
 
-`PAGE_BASE_URL` is deliberately unset in `fly.toml`. It is not a secret, but
-nobody knows the value until Cloudflare Pages is connected (`docs/DEPLOY.md`),
-and a wrong one would quietly render 404 pages into PDFs.
+`PAGE_BASE_URL` is deliberately unset in `fly.toml`. Set it as a Fly secret
+to the live listings origin (`https://besivov.liorkr98.workers.dev` until
+`hasivuv.com` is attached). A wrong value quietly renders 404 pages into PDFs.
 
 ## Failure taxonomy
 
