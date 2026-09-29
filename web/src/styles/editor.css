@@ -1807,3 +1807,169 @@ textarea {
     }
   }
 }
+
+/* ---------- "הבחירה של היעד" (suggest.ts) ---------- */
+
+.magic-pick {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  inline-size: 100%;
+  margin-block: 0.4rem 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--stone);
+  border-radius: 14px;
+  background: var(--card, #fff);
+  color: var(--ink);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.magic-pick.chosen {
+  border-color: var(--olive);
+  box-shadow: 0 0 0 1px var(--olive);
+}
+
+.magic-mark {
+  font-size: 1.3rem;
+  line-height: 1;
+  color: var(--olive);
+}
+
+.magic-text {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.magic-text span {
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+/* ---------- On-device photo advice (photo-quality.ts) ---------- */
+
+.order-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.8rem;
+  margin-block: 0.6rem;
+}
+
+.order-suggest {
+  min-block-size: 44px;
+  padding: 0.4rem 1rem;
+  border: 1px solid var(--stone);
+  border-radius: 999px;
+  background: var(--card, #fff);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.order-tools .hint {
+  margin: 0;
+}
+
+.shot-flags {
+  position: absolute;
+  inset-block-start: 0.4rem;
+  inset-inline-end: 0.4rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  justify-content: flex-end;
+  max-inline-size: calc(100% - 0.8rem);
+}
+
+.shot-flag {
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(11, 12, 10, 0.78);
+  color: #f2f0ea;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.shot-flag.flag-duplicate {
+  background: #e9d8a6;
+  color: #15140f;
+}
+
+/* ---------- Copy tone (listing-copy COPY_TONES) ---------- */
+
+.tone-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-block: 0.8rem 0.2rem;
+}
+
+.tone-chip {
+  min-block-size: 40px;
+  padding: 0.3rem 1rem;
+  border: 1px solid var(--stone);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tone-chip.chosen {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--plaster);
+}
+
+/* ---------- Add-ons shelf (UI only, CLAUDE.md §8) ---------- */
+
+.addon-shelf {
+  margin-block-start: 2rem;
+  padding-block-start: 1.2rem;
+  border-block-start: 1px solid var(--stone);
+}
+
+.addon-shelf h3 {
+  margin: 0 0 0.8rem;
+  font-size: var(--t-label);
+  font-weight: 800;
+  color: var(--muted);
+}
+
+.addon-shelf ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 12rem), 1fr));
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.addon-shelf li {
+  display: grid;
+  gap: 0.25rem;
+  justify-items: start;
+  padding: 0.9rem;
+  border: 1px dashed var(--stone);
+  border-radius: 14px;
+}
+
+.addon-shelf li > span:last-child {
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.addon-soon {
+  padding: 0.05rem 0.55rem;
+  border: 1px solid var(--stone);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+}

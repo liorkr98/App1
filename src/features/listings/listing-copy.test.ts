@@ -5,6 +5,9 @@ import type { Fact } from '../../types/listing.js';
 import {
   acceptDescription,
   appendRewrite,
+  appendTone,
+  COPY_TONES,
+  isCopyTone,
   descriptionPrompt,
   factFragments,
   groundedDescription,
@@ -231,5 +234,28 @@ describe('groundedDescription alternate', () => {
     const second = groundedDescription(PROPERTY, { alternate: true });
     assert.notEqual(first, second);
     assert.ok(second.startsWith('יש '));
+  });
+});
+
+describe('copy tones', () => {
+  it('leaves the default voice exactly as it was', () => {
+    assert.equal(appendTone('PROMPT', 'pro'), 'PROMPT');
+    assert.equal(appendTone('PROMPT'), 'PROMPT');
+  });
+
+  it('adds one instruction per tone and never asks for hype', () => {
+    for (const tone of COPY_TONES.filter((item) => item !== 'pro')) {
+      const out = appendTone('PROMPT', tone);
+      assert.ok(out.startsWith('PROMPT\n\n'), tone);
+      for (const banned of ['חלומית', 'מדהימה', 'ייחודית', 'מושלמת', 'יוקרתית', 'שווי', 'השקעה', 'תשואה']) {
+        assert.equal(out.includes(banned), false, `${tone} contains ${banned}`);
+      }
+    }
+  });
+
+  it('accepts only the three tones from a request', () => {
+    assert.equal(isCopyTone('warm'), true);
+    assert.equal(isCopyTone('luxury'), false);
+    assert.equal(isCopyTone(undefined), false);
   });
 });

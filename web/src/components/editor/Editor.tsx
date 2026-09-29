@@ -12,6 +12,8 @@ import {
 import { blankFacts, reconcileFacts } from '@/features/listings/fact-entry';
 import { isPhotoRoom } from '@/features/listings/photo-rooms';
 import { LISTING_CATEGORIES, schemaFor } from '@/features/listings/schemas';
+import { suggestTemplate } from '@/features/templates/suggest';
+import type { CopyTone } from '@/features/listings/listing-copy';
 
 import { isProfileComplete } from '@/features/agents/profile';
 import { isAccentId } from '@/features/agents/accents';
@@ -305,6 +307,7 @@ export default function Editor() {
         ...('error' in published ? {} : { publicUrl: published.url }),
         width: processed.width,
         height: processed.height,
+        ...(processed.check ? { check: processed.check } : {}),
       });
     }
 
@@ -335,6 +338,8 @@ export default function Editor() {
   const descriptionRef = useRef(state.description);
   descriptionRef.current = state.description;
 
+  const [tone, setTone] = useState<CopyTone>('pro');
+
   const suggest = (retriesLeft = 1) => {
     const id = listingId.current;
     if (!id || suggesting) return;
@@ -356,7 +361,7 @@ export default function Editor() {
             Authorization: `Bearer ${token}`,
             Accept: 'text/event-stream',
           },
-          body: JSON.stringify({ listingId: id, previous }),
+          body: JSON.stringify({ listingId: id, previous, tone }),
         });
         if (!response.ok) throw new Error(String(response.status));
 
@@ -951,6 +956,16 @@ export default function Editor() {
             photos={photos
               .map((photo) => photo.publicUrl ?? photo.url)
               .filter((url): url is string => url.trim() !== '')}
+            suggestion={
+              state.category
+                ? suggestTemplate({
+                    category: state.category,
+                    facts: state.facts,
+                    street: state.street,
+                    namedRooms: new Set(photos.map((photo) => photo.room).filter(Boolean)).size,
+                  })
+                : undefined
+            }
           />
         ) : null}
 
@@ -963,6 +978,8 @@ export default function Editor() {
             onSuggest={canSuggest ? () => suggest() : undefined}
             suggesting={suggesting}
             suggestFailed={suggestFailed ? t('editor.description.suggestFailed') : undefined}
+            tone={tone}
+            onTone={setTone}
           />
         ) : null}
       </section>

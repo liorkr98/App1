@@ -479,6 +479,32 @@
       "unavailable": "",
       "label": "",
       "loading": ""
+    },
+    "magic": {
+      "title": "",
+      "verified": "",
+      "car": "",
+      "plan": "",
+      "sun": "",
+      "rooms": "",
+      "photo": ""
+    },
+    "quality": {
+      "dark": "",
+      "blurry": "",
+      "small": "",
+      "duplicate": "",
+      "suggestOrder": "",
+      "suggestOrderHint": ""
+    },
+    "tone": {
+      "label": "",
+      "pro": "",
+      "warm": "",
+      "refined": ""
+    },
+    "addons": {
+      "title": ""
     }
   },
   "home": {

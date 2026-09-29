@@ -12,7 +12,10 @@ import {
 import {
   acceptDescription,
   appendRewrite,
+  appendTone,
   descriptionPrompt,
+  isCopyTone,
+  type CopyTone,
   DESCRIPTION_SYSTEM_PROMPT,
   groundedDescription,
   sameParagraph,
@@ -206,8 +209,10 @@ export const POST: APIRoute = async ({ request }) => {
 
   let listingId = '';
   let previous = '';
+  let tone: CopyTone = 'pro';
   try {
-    const body = (await request.json()) as { listingId?: unknown; previous?: unknown };
+    const body = (await request.json()) as { listingId?: unknown; previous?: unknown; tone?: unknown };
+    if (isCopyTone(body.tone)) tone = body.tone;
     listingId = typeof body.listingId === 'string' ? body.listingId : '';
     previous = typeof body.previous === 'string' ? body.previous.trim() : '';
   } catch {
@@ -305,7 +310,7 @@ export const POST: APIRoute = async ({ request }) => {
   return modelText(
     apiKey,
     DESCRIPTION_SYSTEM_PROMPT,
-    appendRewrite(descriptionPrompt(input), previous),
+    appendRewrite(appendTone(descriptionPrompt(input), tone), previous),
     (raw) => {
       const accepted = acceptDescription(raw, input);
       if (!accepted) return undefined;

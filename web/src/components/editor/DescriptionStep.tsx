@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import { reviewDescription } from '@/features/listings/description';
+import { COPY_TONES, type CopyTone } from '@/features/listings/listing-copy';
 import type { Fact } from '@/types/listing';
 
 import { t } from '../../lib/i18n';
@@ -14,6 +15,9 @@ interface Props {
   onSuggest?: (() => void) | undefined;
   suggesting?: boolean;
   suggestFailed?: string | undefined;
+  /** The voice the next suggestion is written in (listing-copy COPY_TONES). */
+  tone?: CopyTone;
+  onTone?: (tone: CopyTone) => void;
 }
 
 /**
@@ -31,6 +35,8 @@ export function DescriptionStep({
   onSuggest,
   suggesting,
   suggestFailed,
+  tone = 'pro',
+  onTone,
 }: Props) {
   const review = useMemo(
     () => reviewDescription(text, facts, generated),
@@ -48,6 +54,22 @@ export function DescriptionStep({
         onChange={(event) => onChange(event.target.value)}
         aria-label={t('editor.steps.description')}
       />
+
+      {onSuggest && onTone ? (
+        <div className="tone-row" role="group" aria-label={t('editor.tone.label')}>
+          {COPY_TONES.map((option) => (
+            <button
+              key={option}
+              type="button"
+              className={option === tone ? 'tone-chip chosen' : 'tone-chip'}
+              aria-pressed={option === tone}
+              onClick={() => onTone(option)}
+            >
+              {t(`editor.tone.${option}`)}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       {onSuggest ? (
         <div className="suggest">
