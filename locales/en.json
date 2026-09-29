@@ -472,7 +472,14 @@
     "plateLooking": "",
     "plateLookupFailed": "",
     "plateLookupOk": "",
-    "plateLookupNeedDeclare": ""
+    "plateLookupNeedDeclare": "",
+    "livePreview": {
+      "title": "",
+      "missing": "",
+      "unavailable": "",
+      "label": "",
+      "loading": ""
+    }
   },
   "home": {
     "tagline": "",

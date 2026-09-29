@@ -1,0 +1,82 @@
+---
+import ListingPage from '../components/ListingPage.astro';
+import { PREVIEW_MAX_BYTES } from '@/features/preview/preview-media';
+import { t } from '../lib/i18n';
+import { previewListing } from '../lib/preview';
+
+/**
+ * The editor's live preview: the REAL listing page, drawn from a draft.
+ *
+ * The editor posts (a form aimed at an iframe) the row a save would write;
+ * lib/preview.ts turns it into a Listing through `listingFromRow`, and this
+ * renders the same `ListingPage` as /a/[slug]. So every template, the facts
+ * grid, the absent/unanswered rule and the legal lines are the published
+ * page's own, not a lookalike.
+ *
+ * POST ONLY and nothing is stored: no database, no events, no cache. The
+ * response is noindex, no-store, and may only be framed by this origin.
+ * Links inside it are inert — it is a picture of a page, not a way out of
+ * the editor.
+ */
+export const prerender = false;
+
+Astro.response.headers.set('Cache-Control', 'no-store');
+Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+Astro.response.headers.set('Content-Security-Policy', "frame-ancestors 'self'");
+
+let listing = undefined;
+let problem: 'method' | 'size' | 'missing' | undefined;
+
+if (Astro.request.method !== 'POST') {
+  problem = 'method';
+  Astro.response.status = 405;
+  Astro.response.headers.set('Allow', 'POST');
+} else {
+  const declared = Number(Astro.request.headers.get('content-length') ?? '0');
+  if (declared > PREVIEW_MAX_BYTES) {
+    problem = 'size';
+    Astro.response.status = 413;
+  } else {
+    try {
+      const form = await Astro.request.formData();
+      const raw = form.get('draft');
+      if (typeof raw === 'string' && raw.length <= PREVIEW_MAX_BYTES) {
+        listing = previewListing(JSON.parse(raw), new URL(Astro.request.url).origin);
+      } else if (typeof raw === 'string') {
+        problem = 'size';
+        Astro.response.status = 413;
+      }
+    } catch {
+      listing = undefined;
+    }
+    if (!listing && !problem) problem = 'missing';
+  }
+}
+---
+{listing ? (
+  <Fragment>
+    <ListingPage listing={listing} robots="noindex, nofollow" />
+    <script is:inline>
+      // Inert links: the preview is a picture of the page, not a way out.
+      document.addEventListener('click', function (event) {
+        var link = event.target instanceof Element ? event.target.closest('a[href]') : null;
+        if (link) event.preventDefault();
+      }, true);
+    </script>
+  </Fragment>
+) : (
+  <html lang="he" dir="rtl">
+    <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <meta name="robots" content="noindex, nofollow" />
+      <title>{t('editor.livePreview.title')}</title>
+      <style>
+        body { margin: 0; min-block-size: 100vh; display: grid; place-items: center; background: #0b0c0a; color: #a7a89c; font: 600 0.95rem/1.6 system-ui, sans-serif; text-align: center; padding: 2rem; box-sizing: border-box; }
+      </style>
+    </head>
+    <body>
+      <p>{problem === 'missing' ? t('editor.livePreview.missing') : t('editor.livePreview.unavailable')}</p>
+    </body>
+  </html>
+)}

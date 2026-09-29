@@ -30,7 +30,7 @@ import { supabase, supabaseConfigured } from '../../lib/supabase';
 import { ConsentStep } from './ConsentStep';
 import { DescriptionStep } from './DescriptionStep';
 import { DetailsStep } from './DetailsStep';
-import { PreviewStep } from './PreviewStep';
+import { LivePreview } from './LivePreview';
 import { PublishStep } from './PublishStep';
 import { DisclosuresStep } from './DisclosuresStep';
 import { FactsStep } from './FactsStep';
@@ -923,14 +923,7 @@ export default function Editor() {
         ) : null}
 
         {step === 'preview' ? (
-          <PreviewStep
-            state={state}
-            photos={photos}
-            agency={profile.agencyName ?? undefined}
-            sellerName={profile.displayName ?? undefined}
-            accent={state.accent ?? profile.accent ?? undefined}
-            agencyLogoUrl={profile.agencyLogoUrl?.trim() || undefined}
-          />
+          <LivePreview state={state} photos={photos} profile={profile} />
         ) : null}
 
         {step === 'publish' ? (
@@ -1040,14 +1033,7 @@ export default function Editor() {
             {t('editor.peekClose')}
           </button>
         ) : null}
-        <PreviewStep
-          state={state}
-          photos={photos}
-          agency={profile.agencyName ?? undefined}
-          sellerName={profile.displayName ?? undefined}
-          accent={state.accent ?? profile.accent ?? undefined}
-          agencyLogoUrl={profile.agencyLogoUrl?.trim() || undefined}
-        />
+        <LivePreview state={state} photos={photos} profile={profile} />
       </aside>
     ) : null}
 
