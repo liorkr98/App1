@@ -1,0 +1,312 @@
+/*
+  Walk (מסלול) — out of the front door. Homes only.
+
+  The route is a line down the page drawn as you scroll: a named
+  view-timeline on .wk-route drives the ink's stroke-dashoffset, inside
+  @supports and the reduced-motion guard. Everywhere else — no timeline
+  support, a reader who asked for stillness, a thumbnail — the line is simply
+  drawn. Stops are routed walking minutes, nearest first.
+
+  (Not to be confused with ../walk.css, the shared photo tour.)
+  Living Surfaces, Paper; 1.x tokens pinned.
+*/
+
+html[data-template='walk'] {
+  --plaster: #f3f1ea;
+  --ink: #121310; /* = --ls-ink */
+  --stone: #dcd8cc;
+  --stone-warm: #e9e5da;
+  --muted: #5e5f57; /* = --ls-ink-2 */
+  --muted-warm: #55564e;
+  --absent: #5e5f57;
+  --wk-ink: var(--accent, #2f5340);
+  --heroWant: 60svh;
+}
+
+html[data-template='walk'] body {
+  font-family: var(--ls-font-body);
+}
+
+html[data-template='walk'] section.stage-walk {
+  padding: 0 0 1.4rem;
+}
+
+html[data-template='walk'] .wk-head {
+  display: grid;
+  gap: 1.2rem;
+  padding: 1rem var(--gut) 0;
+}
+
+html[data-template='walk'] .wk-cover {
+  aspect-ratio: 4 / 3;
+  border-radius: 24px;
+}
+
+html[data-template='walk'] .wk-cover img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+html[data-template='walk'] .wk-eyebrow {
+  margin: 0;
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: var(--wk-ink);
+}
+
+html[data-template='walk'] .wk-door .stage-title {
+  font-family: var(--ls-font-display);
+  font-variation-settings: 'wdth' 82;
+  font-weight: 800;
+  font-size: clamp(2.3rem, 8vw, 4.4rem);
+  line-height: 1.02;
+}
+
+html[data-template='walk'] .wk-from {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 1rem 0 0.6rem;
+  font-weight: 700;
+}
+
+html[data-template='walk'] .wk-dot {
+  inline-size: 14px;
+  block-size: 14px;
+  border-radius: 50%;
+  background: var(--wk-ink);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--wk-ink) 22%, transparent);
+  flex: none;
+}
+
+html[data-template='walk'] .wk-door .price-bar {
+  padding: 0;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 0.3rem 1rem;
+}
+
+html[data-template='walk'] .wk-door .price-note {
+  text-align: start;
+}
+
+/* ---------- The route ---------- */
+
+html[data-template='walk'] .wk-route {
+  padding: 2.6rem var(--gut) 0;
+  view-timeline-name: --wk-route;
+  view-timeline-axis: block;
+}
+
+html[data-template='walk'] .wk-title {
+  font-family: var(--ls-font-display);
+  font-weight: 800;
+  font-size: clamp(1.7rem, 5vw, 2.6rem);
+  line-height: 1.1;
+  margin: 0 0 0.4rem;
+}
+
+html[data-template='walk'] .wk-note,
+html[data-template='walk'] .wk-src {
+  margin: 0.3rem 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+html[data-template='walk'] .wk-track {
+  position: relative;
+  padding-block: 1.4rem 0;
+}
+
+/* The line runs down the start side, through the centre of the pins. */
+html[data-template='walk'] .wk-line {
+  position: absolute;
+  inset-block: 1.4rem 1.6rem;
+  inset-inline-start: 24px;
+  inline-size: 10px;
+  block-size: calc(100% - 3rem);
+  overflow: visible;
+}
+
+html[data-template='walk'] .wk-line path {
+  fill: none;
+  vector-effect: non-scaling-stroke;
+  stroke-linecap: round;
+}
+
+html[data-template='walk'] .wk-line-under {
+  stroke: color-mix(in srgb, var(--ink) 22%, transparent);
+  stroke-width: 3;
+  stroke-dasharray: 1 9;
+}
+
+html[data-template='walk'] .wk-line-ink {
+  stroke: var(--wk-ink);
+  stroke-width: 5;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+
+html[data-template='walk'] .wk-stops {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1.6rem;
+  position: relative;
+}
+
+html[data-template='walk'] .wk-stop {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  gap: 1rem;
+  align-items: center;
+}
+
+html[data-template='walk'] .wk-pin {
+  inline-size: 58px;
+  block-size: 58px;
+  border-radius: 50%;
+  background: var(--plaster);
+  border: 3px solid var(--wk-ink);
+  display: grid;
+  place-content: center;
+  text-align: center;
+  line-height: 1;
+  position: relative;
+  z-index: 1;
+}
+
+html[data-template='walk'] .wk-pin bdi {
+  font-family: var(--ls-font-display);
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+html[data-template='walk'] .wk-pin small {
+  display: block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+html[data-template='walk'] .wk-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.9rem 1.05rem;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid var(--stone);
+  box-shadow: 0 24px 40px -32px rgba(0, 0, 0, 0.45);
+  min-inline-size: 0;
+}
+
+html[data-template='walk'] .wk-card em {
+  font-style: normal;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--wk-ink);
+}
+
+html[data-template='walk'] .wk-card b {
+  font-size: 1.02rem;
+}
+
+html[data-template='walk'] .wk-card span {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+html[data-template='walk'] .wk-room .wk-card img {
+  inline-size: 100%;
+  block-size: auto;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-block-end: 0.5rem;
+}
+
+html[data-template='walk'] .wk-arrive {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin: 1.8rem 0 0;
+  padding-inline-start: 22px;
+  font-weight: 800;
+}
+
+html[data-template='walk'] .wk-nums,
+html[data-template='walk'] .stage-walk .highlights {
+  margin-inline: var(--gut);
+}
+
+html[data-template='walk'] .wk-nums {
+  margin-block-start: 2rem;
+}
+
+html[data-template='walk'] .stage-walk .highlights {
+  padding: 1rem 0 0;
+}
+
+html[data-template='walk'] .enrich {
+  background: #fff;
+  border: 1px solid var(--stone);
+  border-radius: 22px;
+  margin-inline: var(--gut);
+}
+
+@media (min-width: 960px) {
+  html[data-template='walk'] .wk-head {
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    align-items: end;
+    gap: 2.4rem;
+  }
+
+  html[data-template='walk'] .wk-route {
+    max-inline-size: 52rem;
+    margin-inline: auto;
+  }
+
+  html[data-template='walk'] .wk-stops {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 2rem;
+  }
+
+  html[data-template='walk'] .wk-line {
+    display: none;
+  }
+
+  html[data-template='walk'] .listing-flow > :not(.stage, .compact-bar) {
+    align-self: center;
+    inline-size: min(100%, 64rem);
+    max-width: none;
+    box-sizing: border-box;
+  }
+
+  html[data-template='walk'] :is(.enrich, .seller, .facts, .monthly-cost) {
+    margin-inline: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    html[data-template='walk'] .wk-line-ink {
+      animation: wk-draw linear both;
+      animation-timeline: --wk-route;
+      animation-range: entry 30% exit 70%;
+    }
+
+    @keyframes wk-draw {
+      from {
+        stroke-dashoffset: 1;
+      }
+
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+  }
+}

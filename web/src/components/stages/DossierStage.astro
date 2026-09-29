@@ -1,0 +1,137 @@
+---
+import type { Listing } from '@/types/listing';
+import { HERO_WIDTHS, largest, srcset } from '../../lib/images';
+import type { FactCell } from '../../lib/facts';
+import { heMonthYear } from '../../lib/format';
+import { t } from '../../lib/i18n';
+import type { PerUnitPrice } from '../../lib/price';
+import { coverStyle, priceProps, stagePlace, titleLines } from '../../lib/stage';
+import HighlightChips from '../HighlightChips.astro';
+import PriceBar from '../PriceBar.astro';
+import Prose from '../Prose.astro';
+import Numerals from './Numerals.astro';
+
+interface Props {
+  listing: Listing;
+  cells: FactCell[];
+  perUnit?: PerUnitPrice | undefined;
+}
+
+/**
+ * Dossier (Paper, cars only). The paperwork is the design: a manila case
+ * file with register stamps, the ownership timeline, the test date.
+ *
+ * LEGAL, NOT STYLE (CLAUDE.md §7):
+ *   - The red מאומת stamp renders ONLY with a Provenance — the body by name
+ *     and the date its record was current. Without one the stamp is the blue
+ *     לפי המוכר, which is what an unchecked car is.
+ *   - Source dates print exactly as the source gave them (08/2026 or an ISO
+ *     date), in <bdi> — the convention FactsGrid and Enrichment already use.
+ *   - The licence plate is never rendered. The redacted bar is a drawing, not
+ *     a hidden value: there is no plate anywhere in this markup to reveal.
+ * The seller's disclosures stay in the shared section below (Disclosures),
+ * restyled as notes by dossier.css — their wording is the seller's.
+ */
+const { listing, cells, perUnit } = Astro.props;
+const cover = listing.media.cover;
+const lines = titleLines(listing);
+const place = stagePlace(listing);
+const vehicle = listing.enrichment?.category === 'vehicle' ? listing.enrichment : undefined;
+const spec = vehicle?.specSource;
+// Oldest first, so יד 1 is the first owner whatever order the register
+// returned (it lists the current owner first).
+const history = [...(vehicle?.ownershipHistory ?? [])].sort((a, b) => a.fromMonth.localeCompare(b.fromMonth));
+const historySource = history.find((period) => period.sourceName && period.sourceDate);
+const test = vehicle?.testValidUntil;
+const testSource = vehicle?.testSource;
+---
+<section class="stage stage-dossier">
+  <div class="ds-folder">
+    <p class="ds-tab">{t('listing.dossier.tab')} · <bdi>{listing.slug}</bdi></p>
+
+    <div class="ds-sheet ds-first">
+      {spec ? (
+        <p class="ds-stamp ds-red">
+          {t('listing.dossier.verified')}
+          <small>{spec.sourceName} · {t('listing.dossier.asOf')}<bdi>{spec.sourceDate}</bdi></small>
+        </p>
+      ) : (
+        <p class="ds-stamp ds-blue">
+          {t('listing.dossier.declared')}
+          <small>{t('listing.dossier.notChecked')}</small>
+        </p>
+      )}
+      {place && <p class="ds-kicker"><Prose text={place} /></p>}
+      <h1 class="stage-title">
+        {lines.map((line, i) => (
+          <span class="ls-line"><span style={`--i:${i}`}><Prose text={line} /></span></span>
+        ))}
+      </h1>
+      <p class="ds-plate">
+        {t('listing.dossier.plate')}: <span class="ds-redact" aria-hidden="true"></span>
+        <span class="ds-why">{t('listing.dossier.plateHidden')}</span>
+      </p>
+      <div class="ds-clipped">
+        <svg class="ds-clip" viewBox="0 0 24 60" aria-hidden="true">
+          <path d="M8 58V14a6 6 0 0 1 12 0v36a4 4 0 0 1-8 0V18" fill="none" stroke="#8b8f96" stroke-width="2.4" stroke-linecap="round" />
+        </svg>
+        <button
+          type="button"
+          class="ds-photo"
+          data-lightbox={largest(cover, HERO_WIDTHS)}
+          data-alt={cover.alt ?? ''}
+          aria-label={t('listing.openPhoto')}
+        >
+          <img
+            src={largest(cover, HERO_WIDTHS)}
+            srcset={srcset(cover, HERO_WIDTHS) || undefined}
+            sizes="(min-width: 960px) 50vw, 100vw"
+            width={cover.width}
+            height={cover.height}
+            alt={cover.alt ?? ''}
+            style={coverStyle(listing)}
+            fetchpriority="high"
+            decoding="async"
+          />
+        </button>
+      </div>
+      <div class="ds-asking">
+        <span>{t('listing.dossier.asking')}</span>
+        <PriceBar {...priceProps(listing, perUnit)} />
+      </div>
+    </div>
+
+    {(history.length > 0 || test) && (
+      <div class="ds-sheet">
+        {history.length > 0 && (
+          <Fragment>
+            <h2 class="ds-sh">{t('listing.dossier.owners')}</h2>
+            <ol class="ds-owners">
+              {history.map((period, i) => (
+                <li>
+                  <span class="ds-hand">{t('listing.dossier.hand')} <bdi>{i + 1}</bdi></span>
+                  <b>{period.type}</b>
+                  <span>
+                    <bdi>{heMonthYear(period.fromMonth)}</bdi> — {period.toMonth ? <bdi>{heMonthYear(period.toMonth)}</bdi> : t('listing.dossier.now')}
+                  </span>
+                </li>
+              ))}
+            </ol>
+            {historySource && (
+              <p class="ds-src">{t('listing.dossier.verified')} · {historySource.sourceName} · {t('listing.dossier.asOf')}<bdi>{historySource.sourceDate}</bdi></p>
+            )}
+          </Fragment>
+        )}
+        {test && (
+          <p class="ds-test">
+            <span>{t('listing.dossier.test')}</span>
+            <b><bdi>{heMonthYear(test)}</bdi></b>
+            {testSource && <small>{testSource.sourceName} · {t('listing.dossier.asOf')}<bdi>{testSource.sourceDate}</bdi></small>}
+          </p>
+        )}
+      </div>
+    )}
+  </div>
+  <Numerals cells={cells} class="ds-nums" />
+  <HighlightChips highlights={listing.highlights} facts={listing.facts} />
+</section>

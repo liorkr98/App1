@@ -14,6 +14,12 @@ import AtelierStage from './stages/AtelierStage.astro';
 import GlassStage from './stages/GlassStage.astro';
 import MonolithStage from './stages/MonolithStage.astro';
 import ShowroomStage from './stages/ShowroomStage.astro';
+import DossierStage from './stages/DossierStage.astro';
+import HeliographStage from './stages/HeliographStage.astro';
+import PosterStage from './stages/PosterStage.astro';
+import TicketStage from './stages/TicketStage.astro';
+import WalkStage from './stages/WalkStage.astro';
+import ZineStage from './stages/ZineStage.astro';
 
 interface Props {
   listing: Listing;
@@ -49,7 +55,8 @@ const { listing, layout, photos, cells, perUnit, waHref, sold } = Astro.props;
  *             Living Surfaces, Paper.
  *   showcase  headline, a rounded photograph and a card beside it carrying
  *             the numbers, the price and the agent
- *   monolith, atelier, glass, showroom
+ *   monolith, atelier, glass, showroom, heliograph, walk, poster, zine,
+ *   dossier, ticket
  *             one component each in ./stages/ — see their headers.
  *
  * Everything below the first screen is the shared flow — facts, provenance,
@@ -387,7 +394,13 @@ const priceProps = {
   </section>
 )}
 
-{layout === 'monolith' && <MonolithStage listing={listing} cells={cells} perUnit={perUnit} />}
+{layout === 'monolith' && <MonolithStage listing={listing} photos={photos} cells={cells} perUnit={perUnit} />}
 {layout === 'atelier' && <AtelierStage listing={listing} cells={cells} perUnit={perUnit} />}
 {layout === 'glass' && <GlassStage listing={listing} cells={cells} perUnit={perUnit} />}
 {layout === 'showroom' && <ShowroomStage listing={listing} cells={cells} perUnit={perUnit} />}
+{layout === 'heliograph' && <HeliographStage listing={listing} cells={cells} perUnit={perUnit} />}
+{layout === 'walk' && <WalkStage listing={listing} photos={photos} cells={cells} perUnit={perUnit} />}
+{layout === 'poster' && <PosterStage listing={listing} photos={photos} cells={cells} perUnit={perUnit} />}
+{layout === 'zine' && <ZineStage listing={listing} photos={photos} cells={cells} perUnit={perUnit} />}
+{layout === 'dossier' && <DossierStage listing={listing} cells={cells} perUnit={perUnit} />}
+{layout === 'ticket' && <TicketStage listing={listing} photos={photos} cells={cells} perUnit={perUnit} waHref={waHref} sold={sold} />}

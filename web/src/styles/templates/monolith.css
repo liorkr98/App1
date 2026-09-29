@@ -142,6 +142,69 @@ html[data-template='monolith'] .stage-monolith .highlights {
   padding: 1.2rem var(--gut) 0;
 }
 
+/* ---------- The pinned room story (M7) ----------
+   Resting state: a swipeable strip. With scroll timelines and motion, the
+   frame pins and the rooms slide past it as the page scrolls (below). */
+
+html[data-template='monolith'] .mono-story {
+  padding-block: 2.6rem 0.6rem;
+}
+
+html[data-template='monolith'] .mono-story-pin {
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: inline mandatory;
+  scrollbar-width: none;
+}
+
+html[data-template='monolith'] .mono-story-track {
+  list-style: none;
+  display: flex;
+  gap: 1rem;
+  inline-size: max-content;
+  margin: 0;
+  padding: 0 var(--gut);
+}
+
+html[data-template='monolith'] .mono-story-track li {
+  inline-size: min(78vw, 620px);
+  scroll-snap-align: start;
+}
+
+html[data-template='monolith'] .mono-room {
+  inline-size: 100%;
+  aspect-ratio: 4 / 5;
+  border-radius: 4px;
+}
+
+html[data-template='monolith'] .mono-room img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+html[data-template='monolith'] .mono-story-track p {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 0.6rem 0 0;
+  font-family: var(--ls-font-display);
+  font-weight: 300;
+  font-size: 1.5rem;
+}
+
+html[data-template='monolith'] .mono-story-track p bdi {
+  font-weight: 800;
+  color: var(--olive);
+}
+
+@media (min-width: 960px) {
+  html[data-template='monolith'] .mono-room {
+    aspect-ratio: 16 / 10;
+  }
+}
+
 /* ---------- The rest of the page ---------- */
 
 html[data-template='monolith'] .facts {
@@ -198,6 +261,37 @@ html[data-template='monolith'] .gallery img {
 
   html[data-template='monolith'] .mono-meta {
     animation: stage-fade 1s var(--ease-out) 1.2s both;
+  }
+
+  @supports (animation-timeline: view()) {
+    html[data-template='monolith'] .mono-story {
+      block-size: calc(var(--n, 3) * 70svh);
+      view-timeline-name: --mono-story;
+      view-timeline-axis: block;
+    }
+
+    html[data-template='monolith'] .mono-story-pin {
+      position: sticky;
+      inset-block-start: 0;
+      block-size: 100svh;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    /* RTL: the track overflows to the left, so it travels right (--dir is
+       -1) until its far end reaches the screen. */
+    html[data-template='monolith'] .mono-story-track {
+      animation: mono-slide linear both;
+      animation-timeline: --mono-story;
+      animation-range: contain 0% contain 100%;
+    }
+
+    @keyframes mono-slide {
+      to {
+        transform: translateX(calc(var(--dir) * (100vw - 100%)));
+      }
+    }
   }
 
   @keyframes mono-wipe {

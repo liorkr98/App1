@@ -43,9 +43,9 @@ describe('template manifest', () => {
     for (const id of TEMPLATE_IDS) assert.equal(resolveTemplateId(id), id);
   });
 
-  it('matches the set the latest template migration (0032) allows', () => {
+  it('matches the set the latest template migration (0033) allows', () => {
     const sql = readFileSync(
-      new URL('../../../supabase/migrations/0032_templates_monolith_atelier_glass_showroom.sql', import.meta.url),
+      new URL('../../../supabase/migrations/0033_templates_round_two.sql', import.meta.url),
       'utf8',
     );
     const check = sql.slice(sql.indexOf('check (template in ('), sql.indexOf('));'));
@@ -70,9 +70,18 @@ describe('template manifest', () => {
     assert.ok(templatesFor('vehicle').includes('showroom'));
   });
 
+  it('keeps Dossier for cars and Heliograph and Walk for homes', () => {
+    assert.equal(templateFor('dossier', 'property'), CATEGORY_FALLBACK);
+    assert.equal(templateFor('heliograph', 'vehicle'), CATEGORY_FALLBACK);
+    assert.equal(templateFor('walk', 'vehicle'), CATEGORY_FALLBACK);
+    assert.equal(templateFor('dossier', 'vehicle'), 'dossier');
+    assert.equal(templateFor('heliograph', 'property'), 'heliograph');
+  });
+
   it('lets every other template draw either category', () => {
+    const oneCategory = new Set(['showroom', 'dossier', 'heliograph', 'walk']);
     for (const id of TEMPLATE_IDS) {
-      if (id === 'showroom') continue;
+      if (oneCategory.has(id)) continue;
       assert.equal(templateFor(id, 'property'), id);
       assert.equal(templateFor(id, 'vehicle'), id);
     }

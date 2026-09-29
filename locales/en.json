@@ -177,7 +177,65 @@
     "metricNext": "",
     "keyFacts": "",
     "blueprintRooms": "",
-    "issue": ""
+    "issue": "",
+    "helio": {
+      "plotLabel": "",
+      "north": "",
+      "south": "",
+      "east": "",
+      "west": "",
+      "seasons": "",
+      "summer": "",
+      "winter": "",
+      "facing": "",
+      "side": "",
+      "behind": "",
+      "twilight": "",
+      "night": "",
+      "belowHorizon": "",
+      "altitude": "",
+      "hoursOn": "",
+      "hours": "",
+      "scrollHint": "",
+      "honest": "",
+      "approx": ""
+    },
+    "walk": {
+      "start": "",
+      "door": "",
+      "places": "",
+      "minutes": "",
+      "back": "",
+      "rooms": "",
+      "roomsNote": "",
+      "routed": ""
+    },
+    "poster": {
+      "fig": ""
+    },
+    "dossier": {
+      "tab": "",
+      "verified": "",
+      "asOf": "",
+      "declared": "",
+      "notChecked": "",
+      "plate": "",
+      "plateHidden": "",
+      "asking": "",
+      "owners": "",
+      "hand": "",
+      "now": "",
+      "test": ""
+    },
+    "ticket": {
+      "boarding": "",
+      "departs": "",
+      "now": "",
+      "to": "",
+      "tear": "",
+      "qr": "",
+      "stop": ""
+    }
   },
   "notFound": {
     "title": "",
@@ -306,7 +364,19 @@
       "glass": "",
       "glassNote": "",
       "showroom": "",
-      "showroomNote": ""
+      "showroomNote": "",
+      "heliograph": "",
+      "heliographNote": "",
+      "walk": "",
+      "walkNote": "",
+      "poster": "",
+      "posterNote": "",
+      "zine": "",
+      "zineNote": "",
+      "dossier": "",
+      "dossierNote": "",
+      "ticket": "",
+      "ticketNote": ""
     },
     "photosHint": "",
     "photosGuide": "",

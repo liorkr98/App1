@@ -1,0 +1,260 @@
+/*
+  Poster (פוסטר) — the numbers are the layout. One ink: the listing's accent
+  on paper, for text, rules and photographs alike (single-ink prints:
+  grayscale screened onto the ink). A twelve-column grid is drawn behind.
+
+  The absent-contrast gate and the contrast test read the pinned hexes
+  below; the accent ink is on top of them for display type only, and body
+  text keeps --ink.
+*/
+
+html[data-template='poster'] {
+  --plaster: #eeece5;
+  --ink: #16170f;
+  --stone: #cfccc1;
+  --stone-warm: #e4e1d7;
+  --muted: #55564e;
+  --muted-warm: #4f5048;
+  --absent: #55564e;
+  --po-ink: var(--accent, #2f5340);
+  --heroWant: 60svh;
+}
+
+html[data-template='poster'] body {
+  font-family: var(--ls-font-body);
+}
+
+html[data-template='poster'] section.stage-poster {
+  position: relative;
+  isolation: isolate;
+  padding: 0 0 1.6rem;
+  color: var(--po-ink);
+  overflow: hidden;
+}
+
+html[data-template='poster'] .po-grid {
+  position: absolute;
+  inset-block: 0;
+  inset-inline: var(--gut);
+  z-index: -1;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  border-inline-end: 1px solid color-mix(in srgb, var(--po-ink) 22%, transparent);
+  pointer-events: none;
+}
+
+html[data-template='poster'] .po-grid span {
+  border-inline-start: 1px solid color-mix(in srgb, var(--po-ink) 22%, transparent);
+  transform-origin: top;
+}
+
+html[data-template='poster'] .po-grid span:nth-child(n + 7) {
+  display: none;
+}
+
+html[data-template='poster'] .po-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 var(--gut);
+  padding: 2.2rem 0 0.8rem;
+  border-block-end: 3px solid var(--po-ink);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+html[data-template='poster'] .po-idx {
+  display: block;
+  padding-block-start: 0.4rem;
+  border-block-start: 1px solid currentColor;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+html[data-template='poster'] .po-giant {
+  padding: 1.4rem var(--gut) 0;
+}
+
+html[data-template='poster'] .po-num {
+  display: block;
+  margin-block-start: 0.4rem;
+  font-family: var(--ls-font-display);
+  font-variation-settings: 'wdth' 62.5;
+  font-weight: 800;
+  font-size: min(58vw, calc(150vw / var(--len, 3)), 34rem);
+  line-height: 0.8;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+html[data-template='poster'] .po-unit {
+  display: block;
+  margin-block-start: 0.5rem;
+  font-size: 1.3rem;
+  font-weight: 800;
+}
+
+html[data-template='poster'] .po-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 0;
+  padding: 2rem var(--gut) 0;
+}
+
+html[data-template='poster'] .po-row dd {
+  margin: 0.4rem 0 0;
+  font-family: var(--ls-font-display);
+  font-variation-settings: 'wdth' 62.5;
+  font-weight: 800;
+  font-size: clamp(2.2rem, 11vw, 6rem);
+  line-height: 0.85;
+  white-space: nowrap;
+}
+
+html[data-template='poster'] .po-title {
+  display: grid;
+  gap: 1.2rem;
+  padding: 2.4rem var(--gut) 0;
+}
+
+html[data-template='poster'] .po-title .stage-title {
+  font-family: var(--ls-font-display);
+  font-weight: 800;
+  font-size: clamp(1.7rem, 5vw, 2.8rem);
+  line-height: 1.08;
+  max-inline-size: 16ch;
+}
+
+html[data-template='poster'] .po-title .price-bar {
+  padding: 0;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem 1rem;
+}
+
+html[data-template='poster'] .po-title .price {
+  font-family: var(--ls-font-display);
+  font-variation-settings: 'wdth' 62.5;
+  font-weight: 800;
+  font-size: clamp(3.2rem, 14vw, 8rem);
+  line-height: 0.85;
+  color: var(--po-ink);
+}
+
+html[data-template='poster'] .po-title .price-note {
+  text-align: start;
+}
+
+html[data-template='poster'] .po-prints {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.4rem 1rem;
+  padding: 2rem var(--gut) 0;
+}
+
+html[data-template='poster'] .po-prints figure {
+  margin: 0;
+}
+
+html[data-template='poster'] .po-print {
+  aspect-ratio: 4 / 5;
+  inline-size: 100%;
+  border-radius: 0;
+  background: var(--po-ink);
+}
+
+html[data-template='poster'] .po-print img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  display: block;
+  filter: grayscale(1) contrast(1.2) brightness(1.05);
+  mix-blend-mode: screen;
+}
+
+html[data-template='poster'] .po-prints figcaption {
+  margin-block-start: 0.45rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+html[data-template='poster'] .stage-poster .highlights {
+  padding: 1.2rem var(--gut) 0;
+}
+
+html[data-template='poster'] :is(.facts, .enrich) {
+  border-radius: 0;
+}
+
+html[data-template='poster'] .enrich {
+  background: transparent;
+  border-block: 3px solid var(--po-ink);
+  margin-inline: var(--gut);
+}
+
+html[data-template='poster'] .gallery img {
+  border-radius: 0;
+}
+
+@media (min-width: 960px) {
+  html[data-template='poster'] .po-grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+
+  html[data-template='poster'] .po-grid span:nth-child(n + 7) {
+    display: block;
+  }
+
+  html[data-template='poster'] .po-num {
+    font-size: min(40vw, calc(110vw / var(--len, 3)), 60svh);
+  }
+
+  html[data-template='poster'] .po-title {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: end;
+  }
+
+  html[data-template='poster'] .po-prints {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  html[data-template='poster'] .listing-flow > :not(.stage, .compact-bar) {
+    align-self: center;
+    inline-size: min(100%, 64rem);
+    max-width: none;
+    box-sizing: border-box;
+  }
+
+  html[data-template='poster'] :is(.enrich, .seller, .facts, .monthly-cost) {
+    margin-inline: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html[data-template='poster'] .po-grid span {
+    animation: po-draw 1.4s var(--ease-in-out) both;
+  }
+
+  html[data-template='poster'] .po-grid span:nth-child(2n) {
+    animation-delay: 120ms;
+  }
+
+  html[data-template='poster'] .po-num {
+    animation: po-rise 1.2s var(--ease-out) 0.2s both;
+  }
+
+  @keyframes po-draw {
+    from {
+      transform: scaleY(0);
+    }
+  }
+
+  @keyframes po-rise {
+    from {
+      opacity: 0;
+      transform: translateY(24%);
+    }
+  }
+}

@@ -1,0 +1,86 @@
+---
+import type { Image, Listing } from '@/types/listing';
+import { GALLERY_WIDTHS, HERO_WIDTHS, largest } from '../../lib/images';
+import type { FactCell } from '../../lib/facts';
+import { t } from '../../lib/i18n';
+import type { PerUnitPrice } from '../../lib/price';
+import { priceProps, titleLines } from '../../lib/stage';
+import HighlightChips from '../HighlightChips.astro';
+import PriceBar from '../PriceBar.astro';
+import Prose from '../Prose.astro';
+
+interface Props {
+  listing: Listing;
+  photos: Image[];
+  cells: FactCell[];
+  perUnit?: PerUnitPrice | undefined;
+}
+
+/**
+ * Zine (Paper). A risograph print: photographs in two inks (fluoro pink and
+ * blue) slightly out of register, paper grain, tape, and the key numbers as
+ * rubber stamps. Young and urban — rentals, lofts, first homes.
+ *
+ * The duotone is CSS: each photograph is drawn twice, grayscale, screened
+ * onto an ink, and the two inks multiplied together a few pixels apart. The
+ * resting frame IS the finished print; motion only lands the stamps.
+ */
+const { listing, photos, cells, perUnit } = Astro.props;
+const cover = listing.media.cover;
+const [first, ...more] = titleLines(listing);
+const strip = photos.slice(1, 4);
+const city = listing.location?.city;
+---
+<section class="stage stage-zine">
+  <span class="zn-grain" aria-hidden="true"></span>
+  <p class="zn-issue">{t('listing.issue')} <bdi>{listing.slug}</bdi>{city ? <Fragment> · {city}</Fragment> : null}</p>
+  <h1 class="zn-title">
+    <span class="zn-main"><Prose text={first ?? ''} /></span>
+    {more.map((line) => <span class="zn-sub"><Prose text={line} /></span>)}
+  </h1>
+  <div class="zn-cover">
+    <button
+      type="button"
+      class="zn-riso"
+      data-lightbox={largest(cover, HERO_WIDTHS)}
+      data-alt={cover.alt ?? ''}
+      aria-label={t('listing.openPhoto')}
+    >
+      <span class="zn-ink zn-blue"><img src={largest(cover, HERO_WIDTHS)} alt={cover.alt ?? ''} width={cover.width} height={cover.height} fetchpriority="high" decoding="async" /></span>
+      <span class="zn-ink zn-pink" aria-hidden="true"><img src={largest(cover, HERO_WIDTHS)} alt="" width={cover.width} height={cover.height} decoding="async" /></span>
+    </button>
+    <span class="zn-tape zn-t1" aria-hidden="true"></span>
+    <span class="zn-tape zn-t2" aria-hidden="true"></span>
+  </div>
+  {cells.length > 0 && (
+    <dl class="zn-stamps">
+      {cells.map((cell, i) => (
+        <div class={`zn-stamp zn-s${i % 3}`} style={`--zn-i:${i}`}>
+          <dt>{cell.label}</dt>
+          <dd>{cell.bdi ? <bdi data-count={cell.countFrom}>{cell.displayValue}</bdi> : cell.displayValue}</dd>
+        </div>
+      ))}
+    </dl>
+  )}
+  <div class="zn-price"><PriceBar {...priceProps(listing, perUnit)} /></div>
+  {strip.length > 0 && (
+    <div class="zn-strip">
+      {strip.map((image, i) => (
+        <figure class={`zn-r${i % 3}`}>
+          <button
+            type="button"
+            class="zn-riso"
+            data-lightbox={largest(image, HERO_WIDTHS)}
+            data-alt={image.alt ?? ''}
+            aria-label={t('listing.openPhoto')}
+          >
+            <span class="zn-ink zn-blue"><img src={largest(image, GALLERY_WIDTHS)} alt={image.alt ?? ''} width={image.width} height={image.height} loading="lazy" decoding="async" /></span>
+            <span class="zn-ink zn-pink" aria-hidden="true"><img src={largest(image, GALLERY_WIDTHS)} alt="" width={image.width} height={image.height} loading="lazy" decoding="async" /></span>
+          </button>
+          {image.room && <figcaption>{t(`editor.rooms.${image.room}`)}</figcaption>}
+        </figure>
+      ))}
+    </div>
+  )}
+  <HighlightChips highlights={listing.highlights} facts={listing.facts} />
+</section>

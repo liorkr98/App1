@@ -1,0 +1,31 @@
+---
+import { create } from 'qrcode/lib/core/qrcode.js';
+
+interface Props {
+  /** What the code opens. An absolute https URL. */
+  text: string;
+  label: string;
+  class?: string;
+}
+
+/**
+ * A QR code, drawn at build/render time as one SVG path — no image request,
+ * no script, no canvas, crisp at any size. Dark modules are one `M…h1v1h-1z`
+ * square each, merged into a single path; the four-module quiet zone the
+ * standard asks for is in the viewBox.
+ */
+const { text, label, class: extra } = Astro.props;
+const { size, data } = create(text, { errorCorrectionLevel: 'M' }).modules;
+const QUIET = 4;
+let d = '';
+for (let row = 0; row < size; row++) {
+  for (let col = 0; col < size; col++) {
+    if (data[row * size + col]) d += `M${col + QUIET} ${row + QUIET}h1v1h-1z`;
+  }
+}
+const box = size + QUIET * 2;
+---
+<svg class:list={['qr', extra]} viewBox={`0 0 ${box} ${box}`} role="img" aria-label={label} shape-rendering="crispEdges">
+  <rect width={box} height={box} fill="#fffaf0" />
+  <path d={d} fill="#15140f" />
+</svg>

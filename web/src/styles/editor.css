@@ -584,6 +584,146 @@
   border: 1px solid #272a2e;
 }
 
+/* Round two. */
+.thumb-heliograph {
+  background: linear-gradient(180deg, #f0b872, #f6f4ef 60%);
+}
+
+.thumb-heliograph .thumb-hero,
+.thumb-heliograph .thumb-hero-photo {
+  block-size: 40%;
+  border-radius: 8px;
+  filter: sepia(0.35) saturate(1.2);
+}
+
+.thumb-heliograph .thumb-price {
+  background: #121310;
+  inline-size: 50%;
+}
+
+.thumb-heliograph .thumb-facts > span {
+  border-radius: 50%;
+  background: #f5a524;
+}
+
+.thumb-walk {
+  background: #f3f1ea;
+  border-inline-start: 4px dotted #2f5340;
+}
+
+.thumb-walk .thumb-hero,
+.thumb-walk .thumb-hero-photo {
+  block-size: 38%;
+  border-radius: 12px;
+}
+
+.thumb-walk .thumb-price {
+  background: #121310;
+  inline-size: 54%;
+}
+
+.thumb-walk .thumb-facts > span {
+  background: #fff;
+  border: 2px solid #2f5340;
+  border-radius: 50%;
+}
+
+.thumb-poster {
+  background: #eeece5;
+  color: #2f5340;
+}
+
+.thumb-poster .thumb-hero,
+.thumb-poster .thumb-hero-photo {
+  block-size: 30%;
+  inline-size: 50%;
+  border-radius: 0;
+  filter: grayscale(1) contrast(1.2);
+}
+
+.thumb-poster .thumb-price {
+  background: #2f5340;
+  inline-size: 90%;
+  block-size: 1.6rem;
+  border-radius: 0;
+}
+
+.thumb-poster .thumb-facts > span {
+  background: transparent;
+  border-block-start: 2px solid #2f5340;
+  border-radius: 0;
+}
+
+.thumb-zine {
+  background: #f4efe6;
+}
+
+.thumb-zine .thumb-hero,
+.thumb-zine .thumb-hero-photo {
+  block-size: 42%;
+  border-radius: 0;
+  filter: grayscale(1) contrast(1.3) sepia(1) hue-rotate(290deg) saturate(3);
+  transform: rotate(-2deg);
+}
+
+.thumb-zine .thumb-price {
+  background: #0078bf;
+  inline-size: 60%;
+}
+
+.thumb-zine .thumb-facts > span {
+  background: transparent;
+  border: 2px solid #ff48b0;
+  border-radius: 50%;
+}
+
+.thumb-dossier {
+  background: #e9dcc0;
+}
+
+.thumb-dossier .thumb-hero,
+.thumb-dossier .thumb-hero-photo {
+  block-size: 36%;
+  border-radius: 0;
+  outline: 6px solid #fff;
+  outline-offset: -6px;
+  transform: rotate(1.5deg);
+}
+
+.thumb-dossier .thumb-price {
+  background: transparent;
+  border: 2px solid #a3221b;
+  inline-size: 46%;
+  transform: rotate(-6deg);
+}
+
+.thumb-dossier .thumb-facts > span {
+  background: #fbf8f0;
+  border-radius: 0;
+}
+
+.thumb-ticket {
+  background: #e8e4da;
+}
+
+.thumb-ticket .thumb-hero,
+.thumb-ticket .thumb-hero-photo {
+  block-size: 34%;
+  border-radius: 10px 10px 0 0;
+}
+
+.thumb-ticket .thumb-price {
+  background: #2f5340;
+  inline-size: 100%;
+  border-radius: 0;
+}
+
+.thumb-ticket .thumb-facts > span {
+  background: #fffaf0;
+  border-block-start: 2px dashed #cfc9bb;
+  border-radius: 0;
+}
+
 /* Blueprint: a drafting grid, the plan's frame, and the photo beside it. */
 .thumb-blueprint {
   background-color: #f6f4ef;

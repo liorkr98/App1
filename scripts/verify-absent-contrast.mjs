@@ -60,7 +60,7 @@ if (!page) {
 const html = fs.readFileSync(page, 'utf8');
 
 /** Inline <style> blocks plus every local stylesheet the page links. */
-const css = [
+let css = [
   ...(html.match(/<style[^>]*>([\s\S]*?)<\/style>/g) ?? []),
   ...[...html.matchAll(/<link[^>]+rel="stylesheet"[^>]*>/g)]
     .map((tag) => tag[0].match(/href="([^"]+)"/)?.[1])
@@ -83,6 +83,39 @@ if (!idBlock) {
   process.exit(1);
 }
 const TEMPLATES = [...idBlock[1].matchAll(/['"]([\w-]+)['"]/g)].map((m) => m[1]);
+
+/*
+ * The 2.0 templates ship as their own stylesheets (web/src/lib/
+ * template-styles.ts): a page links only its own. This gate measures EVERY
+ * template, so it reads every one of those sheets from the build too — and
+ * then refuses to pass if any template id has no rules anywhere, because a
+ * token it cannot find falls back to the shared value and would be measured
+ * as if it were the template's, passing while checking nothing.
+ */
+const assetsDir = path.join(clientRoot, '_astro');
+if (fs.existsSync(assetsDir)) {
+  for (const name of fs.readdirSync(assetsDir)) {
+    if (name.endsWith('.css') && TEMPLATES.includes(name.split('.')[0])) {
+      css += '\n' + fs.readFileSync(path.join(assetsDir, name), 'utf8');
+    }
+  }
+}
+// The template's OWN token block — `html[data-template=id]{` — not just any
+// mention of the id: stage.css names every composed template inside shared
+// :is(…) lists, which would make a missing sheet look present.
+// Only templates whose SOURCE defines a token block are expected to (a few
+// 1.x templates, like walkFirst, use the shared tokens as they are).
+const ownBlock = (id) => new RegExp(`html\\[data-template=['"]?${id}['"]?\\]\\s*\\{`);
+const unstyled = TEMPLATES.filter((id) => {
+  const source = path.join('web/src/styles/templates', `${id}.css`);
+  const expects = fs.existsSync(source) && ownBlock(id).test(fs.readFileSync(source, 'utf8'));
+  return expects && !ownBlock(id).test(css);
+});
+if (unstyled.length > 0) {
+  console.error(`No stylesheet in the build styles these templates: ${unstyled.join(', ')}.`);
+  console.error('Their tokens would be measured as the shared defaults. Is a template sheet missing from _astro/?');
+  process.exit(1);
+}
 
 // --- WCAG maths, the same as accents.test.ts -------------------------------
 const luminance = (hex) => {

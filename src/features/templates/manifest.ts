@@ -11,8 +11,9 @@ import { TEMPLATE_IDS, type TemplateId } from '../../types/listing.js';
  *               page keeps the shared hero and restyles it.
  *   keyCells    how many numerals that composed first screen shows.
  *   categories  the listing categories it is drawn for. Absent means both.
- *               Showroom is a car on a studio floor; a flat in it is a
- *               porting accident, not a choice.
+ *               Showroom and Dossier are cars; Heliograph (a balcony's
+ *               sun) and Walk (walking minutes from the door) are homes. The
+ *               wrong category is a porting accident, not a choice.
  *
  * TEMPLATE_IDS stays the list of ids (the DB check, the picker and the
  * homepage enumerate it); this is what the page needs to know about each.
@@ -26,7 +27,13 @@ export type ComposedLayout =
   | 'monolith'
   | 'atelier'
   | 'glass'
-  | 'showroom';
+  | 'showroom'
+  | 'heliograph'
+  | 'walk'
+  | 'poster'
+  | 'zine'
+  | 'dossier'
+  | 'ticket';
 
 export interface TemplateSpec {
   ls?: 'paper' | 'onyx';
@@ -51,6 +58,13 @@ export const TEMPLATE_MANIFEST: Record<TemplateId, TemplateSpec> = {
   atelier: { ls: 'paper', composed: 'atelier', keyCells: 3 },
   glass: { ls: 'onyx', composed: 'glass', keyCells: 4 },
   showroom: { ls: 'onyx', composed: 'showroom', keyCells: 4, categories: ['vehicle'] },
+  // Round two: each built on one thing only this listing has.
+  heliograph: { ls: 'paper', composed: 'heliograph', keyCells: 4, categories: ['property'] },
+  walk: { ls: 'paper', composed: 'walk', keyCells: 4, categories: ['property'] },
+  poster: { ls: 'paper', composed: 'poster', keyCells: 4 },
+  zine: { ls: 'paper', composed: 'zine', keyCells: 4 },
+  dossier: { ls: 'paper', composed: 'dossier', keyCells: 4, categories: ['vehicle'] },
+  ticket: { ls: 'paper', composed: 'ticket', keyCells: 4 },
 };
 
 /**

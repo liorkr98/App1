@@ -38,6 +38,24 @@ const sheets = [...html.matchAll(/<link[^>]+rel="stylesheet"[^>]*href="([^"]+)"/
   .map((href) => ({ name: href, css: fs.readFileSync(path.join(DIST, href.slice(1)), 'utf8') }));
 const inline = [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m, i) => ({ name: `inline#${i}`, css: m[1] }));
 
+/*
+ * The 2.0 templates ship as their own stylesheets (web/src/lib/
+ * template-styles.ts), and this page links only its own template's. Every
+ * template's sheet is part of what buyers get, so read them all.
+ */
+const listingTs = fs.readFileSync('src/types/listing.ts', 'utf8');
+const ids = [...(/TEMPLATE_IDS\s*=\s*\[([\s\S]*?)\]/.exec(listingTs)?.[1] ?? '').matchAll(/'([\w-]+)'/g)].map((m) => m[1]);
+const assetsDir = path.join(DIST, '_astro');
+const linked = new Set(sheets.map((s) => s.name));
+if (fs.existsSync(assetsDir)) {
+  for (const file of fs.readdirSync(assetsDir)) {
+    const href = `/_astro/${file}`;
+    if (file.endsWith('.css') && ids.includes(file.split('.')[0]) && !linked.has(href)) {
+      sheets.push({ name: href, css: fs.readFileSync(path.join(assetsDir, file), 'utf8') });
+    }
+  }
+}
+
 if (sheets.length + inline.length === 0) {
   console.error('The listing page links no stylesheet — the check would pass while checking nothing.');
   process.exit(1);

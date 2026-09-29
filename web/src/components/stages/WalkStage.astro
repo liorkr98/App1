@@ -1,0 +1,139 @@
+---
+import type { Image, Listing } from '@/types/listing';
+import { labeledWalkItems } from '@/features/listings/photo-rooms';
+import { walkStops, type WalkStop } from '@/features/listings/walk-stops';
+import { categoryLabel, modeLabel } from '../../lib/enrichment';
+import { GALLERY_WIDTHS, HERO_WIDTHS, largest, srcset } from '../../lib/images';
+import type { FactCell } from '../../lib/facts';
+import { t } from '../../lib/i18n';
+import type { PerUnitPrice } from '../../lib/price';
+import { coverStyle, priceProps, stagePlace, titleLines } from '../../lib/stage';
+import HighlightChips from '../HighlightChips.astro';
+import PriceBar from '../PriceBar.astro';
+import Prose from '../Prose.astro';
+import Numerals from './Numerals.astro';
+
+interface Props {
+  listing: Listing;
+  photos: Image[];
+  cells: FactCell[];
+  perUnit?: PerUnitPrice | undefined;
+}
+
+/**
+ * Walk (Paper, homes only). Out of the front door: a route runs down the
+ * page, drawn as you scroll (CSS scroll timeline, walk.css), and the stops
+ * arrive in the order a buyer would reach them — routed walking minutes from
+ * the enrichment, never straight-line distance (CLAUDE.md §2).
+ *
+ * No enrichment (a moshav we have never fetched): the same route walks
+ * through the rooms instead, and says why. Never an empty route.
+ */
+const { listing, photos, cells, perUnit } = Astro.props;
+const cover = listing.media.cover;
+const lines = titleLines(listing);
+const place = stagePlace(listing);
+const stops: WalkStop[] =
+  listing.enrichment?.category === 'property' ? walkStops(listing.enrichment) : [];
+const rooms = stops.length === 0
+  ? labeledWalkItems(photos).filter((p, i, all) => all.findIndex((o) => o.room === p.room) === i)
+  : [];
+const farthest = stops.at(-1)?.minutes;
+
+const kindOf = (stop: WalkStop): string => {
+  switch (stop.kind) {
+    case 'transit':
+      return modeLabel(stop.mode);
+    case 'school':
+      return stop.type;
+    case 'place':
+      return categoryLabel(stop.category);
+    case 'civic':
+      return t(`listing.civicKind.${stop.civic}`);
+  }
+};
+---
+<section class="stage stage-walk">
+  <div class="wk-head">
+    <button
+      type="button"
+      class="wk-cover"
+      data-lightbox={largest(cover, HERO_WIDTHS)}
+      data-alt={cover.alt ?? ''}
+      aria-label={t('listing.openPhoto')}
+    >
+      <img
+        src={largest(cover, HERO_WIDTHS)}
+        srcset={srcset(cover, HERO_WIDTHS) || undefined}
+        sizes="(min-width: 960px) 55vw, 100vw"
+        width={cover.width}
+        height={cover.height}
+        alt={cover.alt ?? ''}
+        style={coverStyle(listing)}
+        fetchpriority="high"
+        decoding="async"
+      />
+    </button>
+    <div class="wk-door">
+      <p class="wk-eyebrow">{t('listing.walk.start')}</p>
+      <h1 class="stage-title">
+        {lines.map((line, i) => (
+          <span class="ls-line"><span style={`--i:${i}`}><Prose text={line} /></span></span>
+        ))}
+      </h1>
+      {place && (
+        <p class="wk-from"><span class="wk-dot" aria-hidden="true"></span><span>{t('listing.walk.door')} · <Prose text={place} /></span></p>
+      )}
+      <PriceBar {...priceProps(listing, perUnit)} />
+    </div>
+  </div>
+
+  {(stops.length > 0 || rooms.length > 0) && (
+    <div class="wk-route">
+      {stops.length > 0 && farthest !== undefined ? (
+        <h2 class="wk-title">
+          <bdi>{stops.length}</bdi> {t('listing.walk.places')} <bdi>{farthest}</bdi> {t('listing.walk.minutes')}
+        </h2>
+      ) : (
+        <Fragment>
+          <h2 class="wk-title">{t('listing.walk.rooms')}</h2>
+          <p class="wk-note">{t('listing.walk.roomsNote')}</p>
+        </Fragment>
+      )}
+      <div class="wk-track">
+        <svg class="wk-line" viewBox="0 0 10 100" preserveAspectRatio="none" aria-hidden="true">
+          <path class="wk-line-under" d="M5 0 V100" />
+          <path class="wk-line-ink" d="M5 0 V100" pathLength="1" />
+        </svg>
+        <ol class="wk-stops">
+          {stops.map((stop) => (
+            <li class="wk-stop">
+              <span class="wk-pin"><bdi>{stop.minutes}</bdi><small>{t('listing.mapNearbyMin')}</small></span>
+              <div class="wk-card">
+                <em>{kindOf(stop)}</em>
+                <b><Prose text={stop.name} /></b>
+                {stop.kind === 'transit' && stop.routes.length > 0 && (
+                  <span><bdi>{stop.routes.slice(0, 4).join(', ')}</bdi></span>
+                )}
+              </div>
+            </li>
+          ))}
+          {rooms.map((image, index) => (
+            <li class="wk-stop wk-room">
+              <span class="wk-pin"><bdi>{index + 1}</bdi></span>
+              <div class="wk-card">
+                <img src={largest(image, GALLERY_WIDTHS)} alt={image.alt ?? ''} width={image.width} height={image.height} loading="lazy" decoding="async" />
+                <b>{image.room ? t(`editor.rooms.${image.room}`) : ''}</b>
+              </div>
+            </li>
+          ))}
+        </ol>
+        <p class="wk-arrive"><span class="wk-dot" aria-hidden="true"></span>{t('listing.walk.back')}</p>
+      </div>
+      {stops.length > 0 && <p class="wk-src">{t('listing.walk.routed')}</p>}
+    </div>
+  )}
+
+  <Numerals cells={cells} class="wk-nums" />
+  <HighlightChips highlights={listing.highlights} facts={listing.facts} />
+</section>

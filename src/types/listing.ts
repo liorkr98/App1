@@ -688,6 +688,12 @@ export const TEMPLATE_IDS = [
   'atelier',
   'glass',
   'showroom',
+  'heliograph',
+  'walk',
+  'poster',
+  'zine',
+  'dossier',
+  'ticket',
 ] as const;
 
 export type TemplateId = (typeof TEMPLATE_IDS)[number];

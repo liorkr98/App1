@@ -6,6 +6,7 @@ import type { Listing } from '@/types/listing';
 import { t } from '../lib/i18n';
 import { listingJsonLd } from '../lib/jsonld';
 import { livingSurfacesMode } from '../lib/living-surfaces';
+import { templateStylesheet } from '../lib/template-styles';
 import { ogDescription, ogImageUrl, ogTitle } from '../lib/og';
 import '../styles/tokens.css';
 
@@ -49,6 +50,7 @@ const accent = accentFor(listing.accent);
 
 // Opted into the 2.0 design system? See lib/living-surfaces.ts.
 const lsMode = livingSurfacesMode(listing.template);
+const templateSheet = templateStylesheet(listing.template);
 
 const title = ogTitle(listing);
 const description = ogDescription(listing, ogFactKeys);
@@ -146,6 +148,8 @@ const showBarLogo =
 @import '../styles/listing.css';
 @import '../styles/walk.css';
 </style>
+{/* The 2.0 template's own sheet, and only that one (lib/template-styles). */}
+{templateSheet && <link rel="stylesheet" href={templateSheet}>}
 </head>
 <body>
 

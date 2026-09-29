@@ -52,6 +52,13 @@ for href in $SHEETS; do
   fi
 done
 
+# The per-template sheets (web/src/lib/template-styles.ts) too: the gate
+# reads every one and refuses a build where a template has no rules.
+if [ -d "$DIST/_astro" ]; then
+  mkdir -p "$WORK/_astro"
+  cp "$DIST"/_astro/*.css "$WORK/_astro/" 2>/dev/null || true
+fi
+
 if [ -z "$TARGET" ]; then
   echo "FAIL: no copied stylesheet contains .fact.off. The gate has nothing to check."
   exit 1

@@ -1,0 +1,342 @@
+/*
+  Heliograph (שמש) — scroll is one day on the balcony. Homes only.
+
+  Day is Paper; below the horizon bindHeliograph puts .hl-night on <html>
+  and the whole page takes the Onyx palette. Both palettes are pinned hexes
+  the contrast test and the absent-contrast gate measure (the gate reads the
+  LAST declaration for this template, which is the night one — so both are
+  covered). Between them the sky behind the first screen moves through dawn
+  and gold (--hl-sky) and the photographs warm with the hour (--hl-grade).
+
+  The resting frame, without script or motion, is noon in June: the plot,
+  the clock and the state line are rendered by the server at 12:45.
+*/
+
+html[data-template='heliograph'] {
+  --plaster: #f6f4ef; /* = --ls-ground (paper) */
+  --ink: #121310; /* = --ls-ink */
+  --stone: #dcd8cc;
+  --stone-warm: #ece8de;
+  --muted: #5e5f57; /* = --ls-ink-2 */
+  --muted-warm: #57584f;
+  --absent: #5e5f57;
+  --hl-sun: #e0892b;
+  --heroWant: 60svh;
+  transition: background-color 0.6s linear;
+}
+
+html[data-template='heliograph'] body {
+  font-family: var(--ls-font-body);
+  transition: background-color 0.6s linear, color 0.4s;
+}
+
+html[data-template='heliograph'] section.stage-helio {
+  --hl-sky: var(--plaster);
+  padding: 0 0 1.4rem;
+  background: linear-gradient(180deg, var(--hl-sky), var(--plaster) 85%);
+  transition: background 0.6s linear;
+}
+
+html[data-template='heliograph'] .hl-head {
+  padding: 2.2rem var(--gut) 1rem;
+}
+
+html[data-template='heliograph'] .hl-head .stage-title {
+  font-family: 'Frank Ruhl Libre', serif;
+  font-weight: 500;
+  font-size: clamp(2.4rem, 8vw, 4.8rem);
+  line-height: 1.04;
+}
+
+html[data-template='heliograph'] .hl-head .price-bar {
+  padding: 1rem 0 0;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 0.3rem 1rem;
+}
+
+html[data-template='heliograph'] .hl-head .price {
+  font-family: 'Frank Ruhl Libre', serif;
+  font-size: clamp(2rem, 6vw, 3rem);
+}
+
+html[data-template='heliograph'] .hl-head .price-note {
+  text-align: start;
+}
+
+html[data-template='heliograph'] .hl-hint {
+  margin: 0.8rem 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+/* ---------- The sky ---------- */
+
+html[data-template='heliograph'] .hl-sky {
+  display: grid;
+  grid-template-columns: minmax(0, 10rem) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: center;
+  padding: 0.6rem var(--gut) 0;
+}
+
+html[data-template='heliograph'] .hl-plot {
+  inline-size: 100%;
+  block-size: auto;
+  overflow: visible;
+}
+
+/* A map, not text: north stays up and anchors stay physical in RTL. */
+html[data-template='heliograph'] .hl-plot text {
+  direction: ltr;
+  font-family: var(--ls-font-body);
+  font-size: 12px;
+  font-weight: 700;
+  fill: var(--muted);
+}
+
+html[data-template='heliograph'] .hl-rim {
+  fill: color-mix(in srgb, var(--ink) 4%, transparent);
+  stroke: var(--ink);
+  stroke-opacity: 0.45;
+}
+
+html[data-template='heliograph'] .hl-ring {
+  fill: none;
+  stroke: var(--ink);
+  stroke-opacity: 0.16;
+  stroke-dasharray: 2 3;
+}
+
+html[data-template='heliograph'] .hl-wedge {
+  fill: var(--accent-lift, #86b79a);
+  opacity: 0.32;
+}
+
+html[data-template='heliograph'] .hl-arc {
+  fill: none;
+  stroke: var(--hl-sun);
+  stroke-width: 2.2;
+  stroke-dasharray: 0.5 5;
+  stroke-linecap: round;
+}
+
+html[data-template='heliograph'] .hl-arc-off {
+  display: none;
+}
+
+html[data-template='heliograph'] .hl-home {
+  fill: var(--ink);
+}
+
+html[data-template='heliograph'] .hl-balc {
+  stroke: var(--accent-lift, #86b79a);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+html[data-template='heliograph'] .hl-sun {
+  fill: #f5a524;
+  stroke: #fff4d2;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 6px #f5a524);
+}
+
+html[data-template='heliograph'] .hl-sun.is-below {
+  fill: #8c93b3;
+  stroke: none;
+  filter: none;
+}
+
+html[data-template='heliograph'] .hl-read {
+  display: grid;
+  gap: 0.3rem;
+  min-inline-size: 0;
+}
+
+html[data-template='heliograph'] .hl-clock {
+  margin: 0;
+  font-family: var(--ls-font-display);
+  font-weight: 200;
+  font-variation-settings: 'wdth' 70;
+  font-size: clamp(2.6rem, 9vw, 4rem);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+html[data-template='heliograph'] .hl-seasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+html[data-template='heliograph'] .hl-seasons[hidden] {
+  display: none;
+}
+
+html[data-template='heliograph'] .hl-seasons button {
+  appearance: none;
+  min-block-size: 36px;
+  padding: 0.2rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--stone);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+html[data-template='heliograph'] .hl-seasons [aria-pressed='true'] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--plaster);
+}
+
+html[data-template='heliograph'] .hl-state {
+  margin: 0;
+  font-weight: 800;
+}
+
+html[data-template='heliograph'] .hl-meta {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+html[data-template='heliograph'] .hl-hours {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin: 1.2rem var(--gut) 0;
+}
+
+html[data-template='heliograph'] .hl-hours > div {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 0.35rem;
+  padding: 1rem;
+  border: 1px solid var(--stone);
+  border-radius: 18px;
+}
+
+html[data-template='heliograph'] .hl-hours dd {
+  margin: 0;
+  font-family: var(--ls-font-display);
+  font-weight: 300;
+  font-size: clamp(1.8rem, 6vw, 2.6rem);
+  line-height: 1;
+}
+
+html[data-template='heliograph'] .hl-hours dt {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+html[data-template='heliograph'] .hl-honest {
+  margin: 0.8rem var(--gut) 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+  max-inline-size: 70ch;
+}
+
+html[data-template='heliograph'] .hl-photo {
+  margin: 1.4rem var(--gut) 0;
+  inline-size: calc(100% - 2 * var(--gut));
+  aspect-ratio: 16 / 10;
+  border-radius: 20px;
+}
+
+html[data-template='heliograph'] :is(.hl-photo, .gallery, .walk) img {
+  filter: var(--hl-grade, none);
+  transition: filter 0.6s linear;
+}
+
+html[data-template='heliograph'] .hl-photo img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+html[data-template='heliograph'] .hl-nums,
+html[data-template='heliograph'] .stage-helio .highlights {
+  margin-inline: var(--gut);
+}
+
+html[data-template='heliograph'] .stage-helio .highlights {
+  padding: 1rem 0 0;
+}
+
+html[data-template='heliograph'] .enrich {
+  background: color-mix(in srgb, var(--plaster) 70%, #fff);
+  border: 1px solid var(--stone);
+  border-radius: 22px;
+  margin-inline: var(--gut);
+}
+
+@media (min-width: 960px) {
+  html[data-template='heliograph'] .stage-helio {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    column-gap: 2rem;
+    padding-inline: var(--gut);
+  }
+
+  html[data-template='heliograph'] .stage-helio > * {
+    margin-inline: 0;
+    padding-inline: 0;
+  }
+
+  html[data-template='heliograph'] .hl-head,
+  html[data-template='heliograph'] .hl-photo {
+    grid-column: 1;
+  }
+
+  html[data-template='heliograph'] .hl-sky,
+  html[data-template='heliograph'] .hl-hours,
+  html[data-template='heliograph'] .hl-honest {
+    grid-column: 2;
+  }
+
+  html[data-template='heliograph'] .hl-sky {
+    grid-row: 1;
+    align-self: end;
+    grid-template-columns: minmax(0, 14rem) minmax(0, 1fr);
+  }
+
+  html[data-template='heliograph'] .hl-photo {
+    inline-size: 100%;
+  }
+
+  html[data-template='heliograph'] .hl-nums,
+  html[data-template='heliograph'] .stage-helio .highlights {
+    grid-column: 1 / -1;
+  }
+
+  html[data-template='heliograph'] .listing-flow > :not(.stage, .compact-bar) {
+    align-self: center;
+    inline-size: min(100%, 64rem);
+    max-width: none;
+    box-sizing: border-box;
+  }
+
+  html[data-template='heliograph'] :is(.enrich, .seller, .facts, .monthly-cost) {
+    margin-inline: 0;
+  }
+}
+
+/* ---------- Night: the sun is down ---------- */
+
+html[data-template='heliograph'].hl-night {
+  --plaster: #0b0c0a;
+  --ink: #f2f0ea;
+  --stone: #2a2c22;
+  --stone-warm: #161713;
+  --muted: #a7a89c;
+  --muted-warm: #a7a89c;
+  --absent: #a7a89c;
+  color-scheme: dark;
+}
