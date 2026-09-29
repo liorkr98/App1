@@ -1,0 +1,70 @@
+---
+import type { Listing } from '@/types/listing';
+import { HERO_WIDTHS, largest, srcset } from '../../lib/images';
+import type { FactCell } from '../../lib/facts';
+import { t } from '../../lib/i18n';
+import type { PerUnitPrice } from '../../lib/price';
+import { coverStyle, priceProps, stagePlace, titleLines } from '../../lib/stage';
+import HighlightChips from '../HighlightChips.astro';
+import PriceBar from '../PriceBar.astro';
+import Prose from '../Prose.astro';
+import Numerals from './Numerals.astro';
+
+interface Props {
+  listing: Listing;
+  cells: FactCell[];
+  perUnit?: PerUnitPrice | undefined;
+}
+
+/**
+ * Showroom (Onyx, cars only — TEMPLATE_MANIFEST.categories). The car on a
+ * studio floor under a slow scanning light, the spec strip Porsche-Finder
+ * style, and the seller's disclosures set as numbered cards (showroom.css;
+ * the section itself is the shared one, so its rules hold).
+ *
+ * The 360° spin needs 24–36 photographs around the car; it lands in P7.
+ * This is one photograph, and it does not pretend to turn.
+ */
+const { listing, cells, perUnit } = Astro.props;
+const cover = listing.media.cover;
+const lines = titleLines(listing);
+const place = stagePlace(listing);
+---
+<section class="stage stage-showroom">
+  <div class="sr-head">
+    {place && <p class="stage-place"><Prose text={place} /></p>}
+    <h1 class="stage-title ls-display">
+      {lines.map((line, i) => (
+        <span class="ls-line"><span style={`--i:${i}`}><Prose text={line} /></span></span>
+      ))}
+    </h1>
+  </div>
+  <div class="sr-platform">
+    <button
+      type="button"
+      class="sr-car"
+      data-lightbox={largest(cover, HERO_WIDTHS)}
+      data-alt={cover.alt ?? ''}
+      aria-label={t('listing.openPhoto')}
+    >
+      <img
+        src={largest(cover, HERO_WIDTHS)}
+        srcset={srcset(cover, HERO_WIDTHS) || undefined}
+        sizes="(min-width: 960px) 70vw, 100vw"
+        width={cover.width}
+        height={cover.height}
+        alt={cover.alt ?? ''}
+        style={coverStyle(listing)}
+        fetchpriority="high"
+        decoding="async"
+      />
+      <span class="sr-scan" aria-hidden="true"></span>
+    </button>
+    <span class="sr-floor" aria-hidden="true"></span>
+  </div>
+  <div class="sr-band">
+    <PriceBar {...priceProps(listing, perUnit)} />
+  </div>
+  <Numerals cells={cells} class="sr-spec" />
+  <HighlightChips highlights={listing.highlights} facts={listing.facts} />
+</section>

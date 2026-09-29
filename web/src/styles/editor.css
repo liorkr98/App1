@@ -496,6 +496,94 @@
   border: 1px solid rgba(255, 255, 255, 0.16);
 }
 
+.thumb-monolith {
+  background: #050505;
+}
+
+.thumb-monolith .thumb-hero,
+.thumb-monolith .thumb-hero-photo {
+  block-size: 58%;
+  filter: brightness(0.45) grayscale(0.3);
+}
+
+.thumb-monolith .thumb-price {
+  background: #f2f0ea;
+  inline-size: 80%;
+  block-size: 1.1rem;
+}
+
+.thumb-monolith .thumb-facts > span {
+  background: transparent;
+  border-block: 1px solid #262620;
+}
+
+.thumb-atelier {
+  background: #f6f3ec;
+  border-block-start: 3px solid #121310;
+}
+
+.thumb-atelier .thumb-hero,
+.thumb-atelier .thumb-hero-photo {
+  block-size: 48%;
+  inline-size: 62%;
+  border-radius: 2px;
+}
+
+.thumb-atelier .thumb-price {
+  background: #121310;
+  inline-size: 52%;
+}
+
+.thumb-atelier .thumb-facts > span {
+  background: transparent;
+  border-block-end: 1px solid #ddd7ca;
+  border-radius: 0;
+}
+
+.thumb-glass {
+  background: radial-gradient(90% 70% at 70% 20%, #3a3f36, #0a0b0a);
+}
+
+.thumb-glass .thumb-hero,
+.thumb-glass .thumb-hero-photo {
+  block-size: 44%;
+  border-radius: 10px;
+  outline: 3px solid rgba(255, 255, 255, 0.14);
+}
+
+.thumb-glass .thumb-price {
+  background: rgba(255, 255, 255, 0.7);
+  inline-size: 58%;
+}
+
+.thumb-glass .thumb-facts > span {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+}
+
+.thumb-showroom {
+  background: radial-gradient(80% 60% at 50% 40%, #1c1f23, #0c0d0f 72%);
+}
+
+.thumb-showroom .thumb-hero,
+.thumb-showroom .thumb-hero-photo {
+  block-size: 40%;
+  margin-block-start: 0.6rem;
+  border-radius: 8px;
+}
+
+.thumb-showroom .thumb-price {
+  background: #f2f0ea;
+  inline-size: 46%;
+  margin-inline: auto;
+}
+
+.thumb-showroom .thumb-facts > span {
+  background: transparent;
+  border: 1px solid #272a2e;
+}
+
 /* Blueprint: a drafting grid, the plan's frame, and the photo beside it. */
 .thumb-blueprint {
   background-color: #f6f4ef;

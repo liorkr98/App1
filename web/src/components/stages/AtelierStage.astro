@@ -1,0 +1,74 @@
+---
+import type { Listing } from '@/types/listing';
+import { HERO_WIDTHS, largest, srcset } from '../../lib/images';
+import type { FactCell } from '../../lib/facts';
+import { t } from '../../lib/i18n';
+import type { PerUnitPrice } from '../../lib/price';
+import { coverStyle, firstSentence, priceProps, stagePlace, titleLines } from '../../lib/stage';
+import HighlightChips from '../HighlightChips.astro';
+import PriceBar from '../PriceBar.astro';
+import Prose from '../Prose.astro';
+import Numerals from './Numerals.astro';
+
+interface Props {
+  listing: Listing;
+  cells: FactCell[];
+  perUnit?: PerUnitPrice | undefined;
+}
+
+/**
+ * Atelier (Paper). A magazine cover: the agency's name as the masthead, an
+ * asymmetric photograph, a serif title and the description's first sentence
+ * as the dek. The description below gets a drop cap (atelier.css).
+ *
+ * The dek is the seller's own sentence, quoted, never written for them —
+ * and omitted when the first sentence is too long to be one.
+ */
+const { listing, cells, perUnit } = Astro.props;
+const cover = listing.media.cover;
+const lines = titleLines(listing);
+const place = stagePlace(listing);
+const masthead = listing.seller.agencyName ?? listing.seller.name;
+const city = listing.location?.city;
+const dek = firstSentence(listing.description);
+---
+<section class="stage stage-atelier">
+  <div class="at-mast">
+    <b>{masthead}</b>
+    <span>{t('listing.issue')} <bdi>{listing.slug}</bdi>{city ? <Fragment> · {city}</Fragment> : null}</span>
+  </div>
+  <div class="at-cover">
+    <button
+      type="button"
+      class="at-photo"
+      data-lightbox={largest(cover, HERO_WIDTHS)}
+      data-alt={cover.alt ?? ''}
+      aria-label={t('listing.openPhoto')}
+    >
+      <img
+        class="ls-breathe"
+        src={largest(cover, HERO_WIDTHS)}
+        srcset={srcset(cover, HERO_WIDTHS) || undefined}
+        sizes="(min-width: 960px) 55vw, 100vw"
+        width={cover.width}
+        height={cover.height}
+        alt={cover.alt ?? ''}
+        style={coverStyle(listing)}
+        fetchpriority="high"
+        decoding="async"
+      />
+    </button>
+    <div class="at-copy">
+      {place && <p class="stage-place"><Prose text={place} /></p>}
+      <h1 class="stage-title">
+        {lines.map((line, i) => (
+          <span class="ls-line"><span style={`--i:${i}`}><Prose text={line} /></span></span>
+        ))}
+      </h1>
+      {dek && <p class="at-dek"><Prose text={dek} /></p>}
+      <PriceBar {...priceProps(listing, perUnit)} />
+    </div>
+  </div>
+  <Numerals cells={cells} class="at-nums" />
+  <HighlightChips highlights={listing.highlights} facts={listing.facts} />
+</section>

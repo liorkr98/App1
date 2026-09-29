@@ -280,6 +280,46 @@ function bindBlueprint(): void {
 }
 
 /**
+ * Glass (M10): the cards lean toward the pointer and a light follows it.
+ *
+ * Pointer only — device-orientation would need an iOS permission prompt on a
+ * page someone was simply forwarded. Nothing runs for a reader who asked for
+ * less motion or on a touch-only screen; the cards then sit flat, which is
+ * their resting state anyway.
+ */
+function bindGlass(): void {
+  const stage = document.querySelector<HTMLElement>('[data-glass]');
+  if (!stage) return;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (!matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+  const cards = [...stage.querySelectorAll<HTMLElement>('[data-tilt]')];
+  let frame = 0;
+  stage.addEventListener('pointermove', (event) => {
+    if (frame) return;
+    frame = requestAnimationFrame(() => {
+      frame = 0;
+      const box = stage.getBoundingClientRect();
+      stage.style.setProperty('--gl-x', `${((event.clientX - box.left) / box.width) * 100}%`);
+      stage.style.setProperty('--gl-y', `${((event.clientY - box.top) / box.height) * 100}%`);
+      for (const card of cards) {
+        const r = card.getBoundingClientRect();
+        const dx = (event.clientX - (r.left + r.width / 2)) / r.width;
+        const dy = (event.clientY - (r.top + r.height / 2)) / r.height;
+        const near = Math.abs(dx) < 1.2 && Math.abs(dy) < 1.2;
+        card.style.setProperty('--ry', near ? `${(dx * 5).toFixed(2)}deg` : '0deg');
+        card.style.setProperty('--rx', near ? `${(-dy * 5).toFixed(2)}deg` : '0deg');
+      }
+    });
+  });
+  stage.addEventListener('pointerleave', () => {
+    for (const card of cards) {
+      card.style.setProperty('--ry', '0deg');
+      card.style.setProperty('--rx', '0deg');
+    }
+  });
+}
+
+/**
  * scroll_75 · the buyer read down to the agent.
  *
  * One beacon per page view, the first time the seller block is half in view.
@@ -308,4 +348,5 @@ bindWalk();
 bindMapDialog();
 bindMetric();
 bindBlueprint();
+bindGlass();
 beaconReadToAgent();

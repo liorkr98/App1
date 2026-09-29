@@ -47,6 +47,8 @@ const LINEN = readFileSync(new URL('../../../web/src/styles/templates/linen.css'
 const GALLERY = readFileSync(new URL('../../../web/src/styles/templates/gallery.css', import.meta.url), 'utf8');
 const AURORA = readFileSync(new URL('../../../web/src/styles/templates/aurora.css', import.meta.url), 'utf8');
 const BLUEPRINT = readFileSync(new URL('../../../web/src/styles/templates/blueprint.css', import.meta.url), 'utf8');
+const TEMPLATE_CSS = (id: string) =>
+  readFileSync(new URL(`../../../web/src/styles/templates/${id}.css`, import.meta.url), 'utf8');
 const SHOWCASE = readFileSync(new URL('../../../web/src/styles/templates/showcase.css', import.meta.url), 'utf8');
 const LS = readFileSync(new URL('../../../web/src/styles/system/tokens.css', import.meta.url), 'utf8');
 const MUTED_ON_DARK = tokenHex(TOKENS, '--muted-on-dark');
@@ -130,10 +132,14 @@ describe('absent and muted tokens meet WCAG AA body', () => {
     }
   });
 
-  it('aurora and blueprint --absent and --muted clear 4.5:1 on their plaster and stone-warm', () => {
+  it('the 2.0 templates: --absent and --muted clear 4.5:1 on their plaster and stone-warm', () => {
     for (const [name, source] of [
       ['aurora', AURORA],
       ['blueprint', BLUEPRINT],
+      ['monolith', TEMPLATE_CSS('monolith')],
+      ['atelier', TEMPLATE_CSS('atelier')],
+      ['glass', TEMPLATE_CSS('glass')],
+      ['showroom', TEMPLATE_CSS('showroom')],
     ] as const) {
       const scope = `html\\[data-template='${name}'\\]`;
       for (const token of ['--plaster', '--stone-warm'] as const) {

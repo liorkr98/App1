@@ -176,7 +176,8 @@
     "metricPrev": "",
     "metricNext": "",
     "keyFacts": "",
-    "blueprintRooms": ""
+    "blueprintRooms": "",
+    "issue": ""
   },
   "notFound": {
     "title": "",
@@ -297,7 +298,15 @@
       "aurora": "",
       "auroraNote": "",
       "blueprint": "",
-      "blueprintNote": ""
+      "blueprintNote": "",
+      "monolith": "",
+      "monolithNote": "",
+      "atelier": "",
+      "atelierNote": "",
+      "glass": "",
+      "glassNote": "",
+      "showroom": "",
+      "showroomNote": ""
     },
     "photosHint": "",
     "photosGuide": "",

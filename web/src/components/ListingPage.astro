@@ -31,7 +31,7 @@ import {
   showListingMap,
   whatsappPrefill,
 } from '@/features/listings/control-surface';
-import { templateSpec } from '@/features/templates/manifest';
+import { templateFor, templateSpec } from '@/features/templates/manifest';
 import { toCells } from '../lib/facts';
 import SectionLabel from './SectionLabel.astro';
 
@@ -57,7 +57,11 @@ interface Props {
  * only category lookup on the page, which is what keeps a fifth divergence
  * from appearing by accident.
  */
-const { listing, robots } = Astro.props;
+const { listing: given, robots } = Astro.props;
+// A template drawn for the other category (Showroom on a flat) is drawn as
+// its fallback instead — here, once, so BaseListing's data-template and every
+// Stage below agree on what the page actually is.
+const listing: Listing = { ...given, template: templateFor(given.template, given.category) };
 const presentation = CATEGORY_PRESENTATION[listing.category];
 
 const paragraphs = listing.description.split('\n\n');
@@ -241,7 +245,7 @@ const shareHref = whatsappShareUrl(
   />
   <MonthlyCost facts={listing.facts} />
 
-  <section class="reveal">
+  <section class="reveal about">
     <SectionLabel text={homeLabel} />
     <h2>{heading}</h2>
     {paragraphs[0] ? <p><Prose text={paragraphs[0]} /></p> : null}

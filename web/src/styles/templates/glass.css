@@ -1,0 +1,234 @@
+/*
+  Glass — the cover, blurred, as the room the cards float in; two glass
+  cards (the photograph; the title, price and numbers) lean toward the
+  pointer while a soft light follows it (M10, bindGlass in listing-enhance).
+
+  Living Surfaces, Onyx (TEMPLATE_MANIFEST). The cards' resting state is flat
+  (--rx/--ry default to 0): no script, reduced motion or a touch screen all
+  get the finished first screen. 1.x tokens pinned to the Onyx hexes.
+*/
+
+html[data-template='glass'] {
+  --olive: var(--accent-lift, #7e9a62);
+  --plaster: #0a0b0a;
+  --ink: #f2f0ea; /* = --ls-ink */
+  --ink-deep: #070805;
+  --stone: #2a2c22;
+  --stone-warm: #161713; /* = --ls-surface */
+  --muted: #a7a89c; /* = --ls-ink-2 */
+  --muted-warm: #a7a89c;
+  --absent: #a7a89c;
+  --heroWant: 80svh;
+}
+
+html[data-template='glass'] body {
+  font-family: var(--ls-font-body);
+}
+
+html[data-template='glass'] .agent-bar {
+  background: var(--ink-deep);
+}
+
+html[data-template='glass'] section.stage-glass {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: 1.2rem 0 1.8rem;
+}
+
+html[data-template='glass'] .gl-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background: var(--plaster);
+}
+
+html[data-template='glass'] .gl-bg img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  filter: blur(34px) saturate(1.5) brightness(0.5);
+  transform: scale(1.3);
+}
+
+/* The light that follows the pointer. A gradient position, not a moving
+   element, so nothing reflows; --gl-x/--gl-y are set on the stage. */
+html[data-template='glass'] .gl-light {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(38vmax 38vmax at var(--gl-x, 70%) var(--gl-y, 25%), rgba(255, 255, 255, 0.14), transparent 70%);
+  pointer-events: none;
+}
+
+html[data-template='glass'] .gl-grid {
+  display: grid;
+  gap: 0.9rem;
+  padding: 0 var(--gut);
+}
+
+html[data-template='glass'] .gl-card {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 30px 60px -30px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(22px) saturate(1.3);
+  border-radius: 28px;
+  color: var(--on-dark);
+  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform 0.4s var(--ease-out);
+}
+
+html[data-template='glass'] .gl-shot {
+  padding: 0.6rem;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+html[data-template='glass'] .gl-shot img {
+  inline-size: 100%;
+  block-size: auto; /* the height attribute would otherwise beat aspect-ratio */
+  aspect-ratio: 4 / 3.4;
+  object-fit: cover;
+  border-radius: 22px;
+  display: block;
+}
+
+html[data-template='glass'] .gl-info {
+  padding: 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+html[data-template='glass'] .gl-info .stage-place {
+  color: #d6d4cb;
+}
+
+html[data-template='glass'] .gl-info .stage-title {
+  font-family: var(--ls-font-display);
+  font-weight: 700;
+  font-size: clamp(2rem, 6vw, 3.4rem);
+  line-height: 1.04;
+  margin: 0;
+}
+
+html[data-template='glass'] .gl-info .price-bar {
+  padding: 0;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: baseline;
+  gap: 0.3rem 1rem;
+}
+
+html[data-template='glass'] .gl-info .price {
+  font-family: var(--ls-font-display);
+  font-size: clamp(2rem, 6vw, 3rem);
+}
+
+html[data-template='glass'] .gl-info .price-note {
+  text-align: start;
+  color: #d6d4cb;
+}
+
+html[data-template='glass'] .gl-nums {
+  margin: 0;
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+html[data-template='glass'] .gl-nums > div {
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+html[data-template='glass'] .gl-nums dd {
+  font-family: var(--ls-font-display);
+  font-weight: 600;
+  font-size: clamp(1.6rem, 5vw, 2.4rem);
+}
+
+html[data-template='glass'] .gl-nums dt {
+  color: #cfcdc3;
+}
+
+html[data-template='glass'] .gl-info .highlights {
+  padding: 0;
+}
+
+html[data-template='glass'] .gl-info .highlights li {
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+/* ---------- The rest of the page, glass on onyx ---------- */
+
+html[data-template='glass'] .enrich {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 24px;
+  margin-inline: var(--gut);
+}
+
+html[data-template='glass'] .facts {
+  gap: 0;
+  background: transparent;
+  border-block: 1px solid var(--stone);
+}
+
+html[data-template='glass'] .fact {
+  background: transparent;
+}
+
+html[data-template='glass'] .fact + .fact {
+  border-inline-start: 1px solid var(--stone);
+}
+
+html[data-template='glass'] .cta {
+  background: var(--ink);
+  color: var(--plaster);
+}
+
+html[data-template='glass'] .cta-dock {
+  background: linear-gradient(to top, var(--plaster) 70%, rgba(10, 11, 10, 0));
+}
+
+html[data-template='glass'] .gallery img {
+  border-radius: 20px;
+}
+
+@media (min-width: 960px) {
+  html[data-template='glass'] section.stage-glass {
+    padding-block: 2rem 2.6rem;
+  }
+
+  html[data-template='glass'] .gl-grid {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    align-items: stretch;
+    gap: 1.2rem;
+  }
+
+  html[data-template='glass'] .gl-shot img {
+    block-size: 100%;
+    aspect-ratio: auto;
+    min-block-size: 26rem;
+  }
+
+  html[data-template='glass'] .listing-flow > :not(.stage, .compact-bar) {
+    align-self: center;
+    inline-size: min(100%, 64rem);
+    max-width: none;
+    box-sizing: border-box;
+  }
+
+  html[data-template='glass'] :is(.enrich, .seller, .facts, .monthly-cost) {
+    margin-inline: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html[data-template='glass'] .gl-card {
+    animation: stage-fade 1s var(--ease-out) both;
+  }
+
+  html[data-template='glass'] .gl-info {
+    animation-delay: 160ms;
+  }
+}

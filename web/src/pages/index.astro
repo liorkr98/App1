@@ -12,6 +12,7 @@ import PriceTiers from '../components/PriceTiers.astro';
 import SectionLabel from '../components/SectionLabel.astro';
 import WalkMinutes from '../components/WalkMinutes.astro';
 import { TEMPLATE_IDS } from '@/types/listing';
+import { templateFits } from '@/features/templates/manifest';
 import { propertyListing, vehicleListing, withNamedRooms } from '../lib/listings';
 import '../styles/tokens.css';
 
@@ -77,6 +78,12 @@ const cardImage = largest(propertyShowcase.media.cover, HERO_WIDTHS);
 const title = `${t('common.brand')} — ${t('home.tagline')}`;
 const canonical = new URL('/', Astro.site).href;
 const ogImage = new URL('/og-home.webp', Astro.site).href;
+// The showcase listing is a flat, so the template row skips car-only ones.
+const homeTemplates = TEMPLATE_IDS.filter((id) => templateFits(id, 'property'));
+// The hero phone's cycle is timed for exactly five screens (20% of the loop
+// each), so it plays the five 2.0 templates rather than every id.
+const HERO_PICKS = new Set(['aurora', 'blueprint', 'monolith', 'atelier', 'glass']);
+const heroTemplates = homeTemplates.filter((id) => HERO_PICKS.has(id));
 ---
 
 <!DOCTYPE html>
@@ -590,6 +597,39 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         --s-muted: #5e5f57;
         --s-accent: #1f4fa0;
         --s-lift: #1f4fa0;
+      }
+
+      .device[data-tpl='monolith'] {
+        --s-ground: #050505;
+        --s-ink: #f2f0ea;
+        --s-deep: #050505;
+        --s-line: #262620;
+        --s-warm: #141412;
+        --s-muted: #a7a89c;
+        --s-accent: #f2f0ea;
+        --s-lift: #86b79a;
+      }
+
+      .device[data-tpl='atelier'] {
+        --s-ground: #f6f3ec;
+        --s-ink: #121310;
+        --s-deep: #121310;
+        --s-line: #ddd7ca;
+        --s-warm: #ece7dc;
+        --s-muted: #5e5f57;
+        --s-accent: #121310;
+        --s-lift: #4a5d3a;
+      }
+
+      .device[data-tpl='glass'] {
+        --s-ground: #0a0b0a;
+        --s-ink: #f2f0ea;
+        --s-deep: #070805;
+        --s-line: #2a2c22;
+        --s-warm: #161713;
+        --s-muted: #a7a89c;
+        --s-accent: #f2f0ea;
+        --s-lift: #86b79a;
       }
 
       .device[data-tpl='blueprint'] .s-hero img {
@@ -1892,7 +1932,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
           <div class="phone">
             <div class="stage">
               {
-                TEMPLATE_IDS.map((tpl, index) => (
+                heroTemplates.map((tpl, index) => (
                   <div class="device" data-tpl={tpl} style={`--i: ${index}`}>
                     <MiniScreen
                       listing={{ ...propertyShowcase, template: tpl }}
@@ -1923,7 +1963,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
 
         <div class="tpl-row">
           {
-            TEMPLATE_IDS.map((tpl) => (
+            homeTemplates.map((tpl) => (
               <a class="device reveal" data-tpl={tpl} href={`/template-check/${tpl}/`}>
                 <MiniScreen
                   listing={{ ...propertyShowcase, template: tpl }}

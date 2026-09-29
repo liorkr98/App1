@@ -10,6 +10,10 @@ import AgentCard from './AgentCard.astro';
 import HighlightChips from './HighlightChips.astro';
 import PriceBar from './PriceBar.astro';
 import Prose from './Prose.astro';
+import AtelierStage from './stages/AtelierStage.astro';
+import GlassStage from './stages/GlassStage.astro';
+import MonolithStage from './stages/MonolithStage.astro';
+import ShowroomStage from './stages/ShowroomStage.astro';
 
 interface Props {
   listing: Listing;
@@ -27,7 +31,7 @@ interface Props {
 const { listing, layout, photos, cells, perUnit, waHref, sold } = Astro.props;
 
 /**
- * THE FIRST SCREEN, three ways.
+ * THE FIRST SCREEN, composed per template (TEMPLATE_MANIFEST.composed).
  *
  * The seven token templates share one head — hero, thumbs, price bar — and
  * restyle it, which is why agents said they all looked the same. These three
@@ -45,6 +49,8 @@ const { listing, layout, photos, cells, perUnit, waHref, sold } = Astro.props;
  *             Living Surfaces, Paper.
  *   showcase  headline, a rounded photograph and a card beside it carrying
  *             the numbers, the price and the agent
+ *   monolith, atelier, glass, showroom
+ *             one component each in ./stages/ — see their headers.
  *
  * Everything below the first screen is the shared flow — facts, provenance,
  * enrichment, map, seller — so the rules those components enforce (absent vs
@@ -380,3 +386,8 @@ const priceProps = {
     <HighlightChips highlights={listing.highlights} facts={listing.facts} />
   </section>
 )}
+
+{layout === 'monolith' && <MonolithStage listing={listing} cells={cells} perUnit={perUnit} />}
+{layout === 'atelier' && <AtelierStage listing={listing} cells={cells} perUnit={perUnit} />}
+{layout === 'glass' && <GlassStage listing={listing} cells={cells} perUnit={perUnit} />}
+{layout === 'showroom' && <ShowroomStage listing={listing} cells={cells} perUnit={perUnit} />}

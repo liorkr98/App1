@@ -1,0 +1,64 @@
+---
+import type { Listing } from '@/types/listing';
+import { HERO_WIDTHS, largest, srcset } from '../../lib/images';
+import type { FactCell } from '../../lib/facts';
+import type { PerUnitPrice } from '../../lib/price';
+import { coverStyle, letterOffsets, priceProps, stagePlace, titleLines } from '../../lib/stage';
+import HighlightChips from '../HighlightChips.astro';
+import Letters from '../Letters.astro';
+import PriceBar from '../PriceBar.astro';
+import Prose from '../Prose.astro';
+import Numerals from './Numerals.astro';
+
+interface Props {
+  listing: Listing;
+  cells: FactCell[];
+  perUnit?: PerUnitPrice | undefined;
+}
+
+/**
+ * Monolith (Onyx). A black screen; the title arrives letter by letter, right
+ * to left (M2, split at build time); the cover wipes in behind it, dimmed;
+ * then the key numbers, set enormous and thin.
+ *
+ * The prototype pinned a horizontal room-by-room story (M7). That needs a
+ * scroll-jacking library, which is a dependency to ask for, not to add; the
+ * rooms are in the tour below, and the pinned story waits for that decision.
+ */
+const { listing, cells, perUnit } = Astro.props;
+const cover = listing.media.cover;
+const lines = titleLines(listing);
+const offsets = letterOffsets(lines);
+const place = stagePlace(listing);
+---
+<section class="stage stage-monolith">
+  <div class="mono-hero">
+    <div class="mono-wipe" aria-hidden="true">
+      <img
+        class="mono-img ls-breathe"
+        src={largest(cover, HERO_WIDTHS)}
+        srcset={srcset(cover, HERO_WIDTHS) || undefined}
+        sizes="100vw"
+        width={cover.width}
+        height={cover.height}
+        alt=""
+        style={coverStyle(listing)}
+        fetchpriority="high"
+        decoding="async"
+      />
+    </div>
+    {place && <p class="stage-place"><Prose text={place} /></p>}
+    <h1 class="stage-title mono-title ls-display" aria-label={lines.join(' ')}>
+      <span aria-hidden="true">
+        {lines.map((line, n) => (
+          <span class="mono-line"><Letters text={line} start={offsets[n]} /></span>
+        ))}
+      </span>
+    </h1>
+    <div class="mono-meta">
+      <PriceBar {...priceProps(listing, perUnit)} />
+    </div>
+  </div>
+  <Numerals cells={cells} class="mono-giant" />
+  <HighlightChips highlights={listing.highlights} facts={listing.facts} />
+</section>
