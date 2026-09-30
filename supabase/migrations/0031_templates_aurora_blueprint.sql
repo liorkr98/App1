@@ -9,6 +9,11 @@
 -- Changing template does not touch status, so the publish gate in
 -- 0016/0022 (draft→published only) does not fire.
 
+-- The old check goes first: it does not allow aurora or brochure, so the
+-- updates below would violate it (found applying this to the live database).
+alter table public.listings
+  drop constraint if exists listings_template_check;
+
 update public.listings
   set template = 'aurora'
   where template = 'cinema';
@@ -26,9 +31,6 @@ update public.listings
     else 'agency'
   end
   where template in ('postcard', 'portrait', 'ledger', 'stack');
-
-alter table public.listings
-  drop constraint if exists listings_template_check;
 
 alter table public.listings
   add constraint listings_template_check
