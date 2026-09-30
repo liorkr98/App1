@@ -402,6 +402,11 @@ export interface Media {
    * made from (rich-media.ts depthFor). Absent means a flat photograph.
    */
   depthUrl?: string;
+  /**
+   * The designed WhatsApp card (1200 × 630) and the content key it was made
+   * for (share-card.ts). The page uses it only while the key still matches.
+   */
+  card?: { url: string; key: string };
 }
 
 // ---------------------------------------------------------------------------

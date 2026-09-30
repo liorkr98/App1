@@ -19,6 +19,10 @@ interface Props {
   photos?: readonly string[];
   /** "הבחירה של היעד" (features/templates/suggest), with its one-line why. */
   suggestion?: { id: TemplateId; reason: SuggestReason } | undefined;
+  /** The current accent was chosen from the cover photo (cover-accent.ts). */
+  accentFromCover?: boolean;
+  /** What the cover suggests, offered as one tap when a brand colour holds. */
+  coverTone?: AccentId | undefined;
 }
 
 /**
@@ -27,7 +31,17 @@ interface Props {
  * The facsimile beside this step restyles from `data-template` and
  * `--accent`. These cards are the picker; that preview is the proof.
  */
-export function TemplateStep({ category, chosen, onChoose, accent, onAccent, photos = [], suggestion }: Props) {
+export function TemplateStep({
+  category,
+  chosen,
+  onChoose,
+  accent,
+  onAccent,
+  photos = [],
+  suggestion,
+  accentFromCover = false,
+  coverTone,
+}: Props) {
   const palette = isAccentId(accent) ? accent : 'olive';
   // Every template when the category is not chosen yet; otherwise only those
   // drawn for it. Still enumerated from TEMPLATE_IDS, never a second list.
@@ -56,6 +70,13 @@ export function TemplateStep({ category, chosen, onChoose, accent, onAccent, pho
             </button>
           ))}
         </div>
+        {accentFromCover ? (
+          <p className="hint palette-note">{t('editor.templates.paletteFromCover')}</p>
+        ) : coverTone && coverTone !== palette ? (
+          <button type="button" className="palette-cover" onClick={() => onAccent(coverTone)}>
+            {t('editor.templates.paletteUseCover', { name: t(`agent.accents.${coverTone}`) })}
+          </button>
+        ) : null}
       </fieldset>
 
       {suggestion ? (

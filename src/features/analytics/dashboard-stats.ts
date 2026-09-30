@@ -141,3 +141,55 @@ export function readRate(views: number, reads: number): number | undefined {
   if (!(views > 0)) return undefined;
   return Math.min(100, Math.round((Math.max(0, reads) / views) * 100));
 }
+
+/**
+ * Time to link: from starting a listing to first sharing its link (plan §0,
+ * the product's own promise — under four minutes). One row of
+ * listing_time_to_link (migration 0035), fetched on its own like ReadRow.
+ */
+export interface LinkRow {
+  listing_id: string;
+  started_at: string;
+  published_at: string | null;
+  first_share_at: string | null;
+}
+
+/** Whole-second minutes from one timestamp to another; undefined if either is missing or it runs backwards. */
+export function minutesBetween(from: string | null | undefined, to: string | null | undefined): number | undefined {
+  if (!from || !to) return undefined;
+  const start = Date.parse(from);
+  const end = Date.parse(to);
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return undefined;
+  return Math.round((end - start) / 1000) / 60;
+}
+
+/** Minutes from starting to first sharing, for one row. */
+export function timeToLink(row: LinkRow): number | undefined {
+  return minutesBetween(row.started_at, row.first_share_at);
+}
+
+/**
+ * The median. Not the mean: one listing edited over two days would drag a
+ * mean into hours and say nothing about the agent's usual four minutes.
+ */
+export function median(values: readonly number[]): number | undefined {
+  if (values.length === 0) return undefined;
+  const sorted = [...values].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 1 ? sorted[middle] : (sorted[middle - 1]! + sorted[middle]!) / 2;
+}
+
+/**
+ * A duration as the dashboard says it: "3:52" under an hour (the promise is
+ * in minutes, so it reads like the race on the homepage), whole hours under
+ * two days, whole days beyond. The unit is a locale key, not a word here.
+ */
+export function durationParts(minutes: number): { value: string; unit: 'minutes' | 'hours' | 'days' } {
+  const seconds = Math.round(minutes * 60);
+  if (seconds < 3600) {
+    const whole = Math.floor(seconds / 60);
+    return { value: `${whole}:${String(seconds % 60).padStart(2, '0')}`, unit: 'minutes' };
+  }
+  if (minutes < 48 * 60) return { value: String(Math.round(minutes / 60)), unit: 'hours' };
+  return { value: String(Math.round(minutes / (60 * 24))), unit: 'days' };
+}

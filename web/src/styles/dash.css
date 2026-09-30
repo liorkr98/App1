@@ -135,6 +135,11 @@ h1 {
   min-block-size: 0;
 }
 
+/* With both optional tiles there are six, which pair up without spanning. */
+.kpis.has-read.has-link .kpi.is-wide {
+  grid-column: auto;
+}
+
 @media (min-width: 900px) {
   .kpis {
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -142,6 +147,15 @@ h1 {
 
   .kpis.has-read {
     grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .kpis.has-link {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  /* Six tiles: two even rows of three rather than six slivers. */
+  .kpis.has-read.has-link {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .kpi.is-wide {

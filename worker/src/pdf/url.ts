@@ -19,12 +19,13 @@ export const SLUG_PATTERN = /^[0-9A-HJKMNP-TV-Z]{5}$/;
 
 /**
  * Which page of a listing the browser may open. A fixed map, so the payload
- * picks one of these three paths and can never supply a path of its own.
+ * picks one of these paths and can never supply a path of its own.
  */
 export const LISTING_PAGES = {
   listing: '',
   flyer: 'flyer/',
   story: 'story/',
+  card: 'card/',
 } as const;
 
 export type ListingPage = keyof typeof LISTING_PAGES;
