@@ -4,13 +4,18 @@ import { describe, it } from 'node:test';
 import {
   contactRate,
   daysSincePublished,
+  durationParts,
   israelDay,
   lastDays,
+  median,
+  minutesBetween,
   readRate,
   readThrough,
   series,
+  timeToLink,
   totals,
   type DailyRow,
+  type LinkRow,
   type ReadRow,
 } from './dashboard-stats.js';
 
@@ -120,5 +125,40 @@ describe('readRate', () => {
 
   it('never claims more than every reader', () => {
     assert.equal(readRate(3, 5), 100);
+  });
+});
+
+describe('time to link', () => {
+  const row = (started: string, shared: string | null): LinkRow => ({
+    listing_id: 'a',
+    started_at: started,
+    published_at: null,
+    first_share_at: shared,
+  });
+
+  it('measures from starting the listing to first sharing it', () => {
+    assert.equal(timeToLink(row('2026-09-22T09:54:18Z', '2026-09-22T09:58:10Z')), 232 / 60);
+    assert.equal(timeToLink(row('2026-09-22T09:54:18Z', null)), undefined);
+  });
+
+  it('refuses a share before the start and a timestamp that is not one', () => {
+    assert.equal(minutesBetween('2026-09-22T10:00:00Z', '2026-09-22T09:00:00Z'), undefined);
+    assert.equal(minutesBetween('nonsense', '2026-09-22T09:00:00Z'), undefined);
+    assert.equal(minutesBetween(undefined, '2026-09-22T09:00:00Z'), undefined);
+  });
+
+  it('takes the median, so one listing edited over two days does not speak for the rest', () => {
+    assert.equal(median([2.9, 3.9, 5.3, 6.1, 3019.4]), 5.3);
+    assert.equal(median([3, 5]), 4);
+    assert.equal(median([]), undefined);
+  });
+
+  it('says a duration the way the promise is made', () => {
+    assert.deepEqual(durationParts(232 / 60), { value: '3:52', unit: 'minutes' });
+    assert.deepEqual(durationParts(0.5), { value: '0:30', unit: 'minutes' });
+    // Rounds to a full hour: said as one hour, never as "60:00".
+    assert.deepEqual(durationParts(59.999), { value: '1', unit: 'hours' });
+    assert.deepEqual(durationParts(150), { value: '3', unit: 'hours' });
+    assert.deepEqual(durationParts(3019.4), { value: '2', unit: 'days' });
   });
 });

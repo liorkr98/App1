@@ -1,0 +1,323 @@
+---
+import type { Listing } from '@/types/listing';
+import { accentFor } from '@/features/agents/accents';
+import { ogPriceFragment } from '@/features/listings/control-surface';
+import { cardFamily, shareCardKey } from '@/features/listings/share-card';
+import { templateFor } from '@/features/templates/manifest';
+import Prose from './Prose.astro';
+import { toCells } from '../lib/facts';
+import { ils } from '../lib/format';
+import { t } from '../lib/i18n';
+import { HERO_WIDTHS, largest } from '../lib/images';
+import { coverStyle, stagePlace } from '../lib/stage';
+import '../styles/tokens.css';
+import '../styles/fonts.css';
+import '../styles/system/tokens.css';
+
+/**
+ * The WhatsApp card, 1200 × 630, in the listing's template (share-card.ts).
+ *
+ * A whole document, screenshotted by the worker's render_card job and
+ * prerendered under /template-check/card/ so the plate, font and <bdi> gates
+ * read it like any listing page. Same rules as the page: numbers in <bdi>, the
+ * plate is not a fact and cannot appear, the price follows its display mode,
+ * and nothing here claims "verified".
+ *
+ * <meta name="card-key"> is the contract with the worker: it stores the key
+ * beside the image, and the listing page uses the image only while the key
+ * still matches what it shows.
+ */
+interface Props {
+  listing: Listing;
+}
+
+const { listing } = Astro.props;
+const template = templateFor(listing.template, listing.category);
+const family = cardFamily(template);
+const accent = accentFor(listing.accent);
+const cells = toCells(listing.category, listing.facts, listing.audience)
+  .filter((cell) => !cell.absent)
+  .slice(0, 3);
+const lead = cells[0];
+// ogPriceFragment is written for og:title ("… · ₪x"); the separator is not ours.
+const price = ogPriceFragment(listing.price, listing.priceDisplay, ils(listing.price), t('listing.priceFrom')).replace(/^[\s·]+/, '');
+const place = stagePlace(listing);
+const title = listing.title.replace(/\s*\n\s*/g, ' ');
+const titleSize = title.length > 56 ? 50 : title.length > 34 ? 60 : 72;
+const photo = largest(listing.media.cover, HERO_WIDTHS);
+const mode = family === 'night' ? 'onyx' : 'paper';
+const serif = template === 'atelier';
+---
+<!DOCTYPE html>
+<html lang="he" dir="rtl" data-ls={mode} data-card={family} data-serif={serif ? 'true' : undefined}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=1200" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="card-key" content={shareCardKey(listing)} />
+    <title>{title}</title>
+    <style is:global>
+      html, body { margin: 0; }
+      body {
+        inline-size: 1200px;
+        block-size: 630px;
+        overflow: hidden;
+        position: relative;
+        background: var(--ls-ground);
+        color: var(--ls-ink);
+        font-family: var(--ls-font-body);
+      }
+      .cd-photo { position: absolute; overflow: hidden; }
+      .cd-photo img { display: block; inline-size: 100%; block-size: 100%; object-fit: cover; }
+      .cd-text {
+        position: absolute;
+        z-index: 2;
+        display: grid;
+        align-content: end;
+        gap: 14px;
+      }
+      .cd-place { margin: 0; font-size: 24px; font-weight: 700; color: var(--ls-ink-2); line-height: 1.5; }
+      .cd-title {
+        margin: 0;
+        font-family: var(--ls-font-display);
+        font-weight: 800;
+        font-size: var(--title-size, 72px);
+        font-variation-settings: 'wdth' 75;
+        line-height: 1.02;
+        text-wrap: balance;
+      }
+      [data-serif] .cd-title { font-family: var(--ls-font-serif); font-weight: 700; font-variation-settings: normal; line-height: 1.12; }
+      .cd-price { margin: 0; font-family: var(--ls-font-display); font-weight: 800; font-size: 52px; line-height: 1.1; color: var(--accent-base); }
+      .cd-cells { display: flex; gap: 36px; margin: 6px 0 0; }
+      .cd-cells div { display: grid; gap: 2px; }
+      .cd-cells dt { order: 2; font-size: 20px; font-weight: 700; color: var(--ls-ink-2); }
+      .cd-cells dd { margin: 0; font-family: var(--ls-font-display); font-size: 40px; font-weight: 700; line-height: 1.05; }
+      .cd-agent { margin: 8px 0 0; font-size: 21px; color: var(--ls-ink-2); line-height: 1.5; }
+      .cd-agent b { color: var(--ls-ink); }
+      .cd-lead, .cd-tab, .cd-stub { display: none; }
+
+      /* ---------- night: Aurora, Monolith, Glass, Showroom ---------- */
+      [data-card='night'] .cd-photo { inset: 0; }
+      /* The card is always Hebrew, dir=rtl: "to left" runs from the text
+         (inline-start, on the right) out to the photograph. */
+      [data-card='night'] .cd-photo::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(to left, rgba(11, 12, 10, 0.94) 0%, rgba(11, 12, 10, 0.72) 42%, rgba(11, 12, 10, 0.08) 78%),
+          radial-gradient(ellipse at 85% 110%, color-mix(in srgb, var(--accent-lift) 35%, transparent), transparent 60%);
+      }
+      [data-card='night'] .cd-text { inset-block: 56px; inset-inline-start: 64px; inline-size: 600px; }
+      [data-card='night'] .cd-price { color: var(--accent-lift); }
+
+      /* ---------- paper: Atelier, Heliograph, Walk and the 1.x templates ---------- */
+      [data-card='paper'] .cd-photo { inset-block: 0; inset-inline-end: 0; inline-size: 540px; }
+      [data-card='paper'] .cd-text { inset-block: 56px; inset-inline-start: 64px; inline-size: 520px; }
+      [data-card='paper'] .cd-cells dd { color: var(--ls-ink); }
+
+      /* ---------- blueprint ---------- */
+      [data-card='blueprint'] body {
+        background-color: #f6f4ef;
+        background-image:
+          linear-gradient(rgba(31, 79, 160, 0.09) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(31, 79, 160, 0.09) 1px, transparent 1px),
+          linear-gradient(rgba(31, 79, 160, 0.16) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(31, 79, 160, 0.16) 1px, transparent 1px);
+        background-size: 24px 24px, 24px 24px, 120px 120px, 120px 120px;
+      }
+      [data-card='blueprint'] .cd-photo {
+        inset-block: 48px;
+        inset-inline-end: 48px;
+        inline-size: 500px;
+        outline: 2px solid #1f4fa0;
+        outline-offset: 10px;
+      }
+      [data-card='blueprint'] .cd-text { inset-block: 56px; inset-inline-start: 64px; inline-size: 540px; }
+      [data-card='blueprint'] .cd-title,
+      [data-card='blueprint'] .cd-cells dd { color: #1f4fa0; }
+      [data-card='blueprint'] .cd-cells { border-block-start: 2px solid #1f4fa0; padding-block-start: 16px; }
+
+      /* ---------- poster: the numbers are the layout ---------- */
+      [data-card='poster'] body { background: #eeece5; color: #16170f; }
+      [data-card='poster'] .cd-photo {
+        inset-block-start: 48px;
+        inset-inline-end: 48px;
+        inline-size: 330px;
+        block-size: 250px;
+        background: var(--accent-base);
+      }
+      [data-card='poster'] .cd-photo img { filter: grayscale(1) contrast(1.1); mix-blend-mode: screen; }
+      [data-card='poster'] .cd-lead {
+        display: grid;
+        position: absolute;
+        inset-block-end: 40px;
+        inset-inline-end: 48px;
+        inline-size: 400px;
+        text-align: end;
+        margin: 0;
+      }
+      [data-card='poster'] .cd-lead dd {
+        margin: 0;
+        font-family: var(--ls-font-display);
+        font-weight: 800;
+        font-size: 200px;
+        line-height: 1;
+        font-variation-settings: 'wdth' 62.5;
+        color: var(--accent-base);
+      }
+      [data-card='poster'] .cd-lead dt { font-size: 26px; font-weight: 800; }
+      [data-card='poster'] .cd-text { inset-block: 56px; inset-inline-start: 64px; inline-size: 620px; }
+      [data-card='poster'] .cd-title { font-variation-settings: 'wdth' 62.5; }
+
+      /* ---------- zine: two inks, a little off register ---------- */
+      [data-card='zine'] body { background: #f4efe6; color: #16305a; }
+      [data-card='zine'] .cd-photo {
+        inset-block: 40px;
+        inset-inline-end: 44px;
+        inline-size: 480px;
+        background: #ff48b0;
+        transform: rotate(-2deg);
+        box-shadow: 8px 6px 0 #0078bf;
+      }
+      [data-card='zine'] .cd-photo img { filter: grayscale(1) contrast(1.25); mix-blend-mode: multiply; }
+      [data-card='zine'] .cd-text { inset-block: 56px; inset-inline-start: 64px; inline-size: 560px; }
+      [data-card='zine'] .cd-title { font-family: 'Heebo', var(--ls-font-body); font-weight: 900; font-variation-settings: normal; }
+      [data-card='zine'] .cd-place { color: #3f4d68; }
+      [data-card='zine'] .cd-price {
+        justify-self: start;
+        padding: 6px 22px;
+        border: 4px solid #ff48b0;
+        color: #16305a;
+        transform: rotate(-3deg);
+      }
+      [data-card='zine'] .cd-cells dt,
+      [data-card='zine'] .cd-agent { color: #3f4d68; }
+
+      /* ---------- dossier: a case file, typed ---------- */
+      [data-card='dossier'] body { background: #e9dcc0; color: #1f1d18; }
+      [data-card='dossier'] .cd-tab {
+        display: block;
+        position: absolute;
+        inset-block-start: 24px;
+        inset-inline-start: 64px;
+        margin: 0;
+        padding: 6px 24px;
+        background: #fbf8f0;
+        border-radius: 10px 10px 0 0;
+        font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Heebo', monospace;
+        font-size: 22px;
+        font-weight: 700;
+      }
+      [data-card='dossier'] .cd-photo {
+        inset-block-start: 70px;
+        inset-inline-end: 70px;
+        inline-size: 420px;
+        block-size: 300px;
+        border: 12px solid #fbf8f0;
+        box-shadow: 0 16px 30px -18px rgba(31, 29, 24, 0.55);
+        transform: rotate(2deg);
+      }
+      [data-card='dossier'] .cd-text {
+        inset-block: 64px 40px;
+        inset-inline-start: 40px;
+        inline-size: 600px;
+        padding: 28px 30px;
+        background: #fbf8f0;
+      }
+      [data-card='dossier'] .cd-title,
+      [data-card='dossier'] .cd-cells dd {
+        font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Heebo', monospace;
+        font-variation-settings: normal;
+        font-weight: 700;
+      }
+      [data-card='dossier'] .cd-title { font-size: calc(var(--title-size, 72px) * 0.72); line-height: 1.25; }
+      [data-card='dossier'] .cd-cells dd { font-size: 30px; }
+
+      /* ---------- ticket: the stub carries the price ---------- */
+      [data-card='ticket'] body { background: #e8e4da; color: #15140f; }
+      [data-card='ticket'] .cd-photo {
+        inset-block-start: 40px;
+        inset-inline-start: 40px;
+        inline-size: 800px;
+        block-size: 170px;
+      }
+      [data-card='ticket'] .cd-text {
+        inset-block: 40px;
+        inset-inline-start: 40px;
+        inline-size: 800px;
+        padding: 196px 40px 26px;
+        box-sizing: border-box;
+        background: #fffaf0;
+        align-content: start;
+        gap: 10px;
+      }
+      [data-card='ticket'] .cd-title { font-size: calc(var(--title-size, 72px) * 0.78); }
+      [data-card='ticket'] .cd-cells dd { font-size: 34px; }
+      [data-card='ticket'] .cd-text { z-index: 1; }
+      [data-card='ticket'] .cd-photo { z-index: 2; }
+      [data-card='ticket'] .cd-price { display: none; }
+      [data-card='ticket'] .cd-stub {
+        display: grid;
+        align-content: center;
+        gap: 12px;
+        position: absolute;
+        inset-block: 40px;
+        inset-inline-end: 40px;
+        inline-size: 300px;
+        padding: 30px;
+        box-sizing: border-box;
+        background: #fffaf0;
+        border-inline-start: 4px dashed #cfc9bb;
+        font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Heebo', monospace;
+      }
+      [data-card='ticket'] .cd-stub p { margin: 0; font-size: 22px; line-height: 1.5; color: #55524a; }
+      [data-card='ticket'] .cd-stub strong {
+        font-family: var(--ls-font-display);
+        font-size: 48px;
+        line-height: 1.1;
+        color: var(--accent-base);
+      }
+    </style>
+  </head>
+  <body style={`--accent-base:${accent.base};--accent-lift:${accent.lift}`}>
+    <div class="cd-photo">
+      <img src={photo} alt="" style={coverStyle(listing)} />
+    </div>
+    {family === 'dossier' && (
+      <p class="cd-tab">{t(listing.category === 'vehicle' ? 'card.dossierVehicle' : 'card.dossierProperty')}</p>
+    )}
+    {family === 'poster' && lead && (
+      <dl class="cd-lead">
+        <dd>{lead.bdi ? <bdi>{lead.displayValue}</bdi> : lead.displayValue}</dd>
+        <dt>{lead.label}</dt>
+      </dl>
+    )}
+    <div class="cd-text">
+      {place && <p class="cd-place"><Prose text={place} /></p>}
+      <h1 class="cd-title" style={`--title-size:${titleSize}px`}><Prose text={title} /></h1>
+      {price && <p class="cd-price"><Prose text={price} /></p>}
+      {cells.length > 0 && (
+        <dl class="cd-cells">
+          {(family === 'poster' ? cells.slice(1) : cells).map((cell) => (
+            <div>
+              <dt>{cell.label}</dt>
+              <dd>{cell.bdi ? <bdi>{cell.displayValue}</bdi> : cell.displayValue}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+      <p class="cd-agent">
+        <b>{listing.seller.name}</b>
+        {(listing.seller.agencyName ?? listing.seller.role) && <Fragment>{' · '}{listing.seller.agencyName ?? listing.seller.role}</Fragment>}
+      </p>
+    </div>
+    {family === 'ticket' && (
+      <div class="cd-stub">
+        <p>{t('card.ticketTrip')}</p>
+        {place && <p>{t('card.ticketTo')}: <Prose text={place} /></p>}
+        {price && <strong><Prose text={price} /></strong>}
+      </div>
+    )}
+  </body>
+</html>

@@ -97,13 +97,15 @@ describe('listingPdfUrl', () => {
 });
 
 describe('listing pages', () => {
-  it('opens the flyer and story pages on the same origin', () => {
+  it('opens the flyer, story and card pages on the same origin', () => {
     assert.equal(listingPdfUrl({ slug: SLUG, pageBaseUrl: PAGE, page: 'flyer' }), 'https://hasivuv.com/a/A7K2M/flyer/');
     assert.equal(listingPdfUrl({ slug: SLUG, pageBaseUrl: PAGE, page: 'story' }), 'https://hasivuv.com/a/A7K2M/story/');
+    assert.equal(listingPdfUrl({ slug: SLUG, pageBaseUrl: PAGE, page: 'card' }), 'https://hasivuv.com/a/A7K2M/card/');
   });
 
-  it('accepts only the three known pages from a payload', () => {
+  it('accepts only the known pages from a payload', () => {
     assert.equal(isListingPage('flyer'), true);
+    assert.equal(isListingPage('card'), true);
     assert.equal(isListingPage('../admin'), false);
     assert.equal(isListingPage('toString'), false);
   });

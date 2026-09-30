@@ -57,13 +57,16 @@ export async function enqueuePublishJobs(input: {
   if (input.slug) {
     const shown = `${hash}:${await sha256(input.content ?? '')}`;
     await enqueue(input.listingId, 'render_story', `${shown}:story`, { slug: input.slug });
+    // The designed WhatsApp card (share-card.ts). Until it exists — or while
+    // it was made for older content — the page advertises generate_og's crop.
+    await enqueue(input.listingId, 'render_card', `${shown}:card`, { slug: input.slug });
     await enqueue(input.listingId, 'render_pdf', `${shown}:flyer`, { slug: input.slug, page: 'flyer' }, 'flyer');
   }
 }
 
 async function enqueue(
   listingId: string,
-  jobType: 'enhance_images' | 'generate_og' | 'render_story' | 'render_pdf' | 'depth_map',
+  jobType: 'enhance_images' | 'generate_og' | 'render_story' | 'render_pdf' | 'depth_map' | 'render_card',
   inputHash: string,
   payload: Record<string, unknown>,
   scopeKey?: string,

@@ -1,0 +1,18 @@
+---
+import ShareCard from '../../../components/ShareCard.astro';
+import { publishedListing } from '../../../lib/listing-from-row';
+
+/**
+ * The WhatsApp card of a published listing, 1200 × 630, for the worker's
+ * render_card job to screenshot (share-card.ts). Never indexed, never linked.
+ */
+export const prerender = false;
+Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+
+const slug = Astro.params.slug ?? '';
+const listing = slug ? await publishedListing(slug) : undefined;
+if (!listing) {
+  return new Response('not found', { status: 404 });
+}
+---
+<ShareCard listing={listing} />

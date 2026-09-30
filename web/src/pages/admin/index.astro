@@ -293,6 +293,7 @@ import '../../styles/tokens.css';
     </main>
 
     <script>
+      import { durationParts } from '@/features/analytics/dashboard-stats';
       import { t } from '../../lib/i18n';
       import { supabase, supabaseConfigured } from '../../lib/supabase';
 
@@ -348,6 +349,23 @@ import '../../styles/tokens.css';
             [t('admin.statJobsPending'), (row as { jobs_pending: number }).jobs_pending ?? 0],
             [t('admin.statJobsFailed'), (row as { jobs_failed: number }).jobs_failed ?? 0],
           ];
+          // The product's promise, measured (0035). Its own call: a database
+          // without 0035 errors here and loses only these two figures.
+          const timing = await client.rpc('admin_time_to_link');
+          const tRow = Array.isArray(timing.data) ? timing.data[0] : timing.data;
+          if (!timing.error && tRow && typeof tRow === 'object') {
+            const said = (value: unknown) => {
+              const minutes = Number(value);
+              if (value === null || !Number.isFinite(minutes)) return '—';
+              const d = durationParts(minutes);
+              const unit = { minutes: 'dash.unitMinutes', hours: 'dash.unitHours', days: 'dash.unitDays' }[d.unit];
+              return `${d.value} ${t(unit)}`;
+            };
+            stats.push(
+              [t('admin.statPublishTime'), said((tRow as { median_minutes_to_publish: unknown }).median_minutes_to_publish)],
+              [t('admin.statLink'), said((tRow as { median_minutes_to_link: unknown }).median_minutes_to_link)],
+            );
+          }
           for (const [label, value] of stats) {
             const card = document.createElement('div');
             card.className = 'stat';

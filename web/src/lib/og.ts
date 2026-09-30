@@ -2,6 +2,7 @@ import type { Fact, Listing } from '@/types/listing';
 import { factDefinition } from '@/features/listings/schemas';
 
 import { ogPriceFragment } from '@/features/listings/control-surface';
+import { currentCard } from '@/features/listings/share-card';
 import { factValue, ils, num } from './format';
 import { t } from './i18n';
 import { supabaseUrl } from './supabase';
@@ -148,9 +149,12 @@ export function ogImagePath(listingId: string, contentHash: string): string {
  * one is missing the others are too.
  */
 export function ogImageUrl(listing: Listing, site: URL | undefined): string {
-  const path = listing.ogImageHash
-    ? ogImagePath(listing.id, listing.ogImageHash)
-    : listing.media.cover.url;
+  // First choice: the designed card (render_card), but only if it was made
+  // for what the listing shows NOW — an edited price must never be advertised
+  // with the old one still on the picture (share-card.ts shareCardKey).
+  const path =
+    currentCard(listing) ??
+    (listing.ogImageHash ? ogImagePath(listing.id, listing.ogImageHash) : listing.media.cover.url);
 
   // Already absolute for both branches — the generated card lives on Storage
   // and an uploaded cover does too. `site` still resolves the demo fixtures,

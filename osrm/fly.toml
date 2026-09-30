@@ -1,10 +1,15 @@
 # The walking-time service. THIS IS NOT THE LISTING WORKER.
-# app1-mmbfma is photos/OG/PDF. Deploying this file onto that app replaces it.
-# Create a second app (hasivuv-osrm) and deploy from the REPO ROOT:
-#   fly apps create hasivuv-osrm
-#   fly deploy --config osrm/fly.toml --dockerfile osrm/Dockerfile
-#   npx wrangler secret put OSRM_URL     # https://hasivuv-osrm.fly.dev
-# See docs/OSRM.md.
+#
+# Where it actually runs (since 17 Sept 2026): a third machine, process group
+# `osrm`, on the worker's app app1-mmbfma — https://app1-mmbfma.fly.dev. The
+# deploy token could not create a second app. docs/OSRM.md has the refresh
+# steps: build and push an image with --build-only, then `fly machine update`
+# the one osrm machine. NEVER a plain `fly deploy` of this file onto
+# app1-mmbfma: that replaces the worker and pdf machines.
+#
+# `app` below names the separate app this was meant to be. It does not exist,
+# and that is deliberate: a stray `fly deploy --config osrm/fly.toml` fails
+# instead of landing on the worker. Change it only after creating that app.
 
 app = "hasivuv-osrm"
 primary_region = "fra"   # Frankfurt, like the worker and the Supabase project

@@ -127,6 +127,14 @@ import '../styles/dash.css';
         <span class="kpi-num"><bdi id="k-read">—</bdi></span>
         <span class="kpi-note plain">{t('dash.kpiReadNote')}</span>
       </div>
+      <div class="kpi is-wide" id="k-link-tile" style="--i:5" hidden>
+        <span class="kpi-lbl">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 9v4l2.5 2.5M9 2h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          {t('dash.kpiLink')}
+        </span>
+        <span class="kpi-num"><bdi id="k-link">—</bdi><small id="k-link-unit"></small></span>
+        <span class="kpi-note plain" id="k-link-note">{t('dash.kpiLinkNote')}</span>
+      </div>
     </section>
 
     {/*
@@ -173,16 +181,21 @@ import '../styles/dash.css';
       import {
         contactRate,
         daysSincePublished,
+        durationParts,
         lastDays,
+        median,
         readRate,
         readThrough,
         series,
+        timeToLink,
         totals,
         type DailyRow,
         type DayPoint,
+        type LinkRow,
         type ReadRow,
       } from '@/features/analytics/dashboard-stats';
       import { formatValue, parts, t, type Values } from '../lib/i18n';
+      import { recordListingEvent } from '../lib/listing-events';
       import { loadProfile } from '../lib/profile';
       import { supabase, supabaseConfigured } from '../lib/supabase';
       import { revealIfSiteAdmin } from '../lib/site-admin';
@@ -209,6 +222,7 @@ import '../styles/dash.css';
       };
 
       const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+      const UNIT = { minutes: 'dash.unitMinutes', hours: 'dash.unitHours', days: 'dash.unitDays' } as const;
       const grid = $<HTMLUListElement>('grid');
       const detail = $('detail');
       const filters = $('filters');
@@ -264,6 +278,8 @@ import '../styles/dash.css';
       let daily: DailyRow[] | undefined;
       /** Read-through rows (0030), or undefined where that column is missing. */
       let reads: ReadRow[] | undefined;
+      /** Undefined until 0035 is applied: the tile is then simply absent. */
+      let links: Map<string, number> | undefined;
       let chosen: string | undefined;
 
       const statusLabel = (status: string) =>
@@ -322,10 +338,16 @@ import '../styles/dash.css';
         requestAnimationFrame(tick);
       };
 
-      const copy = async (text: string) => {
+      /**
+       * Copying a listing's link is sharing it: the agent is about to paste
+       * it somewhere. Recorded like the share kit's opening (0030), so time
+       * to link (0035) sees agents who never open the kit.
+       */
+      const copy = async (text: string, slug?: string) => {
         try {
           await navigator.clipboard.writeText(text);
           tell(t('dash.copied'));
+          if (slug) void recordListingEvent(slug, 'share', null);
         } catch {
           tell(t('dash.copyFailed'), 'bad');
         }
@@ -499,6 +521,26 @@ import '../styles/dash.css';
           $('kpis').classList.remove('has-read');
         }
 
+        const linkTile = $('k-link-tile');
+        if (links) {
+          const typical = median([...links.values()]);
+          if (typical === undefined) {
+            $('k-link').textContent = '—';
+            $('k-link-unit').textContent = '';
+            $('k-link-note').textContent = t('dash.kpiLinkNone');
+          } else {
+            const said = durationParts(typical);
+            $('k-link').textContent = said.value;
+            $('k-link-unit').textContent = ` ${t(UNIT[said.unit])}`;
+            $('k-link-note').textContent = t('dash.kpiLinkNote');
+          }
+          linkTile.hidden = false;
+          $('kpis').classList.add('has-link');
+        } else {
+          linkTile.hidden = true;
+          $('kpis').classList.remove('has-link');
+        }
+
         $('lead').replaceChildren(
           ...sentence(daily ? 'dash.leadLive' : 'dash.leadLiveAll', { live: live.length, taps }),
         );
@@ -607,7 +649,7 @@ import '../styles/dash.css';
         if (sendable) {
           acts.append(
             link(t('dash.share'), 'act primary', `/a/${row.slug}/share/`),
-            button(t('dash.copyLink'), 'act', () => void copy(href)),
+            button(t('dash.copyLink'), 'act', () => void copy(href, row.slug)),
           );
         }
         // The listing this card is for, not a blank new one.
@@ -810,6 +852,11 @@ import '../styles/dash.css';
             const read = readRate(through.views, through.reads);
             cells.push([t('dash.readShort'), read === undefined ? '—' : `${read}%`]);
           }
+          if (links && row.id) {
+            const minutes = links.get(row.id);
+            const said = minutes === undefined ? undefined : durationParts(minutes);
+            cells.push([t('dash.linkShort'), said ? `${said.value} ${t(UNIT[said.unit])}` : '—']);
+          }
           stats.style.setProperty('--n', String(cells.length));
           for (const [label, value] of cells) {
             const cell = document.createElement('div');
@@ -890,7 +937,7 @@ import '../styles/dash.css';
         label.textContent = t('dash.linkLabel');
         const url = document.createElement('bdi');
         url.textContent = publicUrl(row.slug).replace(/^https?:\/\//, '');
-        linkBox.append(label, url, button(t('dash.copyLink'), 'act primary', () => void copy(publicUrl(row.slug))));
+        linkBox.append(label, url, button(t('dash.copyLink'), 'act primary', () => void copy(publicUrl(row.slug), row.slug)));
         box.append(linkBox);
 
         const qr = document.createElement('div');
@@ -1051,7 +1098,7 @@ import '../styles/dash.css';
         if (error) return show('failed');
         rows = (data ?? []) as Row[];
 
-        const [counts, perDay, perDayReads] = await Promise.all([
+        const [counts, perDay, perDayReads, perLink] = await Promise.all([
           client.from('listing_event_counts').select('listing_id, views, wa_taps'),
           // The same RLS: listing_event_daily is security_invoker (0029).
           client
@@ -1064,6 +1111,8 @@ import '../styles/dash.css';
             .from('listing_event_daily')
             .select('listing_id, day, views, read_to_agent')
             .gte('day', windowDays[0] ?? ''),
+          // Its own request too: without 0035 only the time-to-link tile goes.
+          client.from('listing_time_to_link').select('listing_id, started_at, published_at, first_share_at'),
         ]);
 
         if (!counts.error && counts.data) {
@@ -1082,6 +1131,14 @@ import '../styles/dash.css';
         // the tiles then say "since publishing" and the charts are omitted.
         daily = perDay.error ? undefined : ((perDay.data ?? []) as DailyRow[]);
         reads = perDayReads.error ? undefined : ((perDayReads.data ?? []) as ReadRow[]);
+        links = perLink.error
+          ? undefined
+          : new Map(
+              ((perLink.data ?? []) as LinkRow[]).flatMap((row) => {
+                const minutes = timeToLink(row);
+                return minutes === undefined ? [] : [[row.listing_id, minutes] as const];
+              }),
+            );
 
         /*
          * The first-run prompt and the greeting, decided by the profile.

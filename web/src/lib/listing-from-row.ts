@@ -13,6 +13,7 @@ import { OSM_ATTRIBUTION, type AreaPlace, type AreaPlaces } from '@/features/lis
 import { applyPicks, rankEveryday } from '@/features/listings/place-rank';
 import { isPhotoRoom } from '@/features/listings/photo-rooms';
 import { cleanPlanRooms, depthFor, spinFrames } from '@/features/listings/rich-media';
+import { cardFor } from '@/features/listings/share-card';
 import { resolveTemplateId } from '@/features/templates/manifest';
 
 import { listingBySlug } from './listings';
@@ -208,6 +209,7 @@ function asMedia(value: unknown): Media | undefined {
   const https = (url: unknown) => (typeof url === 'string' && url.startsWith('https://') ? url : undefined);
   const storyUrl = https(value.storyUrl);
   const flyerUrl = https(value.flyerUrl);
+  const card = cardFor(value.card);
 
   return {
     cover,
@@ -221,6 +223,7 @@ function asMedia(value: unknown): Media | undefined {
     ...(depthUrl ? { depthUrl } : {}),
     ...(storyUrl ? { storyUrl } : {}),
     ...(flyerUrl ? { flyerUrl } : {}),
+    ...(card ? { card } : {}),
   };
 }
 

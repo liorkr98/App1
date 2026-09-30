@@ -26,11 +26,11 @@ export function attachPdf(listingId: string, url: string): Promise<void> {
 
 /**
  * A P7 output into listings.media (migration 0034). The key is an allow-list
- * in the database function too: storyUrl, flyerUrl or depth.
+ * in the database function too: storyUrl, flyerUrl, depth or card (0035).
  */
 export function attachMediaUrl(
   listingId: string,
-  key: 'storyUrl' | 'flyerUrl' | 'depth',
+  key: 'storyUrl' | 'flyerUrl' | 'depth' | 'card',
   value: unknown,
 ): Promise<void> {
   return call('attach_media_url', { p_listing_id: listingId, p_key: key, p_value: value });

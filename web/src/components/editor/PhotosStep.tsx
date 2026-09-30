@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { AccentId } from '@/features/agents/accents';
 import { photoFlags, suggestedOrder, type PhotoCheck } from '@/features/listings/photo-quality';
 
 import { MAX_IMAGES } from '@/features/listings/editor';
@@ -59,6 +60,9 @@ export interface EditorPhoto {
 
   /** On-device quality measurement, when this browser could make one. */
   check?: PhotoCheck;
+
+  /** The accent this photo suggests when it is the cover (cover-accent.ts). */
+  tone?: AccentId;
 }
 
 interface Props {
