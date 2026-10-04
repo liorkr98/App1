@@ -32,6 +32,10 @@ html[data-template='dossier'] section.stage-dossier {
 
 html[data-template='dossier'] .ds-folder {
   position: relative;
+  /* The stamp lands from 2.4× its size; unclipped, it widened the page for a
+     few frames and a phone re-fitted everything — measured as layout shift
+     (e2e/speed.spec.ts). Clip sideways only: the tab rises above the folder. */
+  overflow-x: clip;
   margin: 0 var(--gut);
   padding: 1.8rem 12px 14px;
   background: var(--ds-manila);

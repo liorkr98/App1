@@ -117,7 +117,10 @@ builds from.
 `npm run lint`, `npm run test` (142 tests). In `web/`: `npx astro check` and
 `npm run build`. Then the gates in `scripts/` — `verify-web-logical-props`,
 `verify-bdi`, `verify-motion-fallbacks`, `verify-template-divergences`, and
-`report-page-weight`. Confirmed working 10 September 2026.
+`report-page-weight`. Confirmed working 10 September 2026. After the build,
+`npm run test:browser` in `web/` runs the browser checks (speed on a throttled
+phone, screenshots); screenshot baselines are Linux-only and come from the
+"Update screenshots" workflow.
 
 Two macOS setup traps, both of which look like something else:
 

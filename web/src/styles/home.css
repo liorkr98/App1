@@ -103,15 +103,26 @@
   display: inline;
 }
 
+/*
+  Every photo's BOX is the whole screen and never moves; where it appears is
+  transform and clip alone. --x/--y/--w/--h place it as fractions of the
+  screen: a uniform scale large enough to cover that rectangle, a translate
+  to its centre, and a clip that crops the rest. Uniform, so a photograph is
+  never squashed; nothing in the layout moves, so the build costs no layout
+  shift (e2e/speed.spec.ts measured 0.07 when inset and size were animated).
+*/
 .hm-photo {
+  --s: max(var(--w), var(--h));
+  --cut-block: calc((var(--s) - var(--h)) / (2 * var(--s)) * 100%);
+  --cut-inline: calc((var(--s) - var(--w)) / (2 * var(--s)) * 100%);
   position: absolute;
-  inset-inline-start: var(--x);
-  inset-block-start: var(--y);
-  inline-size: var(--w);
-  block-size: var(--h);
+  inset: 0;
+  translate:
+    calc(var(--dir) * (var(--x) + var(--w) / 2 - 0.5) * 100%)
+    calc((var(--y) + var(--h) / 2 - 0.5) * 100%);
+  scale: var(--s);
   rotate: var(--r, 0deg);
-  border-radius: 10px;
-  overflow: hidden;
+  clip-path: inset(var(--cut-block) var(--cut-inline) round calc(var(--round, 10px) / var(--s)));
   background: #1d1e1a;
 }
 
@@ -123,9 +134,12 @@
 }
 
 .hm-room {
+  /* Inside the visible crop, and drawn at its true size despite the scale. */
   position: absolute;
-  inset-block-end: 5px;
-  inset-inline-start: 5px;
+  inset-block-end: calc(var(--cut-block) + 5px / var(--s));
+  inset-inline-start: calc(var(--cut-inline) + 5px / var(--s));
+  scale: calc(1 / var(--s));
+  transform-origin: calc(50% - var(--dir) * 50%) 100%;
   padding: 1px 7px;
   border-radius: 99px;
   background: #fff;
@@ -140,25 +154,25 @@
 }
 
 /* State 0 — scattered, as they come off the camera roll. */
-.hm-screen[data-state='0'] .hm-photo[data-i='0'] { --x: 5%; --y: 13%; --w: 43%; --h: 19%; --r: -4deg; }
-.hm-screen[data-state='0'] .hm-photo[data-i='1'] { --x: 52%; --y: 16%; --w: 43%; --h: 19%; --r: 5deg; }
-.hm-screen[data-state='0'] .hm-photo[data-i='2'] { --x: 7%; --y: 38%; --w: 43%; --h: 19%; --r: 6deg; }
-.hm-screen[data-state='0'] .hm-photo[data-i='3'] { --x: 50%; --y: 41%; --w: 43%; --h: 19%; --r: -7deg; }
+.hm-screen[data-state='0'] .hm-photo[data-i='0'] { --x: 0.05; --y: 0.13; --w: 0.43; --h: 0.19; --r: -4deg; }
+.hm-screen[data-state='0'] .hm-photo[data-i='1'] { --x: 0.52; --y: 0.16; --w: 0.43; --h: 0.19; --r: 5deg; }
+.hm-screen[data-state='0'] .hm-photo[data-i='2'] { --x: 0.07; --y: 0.38; --w: 0.43; --h: 0.19; --r: 6deg; }
+.hm-screen[data-state='0'] .hm-photo[data-i='3'] { --x: 0.5; --y: 0.41; --w: 0.43; --h: 0.19; --r: -7deg; }
 
 /* State 1 — sorted into walk order, rooms tagged. */
-.hm-screen[data-state='1'] .hm-photo[data-i='0'] { --x: 4%; --y: 11%; --w: 45%; --h: 19%; }
-.hm-screen[data-state='1'] .hm-photo[data-i='1'] { --x: 51%; --y: 11%; --w: 45%; --h: 19%; }
-.hm-screen[data-state='1'] .hm-photo[data-i='2'] { --x: 4%; --y: 32%; --w: 45%; --h: 19%; }
-.hm-screen[data-state='1'] .hm-photo[data-i='3'] { --x: 51%; --y: 32%; --w: 45%; --h: 19%; }
+.hm-screen[data-state='1'] .hm-photo[data-i='0'] { --x: 0.04; --y: 0.11; --w: 0.45; --h: 0.19; }
+.hm-screen[data-state='1'] .hm-photo[data-i='1'] { --x: 0.51; --y: 0.11; --w: 0.45; --h: 0.19; }
+.hm-screen[data-state='1'] .hm-photo[data-i='2'] { --x: 0.04; --y: 0.32; --w: 0.45; --h: 0.19; }
+.hm-screen[data-state='1'] .hm-photo[data-i='3'] { --x: 0.51; --y: 0.32; --w: 0.45; --h: 0.19; }
 
 /* States 2–3 — the cover fills the screen; the rest become a strip. */
-.hm-screen:is([data-state='2'], [data-state='3']) .hm-photo[data-i='0'] { --x: 0%; --y: 0%; --w: 100%; --h: 100%; }
-.hm-screen:is([data-state='2'], [data-state='3']) .hm-photo[data-i='1'] { --x: 5%; --y: 46%; --w: 28%; --h: 9%; }
-.hm-screen:is([data-state='2'], [data-state='3']) .hm-photo[data-i='2'] { --x: 36%; --y: 46%; --w: 28%; --h: 9%; }
-.hm-screen:is([data-state='2'], [data-state='3']) .hm-photo[data-i='3'] { --x: 67%; --y: 46%; --w: 28%; --h: 9%; }
+.hm-screen:is([data-state='2'], [data-state='3']) .hm-photo[data-i='0'] { --x: 0; --y: 0; --w: 1; --h: 1; }
+.hm-screen:is([data-state='2'], [data-state='3']) .hm-photo[data-i='1'] { --x: 0.05; --y: 0.46; --w: 0.28; --h: 0.09; }
+.hm-screen:is([data-state='2'], [data-state='3']) .hm-photo[data-i='2'] { --x: 0.36; --y: 0.46; --w: 0.28; --h: 0.09; }
+.hm-screen:is([data-state='2'], [data-state='3']) .hm-photo[data-i='3'] { --x: 0.67; --y: 0.46; --w: 0.28; --h: 0.09; }
 
 .hm-screen:is([data-state='2'], [data-state='3']) .hm-photo[data-i='0'] {
-  border-radius: 0;
+  --round: 0px;
 }
 
 .hm-shade {
@@ -617,12 +631,10 @@
 
   .hm-photo {
     transition:
-      inset-inline-start 0.9s var(--ls-ease-expo),
-      inset-block-start 0.9s var(--ls-ease-expo),
-      inline-size 0.9s var(--ls-ease-expo),
-      block-size 0.9s var(--ls-ease-expo),
+      translate 0.9s var(--ls-ease-expo),
+      scale 0.9s var(--ls-ease-expo),
       rotate 0.9s var(--ls-ease-expo),
-      border-radius 0.9s var(--ls-ease-expo);
+      clip-path 0.9s var(--ls-ease-expo);
   }
 
   .hm-room,

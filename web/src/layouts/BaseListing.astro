@@ -138,7 +138,17 @@ const showBarLogo =
 <link rel="preload" href="/fonts/frank-ruhl-hebrew.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/fonts/assistant-hebrew.woff2" as="font" type="font/woff2" crossorigin>
 {lsMode && (
-  <link rel="preload" href="/fonts/noto-sans-hebrew-hebrew.woff2" as="font" type="font/woff2" crossorigin>
+  <Fragment>
+    <link rel="preload" href="/fonts/noto-sans-hebrew-hebrew.woff2" as="font" type="font/woff2" crossorigin>
+    {/* The digits too: titles, prices and Poster's giant numerals are set in
+        the display face, and digits live in its Latin subset. Left to load on
+        unicode-range, that subset arrived after first paint and every number
+        changed width — measured as layout shift by e2e/speed.spec.ts. Same
+        bytes as before, fetched earlier. */}
+    <link rel="preload" href="/fonts/noto-sans-hebrew-latin.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/heebo-hebrew.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/heebo-latin.woff2" as="font" type="font/woff2" crossorigin>
+  </Fragment>
 )}
 
 {jsonLd && (
