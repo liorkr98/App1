@@ -339,6 +339,8 @@
       "hint": "",
       "palette": "",
       "paletteHint": "",
+      "paletteFromCover": "",
+      "paletteUseCover": "",
       "agency": "",
       "agencyNote": "",
       "editorial": "",
@@ -735,7 +737,14 @@
     "qrDownload": "",
     "studioMessage": "",
     "studioStory": "",
-    "studioFlyer": ""
+    "studioFlyer": "",
+    "kpiLink": "",
+    "kpiLinkNote": "",
+    "kpiLinkNone": "",
+    "linkShort": "",
+    "unitMinutes": "",
+    "unitHours": "",
+    "unitDays": ""
   },
   "legal": {
     "terms": "",
@@ -868,7 +877,9 @@
     "statusDraft": "",
     "statusPublished": "",
     "statusSold": "",
-    "statusArchived": ""
+    "statusArchived": "",
+    "statLink": "",
+    "statPublishTime": ""
   },
   "lab": {
     "title": "",
@@ -914,5 +925,11 @@
   "flyer": {
     "qrLabel": "",
     "scan": ""
+  },
+  "card": {
+    "dossierProperty": "",
+    "dossierVehicle": "",
+    "ticketTrip": "",
+    "ticketTo": ""
   }
 }

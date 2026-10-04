@@ -217,3 +217,70 @@ jobs:
 
       - name: Ingest tests
         run: npm run test --prefix ingest
+
+  # ---------------------------------------------------------------------------
+  # Browser checks (web/e2e, plan §11). A job of its own so the gate above
+  # stays fast and a browser problem cannot hide a typecheck failure.
+  #
+  #   speed        every 2.0 template and the site pages, cold, on a cheap
+  #                phone (4x CPU, Fast 4G). LAYOUT SHIFT BLOCKS. Load time and
+  #                long tasks are reported in the job summary only, until a
+  #                week of numbers shows how much a shared runner wanders
+  #                (decided 4 Oct 2026; BLOCK_TIMING in speed.spec.ts).
+  #   speed-fires  plants a late block above the content and asserts the
+  #                measurement catches it — a check that can no longer fail
+  #                is worse than none.
+  #   visual       first screen of every page and card, Hebrew, phone and
+  #                desktop, against baselines made on this same image by the
+  #                "Update screenshots" workflow. Reported, not blocking, for
+  #                the first week — the same rule as the timing.
+  # ---------------------------------------------------------------------------
+  browser:
+    name: Speed and screenshots in Chromium
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      # Retried once for the reason written on the same step above.
+      - name: Install web dependencies
+        run: |
+          npm install --no-audit --no-fund --prefix web \
+            || (sleep 25 && npm install --no-audit --no-fund --prefix web)
+
+      - name: Build web
+        run: npm run build --prefix web
+
+      - name: Cache the Playwright browser
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('web/package.json') }}
+
+      - name: Install Chromium for Playwright
+        working-directory: web
+        run: npx playwright install --with-deps chromium
+
+      - name: Speed on a cheap phone (layout shift blocks)
+        working-directory: web
+        run: npx playwright test speed
+
+      - name: Screenshots (reported, not blocking, for now)
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        working-directory: web
+        run: npx playwright test visual
+
+      - name: Keep the report and any screenshot diffs
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-report
+          path: |
+            web/playwright-report
+            web/test-results
+          retention-days: 14

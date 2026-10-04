@@ -1,7 +1,9 @@
 // GENERATED FILE — do not edit by hand.
 //
-// Regenerated 14 September 2026 from the live Supabase project
-// yaaqcfcjkfdwtczespny via generate_typescript_types.
+// Regenerated 29 September 2026 from the live Supabase project
+// yaaqcfcjkfdwtczespny via generate_typescript_types, after 0029–0034.
+// By hand until 0035 is applied: job_type "render_card" (0035). Regenerate
+// after applying it; the diff should be empty.
 
 export type Json =
   | string
@@ -39,35 +41,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      }
-      listing_events: {
-        Row: {
-          created_at: string
-          id: string
-          kind: string
-          listing_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          kind: string
-          listing_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          kind?: string
-          listing_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "listing_events_listing_id_fkey"
-            columns: ["listing_id"]
-            isOneToOne: false
-            referencedRelation: "listings"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       civic_sites: {
         Row: {
@@ -154,42 +127,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      listing_grants: {
-        Row: {
-          created_at: string
-          effective_from: string
-          effective_to: string | null
-          granted_by: string | null
-          id: string
-          note: string
-          remaining: number
-          source: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          effective_from?: string
-          effective_to?: string | null
-          granted_by?: string | null
-          id?: string
-          note: string
-          remaining: number
-          source: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          effective_from?: string
-          effective_to?: string | null
-          granted_by?: string | null
-          id?: string
-          note?: string
-          remaining?: number
-          source?: string
-          user_id?: string
-        }
-        Relationships: []
       }
       jobs: {
         Row: {
@@ -291,9 +228,75 @@ export type Database = {
           },
         ]
       }
+      listing_events: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          listing_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          listing_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          listing_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_events_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listing_grants: {
+        Row: {
+          created_at: string
+          effective_from: string
+          effective_to: string | null
+          granted_by: string | null
+          id: string
+          note: string
+          remaining: number
+          source: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          effective_from?: string
+          effective_to?: string | null
+          granted_by?: string | null
+          id?: string
+          note: string
+          remaining: number
+          source: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          effective_from?: string
+          effective_to?: string | null
+          granted_by?: string | null
+          id?: string
+          note?: string
+          remaining?: number
+          source?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       listings: {
         Row: {
           accent: string
+          area_places: Json
           audience: string
           category: string
           created_at: string
@@ -302,8 +305,8 @@ export type Database = {
           disclosures: string[] | null
           expires_at: string | null
           facts: Json
-          id: string
           hyad_mark: boolean
+          id: string
           indexable: boolean
           list_price: number | null
           location: Json | null
@@ -325,6 +328,7 @@ export type Database = {
         }
         Insert: {
           accent?: string
+          area_places?: Json
           audience?: string
           category: string
           created_at?: string
@@ -356,6 +360,7 @@ export type Database = {
         }
         Update: {
           accent?: string
+          area_places?: Json
           audience?: string
           category?: string
           created_at?: string
@@ -638,12 +643,9 @@ export type Database = {
         }
         Relationships: []
       }
-      listing_event_daily: {
+      listing_event_counts: {
         Row: {
-          day: string | null
           listing_id: string | null
-          read_to_agent: number | null
-          shares: number | null
           views: number | null
           wa_taps: number | null
         }
@@ -657,9 +659,12 @@ export type Database = {
           },
         ]
       }
-      listing_event_counts: {
+      listing_event_daily: {
         Row: {
+          day: string | null
           listing_id: string | null
+          read_to_agent: number | null
+          shares: number | null
           views: number | null
           wa_taps: number | null
         }
@@ -823,6 +828,108 @@ export type Database = {
             }
             Returns: string
           }
+      admin_contact_messages: {
+        Args: never
+        Returns: {
+          body: string
+          created_at: string
+          email: string
+          id: string
+          name: string
+          read_at: string
+        }[]
+      }
+      admin_editor_funnel: {
+        Args: never
+        Returns: {
+          blocked: number
+          entered: number
+          publish_fail: number
+          publish_ok: number
+          step: string
+        }[]
+      }
+      admin_event_rollups: {
+        Args: never
+        Returns: {
+          listing_id: string
+          slug: string
+          status: string
+          title: string
+          views: number
+          wa_taps: number
+        }[]
+      }
+      admin_find_user: {
+        Args: { p_email: string }
+        Returns: {
+          email: string
+          user_id: string
+        }[]
+      }
+      admin_grant_listings: {
+        Args: { p_count: number; p_note: string; p_user_id: string }
+        Returns: string
+      }
+      admin_ingest_status: {
+        Args: never
+        Returns: {
+          display_name: string
+          last_attempted_at: string
+          last_error: string
+          last_synced_at: string
+          row_count: number
+          source: string
+        }[]
+      }
+      admin_listings: {
+        Args: never
+        Returns: {
+          category: string
+          created_at: string
+          listing_id: string
+          owner_email: string
+          published_at: string
+          slug: string
+          status: string
+          title: string
+          views: number
+          wa_taps: number
+        }[]
+      }
+      admin_mark_contact_read: { Args: { p_id: string }; Returns: undefined }
+      admin_site_overview: {
+        Args: never
+        Returns: {
+          drafts: number
+          grants_remaining: number
+          jobs_failed: number
+          jobs_pending: number
+          listings: number
+          published: number
+          unread_messages: number
+          users: number
+          views_7d: number
+          wa_7d: number
+        }[]
+      }
+      admin_users: {
+        Args: never
+        Returns: {
+          agency_name: string
+          created_at: string
+          display_name: string
+          email: string
+          listings: number
+          published: number
+          remaining: number
+          user_id: string
+        }[]
+      }
+      attach_media_url: {
+        Args: { p_key: string; p_listing_id: string; p_value: Json }
+        Returns: undefined
+      }
       attach_pdf: {
         Args: { p_listing_id: string; p_url: string }
         Returns: undefined
@@ -833,32 +940,7 @@ export type Database = {
           p_locked_by: string
           p_stale_after: string
         }
-        Returns: {
-          attempts: number
-          created_at: string
-          error_code: string | null
-          id: string
-          input_hash: string
-          job_type: Database["public"]["Enums"]["job_type"]
-          listing_id: string
-          locked_at: string | null
-          locked_by: string | null
-          max_attempts: number
-          next_attempt_at: string
-          payload: Json
-          progress: number
-          result: Json | null
-          scope_key: string | null
-          scope_label: string | null
-          status: Database["public"]["Enums"]["job_status"]
-          updated_at: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "jobs"
-          isOneToOne: true
-          isSetofReturn: false
-        }
+        Returns: Json
       }
       disablelongtransactions: { Args: never; Returns: string }
       dropgeometrycolumn:
@@ -892,117 +974,6 @@ export type Database = {
         | { Args: { schema_name: string; table_name: string }; Returns: string }
         | { Args: { table_name: string }; Returns: string }
       enablelongtransactions: { Args: never; Returns: string }
-      admin_event_rollups: {
-        Args: never
-        Returns: {
-          listing_id: string
-          slug: string
-          status: string
-          title: string
-          views: number
-          wa_taps: number
-        }[]
-      }
-      admin_find_user: {
-        Args: { p_email: string }
-        Returns: {
-          email: string
-          user_id: string
-        }[]
-      }
-      admin_grant_listings: {
-        Args: { p_count: number; p_note: string; p_user_id: string }
-        Returns: string
-      }
-      admin_site_overview: {
-        Args: never
-        Returns: {
-          drafts: number
-          grants_remaining: number
-          jobs_failed: number
-          jobs_pending: number
-          listings: number
-          published: number
-          unread_messages: number
-          users: number
-          views_7d: number
-          wa_7d: number
-        }[]
-      }
-      admin_listings: {
-        Args: never
-        Returns: {
-          category: string
-          created_at: string
-          listing_id: string
-          owner_email: string | null
-          published_at: string | null
-          slug: string
-          status: string
-          title: string
-          views: number
-          wa_taps: number
-        }[]
-      }
-      admin_ingest_status: {
-        Args: never
-        Returns: {
-          display_name: string
-          last_attempted_at: string | null
-          last_error: string | null
-          last_synced_at: string | null
-          row_count: number
-          source: string
-        }[]
-      }
-      admin_users: {
-        Args: never
-        Returns: {
-          agency_name: string | null
-          created_at: string
-          display_name: string | null
-          email: string | null
-          listings: number
-          published: number
-          remaining: number
-          user_id: string
-        }[]
-      }
-      admin_editor_funnel: {
-        Args: never
-        Returns: {
-          blocked: number
-          entered: number
-          publish_fail: number
-          publish_ok: number
-          step: string
-        }[]
-      }
-      admin_contact_messages: {
-        Args: never
-        Returns: {
-          body: string
-          created_at: string
-          email: string
-          id: string
-          name: string
-          read_at: string | null
-        }[]
-      }
-      admin_mark_contact_read: { Args: { p_id: string }; Returns: undefined }
-      submit_contact_message: {
-        Args: {
-          p_body: string
-          p_email: string
-          p_honeypot?: string
-          p_name: string
-        }
-        Returns: string
-      }
-      record_editor_event: {
-        Args: { p_kind: string; p_listing_id?: string | null; p_step: string }
-        Returns: undefined
-      }
       enqueue_job: {
         Args: {
           p_input_hash: string
@@ -1013,11 +984,6 @@ export type Database = {
           p_scope_label?: string
         }
         Returns: string
-      }
-      is_site_admin: { Args: never; Returns: boolean }
-      record_listing_event: {
-        Args: { p_kind: string; p_slug: string }
-        Returns: undefined
       }
       equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
       geometry: { Args: { "": string }; Returns: unknown }
@@ -1119,6 +1085,7 @@ export type Database = {
       }
       geomfromewkt: { Args: { "": string }; Returns: unknown }
       gettransactionid: { Args: never; Returns: unknown }
+      is_site_admin: { Args: never; Returns: boolean }
       longtransactionsenabled: { Args: never; Returns: boolean }
       nearby_candidates: {
         Args: {
@@ -1138,10 +1105,6 @@ export type Database = {
           metres: number
           name: string
         }[]
-      }
-      upsert_civic_itm: {
-        Args: { p_rows: Json }
-        Returns: number
       }
       populate_geometry_columns:
         | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
@@ -1183,6 +1146,14 @@ export type Database = {
       }
       postgis_version: { Args: never; Returns: string }
       postgis_wagyu_version: { Args: never; Returns: string }
+      record_editor_event: {
+        Args: { p_kind: string; p_listing_id?: string; p_step: string }
+        Returns: undefined
+      }
+      record_listing_event: {
+        Args: { p_kind: string; p_slug: string }
+        Returns: undefined
+      }
       st_3dclosestpoint: {
         Args: { geom1: unknown; geom2: unknown }
         Returns: unknown
@@ -1764,6 +1735,15 @@ export type Database = {
         Args: { geom: unknown; move: number; wrap: number }
         Returns: unknown
       }
+      submit_contact_message: {
+        Args: {
+          p_body: string
+          p_email: string
+          p_honeypot?: string
+          p_name: string
+        }
+        Returns: string
+      }
       unlockrows: { Args: { "": string }; Returns: number }
       updategeometrysrid: {
         Args: {
@@ -1775,6 +1755,7 @@ export type Database = {
         }
         Returns: string
       }
+      upsert_civic_itm: { Args: { p_rows: Json }; Returns: number }
     }
     Enums: {
       job_status: "queued" | "processing" | "done" | "failed"
@@ -1787,6 +1768,7 @@ export type Database = {
         | "render_pdf"
         | "render_story"
         | "depth_map"
+        | "render_card"
     }
     CompositeTypes: {
       geometry_dump: {
@@ -1932,23 +1914,8 @@ export const Constants = {
         "render_pdf",
         "render_story",
         "depth_map",
+        "render_card",
       ],
     },
   },
 } as const
-
-export type Profile = Tables<'profiles'>;
-export type ListingRow = Tables<'listings'>;
-export type JobRow = Tables<'jobs'>;
-export type BetaPublisherRow = Tables<'beta_publishers'>;
-export type ListingGrantRow = Tables<'listing_grants'>;
-export type ListingEventRow = Tables<'listing_events'>;
-export type ContactMessageRow = Tables<'contact_messages'>;
-export type CivicSiteRow = Tables<'civic_sites'>;
-export type EditorEventRow = Tables<'editor_events'>;
-export type SiteAdminRow = Tables<'site_admins'>;
-export type SchoolRow = Tables<'schools'>;
-export type PlaceRow = Tables<'places'>;
-export type TransitStopRow = Tables<'transit_stops'>;
-export type SourceSyncRow = Tables<'source_sync'>;
-export type ListingEnrichmentRow = Tables<'listing_enrichment'>;

@@ -1,0 +1,24 @@
+---
+import type { Listing } from '@/types/listing';
+import { TEMPLATE_IDS } from '@/types/listing';
+import { templateFits } from '@/features/templates/manifest';
+import ShareCard from '../../../components/ShareCard.astro';
+import { matrixListings } from '../../../lib/listings';
+
+/**
+ * Every fixture's WhatsApp card in every template that fits it, built as
+ * files so the plate, Google Fonts and <bdi> gates read the card the way
+ * they read the listing pages — and so its looks can be screenshotted.
+ */
+export function getStaticPaths() {
+  return matrixListings.flatMap((listing) =>
+    TEMPLATE_IDS.filter((id) => templateFits(id, listing.category)).map((id) => ({
+      params: { slug: `${listing.slug}-${id}` },
+      props: { listing: { ...listing, template: id } satisfies Listing },
+    })),
+  );
+}
+
+const { listing } = Astro.props;
+---
+<ShareCard listing={listing} />

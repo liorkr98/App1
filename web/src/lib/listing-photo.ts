@@ -1,4 +1,6 @@
 import { supabase } from './supabase';
+import { coverAccent } from '@/features/agents/cover-accent';
+import type { AccentId } from '@/features/agents/accents';
 import { checkPixels, type PhotoCheck } from '@/features/listings/photo-quality';
 
 /**
@@ -41,6 +43,8 @@ export interface ProcessedPhoto {
   height: number;
   /** On-device quality measurement (features/listings/photo-quality). */
   check?: PhotoCheck;
+  /** The accent this photograph suggests if it is the cover (cover-accent.ts). */
+  tone?: AccentId;
 }
 
 /** The long edge the quality check is measured at. */
@@ -83,6 +87,7 @@ export async function stripAndResize(
     // a repeat. Nothing leaves the phone for it. A failure here only means
     // no advice for this photograph.
     let check: PhotoCheck | undefined;
+    let tone: AccentId | undefined;
     try {
       const small = Math.min(1, CHECK_EDGE / Math.max(bitmap.width, bitmap.height));
       const w = Math.max(3, Math.round(bitmap.width * small));
@@ -107,7 +112,10 @@ export async function stripAndResize(
           zctx.drawImage(bitmap, -Math.round((dw - side) / 2), -Math.round((dh - side) / 2), dw, dh);
           detail = { rgba: zctx.getImageData(0, 0, side, side).data, width: side, height: side };
         }
-        check = checkPixels(pctx.getImageData(0, 0, w, h).data, w, h, bitmap, detail);
+        const pixels = pctx.getImageData(0, 0, w, h).data;
+        check = checkPixels(pixels, w, h, bitmap, detail);
+        // The same small copy says which offered accent the photo leans to.
+        tone = coverAccent(pixels, w, h);
       }
     } catch {
       check = undefined;
@@ -118,7 +126,7 @@ export async function stripAndResize(
       canvas.toBlob(resolve, 'image/webp', QUALITY),
     );
 
-    return blob ? { blob, width, height, ...(check ? { check } : {}) } : undefined;
+    return blob ? { blob, width, height, ...(check ? { check } : {}), ...(tone ? { tone } : {}) } : undefined;
   } catch {
     return undefined;
   }

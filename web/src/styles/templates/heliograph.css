@@ -164,14 +164,21 @@ html[data-template='heliograph'] .hl-clock {
   font-variant-numeric: tabular-nums;
 }
 
+/* Two equal columns, never a wrap: as a wrapping row, the buttons went from
+   two lines to one and back as the digits' font arrived, and the whole panel
+   jumped with them. */
 html[data-template='heliograph'] .hl-seasons {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 0.35rem;
 }
 
-html[data-template='heliograph'] .hl-seasons[hidden] {
-  display: none;
+/* In the layout from the first paint, invisible until the script makes the
+   buttons work. Un-hiding them later grew the panel under the reader —
+   measured as layout shift (e2e/speed.spec.ts). Without JS: a quiet gap
+   rather than two buttons that do nothing. */
+html[data-template='heliograph'] .hl-seasons:not([data-ready]) {
+  visibility: hidden;
 }
 
 html[data-template='heliograph'] .hl-seasons button {
@@ -185,6 +192,7 @@ html[data-template='heliograph'] .hl-seasons button {
   font: inherit;
   font-size: 0.78rem;
   font-weight: 700;
+  white-space: nowrap;
   cursor: pointer;
 }
 

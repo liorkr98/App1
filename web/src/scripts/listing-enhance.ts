@@ -504,7 +504,8 @@ function bindHeliograph(): void {
     });
   };
 
-  seasons.hidden = false;
+  seasons.dataset.ready = '';
+  seasons.removeAttribute('aria-hidden');
   seasons.addEventListener('click', (event) => {
     const button = (event.target as Element).closest<HTMLButtonElement>('[data-season]');
     if (!button) return;

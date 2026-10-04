@@ -825,6 +825,25 @@
   flex: 0 0 auto;
 }
 
+/* The cover's suggestion: a note when it chose, one tap when a brand holds. */
+.palette-note {
+  margin-block: 0.55rem 0;
+}
+
+.palette-cover {
+  margin-block-start: 0.55rem;
+  min-block-size: 44px;
+  padding: 0.3rem 0.9rem;
+  border: 1px dashed var(--stone);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 @media (max-width: 28rem) {
   .template-grid {
     grid-template-columns: 1fr 1fr;

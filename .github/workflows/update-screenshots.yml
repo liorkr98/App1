@@ -1,0 +1,52 @@
+name: Update screenshots
+
+# Makes the screenshot baselines for web/e2e/visual.spec.ts on the SAME runner
+# image the Verify workflow compares on. Baselines made on a Mac or in a dev
+# container differ in fonts and antialiasing, so they would fail here for
+# reasons that are not changes (web/playwright.config.ts).
+#
+# Manual only: Actions → Update screenshots → Run workflow, on the branch whose
+# look is the new truth. It never commits and needs no write permission: the
+# PNGs come out as an artifact, and the change is committed from there like
+# any other, so a new baseline is always a reviewed diff.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  screenshots:
+    name: Make screenshot baselines
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: Install web dependencies
+        run: |
+          npm install --no-audit --no-fund --prefix web \
+            || (sleep 25 && npm install --no-audit --no-fund --prefix web)
+
+      - name: Build web
+        run: npm run build --prefix web
+
+      - name: Install Chromium for Playwright
+        working-directory: web
+        run: npx playwright install --with-deps chromium
+
+      - name: Make the baselines
+        working-directory: web
+        run: npx playwright test visual --update-snapshots
+
+      - name: Keep them
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: web/e2e/__screenshots__
+          retention-days: 14

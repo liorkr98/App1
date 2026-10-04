@@ -338,6 +338,8 @@
       "hint": "אותם נתונים, צורות שונות מאוד. בחרו לפי איך שהעמוד נראה — התצוגה משנה צורה מיד.",
       "palette": "צבע העמוד",
       "paletteHint": "הצבע של הכפתור ושל הפרטים במודעה הזו. אפשר צבע אחר לכל מודעה.",
+      "paletteFromCover": "✦ הצבע נבחר לפי תמונת השער. אפשר לבחור אחר.",
+      "paletteUseCover": "✦ לפי תמונת השער: {name}",
       "agency": "משרד",
       "agencyNote": "צפוף ומסודר. פרטים בשתי עמודות. ברירת המחדל כשיש הרבה מה להראות.",
       "editorial": "עיתון",
@@ -734,7 +736,14 @@
     "qrDownload": "הורדת QR",
     "studioMessage": "ההודעה המוכנה לשליחה",
     "studioStory": "תמונת סטורי",
-    "studioFlyer": "פלאייר להדפסה (PDF)"
+    "studioFlyer": "פלאייר להדפסה (PDF)",
+    "kpiLink": "זמן עד קישור",
+    "kpiLinkNote": "חציון, מתחילת העריכה עד שהקישור נשלח",
+    "kpiLinkNone": "יופיע אחרי שתשתפו קישור ראשון",
+    "linkShort": "עד קישור",
+    "unitMinutes": "דק׳",
+    "unitHours": "שעות",
+    "unitDays": "ימים"
   },
   "legal": {
     "terms": "תנאי שימוש",
@@ -867,7 +876,9 @@
     "statusDraft": "טיוטה",
     "statusPublished": "פורסמה",
     "statusSold": "נמכרה",
-    "statusArchived": "בארכיון"
+    "statusArchived": "בארכיון",
+    "statLink": "חציון זמן עד קישור, 30 יום",
+    "statPublishTime": "חציון זמן עד פרסום, 30 יום"
   },
   "lab": {
     "title": "מעבדת תנועה",
@@ -913,5 +924,11 @@
   "flyer": {
     "qrLabel": "קוד QR לעמוד המודעה",
     "scan": "סורקים ומגיעים לעמוד"
+  },
+  "card": {
+    "dossierProperty": "תיק נכס",
+    "dossierVehicle": "תיק רכב",
+    "ticketTrip": "יציאה: עכשיו",
+    "ticketTo": "יעד"
   }
 }

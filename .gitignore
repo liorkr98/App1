@@ -98,3 +98,8 @@ web/package-lock.json
 # It points at the adapter's own generated wrangler.json and conflicts with
 # the committed root config when wrangler runs from inside web/.
 web/.wrangler/
+
+# Playwright's run output (web/e2e). Baselines live in web/e2e/__screenshots__
+# and ARE committed; these are per-run results, reports and diffs.
+web/test-results/
+web/playwright-report/

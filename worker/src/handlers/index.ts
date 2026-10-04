@@ -1,5 +1,6 @@
 import type { JobHandler, JobType } from '../types.js';
 
+import { renderCard } from './card.js';
 import { depthMap } from './depth.js';
 import { enhanceImages } from './enhance.js';
 import { generateOg } from './og.js';
@@ -25,6 +26,7 @@ export const WORKER_HANDLERS: Partial<Record<JobType, JobHandler>> = {
 export const PDF_HANDLERS: Partial<Record<JobType, JobHandler>> = {
   render_pdf: renderPdf,
   render_story: renderStory,
+  render_card: renderCard,
 };
 
 export function handlersFor(role: 'worker' | 'pdf'): Partial<Record<JobType, JobHandler>> {

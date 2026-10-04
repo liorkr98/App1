@@ -18,7 +18,7 @@ import type { MediaExtras } from '../../lib/listing-row';
 import type { CopyTone } from '@/features/listings/listing-copy';
 
 import { isProfileComplete } from '@/features/agents/profile';
-import { isAccentId } from '@/features/agents/accents';
+import { DEFAULT_ACCENT, isAccentId } from '@/features/agents/accents';
 
 import { t } from '../../lib/i18n';
 import { loadEntitlement } from '../../lib/entitlement';
@@ -28,6 +28,7 @@ import { stripAndResize, uploadDerived } from '../../lib/listing-photo';
 import { loadListing, publishListing, saveListing } from '../../lib/listing-save';
 import { loadProfile } from '../../lib/profile';
 import { recordEditorEvent } from '../../lib/editor-events';
+import { recordListingEvent } from '../../lib/listing-events';
 import { splitSse } from '@/features/listings/sse';
 import type { AgentProfile } from '@/features/agents/profile';
 import { supabase, supabaseConfigured } from '../../lib/supabase';
@@ -116,6 +117,30 @@ export default function Editor() {
    * actual photos ever disagreeing.
    */
   const [photos, setPhotos] = useState<EditorPhoto[]>([]);
+
+  /**
+   * Where this listing's accent came from, so each source knows what it may
+   * override (plan 12g, item 4). The agent's own pick wins over everything;
+   * a brand accent set on /me wins over the cover; the cover fills in only
+   * when neither has spoken. Not saved: a listing loaded or restored with an
+   * accent counts as the agent's pick.
+   */
+  const accentSource = useRef<'manual' | 'brand' | 'cover' | undefined>(undefined);
+  const coverTone = photos[0]?.tone;
+
+  // The cover suggests the accent while nobody else has (see accentSource).
+  // A new cover re-suggests; a cover with no clear colour hands the listing
+  // back to the default rather than keeping the last photo's.
+  useEffect(() => {
+    if (accentSource.current === 'manual' || accentSource.current === 'brand') return;
+    if (coverTone) {
+      accentSource.current = 'cover';
+      setState((current) => (current.accent === coverTone ? current : { ...current, accent: coverTone }));
+    } else if (accentSource.current === 'cover') {
+      accentSource.current = undefined;
+      setState(({ accent: _dropped, ...rest }) => rest);
+    }
+  }, [coverTone]);
 
   /**
    * P7 extras, held beside the photographs for the same reason they are:
@@ -216,13 +241,18 @@ export default function Editor() {
         const ready = 'profile' in result && isProfileComplete(result.profile);
         if ('profile' in result) {
           setProfile(result.profile);
-          setState((current) => ({
-            ...current,
-            sellerReady: ready,
-            ...(current.accent || !isAccentId(result.profile.accent)
-              ? {}
-              : { accent: result.profile.accent }),
-          }));
+          // Olive is the column's default, so it says nothing about the
+          // agent's taste: only a colour they chose counts as a brand.
+          const brand =
+            isAccentId(result.profile.accent) && result.profile.accent !== DEFAULT_ACCENT
+              ? result.profile.accent
+              : undefined;
+          setState((current) => {
+            if (current.accent && accentSource.current === undefined) accentSource.current = 'manual';
+            const useBrand = brand !== undefined && accentSource.current !== 'manual';
+            if (useBrand) accentSource.current = 'brand';
+            return { ...current, sellerReady: ready, ...(useBrand ? { accent: brand } : {}) };
+          });
         } else {
           setState((current) => ({ ...current, sellerReady: ready }));
         }
@@ -370,6 +400,7 @@ export default function Editor() {
         width: processed.width,
         height: processed.height,
         ...(processed.check ? { check: processed.check } : {}),
+        ...(processed.tone ? { tone: processed.tone } : {}),
       });
     }
 
@@ -633,6 +664,7 @@ export default function Editor() {
         );
 
         const location = (row.location ?? {}) as { city?: string; street?: string };
+        if (isAccentId(row.accent)) accentSource.current = 'manual';
 
         setState((current) => {
           const {
@@ -700,6 +732,7 @@ export default function Editor() {
     state,
     (draft) => {
       if (skipDraftRestore.current) return;
+      if (draft.accent) accentSource.current = 'manual';
       setState((current) => ({ ...current, ...draft }));
       setStep('category');
       if (!draft.slug || !supabaseConfigured) return;
@@ -1038,7 +1071,13 @@ export default function Editor() {
             publishing={publishing}
             failure={failure}
             onPublish={publish}
-            onCopy={(url) => void navigator.clipboard.writeText(url).catch(() => undefined)}
+            onCopy={(url) =>
+              void navigator.clipboard
+                .writeText(url)
+                // Copying the fresh link is the first share (time to link, 0035).
+                .then(() => (slug.current ? recordListingEvent(slug.current, 'share', null) : undefined))
+                .catch(() => undefined)
+            }
             onIndexable={(indexable) => setState((current) => ({ ...current, indexable }))}
             onPrePortal={(prePortal) => setState((current) => ({ ...current, prePortal }))}
           />
@@ -1050,7 +1089,12 @@ export default function Editor() {
             chosen={state.template}
             onChoose={(template) => setState((current) => ({ ...current, template }))}
             accent={state.accent ?? profile.accent ?? undefined}
-            onAccent={(accent) => setState((current) => ({ ...current, accent }))}
+            onAccent={(accent) => {
+              accentSource.current = 'manual';
+              setState((current) => ({ ...current, accent }));
+            }}
+            accentFromCover={accentSource.current === 'cover'}
+            coverTone={coverTone}
             photos={photos
               .map((photo) => photo.publicUrl ?? photo.url)
               .filter((url): url is string => url.trim() !== '')}
