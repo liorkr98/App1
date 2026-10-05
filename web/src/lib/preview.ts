@@ -101,6 +101,7 @@ export function previewListing(input: unknown, origin: string): Listing | undefi
     og_image_hash: null,
     audience: typeof input.audience === 'string' ? text(input.audience, 20) : null,
     hyad_mark: input.hyad_mark !== false,
+    ...(isRecord(input.area_places) ? { area_places: input.area_places } : {}),
   };
   const listing = listingFromRow(row);
   return listing ? withSun(listing, input.sun) : undefined;

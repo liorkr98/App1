@@ -20,6 +20,7 @@ import {
   DESCRIPTION_SYSTEM_PROMPT,
   groundedDescription,
   sameParagraph,
+  sameVoice,
   type ListingCopyInput,
 } from '@/features/listings/listing-copy';
 import { LISTING_CATEGORIES, type ListingCategory } from '@/features/listings/schemas';
@@ -218,7 +219,9 @@ export const POST: APIRoute = async ({ request }) => {
   const facts = Array.isArray(row.facts) ? (row.facts as Fact[]) : [];
   const again = previous !== '';
   const notRepeated = (text: string): string | 'repeated' =>
-    again && sameParagraph(text, previous) ? 'repeated' : text;
+    again && (sameParagraph(text, previous) || (tone !== 'pro' && sameVoice(text, previous)))
+      ? 'repeated'
+      : text;
 
   // -------------------------------------------------------------------- a car
   if (row.category !== 'property') {

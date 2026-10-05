@@ -42,6 +42,8 @@ interface Props {
    * crawled as a second copy of the demo listings.
    */
   robots?: string;
+  /** Editor phone: first screen and map legend stay clear of the fixed bars. */
+  preview?: boolean;
 }
 
 /**
@@ -57,7 +59,7 @@ interface Props {
  * only category lookup on the page, which is what keeps a fifth divergence
  * from appearing by accident.
  */
-const { listing: given, robots } = Astro.props;
+const { listing: given, robots, preview = false } = Astro.props;
 // A template drawn for the other category (Showroom on a flat) is drawn as
 // its fallback instead — here, once, so BaseListing's data-template and every
 // Stage below agree on what the page actually is.
@@ -168,6 +170,7 @@ const shareHref = whatsappShareUrl(
   heroHeight={presentation.heroHeight}
   robots={robots}
   hasWalk={hasWalk}
+  preview={preview}
 >
   {composed ? (
     <Fragment>

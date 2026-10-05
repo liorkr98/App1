@@ -255,6 +255,20 @@ export function sameParagraph(a: string, b: string): boolean {
   return a.replace(/\s+/g, ' ').trim() === b.replace(/\s+/g, ' ').trim();
 }
 
+/**
+ * A reply that keeps the opening of the paragraph already in the box did
+ * not change voice. Tone chips ask for a different paragraph; a model that
+ * only trims a word would otherwise land as if the chip did nothing.
+ */
+export function sameVoice(next: string, previous: string): boolean {
+  const a = next.replace(/\s+/g, ' ').trim();
+  const b = previous.replace(/\s+/g, ' ').trim();
+  if (a === '' || b === '') return false;
+  if (a === b) return true;
+  const n = Math.min(48, a.length, b.length);
+  return n >= 24 && a.slice(0, n) === b.slice(0, n);
+}
+
 /** Hebrew has to be present, or the model answered in the wrong language. */
 const HEBREW = /[\u0590-\u05FF]/;
 

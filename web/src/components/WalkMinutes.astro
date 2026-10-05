@@ -18,10 +18,16 @@ const parts = Astro.props.walking
         <bdi>{parts.digit}</bdi> {parts.noun}
       </Fragment>
     ) : (
-      <Fragment>
+      /*
+        The digit and the noun are one phrase. Without an isolating wrapper
+        the digit escapes the cell and glues to the place name ("3דקות").
+        Flex keeps the number at the start of the line (the right, in Hebrew)
+        and the noun beside it.
+      */
+      <span class="minute-pair">
         <bdi>{parts.digit}</bdi>
         <small>{parts.noun}</small>
-      </Fragment>
+      </span>
     )
   ) : (
     <span>{parts.words}</span>

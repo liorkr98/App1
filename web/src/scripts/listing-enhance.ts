@@ -409,10 +409,11 @@ function bindGlass(): void {
  * the sun moves on the plot, the clock and the state line follow, the sky
  * behind the first screen takes the hour's colour, the photographs warm, and
  * below the horizon the page turns to its night palette (heliograph.css).
- * At the top of the page, and for a reader who asked for stillness, it rests
- * at a quarter to one in June — the frame the server already rendered.
- * Scrolling walks forward from that hour into the night. Starting the table
- * at dawn made the sun jump backwards on the first pixels of scroll.
+ * The top of the page is sunrise — the first hour the sun is up, matching
+ * the frame the server drew — and the bottom is night. The dark hour
+ * before sunrise stays on the arc only, so the listing does not open as
+ * a night page and the first pixels of scroll do not jump backwards.
+ * A reader who asked for stillness stays at a quarter to one in June.
  *
  * The plot is pinned while the day plays, then released near the footer.
  * Mapped across the whole page it used to leave the screen at noon, so the
@@ -499,6 +500,13 @@ function bindHeliograph(): void {
   };
 
   const restIndex = () => Math.round((12.75 - (data.tables[season][0]?.[0] ?? 4.5)) / 0.25);
+  // First hour the sun is above the horizon. Before that the page would
+  // open in the night palette, which is not the listing.
+  const riseIndex = () => {
+    const rows = data.tables[season];
+    const index = rows.findIndex((row) => row[2] >= 0);
+    return index < 0 ? 0 : index;
+  };
   const sky = stage.querySelector<HTMLElement>('.hl-sky');
   let hold = stage.querySelector<HTMLElement>('.hl-sky-hold');
   if (sky && !hold) {
@@ -526,16 +534,16 @@ function bindHeliograph(): void {
     frame = requestAnimationFrame(() => {
       frame = 0;
       const max = document.documentElement.scrollHeight - innerHeight;
-      const rest = restIndex();
-      if (still || scrollY < 4 || max <= 0) {
+      const last = data.tables[season].length - 1;
+      const rise = riseIndex();
+      if (still || max <= 0) {
         placeSky(0);
-        return paint(rest);
+        return paint(restIndex());
       }
       const progress = Math.max(0, Math.min(1, scrollY / max));
-      const last = data.tables[season].length - 1;
       placeSky(progress);
-      // Noon at the top, night at the bottom. The morning stays on the arc.
-      paint(Math.round(rest + progress * (last - rest)));
+      // Sunrise at the top, night at the bottom.
+      paint(Math.round(rise + progress * (last - rise)));
     });
   };
 

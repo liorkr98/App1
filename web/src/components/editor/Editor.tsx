@@ -17,7 +17,8 @@ import { LISTING_CATEGORIES, schemaFor } from '@/features/listings/schemas';
 import { suggestTemplate } from '@/features/templates/suggest';
 import { cleanPlanRooms } from '@/features/listings/rich-media';
 import type { MediaExtras } from '../../lib/listing-row';
-import type { CopyTone } from '@/features/listings/listing-copy';
+import { groundedDescription, type CopyTone } from '@/features/listings/listing-copy';
+import { nextAgentDescription } from '@/features/listings/agent-copy';
 
 import { isProfileComplete } from '@/features/agents/profile';
 import { DEFAULT_ACCENT, isAccentId } from '@/features/agents/accents';
@@ -99,6 +100,28 @@ const START: EditorState = {
  * that publishing never feels stuck on it.
  */
 const AREA_AT_PUBLISH_MS = 6_000;
+
+/** The paragraph a tone chip writes before the server answers. */
+function draftInVoice(
+  category: EditorState['category'],
+  facts: EditorState['facts'],
+  city: string | undefined,
+  previous: string,
+  voice: CopyTone,
+): string {
+  const where = city?.trim();
+  if (category === 'vehicle') {
+    return groundedDescription(
+      { category: 'vehicle', facts, ...(where ? { city: where } : {}) },
+      { tone: voice, alternate: previous.trim() !== '' },
+    );
+  }
+  return nextAgentDescription(
+    { category: 'property', facts, ...(where ? { city: where } : {}) },
+    previous,
+    voice,
+  );
+}
 
 export default function Editor() {
   const [state, setState] = useState<EditorState>(START);
@@ -447,6 +470,9 @@ export default function Editor() {
   // Street midpoint, rounded, for the sun template's preview. Not part of
   // EditorState: saving it onto location would publish a pin.
   const [sunPoint, setSunPoint] = useState<{ lat: number; lng: number } | undefined>();
+  // The row's surroundings, keyed by the address they belong to. A changed
+  // street must not keep showing the previous map.
+  const [surroundings, setSurroundings] = useState<{ key: string; places: unknown } | undefined>();
   const suggestGen = useRef(0);
 
   const suggest = (retriesLeft = 1, voice?: CopyTone) => {
@@ -586,6 +612,11 @@ export default function Editor() {
     void uploadPending(next, state.category);
   };
 
+  const addressKey = areaKey(state.city, state.street);
+  const previewPlaces =
+    surroundings && surroundings.key === addressKey ? surroundings.places : undefined;
+  const previewSun = sunPoint ?? (previewPlaces ? coarseOrigin(previewPlaces) : undefined);
+
   const steps = useMemo(() => stepsFor(state.category), [state.category]);
   const outstanding = useMemo(() => blockers(state), [state]);
 
@@ -687,6 +718,8 @@ export default function Editor() {
         const location = (row.location ?? {}) as { city?: string; street?: string };
         const origin = coarseOrigin(row.area_places);
         if (origin) setSunPoint(origin);
+        const around = areaKey(location.city, location.street);
+        setSurroundings(around && row.area_places ? { key: around, places: row.area_places } : undefined);
         if (isAccentId(row.accent)) accentSource.current = 'manual';
 
         let opened: EditorState | undefined;
@@ -889,6 +922,20 @@ export default function Editor() {
       }
     });
   };
+
+  // A loaded neighbourhood with no street midpoint still needs a sun. An
+  // address that has not been saved yet waits for the save, which asks too.
+  useEffect(() => {
+    const id = savedRow?.id;
+    const key = areaKey(state.city, state.street);
+    if (!signedIn || !id || sunPoint || !key) return;
+    if (state.category === 'vehicle') return;
+    if (!surroundings || surroundings.key !== key) return;
+    if (coarseOrigin(surroundings.places)) return;
+    lookUpArea(id);
+    // lookUpArea reads the address from a ref and asks once per address.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signedIn, sunPoint, state.city, state.street, state.category, savedRow, surroundings]);
 
   /**
    * Publishes, and hands back the link.
@@ -1187,7 +1234,14 @@ export default function Editor() {
         ) : null}
 
         {step === 'preview' ? (
-          <LivePreview state={state} photos={photos} profile={profile} extras={extras} sun={sunPoint} />
+          <LivePreview
+            state={state}
+            photos={photos}
+            profile={profile}
+            extras={extras}
+            sun={previewSun}
+            areaPlaces={previewPlaces}
+          />
         ) : null}
 
         {step === 'publish' ? (
@@ -1252,8 +1306,20 @@ export default function Editor() {
             source={suggestSource}
             tone={tone}
             onTone={(next) => {
+              if (next === tone) return;
               setTone(next);
-              if (next !== tone) suggest(1, next);
+              // The chip has to change the box on this click. The server
+              // then replaces it with the same voice plus the neighbourhood,
+              // and a model that keeps the old opening is refused.
+              const drafted = draftInVoice(state.category, state.facts, state.city, state.description, next);
+              if (drafted.trim() && drafted.trim() !== state.description.trim()) {
+                setState((current) => ({
+                  ...current,
+                  description: drafted,
+                  generatedDescription: drafted,
+                }));
+              }
+              suggest(1, next);
             }}
           />
         ) : null}
@@ -1326,7 +1392,14 @@ export default function Editor() {
             {t('editor.peekClose')}
           </button>
         ) : null}
-        <LivePreview state={state} photos={photos} profile={profile} extras={extras} sun={sunPoint} />
+        <LivePreview
+          state={state}
+          photos={photos}
+          profile={profile}
+          extras={extras}
+          sun={previewSun}
+          areaPlaces={previewPlaces}
+        />
       </aside>
     ) : null}
 

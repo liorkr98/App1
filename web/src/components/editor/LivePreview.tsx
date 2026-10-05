@@ -14,6 +14,8 @@ interface Props {
   extras?: MediaExtras;
   /** Coarse street midpoint for the sun template. Never a pin. */
   sun?: { lat: number; lng: number };
+  /** Surroundings already stored on the row. The preview does not look them up. */
+  areaPlaces?: unknown;
 }
 
 /**
@@ -42,10 +44,10 @@ const PHONE_W = 390;
 const PHONE_H = 844;
 const DEBOUNCE_MS = 450;
 
-export function LivePreview({ state, photos, profile, extras, sun }: Props) {
+export function LivePreview({ state, photos, profile, extras, sun, areaPlaces }: Props) {
   const body = useMemo(
-    () => JSON.stringify(previewPayload(state, photos, profile, t('editor.livePreview.title'), extras, sun)),
-    [state, photos, profile, extras, sun],
+    () => JSON.stringify(previewPayload(state, photos, profile, t('editor.livePreview.title'), extras, sun, areaPlaces)),
+    [state, photos, profile, extras, sun, areaPlaces],
   );
   const [front, setFront] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -58,6 +60,15 @@ export function LivePreview({ state, photos, profile, extras, sun }: Props) {
   const frontRef = useRef(0);
   const gen = useRef(0);
   frontRef.current = front;
+  // Template, accent and sun are what the phone is supposed to show. A
+  // description streaming in must not yank a scrolled phone back to the top.
+  const resetKey = `${state.template ?? ''}|${state.accent ?? ''}|${sun ? '1' : '0'}`;
+  const resetSeen = useRef(resetKey);
+  const wantTop = useRef(false);
+  if (resetSeen.current !== resetKey) {
+    resetSeen.current = resetKey;
+    wantTop.current = true;
+  }
 
   // Fit the 390px page into whatever width the panel has.
   useLayoutEffect(() => {
@@ -77,6 +88,14 @@ export function LivePreview({ state, photos, profile, extras, sun }: Props) {
   useEffect(() => {
     if (!visible) return;
     const token = ++gen.current;
+    const jump = wantTop.current;
+    if (jump) {
+      try {
+        frames[frontRef.current]?.current?.contentWindow?.scrollTo(0, 0);
+      } catch {
+        /* the frame may still be about:blank */
+      }
+    }
     const timer = window.setTimeout(() => {
       const back = frontRef.current === 0 ? 1 : 0;
       const frame = frames[back]?.current;
@@ -94,6 +113,12 @@ export function LivePreview({ state, photos, profile, extras, sun }: Props) {
           if (!node) return;
           const reveal = () => {
             if (token !== gen.current) return;
+            try {
+              if (jump) node.contentWindow?.scrollTo(0, 0);
+            } catch {
+              /* same-origin srcdoc; a thrown access just skips the snap */
+            }
+            if (jump) wantTop.current = false;
             frontRef.current = back;
             setFront(back);
             setLoading(false);
