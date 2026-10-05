@@ -2,7 +2,6 @@
 import type { ListingLocation, PropertyEnrichment } from '@/types/listing';
 import type { AreaMap as AreaMapData } from '@/features/listings/area-map';
 import { mapNearbyItems } from '@/features/listings/nearby-map';
-import { composedMapSrc } from '@/features/listings/area-map';
 import { googleMapsUrl, navigationTarget, wazeNavigateUrl } from '@/features/listings/map-card';
 import { publicPlace } from '@/features/listings/control-surface';
 import { walkPhrase } from '@/features/listings/hebrew-plural';
@@ -32,7 +31,6 @@ const nearby = enrichment ? mapNearbyItems(enrichment) : [];
 const point = navigationTarget(location);
 const waze = point ? wazeNavigateUrl(point.lat, point.lng) : undefined;
 const google = point ? googleMapsUrl(point.lat, point.lng) : undefined;
-const zoomSrc = areaMap ? composedMapSrc(areaMap) : mapImageUrl;
 ---
 {
   /**
@@ -40,10 +38,12 @@ const zoomSrc = areaMap ? composedMapSrc(areaMap) : mapImageUrl;
    * approximate meeting area, not an address; pinning a private car for sale
    * to a home address on a public page is a theft risk.
    *
-   * The image is a local SVG pin card — never an interactive embed and never
-   * a third-party tile (CLAUDE.md §12). Chips on the image are already-routed
-   * walking minutes (OSRM at publish). The named list under it repeats them.
-   * Omitted when that payload has nothing for a group. No live query at render.
+   * Without a stored neighbourhood the image is a local pin card. With one,
+   * the streets are tiles the browser loads — a basemap already published,
+   * not a lookup of this address at render (CLAUDE.md §12). The volunteer
+   * tile.openstreetmap.org server blocks that request, so the picture uses
+   * the Humanitarian tiles. Walking minutes were routed at publish. No live
+   * query of the neighbourhood at render.
    */
 }
 <section class="map reveal">
@@ -83,8 +83,12 @@ const zoomSrc = areaMap ? composedMapSrc(areaMap) : mapImageUrl;
 
   <dialog id="listing-map" class="map-dialog" aria-label={t('listing.mapTitle')}>
     <button type="button" class="lightbox-close" data-map-close>{t('listing.closeLightbox')}</button>
-    <div class="map-zoom">
-      <img src={zoomSrc} alt="" width="4800" height="3000" />
+    <div class="map-zoom" data-map-zoom>
+      {areaMap ? (
+        <p class="area-map-credit"><Prose text={t('listing.mapTilesCredit')} /></p>
+      ) : (
+        <img src={mapImageUrl} alt="" width="4800" height="3000" />
+      )}
     </div>
   </dialog>
   {nearby.length > 0 && (

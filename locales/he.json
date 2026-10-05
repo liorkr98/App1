@@ -133,6 +133,7 @@
     "currentPhoto": "נוכחי",
     "mapTitle": "מיקום",
     "mapAlt": "מפת האזור",
+    "mapTilesCredit": "המפה באדיבות הצוות ההומניטרי של OpenStreetMap.",
     "mapNavigate": "ניווט בוויז",
     "mapGoogle": "פתיחה בגוגל מפות",
     "mapNearby": {

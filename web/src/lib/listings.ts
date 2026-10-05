@@ -1,5 +1,6 @@
 import type { Listing, PropertyEnrichment, VehicleEnrichment } from '@/types/listing';
 import { propertySchema, vehicleSchema } from '@/features/listings/schemas';
+import { OSM_ATTRIBUTION } from '@/features/listings/area-note';
 import { groundedAreaDescription } from '@/features/listings/neighborhood-note';
 import { fixtures } from './fixtures';
 import { answer } from './listing-facts';
@@ -144,7 +145,21 @@ export const propertyListing: Listing = {
 
   // Street present, so the map section renders. Coordinates are the Sokolov
   // corridor in Holon for the demo pin — this listing is not for sale.
+  // The places sit on that same corridor, so the street tiles and the pins
+  // are one neighbourhood rather than a beige card of dots.
   location: { city: 'חולון', street: 'סוקולוב 42', lat: 32.0165, lng: 34.7792 },
+  areaPlaces: {
+    city: 'חולון',
+    street: 'סוקולוב',
+    origin: { lat: 32.0165, lon: 34.7792 },
+    neighbourhoods: [],
+    transit: [{ name: 'סוקולוב/ההסתדרות', lat: 32.0174, lon: 34.7794, walkMinutes: 3, mode: 'bus' }],
+    schools: [{ name: 'בית ספר יסודי אלונים', lat: 32.0154, lon: 34.7776, walkMinutes: 6 }],
+    parks: [{ name: 'פארק פרס', lat: 32.0148, lon: 34.7808, walkMinutes: 9 }],
+    community: [{ name: 'מתנ״ס חולון', lat: 32.0182, lon: 34.7802, walkMinutes: 8 }],
+    shops: [{ name: 'שופרסל שלי', lat: 32.0169, lon: 34.7806, walkMinutes: 5 }],
+  },
+  textAttributions: [OSM_ATTRIBUTION],
   seller: { name: 'ליאור', phone: '972500000000', role: 'בעל הדירה' },
   template: 'editorial',
   status: 'published',

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import type { AreaPlaces } from '../../types/listing.js';
-import { areaMap, composedMapSrc, hasWalkTimes } from './area-map.js';
+import { areaMap, hasWalkTimes, osmTileUrl } from './area-map.js';
 
 const at = (name: string, lat: number, lon: number, walkMinutes?: number) => ({
   name,
@@ -102,14 +102,12 @@ describe('areaMap', () => {
     assert.ok(tight.height <= 1024, 'a phone should not get a map and nothing else');
   });
 
-  it('composes one picture with no text node and a 16:10 frame', () => {
+  it('names a street tile the blocked volunteer server is not asked for', () => {
     const map = areaMap(HOLON);
     assert.ok(map);
-    const src = decodeURIComponent(composedMapSrc(map));
-    assert.match(src, /width="1600"/);
-    assert.match(src, /height="1000"/);
-    assert.equal(src.includes('<text'), false);
-    assert.equal(src.includes('tile.openstreetmap.org'), false);
+    const url = osmTileUrl(map.zoom, map.tileX0, map.tileY0);
+    assert.match(url, /^https:\/\/a\.tile\.openstreetmap\.fr\/hot\/\d+\/\d+\/\d+\.png$/);
+    assert.equal(url.includes('tile.openstreetmap.org/'), false);
   });
 
   it('keys the pins with numerals, not Hebrew letters', () => {

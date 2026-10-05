@@ -5,14 +5,16 @@ import type { AreaGroup } from './osm-area.js';
  * The neighbourhood map: what is around this address, drawn where it is.
  *
  * ===================== STREETS FROM TILES, PLACES FROM US =====================
- * The pins are coordinates we already hold. The streets under them are OSM
- * raster tiles, requested by the buyer's browser — not an Overpass query, not
- * a geocoder, not Distance Matrix. The listing page still does not look up
- * the neighbourhood at view time (CLAUDE.md §12); it only paints a basemap
- * that OSM already published, with the ODbL credit this page already carries.
+ * The pins are coordinates we already hold. The streets under them are
+ * raster tiles the buyer's browser requests — not an Overpass query, not a
+ * geocoder, not Distance Matrix. The listing page still does not look the
+ * neighbourhood up at view time (CLAUDE.md §12); it only paints a basemap
+ * that was already published, with the ODbL credit this page already carries.
  *
  * Without the tiles the drawing was a beige grid of dots, which is what
- * "the map still doesn't work" was reporting.
+ * "the map still doesn't work" was reporting. The volunteer server at
+ * tile.openstreetmap.org now returns that block instead of a street, so the
+ * tiles come from the Humanitarian style, which still serves them.
  * =======================================================================
  *
  * ===================== A MAP MUST NOT MIRROR (§4.1) =====================
@@ -61,29 +63,16 @@ export interface AreaMap {
 }
 
 /**
- * One picture, 16:10, no tile requests and no text.
+ * One street tile.
  *
- * Circles only. The numerals live in the HTML list, inside <bdi>. The page
- * must not ask the browser for OpenStreetMap tiles.
+ * tile.openstreetmap.org answers this app with an "access blocked" picture
+ * (their volunteer servers are not for other sites). The Humanitarian
+ * OpenStreetMap Team publishes the same streets for exactly this use. The
+ * server still does not look the neighbourhood up when the page renders:
+ * these are tiles OSM already cut, and the browser asks for them.
  */
-export function composedMapSrc(map: AreaMap): string {
-  const width = 1600;
-  const height = 1000;
-  const sx = width / map.width;
-  const sy = height / map.height;
-  const pins = map.pins
-    .map(
-      (pin) =>
-        `<circle cx="${Math.round(pin.x * sx)}" cy="${Math.round(pin.y * sy)}" r="22" fill="#4a5d3a"/>`,
-    )
-    .join('');
-  const origin = `<circle cx="${Math.round(map.origin.x * sx)}" cy="${Math.round(map.origin.y * sy)}" r="16" fill="#fbfaf7"/><circle cx="${Math.round(map.origin.x * sx)}" cy="${Math.round(map.origin.y * sy)}" r="9" fill="#191a15"/>`;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}"><rect width="${width}" height="${height}" fill="#e4dfd4"/>${pins}${origin}</svg>`;
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
-}
-
 export function osmTileUrl(zoom: number, x: number, y: number): string {
-  return `https://tile.openstreetmap.org/${zoom}/${x}/${y}.png`;
+  return `https://a.tile.openstreetmap.fr/hot/${zoom}/${x}/${y}.png`;
 }
 
 /** Enough to be useful, few enough to be readable on a phone. */

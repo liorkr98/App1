@@ -1,46 +1,85 @@
 ---
-import { composedMapSrc, type AreaMap } from '@/features/listings/area-map';
+import type { AreaMap } from '@/features/listings/area-map';
+import { osmTileUrl } from '@/features/listings/area-map';
 import { t } from '../lib/i18n';
 import Prose from './Prose.astro';
 import WalkMinutes from './WalkMinutes.astro';
 
 interface Props {
   map: AreaMap;
-  attribution: string;
+  attribution?: string;
 }
 
-const { map, attribution } = Astro.props;
-const src = composedMapSrc(map);
+const { map, attribution = '' } = Astro.props;
+
+const colour: Record<string, string> = {
+  transit: '#4a5d3a',
+  school: '#7a5c2e',
+  park: '#3f6b4a',
+  community: '#5a4a7a',
+  shop: '#7a3f3f',
+  neighbourhood: '#67685f',
+};
+
+const tiles = Array.from({ length: map.rows }, (_, row) =>
+  Array.from({ length: map.cols }, (_, col) => ({
+    src: osmTileUrl(map.zoom, map.tileX0 + col, map.tileY0 + row),
+  })),
+).flat();
+
+const pct = (value: number, total: number) => `${((value / total) * 100).toFixed(2)}%`;
 ---
 
 <figure class="area-map">
-  <div class="area-map-stage">
-    <button type="button" class="map-open" data-map-open>
-      <img
-        src={src}
-        alt={t('listing.mapAlt')}
-        width="1600"
-        height="1000"
-        decoding="async"
-      />
+  {/*
+    direction:ltr so north stays up and east stays east. The rest of the
+    page is RTL; a mirrored street map is a wrong map. Pin positions are
+    logical insets on this box, so they follow the map and not the page.
+  */}
+  <div class="area-map-stage" style={`--map-cols:${map.cols};--map-rows:${map.rows}`}>
+    <button type="button" class="map-open" data-map-open aria-label={t('listing.mapAlt')}>
+      <div class="area-map-tiles">
+        {tiles.map((tile) => (
+          <img src={tile.src} alt="" width="256" height="256" loading="lazy" decoding="async" />
+        ))}
+      </div>
     </button>
+    <div class="area-map-marks" aria-hidden="true">
+      {map.pins.map((pin) => (
+        <span
+          class="area-map-dot"
+          style={`inset-inline-start:${pct(pin.x, map.width)};inset-block-start:${pct(pin.y, map.height)};--pin:${colour[pin.group] ?? colour.neighbourhood}`}
+        >
+          <bdi>{pin.key}</bdi>
+        </span>
+      ))}
+      <span
+        class="area-map-home"
+        style={`inset-inline-start:${pct(map.origin.x, map.width)};inset-block-start:${pct(map.origin.y, map.height)}`}
+      ></span>
+    </div>
   </div>
 
   <ol class="area-map-list">
-    {map.pins.map((pin) => (
-      <li>
-        {pin.walkMinutes === undefined ? (
-          <span class="area-map-walk"></span>
-        ) : (
-          <span class="area-map-walk">
-            <WalkMinutes minutes={pin.walkMinutes} />
+      {map.pins.map((pin) => (
+        <li>
+          {pin.walkMinutes === undefined ? (
+            <span class="area-map-walk"></span>
+          ) : (
+            <span class="area-map-walk">
+              <WalkMinutes minutes={pin.walkMinutes} />
+            </span>
+          )}
+          <b><Prose text={pin.name} /></b>
+          <span class="area-map-key" style={`--pin:${colour[pin.group] ?? colour.neighbourhood}`}>
+            <bdi>{pin.key}</bdi>
           </span>
-        )}
-        <b><Prose text={pin.name} /></b>
-        <span class="area-map-key"><bdi>{pin.key}</bdi></span>
-      </li>
-    ))}
-  </ol>
+        </li>
+      ))}
+    </ol>
 
-  <figcaption class="area-map-credit"><Prose text={attribution} /></figcaption>
+  <figcaption class="area-map-credit">
+    {attribution ? <><Prose text={attribution} /><br /></> : null}
+    <Prose text={t('listing.mapTilesCredit')} />
+  </figcaption>
 </figure>

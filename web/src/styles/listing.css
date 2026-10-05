@@ -494,8 +494,9 @@ p + p{margin-top:.9rem}
   font-variant-numeric:tabular-nums;
 }
 /* ---------- The neighbourhood map ----------
-   Street tiles from OSM, pins from coordinates we already hold. The stage is
-   direction:ltr so north stays up. */
+   Street tiles, pins from coordinates we already hold. The stage is
+   direction:ltr so north stays up. The tile grid sets the shape: cropping
+   it to 16:10 would slide the pins off the streets. */
 .area-map{margin:0}
 .area-map-stage{
   position:relative;
@@ -503,13 +504,55 @@ p + p{margin-top:.9rem}
   overflow:hidden;
   border-radius:4px;
   border:1px solid var(--stone);
-  aspect-ratio:16/10;
+  background:#e4dfd4;
 }
-.area-map-stage img{
+.area-map-tiles{
+  display:grid;
+  grid-template-columns:repeat(var(--map-cols),minmax(0,1fr));
+}
+.area-map .area-map-tiles img{
   display:block;
   inline-size:100%;
-  block-size:100%;
+  block-size:auto;
+  aspect-ratio:1;
   object-fit:cover;
+  border-radius:0;
+  background:#e4dfd4;
+}
+.area-map-marks{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+}
+.area-map-dot,
+.area-map-home{
+  position:absolute;
+  transform:translate(-50%,-50%);
+}
+.area-map-dot{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  inline-size:1.65rem;
+  block-size:1.65rem;
+  border-radius:50%;
+  background:var(--pin,var(--olive));
+  color:var(--plaster);
+  font-family:'Frank Ruhl Libre',serif;
+  font-weight:700;
+  font-size:.86rem;
+  box-shadow:0 1px 4px rgb(25 26 21 / .35);
+}
+.area-map-home{
+  inline-size:1.05rem;
+  block-size:1.05rem;
+  border-radius:50%;
+  background:var(--ink);
+  border:3px solid var(--plaster);
+  box-shadow:0 1px 4px rgb(25 26 21 / .35);
+}
+.map-zoom .area-map-stage{
+  inline-size:min(160%, 72rem);
 }
 .map-open{
   display:block;
@@ -547,6 +590,10 @@ p + p{margin-top:.9rem}
   width:300%;
   height:auto;
   display:block;
+}
+.map-dialog .area-map-credit{
+  color:var(--on-dark);
+  padding:.8rem 1rem 1.4rem;
 }
 .area-map-list{
   list-style:none;

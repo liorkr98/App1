@@ -133,6 +133,7 @@
     "currentPhoto": "",
     "mapTitle": "",
     "mapAlt": "",
+    "mapTilesCredit": "",
     "mapNavigate": "",
     "mapGoogle": "",
     "mapNearby": {

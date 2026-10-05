@@ -213,6 +213,17 @@ function bindMapDialog(): void {
     if (!(target instanceof Element)) return;
     if (target.closest('[data-map-open]')) {
       event.preventDefault();
+      // The enlarged map is a copy of the streets already on the page, made
+      // when it opens, so a closed dialog does not request the tiles twice.
+      const zoom = dialog.querySelector<HTMLElement>('[data-map-zoom]');
+      const stage = document.querySelector<HTMLElement>('.area-map-stage');
+      if (zoom && stage && !zoom.querySelector('.area-map-stage')) {
+        const copy = stage.cloneNode(true);
+        if (copy instanceof HTMLElement) {
+          copy.querySelector('[data-map-open]')?.removeAttribute('data-map-open');
+          zoom.prepend(copy);
+        }
+      }
       dialog.showModal();
       if (!pushed) {
         history.pushState({ listingMap: true }, '');
