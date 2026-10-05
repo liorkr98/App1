@@ -5,6 +5,8 @@ import {
   canAdvance,
   canPublish,
   MAX_IMAGES,
+  nextStep,
+  reachable,
   stepsFor,
   type EditorState,
   type Step,
@@ -57,19 +59,6 @@ import { clearDraft, useDraft } from './useDraft';
  * the presentation of those rules and holds no product logic of its own, so
  * the answer to "why can I not publish" is testable without a browser.
  *
- * BUILT SO FAR: category, photos, facts, description, template.
- *
- * STILL EMPTY — each renders its heading and nothing else:
- *   - preview. It has to show the real listing page, and the site is static
- *     output — so a faithful preview means either a draft URL built by the
- *     pipeline or rendering the page markup twice. That is a design decision,
- *     not a component.
- *
- * Photos are picked and ordered but NOT UPLOADED YET. The target is settled —
- * Supabase Storage, CLAUDE.md §2 — and the buckets already exist in
- * migration 0004; what is missing is the signed-upload call and the
- * credentials to make it, which are not mine to hold.
- *
  * The draft is kept in localStorage (useDraft), because PRD §4 locks "no
  * account until publish" and until the seller pays there is nowhere else to
  * put their work.
@@ -113,6 +102,14 @@ const AREA_AT_PUBLISH_MS = 6_000;
 export default function Editor() {
   const [state, setState] = useState<EditorState>(START);
   const [step, setStep] = useState<Step>('category');
+  /**
+   * True until the agent picks a step themselves. Opening a saved listing
+   * lands on the first gap (`nextStep`); once they tap Next, Back or a
+   * step, that choice sticks — a photo finishing its upload must not
+   * yank them to a later screen.
+   */
+  const followGap = useRef(true);
+  const railList = useRef<HTMLOListElement>(null);
 
   /**
    * The photographs live HERE and not in EditorState.
@@ -591,6 +588,7 @@ export default function Editor() {
 
   useEffect(() => {
     void recordEditorEvent(step, 'enter', listingId.current);
+    railList.current?.querySelector('.is-here')?.scrollIntoView({ inline: 'nearest', block: 'nearest' });
   }, [step]);
 
   const blockedSent = useRef<Step | null>(null);
@@ -680,6 +678,7 @@ export default function Editor() {
         const location = (row.location ?? {}) as { city?: string; street?: string };
         if (isAccentId(row.accent)) accentSource.current = 'manual';
 
+        let opened: EditorState | undefined;
         setState((current) => {
           const {
             ownerConsentDeclaredAt: _declared,
@@ -725,13 +724,20 @@ export default function Editor() {
               ? { tourUrl: String((row.media as { tourUrl: string }).tourUrl) }
               : {}),
           };
+          opened = next;
           return next;
         });
-        // The dashboard's "תצוגה מקדימה" on a draft opens straight on the
-        // preview. Only that step: landing past a step the seller has not
-        // done would hide what is still missing.
+        // "תצוגה מקדימה" on a draft opens that step. Everything else opens
+        // the first gap (nextStep): a finished listing does not make the
+        // agent walk "מה מוכרים?" again, and a missing photo still cannot
+        // be skipped.
         const opening = new URLSearchParams(window.location.search).get('step');
-        setStep(opening === 'preview' ? 'preview' : 'category');
+        if (opening === 'preview') {
+          followGap.current = false;
+          setStep('preview');
+        } else if (opened && followGap.current) {
+          setStep(nextStep(opened));
+        }
       })
       .catch(() => undefined);
 
@@ -741,18 +747,24 @@ export default function Editor() {
   }, [signedIn]);
 
   /**
-   * Restores a saved draft, then lands on step 1. A previous session used to
-   * skip to photos (step 3) because category and details were already filled.
+   * Restores a saved draft onto the first step that still needs work.
    *
    * Entitlement is untouched: `Draft` has no such field. See useDraft.
+   * photoCount is not in the draft either — the photos come back from the
+   * row below, and the landing is recomputed once they have.
    */
   useDraft(
     state,
     (draft) => {
       if (skipDraftRestore.current) return;
       if (draft.accent) accentSource.current = 'manual';
-      setState((current) => ({ ...current, ...draft }));
-      setStep('category');
+      const merged = {
+        ...stateRef.current,
+        ...draft,
+        entitlement: stateRef.current.entitlement,
+      };
+      setState((current) => ({ ...current, ...draft, entitlement: current.entitlement }));
+      if (followGap.current) setStep(nextStep(merged));
       if (!draft.slug || !supabaseConfigured) return;
       void loadListing(draft.slug)
         .then((result) => {
@@ -786,6 +798,9 @@ export default function Editor() {
             })),
           );
           setState((current) => ({ ...current, photoCount: stored.length }));
+          if (followGap.current) {
+            setStep(nextStep({ ...stateRef.current, photoCount: stored.length }));
+          }
           const saved = row.media as {
             floorPlan?: { url?: string; width?: number; height?: number; rooms?: unknown };
             spin?: { id?: string; url?: string; width?: number; height?: number }[];
@@ -961,10 +976,20 @@ export default function Editor() {
 
   const go = (delta: number) => {
     if (delta > 0 && step === 'photos' && photosBusy) return;
+    followGap.current = false;
     setStepMotion(delta < 0 ? 'back' : 'forward');
     persist();
     const target = steps[position + delta];
     if (target) setStep(target);
+  };
+
+  const jump = (target: Step) => {
+    if (target === step || !reachable(state, target)) return;
+    if (step === 'photos' && photosBusy && steps.indexOf(target) > position) return;
+    followGap.current = false;
+    setStepMotion(steps.indexOf(target) < position ? 'back' : 'forward');
+    persist();
+    setStep(target);
   };
 
   /**
@@ -1005,6 +1030,28 @@ export default function Editor() {
           A physical `left` here would fill it backwards, and it would look
           fine in every English screenshot.
         */}
+        <nav className="step-rail" aria-label={t('editor.stepRail')}>
+          <ol ref={railList}>
+            {steps.map((id, index) => {
+              const open = id === step || reachable(state, id);
+              return (
+                <li key={id}>
+                  <button
+                    type="button"
+                    className={id === step ? 'step-pip is-here' : 'step-pip'}
+                    aria-current={id === step ? 'step' : undefined}
+                    aria-label={t(`editor.steps.${id}`)}
+                    disabled={!open || (step === 'photos' && photosBusy && index > position)}
+                    onClick={() => jump(id)}
+                  >
+                    <bdi>{index + 1}</bdi>
+                    <span>{t(`editor.stepShort.${id}`)}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
+        </nav>
         <div className="rail-bar" aria-hidden="true">
           {/*
             A scale factor, not a width. Animating inline-size relaid the bar
@@ -1173,6 +1220,7 @@ export default function Editor() {
                     facts: state.facts,
                     street: state.street,
                     namedRooms: new Set(photos.map((photo) => photo.room).filter(Boolean)).size,
+                    hasFloorPlan: plan !== undefined,
                   })
                 : undefined
             }

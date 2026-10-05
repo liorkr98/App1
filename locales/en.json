@@ -260,6 +260,21 @@
     "ownerDeclare": ""
   },
   "editor": {
+    "stepRail": "",
+    "stepShort": {
+      "category": "",
+      "details": "",
+      "photos": "",
+      "rooms": "",
+      "plate": "",
+      "consent": "",
+      "facts": "",
+      "disclosures": "",
+      "description": "",
+      "template": "",
+      "preview": "",
+      "publish": ""
+    },
     "steps": {
       "category": "",
       "details": "",
@@ -348,6 +363,8 @@
     },
     "templates": {
       "hint": "",
+      "groupNew": "",
+      "groupClassic": "",
       "palette": "",
       "paletteHint": "",
       "paletteFromCover": "",
