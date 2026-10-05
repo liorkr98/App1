@@ -81,14 +81,24 @@ html[data-template='heliograph'] .hl-sky {
 }
 
 /* Pinned by bindHeliograph while the day plays, so the plot stays in view
-   as the hour moves. Released near the footer. No pin without the script. */
+   as the hour moves. Released near the footer. No pin without the script.
+   The script keeps the box the grid gave the sky. Stretching it to the
+   viewport (inset-inline: 0) turned the season controls into bars. */
 html[data-template='heliograph'] .hl-sky.is-pinned {
   position: fixed;
   inset-block-start: 0;
-  inset-inline: 0;
   z-index: 6;
+  margin-inline: 0;
   padding-block: 0.6rem 0.8rem;
   background: linear-gradient(180deg, var(--hl-sky), color-mix(in srgb, var(--hl-sky) 82%, transparent));
+}
+
+/* The compact bar watches the stage leaving, which on this template is
+   while the sky is still pinned at the top. It then paints the price and
+   a second WhatsApp over the clock. The dock is the one that follows. */
+html[data-template='heliograph'] .compact-bar {
+  display: none;
+  animation: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -350,6 +360,23 @@ html[data-template='heliograph'] .enrich {
 
   html[data-template='heliograph'] :is(.enrich, .seller, .facts, .monthly-cost) {
     margin-inline: 0;
+  }
+
+  /* A centred dock covers the paragraph under the pinned sky. On a wide
+     screen it sits in the end corner, only as wide as the label. */
+  html[data-template='heliograph'] .cta-dock {
+    inset-inline-start: auto;
+    inset-inline-end: max(1rem, calc((100% - min(100%, 1240px)) / 2));
+    inline-size: max-content;
+    max-inline-size: 18rem;
+    margin-inline: 0;
+    background: transparent;
+    padding-inline: 0;
+  }
+
+  html[data-template='heliograph'] .cta-dock .cta {
+    inline-size: auto;
+    padding-inline: 1.25rem;
   }
 }
 

@@ -515,16 +515,37 @@ function bindHeliograph(): void {
     hold.setAttribute('aria-hidden', 'true');
     sky.after(hold);
   }
+  // The grid column, remembered before position:fixed pulls the sky out of
+  // it. A full-bleed pin stretches the season buttons across the page and
+  // lets the following WhatsApp sit on the clock.
+  const rememberBox = () => {
+    if (!sky) return;
+    const rect = sky.getBoundingClientRect();
+    if (rect.width < 1) return;
+    const rtl = getComputedStyle(root).direction === 'rtl';
+    const start = rtl ? root.clientWidth - rect.right : rect.left;
+    sky.style.inlineSize = `${rect.width}px`;
+    sky.style.insetInlineStart = `${start}px`;
+  };
+  const releaseBox = () => {
+    if (!sky) return;
+    sky.style.inlineSize = '';
+    sky.style.insetInlineStart = '';
+  };
   const placeSky = (progress: number) => {
     if (!sky || !hold || still) return;
     const pin = progress > 0.04 && progress < 0.88;
     if (pin) {
-      if (!sky.classList.contains('is-pinned')) hold.style.blockSize = `${sky.offsetHeight}px`;
+      if (!sky.classList.contains('is-pinned')) {
+        hold.style.blockSize = `${sky.offsetHeight}px`;
+        rememberBox();
+      }
       sky.classList.add('is-pinned');
       return;
     }
     if (sky.classList.contains('is-pinned')) {
       sky.classList.remove('is-pinned');
+      releaseBox();
       hold.style.blockSize = '0px';
     }
   };
@@ -559,6 +580,14 @@ function bindHeliograph(): void {
     onScroll();
   });
   addEventListener('scroll', onScroll, { passive: true });
+  addEventListener('resize', () => {
+    if (sky?.classList.contains('is-pinned')) {
+      sky.classList.remove('is-pinned');
+      releaseBox();
+      if (hold) hold.style.blockSize = '0px';
+    }
+    onScroll();
+  });
   onScroll();
 }
 
