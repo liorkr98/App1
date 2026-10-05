@@ -171,6 +171,9 @@ export function previewPayload(
   profile: AgentProfile,
   placeholderName: string,
   extras: MediaExtras = {},
+  sun?: { lat: number; lng: number },
+  /** The row's surroundings, so the preview map and the sun share one origin. */
+  areaPlaces?: unknown,
 ): Record<string, unknown> {
   const category = state.category ?? 'property';
   const ownerRole = schemaFor(category).ownerRole;
@@ -187,6 +190,8 @@ export function previewPayload(
     media: toMedia(savedPhotos(photos, { local: true }), state.tourUrl, extras) ?? null,
     seller,
     ...(accent ? { accent } : {}),
+    ...(sun ? { sun } : {}),
+    ...(areaPlaces ? { area_places: areaPlaces } : {}),
     hyad_mark: state.entitlement !== 'paid',
   };
 }

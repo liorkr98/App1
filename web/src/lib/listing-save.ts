@@ -189,7 +189,7 @@ export async function loadListing(
 ): Promise<{ row: Record<string, unknown> } | { error: string }> {
   const { data, error } = await supabase()
     .from('listings')
-    .select('id, slug, category, title, price, price_note, description, facts, media, location, template, accent, audience, disclosures, indexable, pre_portal, owner_consent_declared_at, owner_consent_name, status')
+    .select('id, slug, category, title, price, price_note, description, facts, media, location, template, accent, audience, disclosures, indexable, pre_portal, owner_consent_declared_at, owner_consent_name, status, area_places')
     .eq('slug', slug)
     .maybeSingle();
 

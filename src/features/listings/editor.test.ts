@@ -10,6 +10,7 @@ import {
   canAdvance,
   canPublish,
   nextStep,
+  reachable,
   MAX_IMAGES,
   stepsFor,
   type EditorState,
@@ -435,5 +436,26 @@ describe('nextStep — where a returning seller lands', () => {
 
   it('skips the plate step for a property', () => {
     assert.notEqual(nextStep({ ...ready(), photoCount: 0 }), 'plate');
+  });
+});
+
+describe('reachable — which steps can be opened', () => {
+  it('opens only up to the step that still needs work', () => {
+    const state = { ...ready(), photoCount: 0 };
+    assert.equal(reachable(state, 'details'), true);
+    assert.equal(reachable(state, 'photos'), true);
+    assert.equal(reachable(state, 'rooms'), false);
+    assert.equal(reachable(state, 'publish'), false);
+  });
+
+  it('opens every step of a listing that is ready to publish', () => {
+    const state = ready();
+    assert.equal(reachable(state, 'template'), true);
+    assert.equal(reachable(state, 'publish'), true);
+  });
+
+  it('never opens a step the category does not have', () => {
+    assert.equal(reachable(ready(), 'plate'), false);
+    assert.equal(reachable({ ...ready(), category: 'vehicle' }, 'rooms'), false);
   });
 });

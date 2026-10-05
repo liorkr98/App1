@@ -195,6 +195,19 @@ describe('another description', () => {
     assert.equal(nextAgentDescription(FLAT, 'טקסט שהסוכן כתב בעצמו.'), agentDescription(FLAT, 0));
   });
 
+  it('writes a different paragraph for each tone, and each one still passes the gate', () => {
+    const pro = nextAgentDescription(FLAT);
+    const warm = nextAgentDescription(FLAT, pro, 'warm');
+    const refined = nextAgentDescription(FLAT, warm, 'refined');
+    assert.notEqual(pro, warm);
+    assert.notEqual(warm, refined);
+    assert.notEqual(refined, pro);
+    assert.equal(warm.includes('מקום לגור בו') || warm.includes('לגור ') || warm.includes('יום־יום'), true);
+    assert.equal(acceptAgentDescription(warm, FLAT), warm);
+    assert.equal(acceptAgentDescription(refined, FLAT), refined);
+    assert.equal(acceptAgentDescription(nextAgentDescription(NO_AREA, '', 'warm'), NO_AREA) !== undefined, true);
+  });
+
   it('differs from the box even when two variants come out the same', () => {
     const sparse: AgentCopyInput = { category: 'property', facts: [fact('rooms', 'חדרים', 3, { type: 'number' })] };
     let text = nextAgentDescription(sparse);

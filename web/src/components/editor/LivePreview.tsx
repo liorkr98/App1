@@ -12,14 +12,17 @@ interface Props {
   photos: readonly EditorPhoto[];
   profile: AgentProfile;
   extras?: MediaExtras;
+  /** Coarse street midpoint for the sun template. Never a pin. */
+  sun?: { lat: number; lng: number };
+  /** Surroundings already stored on the row. The preview does not look them up. */
+  areaPlaces?: unknown;
 }
 
 /**
  * The live preview: the real listing page, in a phone.
  *
  * It replaces a hand-drawn miniature that could only ever look like the 1.x
- * page. The editor posts the row a save would write to /preview (a form
- * aimed at an iframe — no fetch, no HTML string handled here), and the
+ * page. The editor fetches the row a save would write from /preview, and the
  * server renders the same ListingPage as /a/[slug], template and all.
  *
  * TWO FRAMES, so a change never flashes white: the next page loads in the
@@ -28,6 +31,12 @@ interface Props {
  * reduced motion it is an instant swap. Posts are debounced so typing a
  * title does not reload the page on every key.
  *
+ * The HTML is fetched and assigned as srcdoc. A form targeted at a named
+ * iframe dropped the second template: the load event for /preview/ did not
+ * fire again, so the front frame stayed on the first page. srcdoc is a new
+ * document every time, and a generation token ignores a response that a
+ * newer template pick has already replaced.
+ *
  * The frame is laid out at a phone's 390 × 844 and scaled to fit, so 84svh
  * heroes and container units resolve the way a buyer's phone resolves them.
  */
@@ -35,10 +44,10 @@ const PHONE_W = 390;
 const PHONE_H = 844;
 const DEBOUNCE_MS = 450;
 
-export function LivePreview({ state, photos, profile, extras }: Props) {
+export function LivePreview({ state, photos, profile, extras, sun, areaPlaces }: Props) {
   const body = useMemo(
-    () => JSON.stringify(previewPayload(state, photos, profile, t('editor.livePreview.title'), extras)),
-    [state, photos, profile, extras],
+    () => JSON.stringify(previewPayload(state, photos, profile, t('editor.livePreview.title'), extras, sun, areaPlaces)),
+    [state, photos, profile, extras, sun, areaPlaces],
   );
   const [front, setFront] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -47,13 +56,19 @@ export function LivePreview({ state, photos, profile, extras }: Props) {
   // no posts while it cannot be seen, one as soon as it can.
   const [visible, setVisible] = useState(false);
   const box = useRef<HTMLDivElement>(null);
-  const forms = [useRef<HTMLFormElement>(null), useRef<HTMLFormElement>(null)];
-  const inputs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)];
-  const pending = useRef<number | null>(null);
-  const names = useMemo(() => {
-    const id = Math.random().toString(36).slice(2, 8);
-    return [`pv-a-${id}`, `pv-b-${id}`];
-  }, []);
+  const frames = [useRef<HTMLIFrameElement>(null), useRef<HTMLIFrameElement>(null)];
+  const frontRef = useRef(0);
+  const gen = useRef(0);
+  frontRef.current = front;
+  // Template, accent and sun are what the phone is supposed to show. A
+  // description streaming in must not yank a scrolled phone back to the top.
+  const resetKey = `${state.template ?? ''}|${state.accent ?? ''}|${sun ? '1' : '0'}`;
+  const resetSeen = useRef(resetKey);
+  const wantTop = useRef(false);
+  if (resetSeen.current !== resetKey) {
+    resetSeen.current = resetKey;
+    wantTop.current = true;
+  }
 
   // Fit the 390px page into whatever width the panel has.
   useLayoutEffect(() => {
@@ -69,30 +84,58 @@ export function LivePreview({ state, photos, profile, extras }: Props) {
     return () => observer.disconnect();
   }, []);
 
-  // Post the draft into the hidden frame, debounced.
+  // Fetch the draft into the hidden frame, debounced.
   useEffect(() => {
     if (!visible) return;
+    const token = ++gen.current;
+    const jump = wantTop.current;
+    if (jump) {
+      try {
+        frames[frontRef.current]?.current?.contentWindow?.scrollTo(0, 0);
+      } catch {
+        /* the frame may still be about:blank */
+      }
+    }
     const timer = window.setTimeout(() => {
-      const back = front === 0 ? 1 : 0;
-      const input = inputs[back]?.current;
-      const form = forms[back]?.current;
-      if (!input || !form) return;
-      input.value = body;
-      pending.current = back;
+      const back = frontRef.current === 0 ? 1 : 0;
+      const frame = frames[back]?.current;
+      if (!frame) return;
       setLoading(true);
-      form.submit();
+      void fetch('/preview/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ draft: body }),
+      })
+        .then((response) => response.text())
+        .then((html) => {
+          if (token !== gen.current) return;
+          const node = frames[back]?.current;
+          if (!node) return;
+          const reveal = () => {
+            if (token !== gen.current) return;
+            try {
+              if (jump) node.contentWindow?.scrollTo(0, 0);
+            } catch {
+              /* same-origin srcdoc; a thrown access just skips the snap */
+            }
+            if (jump) wantTop.current = false;
+            frontRef.current = back;
+            setFront(back);
+            setLoading(false);
+          };
+          node.addEventListener('load', reveal, { once: true });
+          node.srcdoc = html;
+          // A missed load event used to leave the previous template on screen.
+          window.setTimeout(reveal, 800);
+        })
+        .catch(() => {
+          if (token === gen.current) setLoading(false);
+        });
     }, DEBOUNCE_MS);
     return () => window.clearTimeout(timer);
-    // `front` is read, not watched: a swap must not trigger another post.
+    // `frames` is a stable pair of refs. Listing it would re-post every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [body, visible]);
-
-  const onLoad = (index: number) => {
-    if (pending.current !== index) return;
-    pending.current = null;
-    setFront(index);
-    setLoading(false);
-  };
 
   return (
     <div className="live-preview">
@@ -105,10 +148,10 @@ export function LivePreview({ state, photos, profile, extras }: Props) {
         ref={box}
         style={{ blockSize: `${Math.round(PHONE_H * scale)}px` }}
       >
-        {names.map((name, index) => (
+        {[0, 1].map((index) => (
           <iframe
-            key={name}
-            name={name}
+            key={index}
+            ref={frames[index]}
             title={t('editor.livePreview.title')}
             className={index === front ? 'live-frame is-front' : 'live-frame'}
             tabIndex={index === front ? 0 : -1}
@@ -116,15 +159,9 @@ export function LivePreview({ state, photos, profile, extras }: Props) {
             width={PHONE_W}
             height={PHONE_H}
             style={{ transform: `scale(${scale})` }}
-            onLoad={() => onLoad(index)}
           />
         ))}
       </div>
-      {names.map((name, index) => (
-        <form key={name} ref={forms[index]} method="post" action="/preview/" target={name} hidden>
-          <input ref={inputs[index]} type="hidden" name="draft" />
-        </form>
-      ))}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import {
   acceptDescription,
   appendRewrite,
   appendTone,
+  sameVoice,
   COPY_TONES,
   isCopyTone,
   descriptionPrompt,
@@ -237,6 +238,19 @@ describe('groundedDescription alternate', () => {
   });
 });
 
+describe('groundedDescription tones', () => {
+  it('warm and refined are different paragraphs from the professional one', () => {
+    const pro = groundedDescription(PROPERTY);
+    const warm = groundedDescription(PROPERTY, { tone: 'warm' });
+    const refined = groundedDescription(PROPERTY, { tone: 'refined' });
+    assert.notEqual(pro, warm);
+    assert.notEqual(pro, refined);
+    assert.notEqual(warm, refined);
+    assert.ok(warm.startsWith('למגורים:'));
+    assert.ok(refined.startsWith('דירה בתל אביב.'));
+  });
+});
+
 describe('copy tones', () => {
   it('leaves the default voice exactly as it was', () => {
     assert.equal(appendTone('PROMPT', 'pro'), 'PROMPT');
@@ -251,6 +265,14 @@ describe('copy tones', () => {
         assert.equal(out.includes(banned), false, `${tone} contains ${banned}`);
       }
     }
+  });
+
+  it('treats a shared opening as the same voice', () => {
+    const previous = 'דירת 4 חדרים בשכונת רסקו א׳ בחולון. שטח הדירה 154 מ״ר.';
+    assert.equal(sameVoice(previous, previous), true);
+    assert.equal(sameVoice(`${previous} ועוד מילה.`, previous), true);
+    assert.equal(sameVoice('מקום לגור בו. דירת 4 חדרים בחולון.', previous), false);
+    assert.equal(sameVoice('', previous), false);
   });
 
   it('accepts only the three tones from a request', () => {

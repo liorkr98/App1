@@ -589,6 +589,28 @@ p + p{margin-top:.9rem}
   color:var(--olive);
   font-variant-numeric:tabular-nums;
   line-height:1.1;
+  unicode-bidi:isolate;
+}
+/* "3" and "דקות" stay one phrase, number at the start of the Hebrew line. */
+.minute-pair{
+  display:inline-flex;
+  align-items:baseline;
+  gap:.28rem;
+  unicode-bidi:isolate;
+  white-space:nowrap;
+}
+.area-map-walk small{
+  font-family:'Assistant',sans-serif;
+  font-size:.58em;
+  font-weight:600;
+  color:var(--muted);
+}
+/* The enrichment column stacks the noun under the numeral. The map keeps them on one line. */
+.erow .mins .minute-pair{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:.15rem;
 }
 /* ODbL. A licence condition, so it is not styled to disappear. */
 .area-map-credit{
@@ -1116,4 +1138,24 @@ html[data-logo='watermark'] .agent-bar .dot{
 
 @media (min-width: 320px){
   body{padding-block-end:7.5rem}
+}
+
+/*
+  The editor's phone. A fixed bar and a fixed dock sit on top of whatever
+  the agent is looking at, so every template reads as the same tour and the
+  map legend ends up under the WhatsApp button. In the preview they stay in
+  the flow, and the page opens on the template's own first screen.
+*/
+html[data-preview] .compact-bar{
+  display:none;
+  animation:none;
+}
+html[data-preview] .cta-dock{
+  position:static;
+  max-inline-size:none;
+  background:transparent;
+  padding-block-end:1.4rem;
+}
+html[data-preview] body{
+  padding-block-end:1.5rem;
 }

@@ -1,5 +1,6 @@
 ---
 import type { Listing } from '@/types/listing';
+import { sunAnchor } from '@/features/sun/anchor';
 import {
   ASPECT_BEARING,
   PLOT,
@@ -30,8 +31,10 @@ interface Props {
 
 /**
  * Heliograph (Paper, homes only). Scroll is one day: the sun crosses a sky
- * plot drawn over the balcony's direction, the page's light goes from dawn
- * to night, and the photographs warm with the hour (bindHeliograph).
+ * plot drawn over the balcony's direction. The page opens at sunrise —
+ * the first hour the sun is up, not the dark hour before it — and
+ * scrolling carries it to night. The photographs warm with the hour
+ * (bindHeliograph). A reader who asked for stillness stays at 12:45.
  *
  * PRIVACY. The coordinates are never on the page (Listing.location says so).
  * The sun is computed here, on the server, from coordinates ROUNDED TO 0.1°
@@ -46,16 +49,15 @@ const cover = listing.media.cover;
 const lines = titleLines(listing);
 const place = stagePlace(listing);
 
-const aspectFact = listing.facts.find((f) => f.key === 'aspect' && f.present && typeof f.value === 'string');
-const aspect = typeof aspectFact?.value === 'string' ? aspectFact.value : undefined;
-const facing = aspect !== undefined ? ASPECT_BEARING[aspect] : undefined;
-const lat = listing.location?.lat;
-const lng = listing.location?.lng;
-const sun =
-  facing !== undefined && lat !== undefined && lng !== undefined
-    ? { facing, lat: Math.round(lat * 10) / 10, lng: Math.round(lng * 10) / 10 }
-    : undefined;
-const approx = listing.location?.precision === 'area' || !listing.location?.street;
+// A saved listing has no lat/lng — the editor never writes a pin. The street
+// midpoint from the area lookup is the sun's anchor, rounded inside sunAnchor.
+const anchor = sunAnchor({
+  facts: listing.facts,
+  ...(listing.location ? { location: listing.location } : {}),
+  ...(listing.areaPlaces?.origin ? { origin: listing.areaPlaces.origin } : {}),
+});
+const sun = anchor ? { facing: anchor.facing, lat: anchor.lat, lng: anchor.lng } : undefined;
+const approx = anchor?.approx === true;
 
 // The day the page scrolls through, as a table: [hour, bearing, altitude].
 const FROM = 4.5;
@@ -72,10 +74,20 @@ const table = (season: Season) => {
 };
 const tables = sun ? { summer: table('summer'), winter: table('winter') } : undefined;
 
-// The resting frame: summer, a quarter to one — the sun near its highest.
-const REST_HOUR = 12.75;
-const rest = sun ? sunPosition(seasonMoment('summer', REST_HOUR), sun.lat, sun.lng) : undefined;
+// The frame the page opens on: the first summer hour the sun is above the
+// horizon. 04:30 is still night in Israel, and a listing must not open in
+// the dark. Scroll walks this forward to night. Reduced motion is painted
+// to 12:45 by bindHeliograph.
+const openHour = (() => {
+  if (!sun) return 4.5;
+  for (let hour = FROM; hour <= TO + 1e-9; hour += STEP) {
+    if (sunPosition(seasonMoment('summer', hour), sun.lat, sun.lng).altitude >= 0) return hour;
+  }
+  return 12.75;
+})();
+const rest = sun ? sunPosition(seasonMoment('summer', openHour), sun.lat, sun.lng) : undefined;
 const [restX, restY] = rest ? plotPoint(rest) : [PLOT.cx, PLOT.cy];
+const openClock = `${String(Math.floor(openHour)).padStart(2, '0')}:${String(Math.round((openHour % 1) * 60)).padStart(2, '0')}`;
 // Facing within 60°, catching the facade at an angle within 90°, else behind.
 const stateOf = (bearing: number, altitude: number) =>
   altitude < -6 ? 'night' : altitude < 0 ? 'twilight'
@@ -134,7 +146,7 @@ const strings = {
         <circle cx={restX.toFixed(1)} cy={restY.toFixed(1)} r="8" class="hl-sun" data-sun />
       </svg>
       <div class="hl-read">
-        <p class="hl-clock"><bdi data-clock>12:45</bdi></p>
+        <p class="hl-clock"><bdi data-clock>{openClock}</bdi></p>
         <div class="hl-seasons" role="group" aria-label={t('listing.helio.seasons')} aria-hidden="true">
           <button type="button" data-season="summer" aria-pressed="true"><bdi>21</bdi> {t('listing.helio.summer')}</button>
           <button type="button" data-season="winter" aria-pressed="false"><bdi>21</bdi> {t('listing.helio.winter')}</button>

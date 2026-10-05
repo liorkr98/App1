@@ -1,4 +1,6 @@
+import { OSM_ATTRIBUTION, type AreaPlaces } from '@/features/listings/area-note';
 import { allowedPreviewUrl } from '@/features/preview/preview-media';
+import { coarseSunPoint } from '@/features/sun/anchor';
 import type { Listing } from '@/types/listing';
 
 import { listingFromRow, type ListingRow } from './listing-from-row';
@@ -13,7 +15,10 @@ import { SUPABASE_URL } from './supabase';
  * anything a draft cannot carry:
  *   - the id, slug and status are ours, not the client's: 'draft', which
  *     also keeps the page's analytics beacon off (BaseListing)
- *   - coordinates are never accepted (the page only has what a save has)
+ *   - a pin is never accepted. A coarse sun anchor (`sun`, already rounded
+ *     to 0.1° and rounded again here) may be attached as the street
+ *     midpoint the sun table is computed from. It is not written to
+ *     location, so the map does not gain a pin.
  *   - every picture URL must pass allowedPreviewUrl, or it is dropped
  *   - indexable is always false
  *
@@ -96,6 +101,37 @@ export function previewListing(input: unknown, origin: string): Listing | undefi
     og_image_hash: null,
     audience: typeof input.audience === 'string' ? text(input.audience, 20) : null,
     hyad_mark: input.hyad_mark !== false,
+    ...(isRecord(input.area_places) ? { area_places: input.area_places } : {}),
   };
-  return listingFromRow(row);
+  const listing = listingFromRow(row);
+  return listing ? withSun(listing, input.sun) : undefined;
+}
+
+/**
+ * The sun template needs a point and the editor does not store one on the
+ * listing. The area lookup's street midpoint arrives already coarse; it is
+ * rounded again and kept off `location` so the preview cannot grow a pin.
+ */
+function withSun(listing: Listing, raw: unknown): Listing {
+  if (typeof raw !== 'object' || raw === null) return listing;
+  const lat = Number((raw as { lat?: unknown }).lat);
+  const lng = Number((raw as { lng?: unknown }).lng);
+  const sun = coarseSunPoint(lat, lng);
+  if (!sun) return listing;
+  const prev = listing.areaPlaces;
+  const street = prev?.street ?? listing.location?.street;
+  const areaPlaces: AreaPlaces = {
+    city: prev?.city || listing.location?.city || '',
+    ...(street ? { street } : {}),
+    neighbourhoods: prev?.neighbourhoods ?? [],
+    schools: prev?.schools ?? [],
+    transit: prev?.transit ?? [],
+    parks: prev?.parks ?? [],
+    community: prev?.community ?? [],
+    shops: prev?.shops ?? [],
+    origin: { lat: sun.lat, lon: sun.lng },
+  };
+  const credits = new Set(listing.textAttributions ?? []);
+  credits.add(OSM_ATTRIBUTION);
+  return { ...listing, areaPlaces, textAttributions: [...credits] };
 }

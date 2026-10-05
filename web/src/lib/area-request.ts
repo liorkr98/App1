@@ -12,6 +12,8 @@ import { supabase } from './supabase';
 export interface AreaAnswer {
   places: boolean;
   pending: boolean;
+  /** Coarse sun anchor, already rounded. Absent when the street has no point. */
+  sun?: { lat: number; lng: number };
 }
 
 export async function requestArea(listingId: string): Promise<AreaAnswer | undefined> {
@@ -26,8 +28,17 @@ export async function requestArea(listingId: string): Promise<AreaAnswer | undef
       body: JSON.stringify({ listingId }),
     });
     if (!response.ok) return undefined;
-    const body = (await response.json()) as { places?: unknown; pending?: unknown };
-    return { places: body.places === true, pending: body.pending === true };
+    const body = (await response.json()) as { places?: unknown; pending?: unknown; sun?: unknown };
+    const sun = body.sun;
+    const point =
+      typeof sun === 'object' && sun !== null
+        ? { lat: Number((sun as { lat?: unknown }).lat), lng: Number((sun as { lng?: unknown }).lng) }
+        : undefined;
+    return {
+      places: body.places === true,
+      pending: body.pending === true,
+      ...(point && Number.isFinite(point.lat) && Number.isFinite(point.lng) ? { sun: point } : {}),
+    };
   } catch {
     return undefined;
   }

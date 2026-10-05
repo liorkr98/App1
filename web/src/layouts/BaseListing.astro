@@ -29,9 +29,14 @@ interface Props {
   robots?: string;
   /** True when the walk section will render. walkFirst then hides the hero. */
   hasWalk?: boolean;
+  /**
+   * The editor's phone. Hides the compact bar and unpins the WhatsApp dock
+   * so the template's first screen and the map legend stay readable.
+   */
+  preview?: boolean;
 }
 
-const { listing, ogFactKeys, heroHeight, robots: robotsOverride, hasWalk = false } = Astro.props;
+const { listing, ogFactKeys, heroHeight, robots: robotsOverride, hasWalk = false, preview = false } = Astro.props;
 const sellerRole = listing.seller.role ? canonicalSellerRole(listing.seller.role) : '';
 
 /**
@@ -108,6 +113,7 @@ const showBarLogo =
   data-category={listing.category}
   data-logo={logoPlacement}
   data-has-walk={hasWalk ? '1' : undefined}
+  data-preview={preview ? '' : undefined}
   style={`--heroH:${heroHeight};--accent:${accent.base};--accent-lift:${accent.lift}`}
 >
 <head>
@@ -233,5 +239,13 @@ const showBarLogo =
 </dialog>
 
 <script src="../scripts/listing-enhance.ts"></script>
+{preview && (
+  <script is:inline>
+    document.addEventListener('click', function (event) {
+      var link = event.target instanceof Element ? event.target.closest('a[href]') : null;
+      if (link) event.preventDefault();
+    }, true);
+  </script>
+)}
 </body>
 </html>

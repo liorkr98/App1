@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react';
 
 import { ACCENTS, type AccentId, isAccentId } from '@/features/agents/accents';
 import type { ListingCategory } from '@/features/listings/schemas';
-import { templateFits } from '@/features/templates/manifest';
+import { templateFits, templateSpec } from '@/features/templates/manifest';
 import type { SuggestReason } from '@/features/templates/suggest';
 import { TEMPLATE_IDS, type TemplateId } from '@/types/listing';
 
@@ -46,8 +46,63 @@ export function TemplateStep({
   // Every template when the category is not chosen yet; otherwise only those
   // drawn for it. Still enumerated from TEMPLATE_IDS, never a second list.
   const offered = category ? TEMPLATE_IDS.filter((id) => templateFits(id, category)) : TEMPLATE_IDS;
+  const featured = offered.filter((id) => {
+    const spec = templateSpec(id);
+    return spec.ls !== undefined || spec.composed !== undefined;
+  });
+  if (suggestion && featured.includes(suggestion.id)) {
+    featured.splice(0, featured.length, suggestion.id, ...featured.filter((id) => id !== suggestion.id));
+  }
+  const classic = offered.filter((id) => !featured.includes(id));
   const cover = photos[0];
   const film = [0, 1, 2, 3].map((index) => photos[index]);
+
+  const card = (template: TemplateId) => {
+    const shot = templateSpec(template).ls !== undefined;
+    return (
+      <li key={template}>
+        <button
+          type="button"
+          className={template === chosen ? 'template-card chosen' : 'template-card'}
+          aria-pressed={template === chosen}
+          onClick={() => onChoose(template)}
+        >
+          <span
+            className={shot ? `template-thumb is-shot thumb-${template}` : `template-thumb thumb-${template}`}
+            data-template={template}
+            aria-hidden="true"
+            style={{ ['--accent']: ACCENTS.find((item) => item.id === palette)?.base } as CSSProperties}
+          >
+            {shot ? (
+              <img className="thumb-shot" src={`/home/templates/${template}.webp`} alt="" />
+            ) : template === 'walkFirst' ? (
+              <span className="thumb-film">
+                {film.map((src, index) =>
+                  src ? <img key={`${src}-${index}`} src={src} alt="" /> : <span key={index} />,
+                )}
+              </span>
+            ) : cover ? (
+              <img className="thumb-hero-photo" src={cover} alt="" />
+            ) : (
+              <span className="thumb-hero" />
+            )}
+            {shot ? null : (
+              <>
+                <span className="thumb-price" />
+                <span className="thumb-facts">
+                  <span />
+                  <span />
+                  <span />
+                </span>
+              </>
+            )}
+          </span>
+          <span className="choice-name">{t(`editor.templates.${template}`)}</span>
+          <span className="choice-note">{t(`editor.templates.${template}Note`)}</span>
+        </button>
+      </li>
+    );
+  };
 
   return (
     <div className="template-step">
@@ -98,45 +153,15 @@ export function TemplateStep({
 
       <p className="hint">{t('editor.templates.hint')}</p>
 
-      <ul className="template-grid">
-        {offered.map((template) => (
-          <li key={template}>
-            <button
-              type="button"
-              className={template === chosen ? 'template-card chosen' : 'template-card'}
-              aria-pressed={template === chosen}
-              onClick={() => onChoose(template)}
-            >
-              <span
-                className={`template-thumb thumb-${template}`}
-                data-template={template}
-                aria-hidden="true"
-                style={{ ['--accent']: ACCENTS.find((item) => item.id === palette)?.base } as CSSProperties}
-              >
-                {template === 'walkFirst' ? (
-                  <span className="thumb-film">
-                    {film.map((src, index) =>
-                      src ? <img key={`${src}-${index}`} src={src} alt="" /> : <span key={index} />,
-                    )}
-                  </span>
-                ) : cover ? (
-                  <img className="thumb-hero-photo" src={cover} alt="" />
-                ) : (
-                  <span className="thumb-hero" />
-                )}
-                <span className="thumb-price" />
-                <span className="thumb-facts">
-                  <span />
-                  <span />
-                  <span />
-                </span>
-              </span>
-              <span className="choice-name">{t(`editor.templates.${template}`)}</span>
-              <span className="choice-note">{t(`editor.templates.${template}Note`)}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
+      <h2 className="template-group">{t('editor.templates.groupNew')}</h2>
+      <ul className="template-grid">{featured.map(card)}</ul>
+
+      {classic.length > 0 ? (
+        <>
+          <h2 className="template-group">{t('editor.templates.groupClassic')}</h2>
+          <ul className="template-grid">{classic.map(card)}</ul>
+        </>
+      ) : null}
     </div>
   );
 }
