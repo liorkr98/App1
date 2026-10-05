@@ -58,6 +58,7 @@ export function FactsStep({ category, facts, onChange, audience, onAudience }: P
             <button
               key={option}
               type="button"
+              className="toggle-option"
               aria-pressed={audience === option}
               onClick={() => onAudience(audience === option ? undefined : option)}
             >
@@ -155,6 +156,7 @@ function Control({ category, fact, onAnswer, onClear }: ControlProps) {
       <div className="fact-toggle">
         <button
           type="button"
+          className="toggle-option"
           aria-pressed={fact.value === true}
           onClick={() => (fact.value === true ? onClear() : onAnswer(true))}
         >
@@ -162,6 +164,7 @@ function Control({ category, fact, onAnswer, onClear }: ControlProps) {
         </button>
         <button
           type="button"
+          className="toggle-option"
           aria-pressed={fact.value === false}
           onClick={() => (fact.value === false ? onClear() : onAnswer(false))}
         >

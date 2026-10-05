@@ -537,7 +537,8 @@
       "upload": "",
       "count": "",
       "clear": ""
-    }
+    },
+    "uploadRetry": ""
   },
   "home": {
     "tagline": "",

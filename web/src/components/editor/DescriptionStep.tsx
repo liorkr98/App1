@@ -82,7 +82,8 @@ export function DescriptionStep({
       <p className="hint">{t('editor.descriptionHint')}</p>
 
       <textarea
-        className="description"
+        className={suggesting ? 'description is-writing' : 'description'}
+        aria-busy={suggesting || undefined}
         value={text}
         rows={10}
         onChange={(event) => onChange(event.target.value)}

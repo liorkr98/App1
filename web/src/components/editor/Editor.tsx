@@ -956,8 +956,12 @@ export default function Editor() {
     })();
   };
 
+  /** Which way the last step change went, so the next step slides in from there. */
+  const [stepMotion, setStepMotion] = useState<'forward' | 'back'>('forward');
+
   const go = (delta: number) => {
     if (delta > 0 && step === 'photos' && photosBusy) return;
+    setStepMotion(delta < 0 ? 'back' : 'forward');
     persist();
     const target = steps[position + delta];
     if (target) setStep(target);
@@ -1015,7 +1019,13 @@ export default function Editor() {
         </div>
       </header>
 
-      <section className={step === 'template' ? 'step step-templates' : 'step'}>
+      {/* Keyed by step so each arrival is a fresh element and its entrance
+          plays; the direction follows the reading order (editor.css). */}
+      <section
+        key={step}
+        data-motion={stepMotion}
+        className={step === 'template' ? 'step step-templates' : 'step'}
+      >
         {step === 'category' ? (
           <CategoryStep chosen={state.category} onChoose={choose} />
         ) : null}
@@ -1228,12 +1238,13 @@ export default function Editor() {
         flip is ours to control.
       */}
       <footer className="nav">
-        <button type="button" onClick={() => go(-1)} disabled={position <= 0}>
+        <button type="button" className="nav-back" onClick={() => go(-1)} disabled={position <= 0}>
           {t('common.back')}
         </button>
 
         <button
           type="button"
+          className="nav-next"
           onClick={() => go(1)}
           disabled={
             position >= steps.length - 1 || !canAdvance(step, state) || (step === 'photos' && photosBusy)

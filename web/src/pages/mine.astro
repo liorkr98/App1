@@ -443,7 +443,14 @@ import '../styles/dash.css';
         toggle.className = 'act more-toggle';
         toggle.setAttribute('popovertarget', id);
         toggle.setAttribute('aria-label', t('dash.more'));
-        toggle.textContent = '⋯';
+        // Three dots drawn, not the "⋯" character: a glyph standing in for an
+        // icon renders differently on every phone font.
+        toggle.append(
+          icon(
+            'M4.4 12a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0-3.2 0M10.4 12a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0-3.2 0M16.4 12a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0-3.2 0',
+            true,
+          ),
+        );
         const menu = document.createElement('div');
         menu.id = id;
         menu.className = 'more-menu';
