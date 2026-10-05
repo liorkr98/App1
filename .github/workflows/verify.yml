@@ -94,6 +94,14 @@ jobs:
       - name: Verify the web logical-property rule actually fires
         run: bash scripts/verify-web-lint-fires.sh
 
+      # Every control in the new-listing flow answers a touch (5 Oct 2026:
+      # 24 of them did not). Source-level, so it runs before the build.
+      - name: Verify every editor control has a press or hover state
+        run: node scripts/verify-editor-motion.mjs
+
+      - name: Verify the editor motion check actually fires
+        run: bash scripts/verify-editor-motion-fires.sh
+
       - name: Build web
         run: npm run build --prefix web
 

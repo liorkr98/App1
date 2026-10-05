@@ -4,11 +4,12 @@ import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 
 import {
-  allPlaces,
-  hasPlaces,
-  type AreaPlace,
-  type AreaPlaces,
-} from '@/features/listings/area-note';
+  acceptAgentDescription,
+  AGENT_SYSTEM_PROMPT,
+  agentPrompt,
+  nextAgentDescription,
+  type AgentCopyInput,
+} from '@/features/listings/agent-copy';
 import {
   acceptDescription,
   appendRewrite,
@@ -24,18 +25,19 @@ import {
 import { LISTING_CATEGORIES, type ListingCategory } from '@/features/listings/schemas';
 import type { Fact } from '@/types/listing';
 
+import { ensureAreaPlaces } from '../../lib/area-lookup';
 import { deepseekParagraph, deepseekParagraphStreaming } from '../../lib/deepseek';
-import { addressForQuery, areaPlaces } from '../../lib/overpass';
-import { walkMinutes } from '../../lib/routing';
 import { supabaseAsUser, supabaseConfigured } from '../../lib/supabase';
 
 /**
  * POST /api/description — the suggested Hebrew description for one listing.
  *
- * The paragraph is about the property: rooms, condition, light, layout.
- * Surroundings stay on the map. The address is still looked up, and the
- * named places are stored on the row for that map, but they are not
- * handed to the model.
+ * A FLAT IS DESCRIBED THE WAY AN AGENT WRITES IT (5 Oct 2026): opening, the
+ * apartment, the building, the neighbourhood with routed walking minutes, a
+ * closing line — agent-copy.ts. The surroundings come from the same cache
+ * /api/area fills (lib/area-lookup.ts), so a listing whose address was saved
+ * already has them and this press costs no Overpass query. A car keeps the
+ * one-paragraph writer in listing-copy.ts; it has no neighbourhood.
  *
  * WHY A SERVER ROUTE. The model key is a secret and the editor is a browser.
  * Those two facts decide the shape entirely: the island sends a listing id and
@@ -47,10 +49,17 @@ import { supabaseAsUser, supabaseConfigured } from '../../lib/supabase';
  * against the same invented list. The row is the only thing that can ground
  * its own description.
  *
- * The answer is the property paragraph (source: 'model', or 'facts' when
- * the model is absent or rejected). A second press sends the previous
- * paragraph so the next one is a different wording of the same facts.
- * No facts at all is `no_facts` — the box stays empty for the agent.
+ * The answer is `{ text, source, reason?, areaPending }`. `source` is 'model'
+ * or 'facts' (no model involved), and when it is 'facts' `reason` says why:
+ * `no_key` (DEEPSEEK_API_KEY is not set on the Worker), `no_answer` (timeout
+ * or provider error), `rejected` (the reply failed a grounding check) or
+ * `repeated` (it matched the text already in the box). The editor shows it,
+ * because "the AI wrote this" and "the AI never ran" read the same otherwise.
+ *
+ * A second press sends the previous text, and the answer is never that text
+ * again: the model is told to rephrase and a repeat is refused, and the
+ * fallback moves on to its next variant. No facts at all is `no_facts` — the
+ * box stays empty for the agent.
  *
  * NOT A PAGE-RENDER FETCH (CLAUDE.md §12). This runs when an agent presses a
  * button in the editor, the result is stored on their row like any other field
@@ -94,43 +103,56 @@ function sse(run: (send: Send) => Promise<void>): Response {
   });
 }
 
-async function modelText(
-  apiKey: string | undefined,
-  system: string,
-  user: string,
-  accept: (raw: string) => string | undefined,
-  fallback: Record<string, unknown>,
-  successSource: string,
-  stream: boolean,
-  temperature?: number,
-): Promise<Response> {
-  const succeed = (text: string) => ({ ...fallback, text, source: successSource });
+/** Why the text is not the model's. Absent when it is. */
+type FallbackReason = 'no_key' | 'no_answer' | 'rejected' | 'repeated';
 
-  if (!apiKey) {
-    return stream ? sse(async (send) => send('done', fallback)) : json(fallback, 200);
+interface ModelCall {
+  apiKey: string | undefined;
+  system: string;
+  user: string;
+  /** The reply admitted, or why not. */
+  check: (raw: string) => string | 'rejected' | 'repeated';
+  fallback: Record<string, unknown>;
+  stream: boolean;
+  temperature?: number;
+  maxTokens?: number;
+  timeoutMs?: number;
+}
+
+const isReason = (value: string): value is 'rejected' | 'repeated' =>
+  value === 'rejected' || value === 'repeated';
+
+async function modelText(call: ModelCall): Promise<Response> {
+  const fallbackFor = (reason: FallbackReason) => ({ ...call.fallback, reason });
+  const settle = (raw: string | undefined) => {
+    if (!raw) return fallbackFor('no_answer');
+    const checked = call.check(raw);
+    return isReason(checked) ? fallbackFor(checked) : { ...call.fallback, text: checked, source: 'model' };
+  };
+
+  if (!call.apiKey) {
+    const answer = fallbackFor('no_key');
+    return call.stream ? sse(async (send) => send('done', answer)) : json(answer, 200);
   }
 
-  if (stream) {
+  const request = {
+    apiKey: call.apiKey,
+    system: call.system,
+    user: call.user,
+    ...(call.temperature === undefined ? {} : { temperature: call.temperature }),
+    ...(call.maxTokens === undefined ? {} : { maxTokens: call.maxTokens }),
+    ...(call.timeoutMs === undefined ? {} : { timeoutMs: call.timeoutMs }),
+  };
+
+  if (call.stream) {
     return sse(async (send) => {
       send('status', { phase: 'model' });
-      const raw = await deepseekParagraphStreaming(
-        { apiKey, system, user, ...(temperature === undefined ? {} : { temperature }) },
-        (token) => send('token', { t: token }),
-      );
-      const accepted = raw ? accept(raw) : undefined;
-      send('done', accepted ? succeed(accepted) : fallback);
+      const raw = await deepseekParagraphStreaming(request, (token) => send('token', { t: token }));
+      send('done', settle(raw));
     });
   }
 
-  const raw = await deepseekParagraph({
-    apiKey,
-    system,
-    user,
-    ...(temperature === undefined ? {} : { temperature }),
-  });
-  const accepted = raw ? accept(raw) : undefined;
-  if (accepted) return json(succeed(accepted), 200);
-  return json(fallback, 200);
+  return json(settle(await deepseekParagraph(request)), 200);
 }
 
 function isCategory(value: unknown): value is ListingCategory {
@@ -139,66 +161,6 @@ function isCategory(value: unknown): value is ListingCategory {
 
 function asString(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() !== '' ? value.trim() : undefined;
-}
-
-/**
- * The same places with routed walking minutes attached, where a router had an
- * answer.
- *
- * One matrix request for every place at once. A router that is not configured,
- * or does not answer, leaves every `walkMinutes` undefined — which renders as
- * no time at all rather than as a guess (CLAUDE.md §2).
- */
-async function withWalkMinutes(
-  places: AreaPlaces | undefined,
-): Promise<AreaPlaces | undefined> {
-  if (!places?.origin) return places;
-
-  const flat = allPlaces(places);
-  if (flat.length === 0) return places;
-
-  const minutes = await walkMinutes(places.origin, flat);
-  const byName = new Map(flat.map((place, index) => [place.name, minutes[index]]));
-
-  const timed = (group: readonly AreaPlace[]): AreaPlace[] =>
-    group.map((place) => {
-      const found = byName.get(place.name);
-      return found === undefined ? place : { ...place, walkMinutes: found };
-    });
-
-  return {
-    ...places,
-    neighbourhoods: timed(places.neighbourhoods),
-    schools: timed(places.schools),
-    transit: timed(places.transit),
-    parks: timed(places.parks),
-    community: timed(places.community),
-    shops: timed(places.shops),
-  };
-}
-
-/**
- * Cached OSM names on the listing row, when they are still for this address.
- *
- * The seller presses the button more than once — to get a different paragraph,
- * or after editing a fact — and each press would otherwise be another query
- * against a service run on donations. A cache keyed to the address it was
- * fetched for also means changing the street correctly invalidates it.
- */
-function cachedPlaces(
-  value: unknown,
-  where: { city: string; street: string },
-): AreaPlaces | undefined {
-  if (typeof value !== 'object' || value === null) return undefined;
-
-  const cached = value as Partial<AreaPlaces>;
-  if (cached.city !== where.city) return undefined;
-  if (cached.street !== where.street) return undefined;
-
-  const lists = ['neighbourhoods', 'schools', 'transit', 'parks', 'community', 'shops'] as const;
-  if (!lists.every((key) => Array.isArray(cached[key]))) return undefined;
-
-  return cached as AreaPlaces;
 }
 
 export const POST: APIRoute = async ({ request }) => {
@@ -247,78 +209,68 @@ export const POST: APIRoute = async ({ request }) => {
 
   const location = (typeof row.location === 'object' && row.location !== null
     ? row.location
-    : {}) as { city?: unknown; street?: unknown };
+    : {}) as { city?: unknown };
   const city = asString(location.city);
-  const street = asString(location.street);
 
   const apiKey = env.DEEPSEEK_API_KEY;
   const stream = wantsStream(request);
 
-  // ---------------------------------------------------------------- the area
-  //
-  // The normalised address is the cache key as well as the query. Comparing a
-  // stored `סוקולוב` against a raw `סוקולוב 12` never matches, and every press
-  // of the button then queried Overpass again.
-  const where = city && street ? addressForQuery(city, street) : undefined;
+  const facts = Array.isArray(row.facts) ? (row.facts as Fact[]) : [];
+  const again = previous !== '';
+  const notRepeated = (text: string): string | 'repeated' =>
+    again && sameParagraph(text, previous) ? 'repeated' : text;
 
-  if (where) {
-    const cached = cachedPlaces(row.area_places, where);
-    const places = cached ?? (await areaPlaces(where.city, where.street));
+  // -------------------------------------------------------------------- a car
+  if (row.category !== 'property') {
+    const input: ListingCopyInput = { category: row.category, facts, ...(city ? { city } : {}) };
+    const grounded = groundedDescription(input, { alternate: again });
+    if (!grounded.trim()) return json({ error: 'no_facts' }, 409);
 
-    const routed = cached ? places : await withWalkMinutes(places);
-
-    if (routed && hasPlaces(routed)) {
-      const places = routed;
-      /*
-       * Kept on the listing row so a second press costs nothing, and so the
-       * published page can carry the ODbL credit for text derived from these
-       * names (CLAUDE.md §10). Written under the owner's own policy — it is
-       * their row — and a failure here is not worth failing the request for.
-       */
-      if (!cached) {
-        await client
-          .from('listings')
-          .update({ area_places: places })
-          .eq('id', listingId);
-      }
-
-      // The places stay on the row for the map. They do not become the
-      // description — that paragraph is about the property.
-    }
+    return modelText({
+      apiKey,
+      system: DESCRIPTION_SYSTEM_PROMPT,
+      user: appendRewrite(appendTone(descriptionPrompt(input), tone), previous),
+      check: (raw) => {
+        const accepted = acceptDescription(raw, input);
+        return accepted ? notRepeated(accepted) : 'rejected';
+      },
+      fallback: { text: grounded, source: 'facts', area: true, areaPending: false },
+      stream,
+      ...(again ? { temperature: 0.85 } : {}),
+    });
   }
 
-  // ------------------------------------------------- the seller's own answers
+  // ------------------------------------------------------------------- a flat
   //
-  // Reached either because there is no address to look up, or because OSM did
-  // not answer in time. Those are different situations for the CLIENT: the
-  // second one is worth asking about again in a moment, and `areaPending` is
-  // how the editor knows which it got. Overpass is a public service and a busy
-  // minute is normal; a second attempt usually lands.
-  const areaPending = Boolean(where);
+  // The surroundings, from the row's cache or looked up now (one path with
+  // /api/area). `pending` means OpenStreetMap did not answer in time: the
+  // text is written without a neighbourhood and the editor asks once more in
+  // a moment, when a second attempt usually lands.
+  const { places, pending } = await ensureAreaPlaces(client, listingId, row);
 
-  const input: ListingCopyInput = {
+  const input: AgentCopyInput = {
     category: row.category,
-    facts: Array.isArray(row.facts) ? (row.facts as Fact[]) : [],
+    facts,
     ...(city ? { city } : {}),
+    ...(places ? { places } : {}),
   };
 
-  const again = previous !== '';
-  const grounded = groundedDescription(input, { alternate: again });
+  const fallbackText = nextAgentDescription(input, previous);
   // Nothing to say about the property: the editor keeps the box empty.
-  if (!grounded.trim()) return json({ error: 'no_facts' }, 409);
+  if (!fallbackText.trim()) return json({ error: 'no_facts' }, 409);
 
-  return modelText(
+  return modelText({
     apiKey,
-    DESCRIPTION_SYSTEM_PROMPT,
-    appendRewrite(appendTone(descriptionPrompt(input), tone), previous),
-    (raw) => {
-      const accepted = acceptDescription(raw, input);
-      if (!accepted) return undefined;
-      return again && sameParagraph(accepted, previous) ? undefined : accepted;
+    system: AGENT_SYSTEM_PROMPT,
+    user: appendRewrite(appendTone(agentPrompt(input), tone), previous),
+    check: (raw) => {
+      const accepted = acceptAgentDescription(raw, input);
+      return accepted ? notRepeated(accepted) : 'rejected';
     },
-    { text: grounded, source: 'facts', areaPending },
-    'model',
+    fallback: { text: fallbackText, source: 'facts', area: places !== undefined, areaPending: pending },
     stream,
-    again ? 0.85 : undefined,
-  );
+    temperature: again ? 0.85 : 0.5,
+    maxTokens: 900,
+    timeoutMs: 30_000,
+  });
 };

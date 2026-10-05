@@ -60,6 +60,7 @@ export function DisclosuresStep({ items, onChange, category }: Props) {
               <span>{item}</span>
               <button
                 type="button"
+                className="disclosures-remove"
                 onClick={() => remove(index)}
                 aria-label={t('editor.disclosuresRemove')}
               >

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import type { AccentId } from '@/features/agents/accents';
 import { photoFlags, suggestedOrder, type PhotoCheck } from '@/features/listings/photo-quality';
 
@@ -123,6 +123,7 @@ export function PhotosStep({
   category,
 }: Props) {
   const [dragging, setDragging] = useState<number | null>(null);
+  const strip = useFlip(photos.map((photo) => photo.id).join('|'));
   const warnings = photoWarnings(photos);
   const warningCopy: Record<(typeof warnings)[number], string> = {
     few: t('editor.photosWarnFew'),
@@ -193,7 +194,7 @@ export function PhotosStep({
         <li>{t('guide.before4')}</li>
       </ul>
       <details className="photo-rules-more">
-        <summary>{t('listing.readMore')}</summary>
+        <summary className="rules-toggle">{t('listing.readMore')}</summary>
         <ul>
           <li>{t('guide.shoot1')}</li>
           <li>{t('guide.shoot2')}</li>
@@ -224,11 +225,18 @@ export function PhotosStep({
       ) : null}
 
       {photos.length > 0 ? (
-        <ul className="strip">
+        <ul className="strip" ref={strip}>
           {photos.map((photo, index) => (
             <li
               key={photo.id}
-              className={dragging === index ? 'shot dragging' : 'shot'}
+              data-id={photo.id}
+              className={[
+                'shot',
+                dragging === index ? 'dragging' : '',
+                photo.status ? `is-${photo.status}` : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
               draggable
               onDragStart={(event) => {
                 // An input inside a draggable tile would otherwise start a
@@ -267,7 +275,23 @@ export function PhotosStep({
                 </span>
               ) : null}
 
-              {photo.status && photo.status !== 'uploaded' ? (
+              {photo.status === 'failed' && photo.file ? (
+                // The photo is still in memory: setting it back to 'local'
+                // is all a retry needs, the editor uploads what is local.
+                <button
+                  type="button"
+                  className="shot-state failed shot-retry"
+                  onClick={() =>
+                    onChange(
+                      photos.map((item) =>
+                        item.id === photo.id ? { ...item, status: 'local' as const } : item,
+                      ),
+                    )
+                  }
+                >
+                  {t('editor.uploadRetry')}
+                </button>
+              ) : photo.status && photo.status !== 'uploaded' ? (
                 <span className={`shot-state ${photo.status}`}>
                   {t(
                     photo.status === 'uploading'
@@ -276,6 +300,19 @@ export function PhotosStep({
                         ? 'editor.uploadFailed'
                         : 'editor.notUploaded',
                   )}
+                </span>
+              ) : null}
+
+              {photo.status === 'uploading' ? <span className="shot-progress" aria-hidden="true" /> : null}
+
+              {/* Only for a photo picked in this visit (it still has its
+                  file): one check that pulses as it lands. A listing opened
+                  from the dashboard does not flash a check on every tile. */}
+              {photo.status === 'uploaded' && photo.file ? (
+                <span className="shot-done" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M5 12.5l4.5 4.5L19 7.5" />
+                  </svg>
                 </span>
               ) : null}
 
@@ -288,6 +325,7 @@ export function PhotosStep({
                 */}
                 <button
                   type="button"
+                  className="shot-move"
                   onClick={() => move(index, index - 1)}
                   disabled={index === 0}
                   aria-label={t('editor.moveEarlier')}
@@ -296,6 +334,7 @@ export function PhotosStep({
                 </button>
                 <button
                   type="button"
+                  className="shot-move"
                   onClick={() => move(index, index + 1)}
                   disabled={index === photos.length - 1}
                   aria-label={t('editor.moveLater')}
@@ -362,4 +401,46 @@ export function PhotosStep({
       </p>
     </>
   );
+}
+
+/**
+ * Reordering animates: the photos that moved glide to their new places
+ * instead of jumping (FLIP — measure, then animate the difference back to
+ * zero). Transform only, so nothing else on the page shifts, and nothing at
+ * all for a reader who asked for less motion.
+ *
+ * Keyed on the ORDER of ids, so a status change on one tile (uploading →
+ * uploaded) does not read as a move. Positions are measured, not computed
+ * from indexes, so RTL needs no special case: whichever way the tile went on
+ * screen is the way it glides.
+ */
+function useFlip(order: string) {
+  const list = useRef<HTMLUListElement>(null);
+  const last = useRef(new Map<string, DOMRect>());
+
+  useLayoutEffect(() => {
+    const node = list.current;
+    const before = last.current;
+    const after = new Map<string, DOMRect>();
+    if (!node) return;
+    const still = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+
+    for (const item of node.querySelectorAll<HTMLElement>(':scope > li[data-id]')) {
+      const id = item.dataset.id ?? '';
+      const rect = item.getBoundingClientRect();
+      after.set(id, rect);
+      const was = before.get(id);
+      if (!was || still || typeof item.animate !== 'function') continue;
+      const dx = was.left - rect.left;
+      const dy = was.top - rect.top;
+      if (Math.abs(dx) < 1 && Math.abs(dy) < 1) continue;
+      item.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }], {
+        duration: 260,
+        easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+      });
+    }
+    last.current = after;
+  }, [order]);
+
+  return list;
 }

@@ -207,8 +207,9 @@ const RULES: { key: string; values: string[]; group: AreaGroup }[] = [
   },
   { key: 'leisure', values: ['sports_centre', 'fitness_centre', 'swimming_pool'], group: 'community' },
 
-  { key: 'shop', values: ['supermarket', 'convenience', 'greengrocer', 'bakery'], group: 'shop' },
-  { key: 'amenity', values: ['pharmacy'], group: 'shop' },
+  { key: 'shop', values: ['supermarket', 'convenience', 'greengrocer', 'bakery', 'mall'], group: 'shop' },
+  // A market (שוק) is where a lot of Israel does its weekly shopping.
+  { key: 'amenity', values: ['pharmacy', 'marketplace'], group: 'shop' },
 ];
 
 export function groupFor(tags: Record<string, string>): AreaGroup | undefined {

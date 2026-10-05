@@ -326,7 +326,18 @@
       "suggesting": "",
       "streaming": "",
       "suggestWhy": "",
-      "suggestFailed": ""
+      "suggestFailed": "",
+      "source": {
+        "model": "",
+        "facts": ""
+      },
+      "reason": {
+        "no_key": "",
+        "no_answer": "",
+        "rejected": "",
+        "repeated": ""
+      },
+      "noArea": ""
     },
     "review": {
       "title": "",
@@ -526,7 +537,8 @@
       "upload": "",
       "count": "",
       "clear": ""
-    }
+    },
+    "uploadRetry": ""
   },
   "home": {
     "tagline": "",
@@ -685,7 +697,6 @@
     "confirmArchive": "",
     "archivedDone": "",
     "archivedFailed": "",
-    "archivedHint": "",
     "noPhoto": "",
     "emptyTitle": "",
     "emptyBody": "",
@@ -693,7 +704,6 @@
     "signedOut": "",
     "signIn": "",
     "failed": "",
-    "draftHint": "",
     "staleHint": "",
     "countSuffix": "",
     "onboardTitle": "",
@@ -744,7 +754,15 @@
     "linkShort": "",
     "unitMinutes": "",
     "unitHours": "",
-    "unitDays": ""
+    "unitDays": "",
+    "statsDraft": "",
+    "statsArchived": "",
+    "continue": "",
+    "preview": "",
+    "restore": "",
+    "restoredDone": "",
+    "restoredFailed": "",
+    "more": ""
   },
   "legal": {
     "terms": "",

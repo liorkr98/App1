@@ -411,6 +411,84 @@ import '../styles/dash.css';
         return node;
       };
 
+      /**
+       * Back to the drafts, not straight back on air. Republishing goes
+       * through the editor's publish step and the server's publish gate
+       * (0016/0022) like any other publish; this only moves the row out of
+       * the archive, and decides nothing about what the agent may publish.
+       */
+      const restoreListing = async (slug: string, button: HTMLButtonElement) => {
+        button.disabled = true;
+        const { error } = await supabase().from('listings').update({ status: 'draft' }).eq('slug', slug);
+        button.disabled = false;
+        if (error) return tell(t('dash.restoredFailed'), 'bad');
+        const row = rows.find((candidate) => candidate.slug === slug);
+        if (row) row.status = 'draft';
+        tell(t('dash.restoredDone'));
+        paint();
+      };
+
+      /**
+       * "⋯": everything else a card can do, in a native popover — keyboard,
+       * Escape and outside-tap dismissal come with the element. Placed under
+       * its button by hand, because anchor positioning is not everywhere yet.
+       */
+      let menus = 0;
+      const moreMenu = (row: Row, edit: string) => {
+        const id = `more-${(menus += 1)}`;
+        const wrap = document.createElement('div');
+        wrap.className = 'more';
+        const toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.className = 'act more-toggle';
+        toggle.setAttribute('popovertarget', id);
+        toggle.setAttribute('aria-label', t('dash.more'));
+        // Three dots drawn, not the "⋯" character: a glyph standing in for an
+        // icon renders differently on every phone font.
+        toggle.append(
+          icon(
+            'M4.4 12a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0-3.2 0M10.4 12a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0-3.2 0M16.4 12a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0-3.2 0',
+            true,
+          ),
+        );
+        const menu = document.createElement('div');
+        menu.id = id;
+        menu.className = 'more-menu';
+        menu.setAttribute('popover', 'auto');
+        menu.setAttribute('role', 'menu');
+        const item = (node: HTMLElement) => {
+          node.setAttribute('role', 'menuitem');
+          menu.append(node);
+        };
+        if (row.status === 'published' || row.status === 'draft') item(link(t('dash.edit'), 'menu-item', edit));
+        if (row.status === 'published') {
+          item(button(t('dash.markSold'), 'menu-item', (self) => void markSold(row.slug, self)));
+        }
+        if (row.status !== 'archived') {
+          item(button(t('dash.archive'), 'menu-item', (self) => void archiveListing(row.slug, self)));
+        }
+        item(button(t('dash.delete'), 'menu-item is-danger', (self) => void deleteListing(row.slug, self)));
+        menu.addEventListener('toggle', (event) => {
+          if ((event as ToggleEvent).newState !== 'open') return;
+          const rect = toggle.getBoundingClientRect();
+          const width = menu.offsetWidth;
+          // inline-start is the right edge here (RTL): align the menu's
+          // start with the button's, and keep it on screen.
+          const start = Math.min(
+            Math.max(8, window.innerWidth - rect.right),
+            Math.max(8, window.innerWidth - width - 8),
+          );
+          const below = rect.bottom + 6 + menu.offsetHeight < window.innerHeight;
+          menu.style.setProperty('inset-inline-start', `${start}px`);
+          menu.style.setProperty(
+            'inset-block-start',
+            `${below ? rect.bottom + 6 : Math.max(8, rect.top - menu.offsetHeight - 6)}px`,
+          );
+        });
+        wrap.append(toggle, menu);
+        return wrap;
+      };
+
       const flatTitle = (row: Row) =>
         String(row.title ?? '').replace(/\s*\n\s*/g, ' ').trim() || '—';
 
@@ -594,79 +672,94 @@ import '../styles/dash.css';
         }
 
         // --- Body --------------------------------------------------------
+        //
+        // ONE SHAPE FOR EVERY STATUS. Every card has the same lines in the
+        // same places — title, price, place, stats, note, two actions and
+        // "⋯" — and a line with nothing to say keeps its height. Cards that
+        // changed shape by status (a stats row on some, a hint on others,
+        // three to six buttons) are why the grid would not line up.
         const body = document.createElement('div');
         body.className = 'body';
         const title = document.createElement('b');
+        title.className = 'title';
         // textContent, never innerHTML: the agent typed this.
         title.textContent = flatTitle(row);
-        const priceRow = document.createElement('div');
-        priceRow.className = 'price-row';
-        priceRow.append(priceNode(row));
-        const place = [row.location?.street, row.location?.city].filter(Boolean).join(', ');
-        if (place) {
-          const where = document.createElement('span');
-          where.className = 'where';
-          where.textContent = place;
-          priceRow.append(where);
-        }
-        body.append(title, priceRow);
+        title.title = flatTitle(row);
+        const where = document.createElement('span');
+        where.className = 'where';
+        where.textContent = [row.location?.street, row.location?.city].filter(Boolean).join(', ');
+        body.append(title, priceNode(row), where);
 
+        const stats = document.createElement('div');
+        stats.className = 'stats';
         if (row.status === 'published' || row.status === 'sold') {
-          const stats = document.createElement('div');
-          stats.className = 'stats';
-          const stat = (d: string, fill: boolean, value: number, label: string) => {
+          // Number over label, three equal columns: a row of "120 צפיות ·
+          // 7 וואטסאפ · 30 ימים באוויר" clipped on a 250px card.
+          const stat = (d: string, fill: boolean, value: number | undefined, label: string) => {
             const span = document.createElement('span');
+            const figure = document.createElement('span');
+            figure.className = 'n';
             const bdi = document.createElement('bdi');
-            bdi.textContent = num(value);
-            span.append(icon(d, fill), bdi, document.createTextNode(` ${label}`));
+            bdi.textContent = value === undefined ? '—' : num(value);
+            figure.append(icon(d, fill), bdi);
+            const caption = document.createElement('small');
+            caption.textContent = label;
+            span.append(figure, caption);
             return span;
           };
           stats.append(
             stat(EYE, false, row.views ?? 0, t('dash.views')),
             stat(CHAT, true, row.waTaps ?? 0, t('dash.waTaps')),
+            stat(CLOCK, false, daysLive(row), t('dash.daysLive')),
           );
-          const days = daysLive(row);
-          if (days !== undefined) stats.append(stat(CLOCK, false, days, t('dash.daysLive')));
-          body.append(stats);
+        } else {
+          stats.classList.add('is-quiet');
+          stats.textContent = row.status === 'draft' ? t('dash.statsDraft') : t('dash.statsArchived');
         }
+        body.append(stats);
+
+        const note = document.createElement('p');
+        note.className = 'hint';
+        if (row.status === 'published' && isStalePublished(row, Date.now())) {
+          note.textContent = t('dash.staleHint');
+        }
+        body.append(note);
 
         item.append(shot, body);
 
-        let hint = '';
-        if (row.status === 'draft') hint = t('dash.draftHint');
-        else if (row.status === 'archived') hint = t('dash.archivedHint');
-        else if (isStalePublished(row, Date.now())) hint = t('dash.staleHint');
-        if (hint) {
-          const note = document.createElement('p');
-          note.className = 'hint';
-          note.textContent = hint;
-          item.append(note);
-        }
-
-        // --- Actions -----------------------------------------------------
+        // --- Actions: always two, then "⋯" --------------------------------
+        const edit = `/new/?id=${encodeURIComponent(row.slug)}`;
         const acts = document.createElement('div');
         acts.className = 'acts';
-        if (sendable) {
+        if (row.status === 'published') {
           acts.append(
             link(t('dash.share'), 'act primary', `/a/${row.slug}/share/`),
             button(t('dash.copyLink'), 'act', () => void copy(href, row.slug)),
           );
+        } else if (row.status === 'draft') {
+          acts.append(
+            // The listing this card is for, not a blank new one.
+            link(t('dash.continue'), 'act primary', edit),
+            link(t('dash.preview'), 'act', `${edit}&step=preview`),
+          );
+        } else if (row.status === 'sold') {
+          acts.append(
+            link(t('dash.edit'), 'act', edit),
+            button(t('dash.copyLink'), 'act', () => void copy(href, row.slug)),
+          );
+        } else {
+          acts.append(
+            link(t('dash.edit'), 'act', edit),
+            button(t('dash.restore'), 'act', (self) => void restoreListing(row.slug, self)),
+          );
         }
-        // The listing this card is for, not a blank new one.
-        acts.append(link(t('dash.edit'), 'act', `/new/?id=${encodeURIComponent(row.slug)}`));
-        if (row.status === 'published') {
-          acts.append(button(t('dash.markSold'), 'act', (self) => void markSold(row.slug, self)));
-        }
-        if (row.status !== 'archived') {
-          acts.append(button(t('dash.archive'), 'act', (self) => void archiveListing(row.slug, self)));
-        }
-        acts.append(button(t('dash.delete'), 'act', (self) => void deleteListing(row.slug, self)));
+        acts.append(moreMenu(row, edit));
         item.append(acts);
 
         // Choosing a card opens it in the panel. Clicks on the card's own
         // links and buttons keep doing what they say.
         item.addEventListener('click', (event) => {
-          if ((event.target as Element).closest('a, button')) return;
+          if ((event.target as Element).closest('a, button, [popover]')) return;
           choose(row.slug);
         });
 
@@ -857,7 +950,6 @@ import '../styles/dash.css';
             const said = minutes === undefined ? undefined : durationParts(minutes);
             cells.push([t('dash.linkShort'), said ? `${said.value} ${t(UNIT[said.unit])}` : '—']);
           }
-          stats.style.setProperty('--n', String(cells.length));
           for (const [label, value] of cells) {
             const cell = document.createElement('div');
             const dt = document.createElement('dt');

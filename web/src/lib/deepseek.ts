@@ -43,6 +43,14 @@ export interface ParagraphRequest {
    * the same facts produce the same paragraph and the button looks dead.
    */
   temperature?: number;
+  /**
+   * Default 400 tokens and 12 s: one paragraph. The agent-format description
+   * is three paragraphs with the neighbourhood, which is roughly twice the
+   * Hebrew, and a cut-off reply fails its checks and falls back — so that
+   * caller asks for more room and more time.
+   */
+  maxTokens?: number;
+  timeoutMs?: number;
 }
 
 /**
@@ -68,13 +76,13 @@ export async function deepseekParagraph(
         // listing, and an agency publishing twenty flats would ship twenty
         // pages that read as one template.
         temperature: request.temperature ?? 0.4,
-        max_tokens: 400,
+        max_tokens: request.maxTokens ?? 400,
         messages: [
           { role: 'system', content: request.system },
           { role: 'user', content: request.user },
         ],
       }),
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+      signal: AbortSignal.timeout(request.timeoutMs ?? TIMEOUT_MS),
     });
 
     if (!response.ok) return undefined;
@@ -110,14 +118,14 @@ export async function deepseekParagraphStreaming(
       body: JSON.stringify({
         model: 'deepseek-chat',
         temperature: request.temperature ?? 0.4,
-        max_tokens: 400,
+        max_tokens: request.maxTokens ?? 400,
         stream: true,
         messages: [
           { role: 'system', content: request.system },
           { role: 'user', content: request.user },
         ],
       }),
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+      signal: AbortSignal.timeout(request.timeoutMs ?? TIMEOUT_MS),
     });
 
     if (!response.ok || !response.body) return undefined;

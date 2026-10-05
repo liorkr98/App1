@@ -79,11 +79,12 @@ export function RoomsStep({ photos, onChange }: Props) {
       </ul>
 
       <div className="room-nav">
-        <button type="button" onClick={() => setAt(index - 1)} disabled={index === 0}>
+        <button type="button" className="room-move" onClick={() => setAt(index - 1)} disabled={index === 0}>
           {t('editor.earlier')}
         </button>
         <button
           type="button"
+          className="room-move"
           onClick={() => setAt(index + 1)}
           disabled={index >= photos.length - 1}
         >
