@@ -115,9 +115,9 @@ rel["boundary"="administrative"]["name"~${JSON.stringify(cityPattern(city))}]->.
 .rels map_to_area->.city;
 way(area.city)["highway"]["name"~${JSON.stringify(pattern)}]->.scope;
 (
-  nwr(around.scope:${RADIUS_M})(area.city)["amenity"~"^(school|kindergarten|college|library|theatre|cinema|arts_centre|community_centre|pharmacy)$"];
+  nwr(around.scope:${RADIUS_M})(area.city)["amenity"~"^(school|kindergarten|college|library|theatre|cinema|arts_centre|community_centre|pharmacy|marketplace)$"];
   nwr(around.scope:${RADIUS_M})(area.city)["leisure"~"^(park|garden|playground|sports_centre|fitness_centre|swimming_pool)$"];
-  nwr(around.scope:${RADIUS_M})(area.city)["shop"~"^(supermarket|convenience|greengrocer|bakery)$"];
+  nwr(around.scope:${RADIUS_M})(area.city)["shop"~"^(supermarket|convenience|greengrocer|bakery|mall)$"];
   nwr(around.scope:${RADIUS_M})(area.city)["highway"="bus_stop"];
   nwr(around.scope:${RADIUS_M})(area.city)["railway"~"^(station|halt|tram_stop)$"];
   nwr(around.scope:800)(area.city)["place"~"^(suburb|neighbourhood|quarter)$"];

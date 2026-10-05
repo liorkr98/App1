@@ -1264,6 +1264,21 @@ textarea {
   cursor: default;
 }
 
+/* Who wrote the text in the box. Quiet when it was the model; the reason is
+   the useful part when it was not, so it reads as a note, never an error. */
+.suggest-source {
+  margin-block-start: 0.5rem;
+  padding-inline-start: 0.6rem;
+  border-inline-start: 2px solid var(--stone);
+  font-size: var(--t-label);
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.suggest-source.by-model {
+  border-inline-start-color: var(--olive);
+}
+
 /* ---------- A save or publish that did not work ----------
    Red, and it stays until the next attempt succeeds. Everything else in this
    editor is advisory; this one means the seller's work is not yet on the row,

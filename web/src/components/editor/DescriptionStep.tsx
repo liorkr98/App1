@@ -7,6 +7,37 @@ import type { Fact } from '@/types/listing';
 import { t } from '../../lib/i18n';
 import { Message, NumberList } from './Message';
 
+/** The fallback reasons /api/description can give (see that route). */
+const REASONS = ['no_key', 'no_answer', 'rejected', 'repeated'] as const;
+type SuggestReason = (typeof REASONS)[number];
+
+export interface SuggestSource {
+  /** 'model' when the AI wrote it, 'facts' when the writer that needs none did. */
+  by: 'model' | 'facts';
+  reason?: SuggestReason;
+  /** False when the text has no neighbourhood paragraph. */
+  area: boolean;
+}
+
+/** The answer's JSON, before it is trusted. */
+export interface SuggestAnswer {
+  text?: unknown;
+  source?: unknown;
+  reason?: unknown;
+  area?: unknown;
+  areaPending?: unknown;
+  error?: unknown;
+}
+
+export function sourceOf(body: SuggestAnswer): SuggestSource {
+  const reason = REASONS.find((known) => known === body.reason);
+  return {
+    by: body.source === 'model' ? 'model' : 'facts',
+    ...(reason ? { reason } : {}),
+    area: body.area !== false,
+  };
+}
+
 interface Props {
   text: string;
   generated?: string;
@@ -15,6 +46,8 @@ interface Props {
   onSuggest?: (() => void) | undefined;
   suggesting?: boolean;
   suggestFailed?: string | undefined;
+  /** Who wrote the text the last suggestion put in the box. */
+  source?: SuggestSource | undefined;
   /** The voice the next suggestion is written in (listing-copy COPY_TONES). */
   tone?: CopyTone;
   onTone?: (tone: CopyTone) => void;
@@ -35,6 +68,7 @@ export function DescriptionStep({
   onSuggest,
   suggesting,
   suggestFailed,
+  source,
   tone = 'pro',
   onTone,
 }: Props) {
@@ -82,6 +116,14 @@ export function DescriptionStep({
           </button>
           <p className="field-hint">{t('editor.description.suggestWhy')}</p>
         </div>
+      ) : null}
+
+      {source && !suggesting ? (
+        <p className={source.by === 'model' ? 'suggest-source by-model' : 'suggest-source'}>
+          {t(`editor.description.source.${source.by}`)}
+          {source.reason ? ` ${t(`editor.description.reason.${source.reason}`)}` : ''}
+          {source.area ? '' : ` ${t('editor.description.noArea')}`}
+        </p>
       ) : null}
 
       {suggestFailed ? (

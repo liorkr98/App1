@@ -326,7 +326,18 @@
       "suggesting": "",
       "streaming": "",
       "suggestWhy": "",
-      "suggestFailed": ""
+      "suggestFailed": "",
+      "source": {
+        "model": "",
+        "facts": ""
+      },
+      "reason": {
+        "no_key": "",
+        "no_answer": "",
+        "rejected": "",
+        "repeated": ""
+      },
+      "noArea": ""
     },
     "review": {
       "title": "",

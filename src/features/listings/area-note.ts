@@ -85,7 +85,7 @@ const CAPS = {
 } as const;
 
 /** Closest first when a router answered; otherwise the OSM order (already nearest). */
-function nearest(places: readonly AreaPlace[]): AreaPlace[] {
+export function nearest(places: readonly AreaPlace[]): AreaPlace[] {
   return [...places].sort((a, b) => {
     const left = a.walkMinutes ?? Number.POSITIVE_INFINITY;
     const right = b.walkMinutes ?? Number.POSITIVE_INFINITY;
@@ -93,10 +93,10 @@ function nearest(places: readonly AreaPlace[]): AreaPlace[] {
   });
 }
 
-const busesOf = (places: AreaPlaces) =>
+export const busesOf = (places: AreaPlaces) =>
   places.transit.filter((place) => place.mode !== 'rail');
 
-const railsOf = (places: AreaPlaces) =>
+export const railsOf = (places: AreaPlaces) =>
   places.transit.filter((place) => place.mode === 'rail');
 
 /**
@@ -106,7 +106,7 @@ const railsOf = (places: AreaPlaces) =>
  * and `isGrounded` allows exactly the numbers that appear here. A place with
  * no routed time is named without one rather than guessed at.
  */
-function named(place: AreaPlace): string {
+export function named(place: AreaPlace): string {
   return place.walkMinutes === undefined
     ? place.name
     : `${place.name} (${walkPhrase(place.walkMinutes)})`;
@@ -210,6 +210,18 @@ const OTHER_CITIES = [
  * mentioning schools without naming one of the real ones is not.
  */
 export function isGrounded(text: string, places: AreaPlaces): boolean {
+  const allowed = routedMinutes(places);
+  for (const number of text.match(/\d+/g) ?? []) {
+    if (!allowed.has(number)) return false;
+  }
+  return mentionsGrounded(text, places);
+}
+
+/**
+ * THE ONLY NUMBERS AN AREA SENTENCE MAY CARRY: routed walking minutes we were
+ * given, as strings.
+ */
+export function routedMinutes(places: AreaPlaces): Set<string> {
   /*
    * THE ONLY NUMBERS ALLOWED ARE ROUTED WALKING MINUTES WE WERE GIVEN.
    *
@@ -219,20 +231,26 @@ export function isGrounded(text: string, places: AreaPlaces): boolean {
    * minutes in the prompt, so "7 דקות" is allowed when the router said seven
    * and refused when it said nothing or said nine.
    */
-  const allowed = new Set(
+  return new Set(
     allPlaces(places)
       .map((place) => place.walkMinutes)
       .filter((minutes): minutes is number => minutes !== undefined)
       .map(String),
   );
-  for (const number of text.match(/\d+/g) ?? []) {
-    if (!allowed.has(number)) return false;
-  }
+}
 
+/**
+ * The claims half of `isGrounded`: a school, a station, a park, a community
+ * place or a shop is mentioned only together with a real one from the list,
+ * no other city is named, and nobody is counted. Shared with the listing
+ * description, which carries the area in its own paragraph (agent-copy.ts)
+ * and checks its numbers against the facts as well as the minutes.
+ */
+export function mentionsGrounded(text: string, places: AreaPlaces): boolean {
   const mentions = (needle: RegExp, group: readonly AreaPlace[]) =>
     !needle.test(text) || group.some((place) => text.includes(place.name));
 
-  if (!mentions(/בית ספר|בתי ספר|בי״ס|גן ילדים|גני ילדים|תיכון|חטיבה/, places.schools)) {
+  if (!mentions(/בית ה?ספר|בתי ה?ספר|בי״ס|גן ילדים|גני ילדים|גן הילדים|תיכון|חטיבה/, places.schools)) {
     return false;
   }
   if (!mentions(/תחנ|אוטובוס|רכבת|רכבת קלה|מטרו/, places.transit)) return false;
@@ -240,7 +258,7 @@ export function isGrounded(text: string, places: AreaPlaces): boolean {
   if (!mentions(/מתנ״ס|מתנ''ס|ספרי|מועדון|בריכה|מרכז קהילתי/, places.community)) {
     return false;
   }
-  if (!mentions(/סופרמרקט|מכולת|מאפי|בית מרקחת|סופר/, places.shops)) return false;
+  if (!mentions(/סופרמרקט|מכולת|מאפי|בית מרקחת|סופר|קניון|שוק /, places.shops)) return false;
 
   // Somewhere else entirely.
   const elsewhere = OTHER_CITIES.filter(

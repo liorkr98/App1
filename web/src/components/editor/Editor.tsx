@@ -23,6 +23,7 @@ import { DEFAULT_ACCENT, isAccentId } from '@/features/agents/accents';
 import { t } from '../../lib/i18n';
 import { loadEntitlement } from '../../lib/entitlement';
 import { createDraft, uploadOriginal } from '../../lib/listing-draft';
+import { areaKey, requestArea } from '../../lib/area-request';
 import { enqueuePublishJobs } from '../../lib/listing-jobs';
 import { stripAndResize, uploadDerived } from '../../lib/listing-photo';
 import { loadListing, publishListing, saveListing } from '../../lib/listing-save';
@@ -33,7 +34,7 @@ import { splitSse } from '@/features/listings/sse';
 import type { AgentProfile } from '@/features/agents/profile';
 import { supabase, supabaseConfigured } from '../../lib/supabase';
 import { ConsentStep } from './ConsentStep';
-import { DescriptionStep } from './DescriptionStep';
+import { DescriptionStep, sourceOf, type SuggestAnswer, type SuggestSource } from './DescriptionStep';
 import { DetailsStep } from './DetailsStep';
 import { LivePreview } from './LivePreview';
 import { PlanEditor, type PlanDraft } from './PlanEditor';
@@ -102,6 +103,12 @@ const START: EditorState = {
   // ==================================================================
   entitlement: 'unknown',
 };
+
+/**
+ * Long enough for a cached answer or a quick Overpass reply, short enough
+ * that publishing never feels stuck on it.
+ */
+const AREA_AT_PUBLISH_MS = 6_000;
 
 export default function Editor() {
   const [state, setState] = useState<EditorState>(START);
@@ -201,6 +208,13 @@ export default function Editor() {
   const [failure, setFailure] = useState<string | undefined>(undefined);
   const [suggesting, setSuggesting] = useState(false);
   const [suggestFailed, setSuggestFailed] = useState(false);
+  /**
+   * Where the text in the box came from: the model, or the writer that needs
+   * none — and if the latter, why. Shown under the box, because "the AI wrote
+   * this" and "the AI never ran" otherwise look identical, and the second one
+   * usually means a missing DEEPSEEK_API_KEY on the Worker.
+   */
+  const [suggestSource, setSuggestSource] = useState<SuggestSource | undefined>(undefined);
   const [peekOpen, setPeekOpen] = useState(false);
 
   useEffect(() => {
@@ -464,6 +478,7 @@ export default function Editor() {
 
         let text = '';
         let areaPending = false;
+        let source: SuggestSource | undefined;
 
         if (streamed && response.body) {
           const reader = response.body.getReader();
@@ -491,25 +506,24 @@ export default function Editor() {
                 }
               }
               if (event.event === 'done') {
-                const body = JSON.parse(event.data) as {
-                  text?: unknown;
-                  areaPending?: unknown;
-                  error?: unknown;
-                };
+                const body = JSON.parse(event.data) as SuggestAnswer;
                 if (typeof body.error === 'string') throw new Error(body.error);
                 text = typeof body.text === 'string' ? body.text.trim() : draft.trim();
                 areaPending = body.areaPending === true;
+                source = sourceOf(body);
               }
             }
           }
         } else {
-          const body = (await response.json()) as { text?: unknown; areaPending?: unknown };
+          const body = (await response.json()) as SuggestAnswer;
           text = typeof body.text === 'string' ? body.text.trim() : '';
           areaPending = body.areaPending === true;
+          source = sourceOf(body);
         }
 
         if (!text) throw new Error('empty');
 
+        setSuggestSource(source);
         setState((current) => ({
           ...current,
           description: text,
@@ -814,8 +828,34 @@ export default function Editor() {
     const id = listingId.current;
     if (!id || !supabaseConfigured || !signedIn) return;
     void saveListing(id, stateRef.current, photos, extrasRef.current)
-      .then((result) => setFailure('error' in result ? t('editor.publish.saveFailed') : undefined))
+      .then((result) => {
+        setFailure('error' in result ? t('editor.publish.saveFailed') : undefined);
+        if (!('error' in result)) lookUpArea(id);
+      })
       .catch(() => setFailure(t('editor.publish.saveFailed')));
+  };
+
+  /**
+   * The surroundings, looked up as soon as a saved row has a city and street.
+   *
+   * Once per address: the key is remembered, so walking back and forth
+   * through the steps costs nothing, and a changed street asks again. The
+   * server reads the address from the row, which is why this runs only after
+   * a save. A busy OpenStreetMap gets one retry a few seconds later.
+   */
+  const areaAskedFor = useRef<string | undefined>(undefined);
+  const lookUpArea = (id: string, retry = true) => {
+    const current = stateRef.current;
+    if (current.category !== 'property') return;
+    const key = areaKey(current.city, current.street);
+    if (!key || areaAskedFor.current === key) return;
+    areaAskedFor.current = key;
+    void requestArea(id).then((answer) => {
+      if (answer?.pending && retry) {
+        areaAskedFor.current = undefined;
+        window.setTimeout(() => lookUpArea(id, false), 5000);
+      }
+    });
   };
 
   /**
@@ -861,6 +901,20 @@ export default function Editor() {
         setPublishing(false);
         setFailure(t('editor.publish.saveFailed'));
         return;
+      }
+
+      /*
+       * The neighbourhood, if the address step's lookup has not landed yet,
+       * so the first buyer to open the link sees the map and the walking
+       * times. Capped: the page renders per request and reads the row, so a
+       * lookup that finishes after publish still reaches every later visit,
+       * and the agent's link is worth more than a few seconds of waiting.
+       */
+      if (state.category === 'property' && areaKey(state.city, state.street)) {
+        await Promise.race([
+          requestArea(id),
+          new Promise((resolve) => window.setTimeout(resolve, AREA_AT_PUBLISH_MS)),
+        ]);
       }
 
       const result = await publishListing(id, state, photos, extrasRef.current).catch(
@@ -1120,6 +1174,7 @@ export default function Editor() {
             onSuggest={canSuggest ? () => suggest() : undefined}
             suggesting={suggesting}
             suggestFailed={suggestFailed ? t('editor.description.suggestFailed') : undefined}
+            source={suggestSource}
             tone={tone}
             onTone={setTone}
           />
