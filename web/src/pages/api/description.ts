@@ -223,7 +223,7 @@ export const POST: APIRoute = async ({ request }) => {
   // -------------------------------------------------------------------- a car
   if (row.category !== 'property') {
     const input: ListingCopyInput = { category: row.category, facts, ...(city ? { city } : {}) };
-    const grounded = groundedDescription(input, { alternate: again });
+    const grounded = groundedDescription(input, { alternate: again, tone });
     if (!grounded.trim()) return json({ error: 'no_facts' }, 409);
 
     return modelText({
@@ -255,7 +255,7 @@ export const POST: APIRoute = async ({ request }) => {
     ...(places ? { places } : {}),
   };
 
-  const fallbackText = nextAgentDescription(input, previous);
+  const fallbackText = nextAgentDescription(input, previous, tone);
   // Nothing to say about the property: the editor keeps the box empty.
   if (!fallbackText.trim()) return json({ error: 'no_facts' }, 409);
 

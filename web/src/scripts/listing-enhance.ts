@@ -411,6 +411,12 @@ function bindGlass(): void {
  * below the horizon the page turns to its night palette (heliograph.css).
  * At the top of the page, and for a reader who asked for stillness, it rests
  * at a quarter to one in June — the frame the server already rendered.
+ * Scrolling walks forward from that hour into the night. Starting the table
+ * at dawn made the sun jump backwards on the first pixels of scroll.
+ *
+ * The plot is pinned while the day plays, then released near the footer.
+ * Mapped across the whole page it used to leave the screen at noon, so the
+ * afternoon happened where nobody could see it.
  */
 function bindHeliograph(): void {
   const stage = document.querySelector<HTMLElement>('[data-helio]');
@@ -493,14 +499,43 @@ function bindHeliograph(): void {
   };
 
   const restIndex = () => Math.round((12.75 - (data.tables[season][0]?.[0] ?? 4.5)) / 0.25);
+  const sky = stage.querySelector<HTMLElement>('.hl-sky');
+  let hold = stage.querySelector<HTMLElement>('.hl-sky-hold');
+  if (sky && !hold) {
+    hold = document.createElement('div');
+    hold.className = 'hl-sky-hold';
+    hold.setAttribute('aria-hidden', 'true');
+    sky.after(hold);
+  }
+  const placeSky = (progress: number) => {
+    if (!sky || !hold || still) return;
+    const pin = progress > 0.04 && progress < 0.88;
+    if (pin) {
+      if (!sky.classList.contains('is-pinned')) hold.style.blockSize = `${sky.offsetHeight}px`;
+      sky.classList.add('is-pinned');
+      return;
+    }
+    if (sky.classList.contains('is-pinned')) {
+      sky.classList.remove('is-pinned');
+      hold.style.blockSize = '0px';
+    }
+  };
   let frame = 0;
   const onScroll = () => {
     if (frame) return;
     frame = requestAnimationFrame(() => {
       frame = 0;
       const max = document.documentElement.scrollHeight - innerHeight;
-      if (still || scrollY < 4 || max <= 0) return paint(restIndex());
-      paint(Math.round((scrollY / max) * (data.tables[season].length - 1)));
+      const rest = restIndex();
+      if (still || scrollY < 4 || max <= 0) {
+        placeSky(0);
+        return paint(rest);
+      }
+      const progress = Math.max(0, Math.min(1, scrollY / max));
+      const last = data.tables[season].length - 1;
+      placeSky(progress);
+      // Noon at the top, night at the bottom. The morning stays on the arc.
+      paint(Math.round(rest + progress * (last - rest)));
     });
   };
 

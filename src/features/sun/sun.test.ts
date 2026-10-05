@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
+import { coarseOrigin, coarseSunPoint, sunAnchor } from './anchor.js';
 import { ASPECT_BEARING, bearingGap, facadeSunMinutes, seasonMoment, sunPosition } from './sun.js';
 
 // Dizengoff, Tel Aviv.
@@ -55,5 +56,36 @@ describe('sun position', () => {
   it('measures the gap between bearings across north', () => {
     assert.equal(bearingGap(350, 10), 20);
     assert.equal(bearingGap(90, 270), 180);
+  });
+});
+
+const aspect = (value: string) => ({ key: 'aspect', value, present: true });
+
+describe('sun anchor', () => {
+  it('rounds a pin to 0.1° and keeps a street exact', () => {
+    const anchor = sunAnchor({
+      facts: [aspect('דרום')],
+      location: { street: 'דיזנגוף', lat: 32.0808, lng: 34.7741 },
+    });
+    assert.deepEqual(anchor, { lat: 32.1, lng: 34.8, facing: 180, approx: false });
+  });
+
+  it('uses the street midpoint when the listing has no pin', () => {
+    const anchor = sunAnchor({
+      facts: [aspect('צפון־מזרח')],
+      location: { street: 'סוקולוב' },
+      origin: { lat: 32.0165, lon: 34.7792 },
+    });
+    assert.equal(anchor?.approx, true);
+    assert.equal(anchor?.lat, 32);
+    assert.equal(anchor?.lng, 34.8);
+    assert.equal(anchor?.facing, 45);
+  });
+
+  it('draws nothing without an aspect or a point', () => {
+    assert.equal(sunAnchor({ facts: [], location: { lat: 32.1, lng: 34.8 } }), undefined);
+    assert.equal(sunAnchor({ facts: [aspect('דרום')], location: { street: 'סוקולוב' } }), undefined);
+    assert.equal(coarseSunPoint(51.5, -0.1), undefined);
+    assert.deepEqual(coarseOrigin({ origin: { lat: 32.016, lon: 34.779 } }), { lat: 32, lng: 34.8 });
   });
 });

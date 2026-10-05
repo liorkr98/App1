@@ -237,6 +237,19 @@ describe('groundedDescription alternate', () => {
   });
 });
 
+describe('groundedDescription tones', () => {
+  it('warm and refined are different paragraphs from the professional one', () => {
+    const pro = groundedDescription(PROPERTY);
+    const warm = groundedDescription(PROPERTY, { tone: 'warm' });
+    const refined = groundedDescription(PROPERTY, { tone: 'refined' });
+    assert.notEqual(pro, warm);
+    assert.notEqual(pro, refined);
+    assert.notEqual(warm, refined);
+    assert.ok(warm.startsWith('למגורים:'));
+    assert.ok(refined.startsWith('דירה בתל אביב.'));
+  });
+});
+
 describe('copy tones', () => {
   it('leaves the default voice exactly as it was', () => {
     assert.equal(appendTone('PROMPT', 'pro'), 'PROMPT');

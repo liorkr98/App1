@@ -80,6 +80,23 @@ html[data-template='heliograph'] .hl-sky {
   padding: 0.6rem var(--gut) 0;
 }
 
+/* Pinned by bindHeliograph while the day plays, so the plot stays in view
+   as the hour moves. Released near the footer. No pin without the script. */
+html[data-template='heliograph'] .hl-sky.is-pinned {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline: 0;
+  z-index: 6;
+  padding-block: 0.6rem 0.8rem;
+  background: linear-gradient(180deg, var(--hl-sky), color-mix(in srgb, var(--hl-sky) 82%, transparent));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-template='heliograph'] .hl-sky.is-pinned {
+    position: static;
+  }
+}
+
 html[data-template='heliograph'] .hl-plot {
   inline-size: 100%;
   block-size: auto;

@@ -25,6 +25,7 @@ import { DEFAULT_ACCENT, isAccentId } from '@/features/agents/accents';
 import { t } from '../../lib/i18n';
 import { loadEntitlement } from '../../lib/entitlement';
 import { createDraft, uploadOriginal } from '../../lib/listing-draft';
+import { coarseOrigin } from '@/features/sun/anchor';
 import { areaKey, requestArea } from '../../lib/area-request';
 import { enqueuePublishJobs } from '../../lib/listing-jobs';
 import { stripAndResize, uploadDerived } from '../../lib/listing-photo';
@@ -443,11 +444,17 @@ export default function Editor() {
   descriptionRef.current = state.description;
 
   const [tone, setTone] = useState<CopyTone>('pro');
+  // Street midpoint, rounded, for the sun template's preview. Not part of
+  // EditorState: saving it onto location would publish a pin.
+  const [sunPoint, setSunPoint] = useState<{ lat: number; lng: number } | undefined>();
+  const suggestGen = useRef(0);
 
-  const suggest = (retriesLeft = 1) => {
+  const suggest = (retriesLeft = 1, voice?: CopyTone) => {
     const id = listingId.current;
-    if (!id || suggesting) return;
+    if (!id) return;
 
+    const voiceNow = voice ?? tone;
+    const ticket = ++suggestGen.current;
     const previous = descriptionRef.current.trim();
     setSuggesting(true);
     setSuggestFailed(false);
@@ -465,7 +472,7 @@ export default function Editor() {
             Authorization: `Bearer ${token}`,
             Accept: 'text/event-stream',
           },
-          body: JSON.stringify({ listingId: id, previous, tone }),
+          body: JSON.stringify({ listingId: id, previous, tone: voiceNow }),
         });
         if (!response.ok) throw new Error(String(response.status));
 
@@ -484,6 +491,7 @@ export default function Editor() {
           let draft = '';
 
           while (true) {
+            if (ticket !== suggestGen.current) return;
             const { value, done } = await reader.read();
             if (done) break;
             buffer += decoder.decode(value, { stream: true });
@@ -518,6 +526,7 @@ export default function Editor() {
           source = sourceOf(body);
         }
 
+        if (ticket !== suggestGen.current) return;
         if (!text) throw new Error('empty');
 
         setSuggestSource(source);
@@ -541,13 +550,13 @@ export default function Editor() {
          */
         if (areaPending && retriesLeft > 0) {
           setSuggesting(false);
-          window.setTimeout(() => suggest(retriesLeft - 1), 4000);
+          window.setTimeout(() => suggest(retriesLeft - 1, voiceNow), 4000);
           return;
         }
       } catch {
-        setSuggestFailed(true);
+        if (ticket === suggestGen.current) setSuggestFailed(true);
       } finally {
-        setSuggesting(false);
+        if (ticket === suggestGen.current) setSuggesting(false);
       }
     })();
   };
@@ -676,6 +685,8 @@ export default function Editor() {
         );
 
         const location = (row.location ?? {}) as { city?: string; street?: string };
+        const origin = coarseOrigin(row.area_places);
+        if (origin) setSunPoint(origin);
         if (isAccentId(row.accent)) accentSource.current = 'manual';
 
         let opened: EditorState | undefined;
@@ -869,7 +880,9 @@ export default function Editor() {
     const key = areaKey(current.city, current.street);
     if (!key || areaAskedFor.current === key) return;
     areaAskedFor.current = key;
+    setSunPoint(undefined);
     void requestArea(id).then((answer) => {
+      if (areaAskedFor.current === key && answer?.sun) setSunPoint(answer.sun);
       if (answer?.pending && retry) {
         areaAskedFor.current = undefined;
         window.setTimeout(() => lookUpArea(id, false), 5000);
@@ -1174,7 +1187,7 @@ export default function Editor() {
         ) : null}
 
         {step === 'preview' ? (
-          <LivePreview state={state} photos={photos} profile={profile} extras={extras} />
+          <LivePreview state={state} photos={photos} profile={profile} extras={extras} sun={sunPoint} />
         ) : null}
 
         {step === 'publish' ? (
@@ -1238,7 +1251,10 @@ export default function Editor() {
             suggestFailed={suggestFailed ? t('editor.description.suggestFailed') : undefined}
             source={suggestSource}
             tone={tone}
-            onTone={setTone}
+            onTone={(next) => {
+              setTone(next);
+              if (next !== tone) suggest(1, next);
+            }}
           />
         ) : null}
       </section>
@@ -1310,7 +1326,7 @@ export default function Editor() {
             {t('editor.peekClose')}
           </button>
         ) : null}
-        <LivePreview state={state} photos={photos} profile={profile} extras={extras} />
+        <LivePreview state={state} photos={photos} profile={profile} extras={extras} sun={sunPoint} />
       </aside>
     ) : null}
 

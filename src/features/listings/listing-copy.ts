@@ -132,10 +132,11 @@ function hebrewList(items: readonly string[]): string {
  */
 export function groundedDescription(
   input: ListingCopyInput,
-  options: { alternate?: boolean } = {},
+  options: { alternate?: boolean; tone?: CopyTone } = {},
 ): string {
   const schema = schemaFor(input.category);
   const { measured, features } = factFragments(input);
+  const tone = options.tone ?? 'pro';
 
   const opening = [
     input.city ? `${schema.label} ב${input.city}` : schema.label,
@@ -143,17 +144,36 @@ export function groundedDescription(
   ].join(', ');
 
   const featureLine = features.length > 0 ? `יש ${hebrewList(features)}.` : undefined;
+  const notes = input.sellerNotes?.trim();
+  const noteLine = notes ? (notes.endsWith('.') ? notes : `${notes}.`) : undefined;
+
+  // Surroundings stay in the enrichment block. A description that names
+  // the same schools and walk times as the map reads as machine output.
+  if (measured.length === 0 && features.length === 0 && !notes) return '';
+
+  // Refined is one fact per sentence. Same words, no comma list, so the
+  // מוקפד chip is a different paragraph when no model is configured.
+  if (tone === 'refined') {
+    const bits = [input.city ? `${schema.label} ב${input.city}` : schema.label, ...measured];
+    const sentences = bits.map((bit) => (bit.endsWith('.') ? bit : `${bit}.`));
+    if (featureLine) sentences.push(featureLine);
+    if (noteLine) sentences.push(noteLine);
+    return sentences.join(' ');
+  }
+
   const sentences: string[] =
     options.alternate && featureLine
       ? [featureLine, `${opening}.`]
       : [`${opening}.`, ...(featureLine ? [featureLine] : [])];
 
-  const notes = input.sellerNotes?.trim();
-  if (notes) sentences.push(notes.endsWith('.') ? notes : `${notes}.`);
+  if (noteLine) sentences.push(noteLine);
 
-  // Surroundings stay in the enrichment block. A description that names
-  // the same schools and walk times as the map reads as machine output.
-  if (measured.length === 0 && features.length === 0 && !notes) return '';
+  // Warm names what the thing is for, from the category alone — a car is
+  // for driving, a home is for living — and then the same facts.
+  if (tone === 'warm' && sentences[0]) {
+    const lead = input.category === 'vehicle' ? 'לנסיעה' : 'למגורים';
+    sentences[0] = `${lead}: ${sentences[0]}`;
+  }
 
   return sentences.join(' ');
 }

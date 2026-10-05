@@ -1,5 +1,7 @@
 import type { APIRoute } from 'astro';
 
+import { coarseSunPoint } from '@/features/sun/anchor';
+
 import { ensureAreaPlaces } from '../../lib/area-lookup';
 import { supabaseAsUser, supabaseConfigured } from '../../lib/supabase';
 
@@ -58,6 +60,9 @@ export const POST: APIRoute = async ({ request }) => {
   // A car's location is a meeting area, not an address (DESIGN-CONTRACT §5.4).
   if (row.category !== 'property') return json({ ok: true, places: false, pending: false }, 200);
 
-  const { places, pending } = await ensureAreaPlaces(client, listingId, row);
-  return json({ ok: true, places: places !== undefined, pending }, 200);
+  const { places, pending, origin } = await ensureAreaPlaces(client, listingId, row);
+  // Rounded before it reaches the browser. The preview draws a sun table
+  // from this and never prints the point.
+  const sun = origin ? coarseSunPoint(origin.lat, origin.lon) : undefined;
+  return json({ ok: true, places: places !== undefined, pending, ...(sun ? { sun } : {}) }, 200);
 };

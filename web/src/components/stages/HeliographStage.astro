@@ -1,5 +1,6 @@
 ---
 import type { Listing } from '@/types/listing';
+import { sunAnchor } from '@/features/sun/anchor';
 import {
   ASPECT_BEARING,
   PLOT,
@@ -46,16 +47,15 @@ const cover = listing.media.cover;
 const lines = titleLines(listing);
 const place = stagePlace(listing);
 
-const aspectFact = listing.facts.find((f) => f.key === 'aspect' && f.present && typeof f.value === 'string');
-const aspect = typeof aspectFact?.value === 'string' ? aspectFact.value : undefined;
-const facing = aspect !== undefined ? ASPECT_BEARING[aspect] : undefined;
-const lat = listing.location?.lat;
-const lng = listing.location?.lng;
-const sun =
-  facing !== undefined && lat !== undefined && lng !== undefined
-    ? { facing, lat: Math.round(lat * 10) / 10, lng: Math.round(lng * 10) / 10 }
-    : undefined;
-const approx = listing.location?.precision === 'area' || !listing.location?.street;
+// A saved listing has no lat/lng — the editor never writes a pin. The street
+// midpoint from the area lookup is the sun's anchor, rounded inside sunAnchor.
+const anchor = sunAnchor({
+  facts: listing.facts,
+  ...(listing.location ? { location: listing.location } : {}),
+  ...(listing.areaPlaces?.origin ? { origin: listing.areaPlaces.origin } : {}),
+});
+const sun = anchor ? { facing: anchor.facing, lat: anchor.lat, lng: anchor.lng } : undefined;
+const approx = anchor?.approx === true;
 
 // The day the page scrolls through, as a table: [hour, bearing, altitude].
 const FROM = 4.5;

@@ -86,6 +86,11 @@ export interface AreaResult {
    * Worth one quiet retry from the editor; a listing with no street is not.
    */
   pending: boolean;
+  /**
+   * The street midpoint, when the lookup has one. The sun template rounds it;
+   * it is not a pin and it is not written onto location.
+   */
+  origin?: { lat: number; lon: number };
 }
 
 /**
@@ -112,17 +117,29 @@ export async function ensureAreaPlaces(
   if (!where) return { places: undefined, pending: false };
 
   const cached = cachedPlaces(row.area_places, where);
-  if (cached) return { places: hasPlaces(cached) ? cached : undefined, pending: false };
+  if (cached) {
+    return {
+      places: hasPlaces(cached) ? cached : undefined,
+      pending: false,
+      ...(cached.origin ? { origin: cached.origin } : {}),
+    };
+  }
 
   const fetched = await areaPlaces(where.city, where.street);
   if (!fetched) return { places: undefined, pending: true };
 
   const routed = await withWalkMinutes(fetched);
-  if (!routed || !hasPlaces(routed)) return { places: undefined, pending: false };
+  if (!routed || !hasPlaces(routed)) {
+    return {
+      places: undefined,
+      pending: false,
+      ...(routed?.origin ? { origin: routed.origin } : {}),
+    };
+  }
 
   // Kept on the row so the next press costs nothing, so the published page can
   // draw the map, and so it carries the ODbL credit for text derived from
   // these names (CLAUDE.md §10).
   await client.from('listings').update({ area_places: routed }).eq('id', listingId);
-  return { places: routed, pending: false };
+  return { places: routed, pending: false, ...(routed.origin ? { origin: routed.origin } : {}) };
 }

@@ -171,6 +171,7 @@ export function previewPayload(
   profile: AgentProfile,
   placeholderName: string,
   extras: MediaExtras = {},
+  sun?: { lat: number; lng: number },
 ): Record<string, unknown> {
   const category = state.category ?? 'property';
   const ownerRole = schemaFor(category).ownerRole;
@@ -187,6 +188,7 @@ export function previewPayload(
     media: toMedia(savedPhotos(photos, { local: true }), state.tourUrl, extras) ?? null,
     seller,
     ...(accent ? { accent } : {}),
+    ...(sun ? { sun } : {}),
     hyad_mark: state.entitlement !== 'paid',
   };
 }

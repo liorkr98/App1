@@ -16,6 +16,7 @@ import {
   findReservedTopics,
   findUnsupportedNumbers,
 } from './description.js';
+import type { CopyTone } from './listing-copy.js';
 import { schemaFor, type ListingCategory } from './schemas/index.js';
 
 /**
@@ -100,10 +101,26 @@ function homePhrase(facts: readonly Fact[]): string {
   return `דירת ${grouped(rooms)} חדרים`;
 }
 
-function opening(input: AgentCopyInput, variant: number): string {
+function opening(input: AgentCopyInput, variant: number, tone: CopyTone = 'pro'): string {
   const home = homePhrase(input.facts);
   const hood = input.places ? nearest(input.places.neighbourhoods)[0]?.name : undefined;
   const city = input.city;
+  const where = city && hood ? `בשכונת ${hood} ב${city}` : city ? `ב${city}` : '';
+
+  // The same facts, a different voice. 'pro' is the agent's listing voice
+  // below; warm and refined exist so the tone chips change the paragraph
+  // even when no model is configured.
+  if (tone === 'warm') {
+    if (variant === 1) return where ? `לגור ${where}: ${home}.` : `${home}.`;
+    if (variant === 2) return where ? `${home} ${where} — הבית ליום־יום.` : `${home} — הבית ליום־יום.`;
+    return where ? `${home} ${where}. מקום לגור בו.` : `${home}. מקום לגור בו.`;
+  }
+  if (tone === 'refined') {
+    if (!where) return `${home}.`;
+    if (variant === 1) return `${where}. ${home}.`;
+    if (variant === 2) return `${home} — ${where}.`;
+    return `${home}. ${where}.`;
+  }
 
   if (variant === 1) {
     if (city && hood) return `למכירה ב${city}, בשכונת ${hood}: ${home}.`;
@@ -253,7 +270,7 @@ function timer(): (place: AreaPlace) => string {
   };
 }
 
-function neighbourhood(input: AgentCopyInput, variant: number): string | undefined {
+function neighbourhood(input: AgentCopyInput, variant: number, tone: CopyTone = 'pro'): string | undefined {
   const places = input.places;
   if (!places || !hasPlaces(places)) return undefined;
   const near = around(places);
@@ -291,8 +308,12 @@ function neighbourhood(input: AgentCopyInput, variant: number): string | undefin
   }
   if (lines.length === 0) return undefined;
 
-  // Variant 0 is already a list of "label: names", so it takes no intro.
-  const intro = ['', 'על השכונה:', 'מה יש בסביבה?'][variant] ?? '';
+  const intros: Record<CopyTone, readonly string[]> = {
+    pro: ['', 'על השכונה:', 'מה יש בסביבה?'],
+    warm: ['מסביב, ביום־יום:', 'השכונה ביום־יום:', 'ומסביב:'],
+    refined: ['בסביבה.', 'הסביבה.', 'מסביב.'],
+  };
+  const intro = intros[tone][variant] ?? '';
   return [intro, ...lines].filter((part) => part !== '').join(' ');
 }
 
@@ -308,18 +329,35 @@ function entryPhrase(facts: readonly Fact[]): string | undefined {
   return `כניסה: ${entry}.`;
 }
 
-const CLOSINGS = [
-  'לפרטים נוספים ולתיאום ביקור — מוזמנים ליצור קשר.',
-  'מוזמנים לתאם ביקור ולהתרשם מקרוב.',
-  'לתיאום צפייה בנכס אפשר לפנות ישירות בוואטסאפ.',
-] as const;
+const CLOSINGS: Record<CopyTone, readonly string[]> = {
+  pro: [
+    'לפרטים נוספים ולתיאום ביקור — מוזמנים ליצור קשר.',
+    'מוזמנים לתאם ביקור ולהתרשם מקרוב.',
+    'לתיאום צפייה בנכס אפשר לפנות ישירות בוואטסאפ.',
+  ],
+  warm: [
+    'נשמח להראות את הדירה ולענות על שאלות.',
+    'אפשר לתאם ביקור ולראות את הדירה מקרוב.',
+    'לשאלות ולתיאום ביקור — כותבים לנו.',
+  ],
+  refined: ['לתיאום ביקור.', 'לפרטים ולצפייה בנכס.', 'פנייה לתיאום ביקור מתקבלת ישירות.'],
+};
 
-function closing(input: AgentCopyInput, variant: number): string {
+function closing(input: AgentCopyInput, variant: number, tone: CopyTone = 'pro'): string {
   const terms = [
     entryPhrase(input.facts),
     has(input.facts, 'has_tenants') ? 'הנכס מושכר כעת.' : undefined,
   ].filter((part): part is string => part !== undefined);
-  return [...terms, CLOSINGS[variant] ?? CLOSINGS[0]].join(' ');
+  const lines = CLOSINGS[tone];
+  return [...terms, lines[variant] ?? lines[0]].join(' ');
+}
+
+/** Warm leads with how it is to be there; refined breaks the comma list up. */
+function voiced(tone: CopyTone, line: string | undefined, warmLead: string): string | undefined {
+  if (!line) return undefined;
+  if (tone === 'warm') return `${warmLead} ${line}`;
+  if (tone === 'refined') return line.replace(/, /g, '. ');
+  return line;
 }
 
 // -------------------------------------------------------------------- the text
@@ -329,25 +367,25 @@ function closing(input: AgentCopyInput, variant: number): string {
  * Property only — a car has no neighbourhood and keeps listing-copy.ts.
  * Empty when the seller answered nothing that could be said.
  */
-export function agentDescription(input: AgentCopyInput, variant = 0): string {
+export function agentDescription(input: AgentCopyInput, variant = 0, tone: CopyTone = 'pro'): string {
   const v = ((variant % AGENT_VARIANTS) + AGENT_VARIANTS) % AGENT_VARIANTS;
-  const apartmentLine = apartment(input, v);
-  const buildingLine = building(input, v);
+  const apartmentLine = voiced(tone, apartment(input, v), 'כך זה בפנים.');
+  const buildingLine = voiced(tone, building(input, v), 'ועוד בנכס:');
   if (!apartmentLine && !buildingLine && numberOf(input.facts, 'rooms') === undefined) return '';
 
-  const property = [opening(input, v), apartmentLine, buildingLine]
+  const property = [opening(input, v, tone), apartmentLine, buildingLine]
     .filter((part): part is string => part !== undefined)
     .join(' ');
-  const area = neighbourhood(input, v);
+  const area = neighbourhood(input, v, tone);
 
-  return [property, area, closing(input, v)]
+  return [property, area, closing(input, v, tone)]
     .filter((part): part is string => part !== undefined && part !== '')
     .join('\n\n');
 }
 
-/** Every variant, so a caller can pick one that differs from the last. */
-export function agentDescriptions(input: AgentCopyInput): string[] {
-  return Array.from({ length: AGENT_VARIANTS }, (_, variant) => agentDescription(input, variant));
+/** Every variant of one voice, so a caller can pick one that differs from the last. */
+export function agentDescriptions(input: AgentCopyInput, tone: CopyTone = 'pro'): string[] {
+  return Array.from({ length: AGENT_VARIANTS }, (_, variant) => agentDescription(input, variant, tone));
 }
 
 const same = (a: string, b: string) => a.replace(/\s+/g, ' ').trim() === b.replace(/\s+/g, ' ').trim();
@@ -360,8 +398,8 @@ const same = (a: string, b: string) => a.replace(/\s+/g, ' ').trim() === b.repla
  * two; and when the box holds something else (the model's text, or the
  * agent's own edit), the first variant that differs from it.
  */
-export function nextAgentDescription(input: AgentCopyInput, previous = ''): string {
-  const variants = agentDescriptions(input);
+export function nextAgentDescription(input: AgentCopyInput, previous = '', tone: CopyTone = 'pro'): string {
+  const variants = agentDescriptions(input, tone);
   const before = previous.trim();
   if (before === '') return variants[0] ?? '';
 
