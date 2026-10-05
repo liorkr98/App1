@@ -696,7 +696,6 @@
     "confirmArchive": "",
     "archivedDone": "",
     "archivedFailed": "",
-    "archivedHint": "",
     "noPhoto": "",
     "emptyTitle": "",
     "emptyBody": "",
@@ -704,7 +703,6 @@
     "signedOut": "",
     "signIn": "",
     "failed": "",
-    "draftHint": "",
     "staleHint": "",
     "countSuffix": "",
     "onboardTitle": "",
@@ -755,7 +753,15 @@
     "linkShort": "",
     "unitMinutes": "",
     "unitHours": "",
-    "unitDays": ""
+    "unitDays": "",
+    "statsDraft": "",
+    "statsArchived": "",
+    "continue": "",
+    "preview": "",
+    "restore": "",
+    "restoredDone": "",
+    "restoredFailed": "",
+    "more": ""
   },
   "legal": {
     "terms": "",

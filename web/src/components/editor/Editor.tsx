@@ -727,7 +727,11 @@ export default function Editor() {
           };
           return next;
         });
-        setStep('category');
+        // The dashboard's "תצוגה מקדימה" on a draft opens straight on the
+        // preview. Only that step: landing past a step the seller has not
+        // done would hide what is still missing.
+        const opening = new URLSearchParams(window.location.search).get('step');
+        setStep(opening === 'preview' ? 'preview' : 'category');
       })
       .catch(() => undefined);
 
