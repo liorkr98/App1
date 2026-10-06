@@ -2,6 +2,8 @@ import react from '@astrojs/react';
 import cloudflare from '@astrojs/cloudflare';
 import { defineConfig } from 'astro/config';
 
+import vendorMapLibre from './integrations/vendor-maplibre.mjs';
+
 /**
  * Mostly static, with on-demand listing routes.
  *
@@ -93,7 +95,11 @@ export default defineConfig({
   // the listing pages nothing — and report-page-weight.mjs now attributes
   // bundles per page, so if that ever stops being true the number will say so
   // instead of averaging it away.
-  integrations: [react()],
+  //
+  // vendorMapLibre serves the listing map's library as published, from a
+  // versioned path, loaded only when the map section nears the screen
+  // (integrations/vendor-maplibre.mjs).
+  integrations: [react(), vendorMapLibre()],
 
   // Share the Listing type and category schemas with the mobile app without
   // making the repo an npm workspace. Turning the root into a workspace root

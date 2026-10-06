@@ -253,6 +253,7 @@ export const POST: APIRoute = async ({ request }) => {
     facts,
     ...(city ? { city } : {}),
     ...(places ? { places } : {}),
+    tone,
   };
 
   const fallbackText = nextAgentDescription(input, previous);

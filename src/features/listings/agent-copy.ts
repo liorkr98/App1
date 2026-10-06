@@ -16,6 +16,7 @@ import {
   findReservedTopics,
   findUnsupportedNumbers,
 } from './description.js';
+import type { CopyTone } from './listing-copy.js';
 import { schemaFor, type ListingCategory } from './schemas/index.js';
 
 /**
@@ -55,6 +56,13 @@ export interface AgentCopyInput {
   sellerNotes?: string;
   /** The surroundings, when the address was looked up (api/area.ts). */
   places?: AreaPlaces;
+  /**
+   * The voice the agent chose (מקצועי / חם / מוקפד). It changes the opening,
+   * the neighbourhood's wording and the closing — never which facts are said.
+   * Before, only the model heard it, so without a model all three chips gave
+   * the same text.
+   */
+  tone?: CopyTone;
 }
 
 /** Answered, and not a confirmed absence. Absence belongs to the grid (§7). */
@@ -104,6 +112,21 @@ function opening(input: AgentCopyInput, variant: number): string {
   const home = homePhrase(input.facts);
   const hood = input.places ? nearest(input.places.neighbourhoods)[0]?.name : undefined;
   const city = input.city;
+  const where = [hood ? `בשכונת ${hood}` : undefined, city ? `ב${city}` : undefined]
+    .filter(Boolean)
+    .join(' ');
+
+  if (input.tone === 'warm') {
+    if (variant === 1) return where ? `${where} מחכה לכם ${home}.` : `מחכה לכם ${home}.`;
+    if (variant === 2) return where ? `${home} ${where} — בואו לראות אותה מקרוב.` : `${home} — בואו לראות אותה מקרוב.`;
+    return where ? `בואו להכיר ${home} ${where}.` : `בואו להכיר ${home}.`;
+  }
+  if (input.tone === 'refined') {
+    const place = [hood ? `שכונת ${hood}` : undefined, city].filter(Boolean).join(', ');
+    if (variant === 1) return place ? `${place}. ${home}.` : `${home}.`;
+    if (variant === 2) return place ? `${home}, ${place}.` : `${home}.`;
+    return place ? `${home}. ${place}.` : `${home}.`;
+  }
 
   if (variant === 1) {
     if (city && hood) return `למכירה ב${city}, בשכונת ${hood}: ${home}.`;
@@ -273,6 +296,36 @@ function neighbourhood(input: AgentCopyInput, variant: number): string | undefin
   const say = (text: string | undefined, line: (text: string) => string) => {
     if (text) lines.push(line(text));
   };
+
+  // Warm and refined keep one wording each and let the variant reorder it.
+  const toned: Record<'warm' | 'refined', { intro: string; parts: [() => string | undefined, (text: string) => string][] }> = {
+    warm: {
+      intro: '',
+      parts: [
+        [transit, (text) => `ברגל מהבית: ${text}.`],
+        [shops, (text) => `לקניות של כל יום — ${text}.`],
+        [schools, (text) => `לילדים, בקרבת מקום: ${text}.`],
+        [leisure, (text) => `ולשעות הפנויות — ${text}.`],
+      ],
+    },
+    refined: {
+      intro: '',
+      parts: [
+        [transit, (text) => `תחבורה — ${text}.`],
+        [shops, (text) => `מסחר — ${text}.`],
+        [schools, (text) => `חינוך — ${text}.`],
+        [leisure, (text) => `פנאי — ${text}.`],
+      ],
+    },
+  };
+  if (input.tone === 'warm' || input.tone === 'refined') {
+    const { intro, parts } = toned[input.tone];
+    const order = [parts, [parts[2]!, parts[3]!, parts[1]!, parts[0]!], [parts[1]!, parts[0]!, parts[3]!, parts[2]!]][variant] ?? parts;
+    for (const [text, line] of order) say(text(), line);
+    if (lines.length === 0) return undefined;
+    return [intro, ...lines].filter((part) => part !== '').join(' ');
+  }
+
   if (variant === 1) {
     say(transit(), (text) => `במרחק הליכה נמצאות ${text}.`);
     say(shops(), (text) => `לקניות היומיומיות יש את ${text}.`);
@@ -308,18 +361,27 @@ function entryPhrase(facts: readonly Fact[]): string | undefined {
   return `כניסה: ${entry}.`;
 }
 
-const CLOSINGS = [
-  'לפרטים נוספים ולתיאום ביקור — מוזמנים ליצור קשר.',
-  'מוזמנים לתאם ביקור ולהתרשם מקרוב.',
-  'לתיאום צפייה בנכס אפשר לפנות ישירות בוואטסאפ.',
-] as const;
+const CLOSINGS: Record<CopyTone, readonly string[]> = {
+  pro: [
+    'לפרטים נוספים ולתיאום ביקור — מוזמנים ליצור קשר.',
+    'מוזמנים לתאם ביקור ולהתרשם מקרוב.',
+    'לתיאום צפייה בנכס אפשר לפנות ישירות בוואטסאפ.',
+  ],
+  warm: [
+    'נשמח לארח אתכם לביקור ולהכיר את הבית מקרוב.',
+    'רוצים לראות בעיניים? כתבו לנו בוואטסאפ ונקבע.',
+    'מוזמנים לבוא, להסתובב ולהרגיש את המקום.',
+  ],
+  refined: ['ביקור בתיאום מראש.', 'לתיאום ביקור — בוואטסאפ.', 'פרטים נוספים ותיאום צפייה לפי בקשה.'],
+};
 
 function closing(input: AgentCopyInput, variant: number): string {
   const terms = [
     entryPhrase(input.facts),
     has(input.facts, 'has_tenants') ? 'הנכס מושכר כעת.' : undefined,
   ].filter((part): part is string => part !== undefined);
-  return [...terms, CLOSINGS[variant] ?? CLOSINGS[0]].join(' ');
+  const lines = CLOSINGS[input.tone ?? 'pro'];
+  return [...terms, lines[variant] ?? lines[0]].join(' ');
 }
 
 // -------------------------------------------------------------------- the text

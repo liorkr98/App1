@@ -44,12 +44,20 @@ export interface AreaMapPin {
   /** Position inside the viewBox below. */
   x: number;
   y: number;
+  /** Where it is, for the live map (listing-map.ts). Same place, same key. */
+  lat: number;
+  lon: number;
 }
 
 export interface AreaMap {
   pins: AreaMapPin[];
   /** The property itself, in the same pixel space as the pins. */
   origin: { x: number; y: number };
+  /**
+   * The street's midpoint (overpass.ts), which is where walking times are
+   * measured from. Never the building: nothing here knows the building.
+   */
+  center: { lat: number; lon: number };
   width: number;
   height: number;
   /** OSM tile mosaic under the pins. One zoom, integer tile indices. */
@@ -63,8 +71,9 @@ export interface AreaMap {
 /**
  * One picture, 16:10, no tile requests and no text.
  *
- * Circles only. The numerals live in the HTML list, inside <bdi>. The page
- * must not ask the browser for OpenStreetMap tiles.
+ * Circles only. The numerals live in the HTML list, inside <bdi>. This is
+ * the first paint and the fallback; the street map with tiles is the live
+ * map that loads over it later (liveMapData, scripts/listing-map.ts).
  */
 export function composedMapSrc(map: AreaMap): string {
   const width = 1600;
@@ -210,8 +219,11 @@ export function areaMap(places: AreaPlaces): AreaMap | undefined {
       ...(item.place.walkMinutes === undefined ? {} : { walkMinutes: item.place.walkMinutes }),
       x: Math.round(item.x - tileX0 * TILE),
       y: Math.round(item.y - tileY0 * TILE),
+      lat: item.place.lat,
+      lon: item.place.lon,
     })),
     origin: { x: Math.round(originPx.x), y: Math.round(originPx.y) },
+    center: { lat: origin.lat, lon: origin.lon },
     width: cols * TILE,
     height: rows * TILE,
     zoom,
@@ -225,4 +237,58 @@ export function areaMap(places: AreaPlaces): AreaMap | undefined {
 /** True when any pin has a routed time, so the page knows whether to say so. */
 export function hasWalkTimes(places: AreaPlaces): boolean {
   return allPlaces(places).some((place) => place.walkMinutes !== undefined);
+}
+
+/**
+ * What the live map needs, handed to the page as JSON (AreaMap.astro).
+ *
+ * The same pins as the drawing and the list, with the same keys, so the
+ * three are one thing. The home is a soft circle around the street's
+ * midpoint, never a pin on a building; its radius is wide enough that it
+ * cannot be read as one.
+ *
+ * Bounds frame every pin and the home with a margin, [west, south] then
+ * [east, north] — MapLibre's order. North stays up: a map never mirrors.
+ */
+export interface LiveMapData {
+  center: [number, number];
+  bounds: [[number, number], [number, number]];
+  homeRadiusM: number;
+  pins: {
+    key: string;
+    name: string;
+    group: AreaGroup;
+    walkMinutes?: number;
+    lon: number;
+    lat: number;
+  }[];
+}
+
+/** About a city block each way: a neighbourhood, never a doorstep. */
+export const HOME_RADIUS_M = 150;
+
+export function liveMapData(map: AreaMap): LiveMapData {
+  const lons = [map.center.lon, ...map.pins.map((pin) => pin.lon)];
+  const lats = [map.center.lat, ...map.pins.map((pin) => pin.lat)];
+  // ~150 m of margin, so the home circle and the edge pins are not cut off.
+  const padLat = HOME_RADIUS_M / 111_320;
+  const padLon = padLat / Math.max(Math.cos((map.center.lat * Math.PI) / 180), 0.2);
+  const round = (value: number) => Math.round(value * 1e6) / 1e6;
+
+  return {
+    center: [round(map.center.lon), round(map.center.lat)],
+    bounds: [
+      [round(Math.min(...lons) - padLon), round(Math.min(...lats) - padLat)],
+      [round(Math.max(...lons) + padLon), round(Math.max(...lats) + padLat)],
+    ],
+    homeRadiusM: HOME_RADIUS_M,
+    pins: map.pins.map((pin) => ({
+      key: pin.key,
+      name: pin.name,
+      group: pin.group,
+      ...(pin.walkMinutes === undefined ? {} : { walkMinutes: pin.walkMinutes }),
+      lon: round(pin.lon),
+      lat: round(pin.lat),
+    })),
+  };
 }

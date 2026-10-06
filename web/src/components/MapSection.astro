@@ -40,8 +40,10 @@ const zoomSrc = areaMap ? composedMapSrc(areaMap) : mapImageUrl;
    * approximate meeting area, not an address; pinning a private car for sale
    * to a home address on a public page is a theft risk.
    *
-   * The image is a local SVG pin card — never an interactive embed and never
-   * a third-party tile (CLAUDE.md §12). Chips on the image are already-routed
+   * The image is a local SVG pin card. Where the address was looked up,
+   * AreaMap draws the neighbourhood and a live map loads over it once the
+   * section nears the screen (scripts/listing-map.ts; CLAUDE.md §2, the
+   * 5 Oct 2026 map note). Chips on the image are already-routed
    * walking minutes (OSRM at publish). The named list under it repeats them.
    * Omitted when that payload has nothing for a group. No live query at render.
    */

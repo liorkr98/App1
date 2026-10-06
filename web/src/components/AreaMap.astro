@@ -1,5 +1,7 @@
 ---
-import { composedMapSrc, type AreaMap } from '@/features/listings/area-map';
+import { composedMapSrc, liveMapData, type AreaMap } from '@/features/listings/area-map';
+import { walkPhrase } from '@/features/listings/hebrew-plural';
+import { scriptJson } from '@/features/listings/script-json';
 import { t } from '../lib/i18n';
 import Prose from './Prose.astro';
 import WalkMinutes from './WalkMinutes.astro';
@@ -11,10 +13,41 @@ interface Props {
 
 const { map, attribution } = Astro.props;
 const src = composedMapSrc(map);
+
+/*
+ * The live map's data (scripts/listing-map.ts), as JSON in the page. Only
+ * what the drawing and the list beside it already show: the same pins and
+ * keys, the street's midpoint, and the Hebrew the map's controls need. The
+ * map itself loads only when this section nears the screen.
+ */
+const live = liveMapData(map);
+const payload = scriptJson({
+  ...live,
+  pins: live.pins.map((pin) => ({
+    ...pin,
+    ...(pin.walkMinutes === undefined ? {} : { walk: walkPhrase(pin.walkMinutes) }),
+    label: pin.walkMinutes === undefined ? pin.name : `${pin.name}, ${walkPhrase(pin.walkMinutes)}`,
+  })),
+  text: {
+    region: t('listing.liveMap.region'),
+    home: t('listing.liveMap.home'),
+    gestureMobile: t('listing.liveMap.gestureMobile'),
+    gestureWindows: t('listing.liveMap.gestureWindows'),
+    gestureMac: t('listing.liveMap.gestureMac'),
+    zoomIn: t('listing.liveMap.zoomIn'),
+    zoomOut: t('listing.liveMap.zoomOut'),
+    fullscreenEnter: t('listing.liveMap.fullscreenEnter'),
+    fullscreenExit: t('listing.liveMap.fullscreenExit'),
+    attribution: t('listing.liveMap.attribution'),
+    close: t('listing.liveMap.close'),
+    marker: t('listing.liveMap.marker'),
+  },
+});
 ---
 
 <figure class="area-map">
-  <div class="area-map-stage">
+  <div class="area-map-stage" data-live-map>
+    <script type="application/json" set:html={payload} />
     <button type="button" class="map-open" data-map-open>
       <img
         src={src}

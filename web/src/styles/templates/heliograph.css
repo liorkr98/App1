@@ -27,13 +27,16 @@ html[data-template='heliograph'] {
 
 html[data-template='heliograph'] body {
   font-family: var(--ls-font-body);
+  /* The hour's light on the whole page (bindHeliograph sets --hl-sky on
+     <html>). Kept to a fifth of the sky so body text stays above 4.5:1 at
+     every hour; at night the palette itself turns. */
+  background-color: color-mix(in srgb, var(--hl-sky, var(--plaster)) 20%, var(--plaster));
   transition: background-color 0.6s linear, color 0.4s;
 }
 
 html[data-template='heliograph'] section.stage-helio {
-  --hl-sky: var(--plaster);
   padding: 0 0 1.4rem;
-  background: linear-gradient(180deg, var(--hl-sky), var(--plaster) 85%);
+  background: linear-gradient(180deg, var(--hl-sky, var(--plaster)), transparent 85%);
   transition: background 0.6s linear;
 }
 
@@ -346,5 +349,23 @@ html[data-template='heliograph'].hl-night {
   --muted: #a7a89c;
   --muted-warm: #a7a89c;
   --absent: #a7a89c;
+  /* The agent's colour, lifted for the dark: links, walking minutes and the
+     WhatsApp button stayed dark green on near-black after dusk. */
+  --olive: var(--accent-lift, #7e9a62);
+  /* The Living Surfaces tokens turn with the page (tokens.css onyx), or text
+     drawn with them stays paper-dark on the night ground. */
+  --ls-ground: #0b0c0a;
+  --ls-surface: #161713;
+  --ls-ink: #f2f0ea;
+  --ls-ink-2: #a7a89c;
+  --ls-line: rgba(242, 240, 234, 0.12);
+  --ls-accent: var(--accent-lift, #86b79a);
+  --ls-on-accent: #0b0c0a;
   color-scheme: dark;
+}
+
+/* The neighbourhood card is a light mix by day; at night that mix turned
+   mid-grey and the grey text on it fell to 3.1:1. */
+html[data-template='heliograph'].hl-night .enrich {
+  background: var(--stone-warm);
 }

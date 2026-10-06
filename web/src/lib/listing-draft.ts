@@ -2,6 +2,7 @@ import { DEFAULT_ACCENT, isAccentId } from '@/features/agents/accents';
 import { toSeller } from '@/features/agents/profile';
 import { generateSlug } from '@/features/listings/slug';
 import { schemaFor, type ListingCategory } from '@/features/listings/schemas';
+import { NEW_LISTING_TEMPLATE } from '@/features/templates/manifest';
 
 import { loadProfile } from './profile';
 import { supabase } from './supabase';
@@ -88,7 +89,7 @@ export async function createDraft(category: ListingCategory): Promise<DraftRow> 
         // database only needs a row it can hang photos off.
         title: '',
         price: 0,
-        template: 'agency',
+        template: NEW_LISTING_TEMPLATE,
         ...(stamped.seller ? { seller: stamped.seller } : {}),
         accent: stamped.accent,
       })

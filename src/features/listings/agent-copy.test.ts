@@ -274,3 +274,30 @@ describe('descriptionCoversArea', () => {
     assert.equal(descriptionCoversArea('משהו', undefined), false);
   });
 });
+
+describe('tone', () => {
+  const tones = ['pro', 'warm', 'refined'] as const;
+
+  it('gives a different text for each tone, so the chips visibly do something', () => {
+    const texts = tones.map((tone) => agentDescription({ ...FLAT, tone }, 0));
+    assert.equal(new Set(texts).size, 3);
+  });
+
+  it('says the same facts and the same places in every tone', () => {
+    for (const tone of tones) {
+      const text = agentDescription({ ...FLAT, tone }, 0);
+      for (const needle of ['154 מ״ר', 'מרפסת שמש של 25 מ״ר', 'ממ״ד', 'גן גרנית', 'שופרסל אקספרס']) {
+        assert.ok(text.includes(needle), `${tone}: ${needle}`);
+      }
+    }
+  });
+
+  it('passes the same checks in every tone and every variant', () => {
+    for (const tone of tones) {
+      for (const text of agentDescriptions({ ...FLAT, tone })) {
+        assert.equal(acceptAgentDescription(text, { ...FLAT, tone }), text, text);
+      }
+      assert.equal(new Set(agentDescriptions({ ...FLAT, tone })).size, AGENT_VARIANTS, tone);
+    }
+  });
+});

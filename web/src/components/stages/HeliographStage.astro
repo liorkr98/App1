@@ -9,6 +9,7 @@ import {
   facadeWedge,
   plotPoint,
   seasonMoment,
+  sunCoordinates,
   sunPosition,
   type Season,
 } from '@/features/sun/sun';
@@ -38,8 +39,9 @@ interface Props {
  * — about 11 km, which moves the sun by a fraction of a degree — and the
  * page receives only that table of positions. Nothing in it locates the flat.
  *
- * No aspect fact or no coordinates: the sun scene is omitted and the first
- * screen is title, photograph, price and numbers — never an empty plot.
+ * No aspect fact: the sun scene is omitted and the first screen is title,
+ * photograph, price and numbers — never an empty plot. Missing coordinates
+ * no longer omit it (sunCoordinates).
  */
 const { listing, cells, perUnit } = Astro.props;
 const cover = listing.media.cover;
@@ -49,13 +51,17 @@ const place = stagePlace(listing);
 const aspectFact = listing.facts.find((f) => f.key === 'aspect' && f.present && typeof f.value === 'string');
 const aspect = typeof aspectFact?.value === 'string' ? aspectFact.value : undefined;
 const facing = aspect !== undefined ? ASPECT_BEARING[aspect] : undefined;
-const lat = listing.location?.lat;
-const lng = listing.location?.lng;
-const sun =
-  facing !== undefined && lat !== undefined && lng !== undefined
-    ? { facing, lat: Math.round(lat * 10) / 10, lng: Math.round(lng * 10) / 10 }
-    : undefined;
-const approx = listing.location?.precision === 'area' || !listing.location?.street;
+// The listing's coordinates, else the street's midpoint, else the middle of
+// Israel (sunCoordinates) — never "no sun" just because nothing geocoded.
+const where = sunCoordinates(listing.location, listing.areaPlaces?.origin);
+// Without an aspect the day still plays — the sun's path and the light —
+// but nothing is said about the facade: no wedge, no hours on the balcony.
+const sun: { facing: number | null; lat: number; lng: number } = {
+  facing: facing ?? null,
+  lat: where.lat,
+  lng: where.lng,
+};
+const approx = where.approx || listing.location?.precision === 'area' || !listing.location?.street;
 
 // The day the page scrolls through, as a table: [hour, bearing, altitude].
 const FROM = 4.5;
@@ -79,12 +85,13 @@ const [restX, restY] = rest ? plotPoint(rest) : [PLOT.cx, PLOT.cy];
 // Facing within 60°, catching the facade at an angle within 90°, else behind.
 const stateOf = (bearing: number, altitude: number) =>
   altitude < -6 ? 'night' : altitude < 0 ? 'twilight'
-  : bearingGap(bearing, sun?.facing ?? 0) < 60 ? 'facing'
-  : bearingGap(bearing, sun?.facing ?? 0) < 90 ? 'side' : 'behind';
+  : sun.facing === null ? 'up'
+  : bearingGap(bearing, sun.facing) < 60 ? 'facing'
+  : bearingGap(bearing, sun.facing) < 90 ? 'side' : 'behind';
 const restState = rest ? stateOf(rest.bearing, rest.altitude) : 'behind';
 const hhmm = (minutes: number) => `${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, '0')}`;
-const summerMinutes = sun ? facadeSunMinutes('summer', sun.lat, sun.lng, sun.facing) : 0;
-const winterMinutes = sun ? facadeSunMinutes('winter', sun.lat, sun.lng, sun.facing) : 0;
+const summerMinutes = sun.facing === null ? 0 : facadeSunMinutes('summer', sun.lat, sun.lng, sun.facing);
+const winterMinutes = sun.facing === null ? 0 : facadeSunMinutes('winter', sun.lat, sun.lng, sun.facing);
 const compassName = (bearing: number) =>
   Object.entries(ASPECT_BEARING).reduce((best, [name, deg]) =>
     bearingGap(bearing, deg) < bearingGap(bearing, ASPECT_BEARING[best]!) ? name : best, 'צפון');
@@ -95,6 +102,7 @@ const strings = {
   side: t('listing.helio.side'),
   twilight: t('listing.helio.twilight'),
   night: t('listing.helio.night'),
+  up: t('listing.helio.up'),
   below: t('listing.helio.belowHorizon'),
   altitude: t('listing.helio.altitude'),
 };
@@ -120,17 +128,21 @@ const strings = {
         <circle cx={PLOT.cx} cy={PLOT.cy} r={PLOT.r} class="hl-rim" />
         <circle cx={PLOT.cx} cy={PLOT.cy} r={(PLOT.r * 2) / 3} class="hl-ring" />
         <circle cx={PLOT.cx} cy={PLOT.cy} r={PLOT.r / 3} class="hl-ring" />
-        <path d={facadeWedge(sun.facing)} class="hl-wedge" />
+        {sun.facing !== null && <path d={facadeWedge(sun.facing)} class="hl-wedge" />}
         <path d={dayArc('summer', sun.lat, sun.lng)} class="hl-arc" data-arc="summer" />
         <path d={dayArc('winter', sun.lat, sun.lng)} class="hl-arc hl-arc-off" data-arc="winter" />
         <text x="100" y="9" class="hl-card" text-anchor="middle">{t('listing.helio.north')}</text>
         <text x="100" y="198" class="hl-card" text-anchor="middle">{t('listing.helio.south')}</text>
         <text x="197" y="104" class="hl-card" text-anchor="end">{t('listing.helio.east')}</text>
         <text x="3" y="104" class="hl-card">{t('listing.helio.west')}</text>
-        <g transform={`rotate(${sun.facing} 100 100)`}>
+        {sun.facing !== null ? (
+          <g transform={`rotate(${sun.facing} 100 100)`}>
+            <rect x="92" y="92" width="16" height="16" rx="2" class="hl-home" />
+            <line x1="100" y1="92" x2="100" y2="80" class="hl-balc" />
+          </g>
+        ) : (
           <rect x="92" y="92" width="16" height="16" rx="2" class="hl-home" />
-          <line x1="100" y1="92" x2="100" y2="80" class="hl-balc" />
-        </g>
+        )}
         <circle cx={restX.toFixed(1)} cy={restY.toFixed(1)} r="8" class="hl-sun" data-sun />
       </svg>
       <div class="hl-read">
@@ -145,7 +157,7 @@ const strings = {
     </div>
   )}
 
-  {sun && (
+  {sun.facing !== null && (
     <dl class="hl-hours">
       <div>
         <dt>{t('listing.helio.hoursOn')} · <bdi>21</bdi> {t('listing.helio.summer')}</dt>
@@ -158,7 +170,10 @@ const strings = {
     </dl>
   )}
   {sun && (
-    <p class="hl-honest">{t('listing.helio.honest')}{approx ? ` ${t('listing.helio.approx')}` : ''}</p>
+    <p class="hl-honest">
+      {sun.facing === null ? t('listing.helio.honestNoAspect') : t('listing.helio.honest')}
+      {approx ? ` ${t('listing.helio.approx')}` : ''}
+    </p>
   )}
 
   <button

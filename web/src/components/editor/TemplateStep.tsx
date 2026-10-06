@@ -2,9 +2,9 @@ import type { CSSProperties } from 'react';
 
 import { ACCENTS, type AccentId, isAccentId } from '@/features/agents/accents';
 import type { ListingCategory } from '@/features/listings/schemas';
-import { templateFits } from '@/features/templates/manifest';
+import { pickerTemplates } from '@/features/templates/manifest';
 import type { SuggestReason } from '@/features/templates/suggest';
-import { TEMPLATE_IDS, type TemplateId } from '@/types/listing';
+import type { TemplateId } from '@/types/listing';
 
 import { t } from '../../lib/i18n';
 
@@ -43,9 +43,9 @@ export function TemplateStep({
   coverTone,
 }: Props) {
   const palette = isAccentId(accent) ? accent : 'olive';
-  // Every template when the category is not chosen yet; otherwise only those
-  // drawn for it. Still enumerated from TEMPLATE_IDS, never a second list.
-  const offered = category ? TEMPLATE_IDS.filter((id) => templateFits(id, category)) : TEMPLATE_IDS;
+  // The catalogue of twelve, filtered to the category, with an older
+  // listing's own template kept on offer (manifest.ts pickerTemplates).
+  const offered = pickerTemplates(category ?? 'property', chosen);
   const cover = photos[0];
   const film = [0, 1, 2, 3].map((index) => photos[index]);
 

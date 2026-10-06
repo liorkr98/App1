@@ -1,7 +1,15 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { ASPECT_BEARING, bearingGap, facadeSunMinutes, seasonMoment, sunPosition } from './sun.js';
+import {
+  ASPECT_BEARING,
+  bearingGap,
+  facadeSunMinutes,
+  ISRAEL_CENTRE,
+  seasonMoment,
+  sunCoordinates,
+  sunPosition,
+} from './sun.js';
 
 // Dizengoff, Tel Aviv.
 const LAT = 32.0808;
@@ -55,5 +63,23 @@ describe('sun position', () => {
   it('measures the gap between bearings across north', () => {
     assert.equal(bearingGap(350, 10), 20);
     assert.equal(bearingGap(90, 270), 180);
+  });
+});
+
+describe('sunCoordinates', () => {
+  it('uses the listing coordinates first, rounded so they do not locate the flat', () => {
+    assert.deepEqual(sunCoordinates({ lat: 32.08081, lng: 34.77412 }, { lat: 31, lon: 35 }), {
+      lat: 32.1,
+      lng: 34.8,
+      approx: false,
+    });
+  });
+
+  it('falls back to the street midpoint from the area lookup', () => {
+    assert.deepEqual(sunCoordinates({}, { lat: 32.0227, lon: 34.7779 }), { lat: 32, lng: 34.8, approx: false });
+  });
+
+  it('falls back to the middle of Israel, and says it is approximate', () => {
+    assert.deepEqual(sunCoordinates(undefined, undefined), { ...ISRAEL_CENTRE, approx: true });
   });
 });

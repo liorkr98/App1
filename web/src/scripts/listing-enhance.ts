@@ -418,8 +418,9 @@ function bindHeliograph(): void {
   type Row = [number, number, number];
   const data = JSON.parse(stage.dataset.helio) as {
     tables: { summer: Row[]; winter: Row[] };
-    facing: number;
-    strings: Record<'facing' | 'side' | 'behind' | 'twilight' | 'night' | 'below' | 'altitude', string>;
+    /** null when the seller gave no aspect: the day plays, the facade is not judged. */
+    facing: number | null;
+    strings: Record<'facing' | 'side' | 'behind' | 'twilight' | 'night' | 'up' | 'below' | 'altitude', string>;
     names: Record<string, number>;
   };
   const sun = stage.querySelector<SVGCircleElement>('[data-sun]');
@@ -469,7 +470,9 @@ function bindHeliograph(): void {
         ? data.strings.night
         : alt < 0
           ? data.strings.twilight
-          : gap(bearing, data.facing) < 60
+          : data.facing === null
+            ? data.strings.up
+            : gap(bearing, data.facing) < 60
             ? data.strings.facing
             : gap(bearing, data.facing) < 90
               ? data.strings.side
@@ -481,7 +484,8 @@ function bindHeliograph(): void {
       deg.textContent = `${Math.round(alt)}°`;
       meta.append(`${data.strings.altitude} `, deg, ` · ${compass(bearing)}`);
     }
-    stage.style.setProperty('--hl-sky', `rgb(${skyAt(alt)})`);
+    // The hour's light, on the first screen and — softly — on the whole page.
+    root.style.setProperty('--hl-sky', `rgb(${skyAt(alt)})`);
     const warm = alt > 0 ? Math.max(0, 1 - alt / 30) : 0;
     root.style.setProperty(
       '--hl-grade',
@@ -489,9 +493,13 @@ function bindHeliograph(): void {
         ? 'brightness(.6) saturate(.7) hue-rotate(185deg) sepia(.2)'
         : `sepia(${(warm * 0.45).toFixed(2)}) saturate(${(1 + warm * 0.3).toFixed(2)})`,
     );
-    root.classList.toggle('hl-night', alt < -4);
+    // Dusk onward is night: the light text palette takes over before the
+    // sky behind it is dark enough to need it.
+    root.classList.toggle('hl-night', alt < -1);
   };
 
+  const DAY_FROM = 6.5;
+  const DAY_TO = 21;
   const restIndex = () => Math.round((12.75 - (data.tables[season][0]?.[0] ?? 4.5)) / 0.25);
   let frame = 0;
   const onScroll = () => {
@@ -499,8 +507,13 @@ function bindHeliograph(): void {
     frame = requestAnimationFrame(() => {
       frame = 0;
       const max = document.documentElement.scrollHeight - innerHeight;
-      if (still || scrollY < 4 || max <= 0) return paint(restIndex());
-      paint(Math.round((scrollY / max) * (data.tables[season].length - 1)));
+      if (still || max <= 0) return paint(restIndex());
+      // The top of the page is morning and the end of it is night: 06:30 to
+      // 21:00, in the table's quarter-hours. It used to rest at 12:45 and
+      // jump to 04:30 — night — on the first pixel of scroll.
+      const first = data.tables[season][0]?.[0] ?? 4.5;
+      const hour = DAY_FROM + Math.min(1, Math.max(0, scrollY / max)) * (DAY_TO - DAY_FROM);
+      paint(Math.round((hour - first) / 0.25));
     });
   };
 
@@ -556,3 +569,19 @@ beaconReadToAgent();
 // The depth hero (P7): its module loads only on a page that has a map.
 const depthImage = document.querySelector<HTMLImageElement>('img[data-depth]');
 if (depthImage) void import('./depth').then(({ bindDepth }) => bindDepth(depthImage)).catch(() => undefined);
+
+// The live neighbourhood map (PR B): MapLibre and the tiles load only when
+// the map section is about to be seen, never on first load. Until it has
+// painted — and for good if it cannot — the drawing stays (listing-map.ts).
+const liveMapHost = document.querySelector<HTMLElement>('[data-live-map]');
+if (liveMapHost && 'IntersectionObserver' in window) {
+  const nearby = new IntersectionObserver(
+    (entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return;
+      nearby.disconnect();
+      void import('./listing-map').then(({ mountLiveMap }) => mountLiveMap(liveMapHost)).catch(() => undefined);
+    },
+    { rootMargin: '300px 0px' },
+  );
+  nearby.observe(liveMapHost);
+}

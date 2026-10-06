@@ -198,7 +198,9 @@
       "hours": "",
       "scrollHint": "",
       "honest": "",
-      "approx": ""
+      "approx": "",
+      "up": "",
+      "honestNoAspect": ""
     },
     "walk": {
       "start": "",
@@ -239,7 +241,21 @@
     "spinLabel": "",
     "spinHint": "",
     "spinBack": "",
-    "spinOn": ""
+    "spinOn": "",
+    "liveMap": {
+      "region": "",
+      "home": "",
+      "gestureMobile": "",
+      "gestureWindows": "",
+      "gestureMac": "",
+      "zoomIn": "",
+      "zoomOut": "",
+      "fullscreenEnter": "",
+      "fullscreenExit": "",
+      "attribution": "",
+      "close": "",
+      "marker": ""
+    }
   },
   "notFound": {
     "title": "",
@@ -337,7 +353,9 @@
         "rejected": "",
         "repeated": ""
       },
-      "noArea": ""
+      "noArea": "",
+      "failedNoFacts": "",
+      "failedSignIn": ""
     },
     "review": {
       "title": "",
