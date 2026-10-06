@@ -57,7 +57,9 @@ const legal = [
 <html lang="he" dir="rtl" data-ls="paper">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- The sheet is A4 (210mm, about 794px) at every width: a phone shows it
+         whole, zoomed out, rather than a strip of it it must scroll across. -->
+    <meta name="viewport" content="width=820" />
     <meta name="robots" content="noindex, nofollow" />
     <title>{listing.title.replace(/\s*\n\s*/g, ' ')}</title>
     <style is:global>
@@ -113,9 +115,44 @@ const legal = [
       .fl-agent span { color: var(--ls-ink-2); }
       .fl-phone { font-family: var(--ls-font-display); font-weight: 800; font-size: 20pt; }
       .fl-legal { margin: 0 14mm 7mm; font-size: 8pt; color: var(--ls-ink-2); }
+
+      /* The print bar is for the screen only; the sheet itself is unchanged. */
+      .fl-print {
+        position: sticky;
+        inset-block-start: 0;
+        z-index: 2;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 4mm;
+        padding: 4mm 14mm;
+        background: var(--ls-ink);
+        color: #fff;
+        /* Large: a phone shows this page at about half size. */
+        font-size: 18pt;
+        line-height: 1.5;
+      }
+      .fl-print button {
+        font: inherit;
+        font-weight: 700;
+        padding: 3mm 8mm;
+        border: 0;
+        border-radius: 999px;
+        background: var(--accent-base);
+        color: #fff;
+        cursor: pointer;
+      }
+      .fl-print span { opacity: 0.8; }
+      @media print {
+        .fl-print { display: none; }
+      }
     </style>
   </head>
   <body style={`--accent-base:${accent.base}`}>
+    <div class="fl-print">
+      <button type="button" data-print>{t('flyer.print')}</button>
+      <span>{t('flyer.printHint')}</span>
+    </div>
     <div class="fl">
       <div class="fl-photo">
         <img src={largest(listing.media.cover, HERO_WIDTHS)} alt="" style={coverStyle(listing)} />
@@ -164,5 +201,8 @@ const legal = [
         )}
       </div>
     </div>
+    <script>
+      document.querySelector<HTMLButtonElement>('[data-print]')?.addEventListener('click', () => window.print());
+    </script>
   </body>
 </html>

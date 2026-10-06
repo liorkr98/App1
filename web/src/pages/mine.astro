@@ -212,7 +212,7 @@ import '../styles/dash.css';
         media: {
           cover?: { url?: string; alt?: string };
           gallery?: { url?: string; alt?: string }[];
-          /** P7, written by the worker once rendered. */
+          /** Drawn in the agent's browser at publish (lib/share-images). */
           storyUrl?: string;
           flyerUrl?: string;
         } | null;
@@ -1073,40 +1073,63 @@ import '../styles/dash.css';
           })
           .catch(() => qr.remove());
 
-        // The story image and the flyer, once the worker has made them.
-        // Before that they are simply not offered — never a dead link.
+        /*
+         * The story image and the flyer.
+         *
+         * Both used to be made by the Fly worker, which no longer exists. The
+         * story is drawn in this browser (lib/share-images) — at publish, or
+         * here for a listing published before that. The flyer is its own page,
+         * printed or saved as PDF from the phone's share sheet.
+         */
         const https = (url: unknown) => (typeof url === 'string' && url.startsWith('https://') ? url : undefined);
+        const made = document.createElement('div');
+        made.className = 'studio-made';
+        const storyFigure = (story: string) => {
+          const figure = document.createElement('a');
+          figure.className = 'studio-story';
+          figure.href = story;
+          figure.target = '_blank';
+          figure.rel = 'noopener';
+          const image = document.createElement('img');
+          image.src = story;
+          image.alt = t('dash.studioStory');
+          image.loading = 'lazy';
+          const label = document.createElement('span');
+          label.textContent = t('dash.studioStory');
+          figure.append(image, label);
+          return figure;
+        };
         const story = https(row.media?.storyUrl);
-        const flyer = https(row.media?.flyerUrl);
-        if (story || flyer) {
-          const made = document.createElement('div');
-          made.className = 'studio-made';
-          if (story) {
-            const figure = document.createElement('a');
-            figure.className = 'studio-story';
-            figure.href = story;
-            figure.target = '_blank';
-            figure.rel = 'noopener';
-            const image = document.createElement('img');
-            image.src = story;
-            image.alt = t('dash.studioStory');
-            image.loading = 'lazy';
-            const label = document.createElement('span');
-            label.textContent = t('dash.studioStory');
-            figure.append(image, label);
-            made.append(figure);
-          }
-          if (flyer) {
-            const file = document.createElement('a');
-            file.className = 'act';
-            file.href = flyer;
-            file.target = '_blank';
-            file.rel = 'noopener';
-            file.textContent = t('dash.studioFlyer');
-            made.append(file);
-          }
-          box.append(made);
+        if (story) {
+          made.append(storyFigure(story));
+        } else if (row.id) {
+          const listingId = row.id;
+          made.append(
+            button(t('dash.studioMake'), 'act', (self) => {
+              self.disabled = true;
+              self.textContent = t('dash.studioMaking');
+              void import('../lib/share-images')
+                .then(({ makeShareImages }) => makeShareImages(listingId))
+                .catch(() => ({ status: 'failed' as const, storyUrl: undefined }))
+                .then((result) => {
+                  if (result.status !== 'failed' && result.storyUrl) {
+                    self.replaceWith(storyFigure(result.storyUrl));
+                    return;
+                  }
+                  self.disabled = false;
+                  self.textContent = t('dash.studioMakeFailed');
+                });
+            }),
+          );
         }
+        const flyer = document.createElement('a');
+        flyer.className = 'act';
+        flyer.href = `/a/${encodeURIComponent(row.slug)}/flyer/`;
+        flyer.target = '_blank';
+        flyer.rel = 'noopener';
+        flyer.textContent = t('dash.studioFlyer');
+        made.append(flyer);
+        box.append(made);
 
         const acts = document.createElement('div');
         acts.className = 'd-acts';

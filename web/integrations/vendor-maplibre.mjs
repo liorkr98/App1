@@ -71,6 +71,21 @@ export default function vendorMapLibre() {
         for (const name of Object.keys(FILES)) fs.writeFileSync(path.join(target, name), read(name));
         // BSD-3 asks for the notice to travel with the files.
         fs.copyFileSync(path.join(packageDir, 'LICENSE.txt'), path.join(target, 'LICENSE.txt'));
+
+        /*
+         * Their types, said outright. A module script served with any other
+         * type is refused by the browser, silently, and the map never loads;
+         * Cloudflare infers types from extensions, and `.mjs` is the one not
+         * worth leaving to inference. Cached for a year: the path is versioned.
+         */
+        const headers = path.join(fileURLToPath(dir), '_headers');
+        const rules = Object.entries(FILES)
+          .map(([name, type]) =>
+            `${MAPLIBRE_BASE}${name}\n  Content-Type: ${type}; charset=utf-8\n  Cache-Control: public, max-age=31536000, immutable\n`,
+          )
+          .join('\n');
+        const existing = fs.existsSync(headers) ? fs.readFileSync(headers, 'utf8') : '';
+        fs.writeFileSync(headers, `${existing.replace(/\s*$/, '\n\n')}${rules}`);
       },
     },
   };

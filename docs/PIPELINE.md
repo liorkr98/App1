@@ -1,5 +1,21 @@
 # The processing pipeline
 
+> **6 October 2026: the worker is not running.** The Fly.io app was deleted
+> (it cost more than the product earns) and `deploy-worker.yml` went with it.
+> Nothing is enqueued any more. What replaced each job:
+>
+> | job | now |
+> | --- | --- |
+> | `render_card`, `render_story` | drawn on a canvas in the agent's browser at publish, uploaded to `derived/{listingId}/browser/` (`web/src/lib/share-images.ts`) |
+> | `render_pdf` (flyer) | `/a/{slug}/flyer/` saved as PDF from the phone's print sheet |
+> | `enhance_images` | none: the browser-made copy (EXIF stripped, resized) is what pages show |
+> | `generate_og` | none: the designed card replaces it; the cover is the fallback |
+> | `depth_map` | none: the depth hero shows the plain photo |
+>
+> The code below and in `worker/` is kept, not deleted: reversing a deletion
+> costs months, reversing a demotion an afternoon (CLAUDE.md §1). The rest of
+> this file describes it as it was.
+
 Three job types, two Fly process groups, one Postgres queue. ADR 0001 has the
 runtime reasoning. This file is the map.
 

@@ -3,10 +3,10 @@ import type { Listing, TemplateId } from '../../types/listing.js';
 /**
  * The WhatsApp card, designed per template (plan §6: "a matching OG card").
  *
- * The card is a PAGE — /a/{slug}/card, 1200 × 630 — that the worker's
- * render_card job screenshots in Chrome, for the reason the story and the
- * flyer are pages: Hebrew, <bdi> numbers and the template's own faces render
- * exactly as they do on the listing, with no second typesetting to drift.
+ * The layout is a PAGE — /a/{slug}/card, 1200 × 630 — which the gates read
+ * and which the Fly worker used to screenshot. Since Fly was deleted (6 Oct
+ * 2026) the agent's browser draws the same layout on a canvas at publish
+ * (web/src/lib/share-draw.ts) and stores it with this key.
  *
  * Until a card exists, and whenever the one stored is for content the
  * listing no longer has, the page advertises the photo crop (generate_og) or
@@ -54,8 +54,8 @@ export function cardFamily(template: TemplateId): CardFamily {
 /**
  * What the card shows, reduced to one short string.
  *
- * The card page prints it into <meta name="card-key">; the worker reads it
- * back and stores it beside the image; the listing page recomputes it and
+ * The browser that draws the card computes it from the row and stores it
+ * beside the image; the listing page recomputes it and
  * uses the card only when the two agree. So a seller who drops the price
  * never has the old figure advertised in a WhatsApp thread while the new card
  * is being made (CLAUDE.md §6: previews are cached hard) — the page falls

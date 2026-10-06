@@ -68,9 +68,10 @@ sellers are secondary. When a design decision trades one against the other,
 | Image storage | **Supabase Storage**. Decided 10 September 2026 — see below. |
 | Spatial | **PostGIS** for proximity queries |
 | Routing | **OSRM**, foot profile, self-hosted — `osrm/`, see docs/OSRM.md |
-| Worker | **Fly.io** container, Postgres job queue |
-| Images | **sharp**/libvips, local, no external API in v1 |
-| PDF | **Puppeteer**, in its own Fly process group |
+| Worker | **None running.** Fly.io was deleted 6 Oct 2026 for cost — see below. `worker/` is kept, not deployed |
+| Share images | **Canvas, in the agent's browser** at publish: the WhatsApp card and the story image (`web/src/lib/share-images.ts`) |
+| Images | The browser's re-encode (EXIF stripped, resized). sharp lives in `worker/`, idle |
+| PDF | **The phone's print sheet.** `/a/{slug}/flyer/` has a "save as PDF" button |
 | Listing map | **MapLibre GL JS** 6, self-served from a versioned path, with **OpenFreeMap** tiles. Lazy: loaded only when the map section nears the screen. Decided 5 Oct 2026 — see below. |
 | Payments | **Undecided.** Build behind a provider interface (PRD §6) |
 
@@ -200,6 +201,18 @@ day OSRM is inconvenient.
 > the listing row. MapLibre draws right-to-left text itself (no RTL plugin);
 > Hebrew labels use our self-hosted Heebo through the style's font faces.
 
+> **6 October 2026: no Fly.io.** The app cost more than the product earns and
+> was deleted, with `deploy-worker.yml`. The agent's browser does what the
+> worker did that a buyer would notice: it draws the WhatsApp card and the
+> story image on a canvas at publish (same layouts as `ShareCard.astro` and
+> `/a/{slug}/story`, which stay as the reference and for the gates) and
+> uploads them under `derived/{listingId}/browser/`, the one prefix the
+> browser may write (0023). The flyer is saved as PDF from its page. Photo
+> enhancement and the depth map are dropped; the browser copy and the plain
+> photo stand in. `worker/` is demoted, not deleted (§1): moving any of this
+> back is a deploy, not a rewrite. OSRM was to share that Fly app, so the
+> Valhalla interim router stays the router.
+
 Do not introduce a dependency without asking. Justify: what it does, size,
 last publish date, and why the stack above cannot do it.
 
@@ -216,7 +229,7 @@ web/              Astro. Its own package.json, tsconfig and lint pass.
   src/pages/a/[slug]/   the listing page
   src/components/       one concern each
   src/lib/              formatting, facts, enrichment queries
-worker/           Fly container: image enhancement, OG, PDF
+worker/           image enhancement, OG, PDF — NOT DEPLOYED since 6 Oct 2026 (§2)
 ingest/           Fly scheduled jobs: schools, GTFS, OSM
 supabase/
   migrations/     numbered, append-only. Never rewrite an applied migration.
@@ -439,7 +452,7 @@ the summary.
 
 - **RLS is mandatory** on every Supabase table. A table without a policy is a
   data leak.
-- The service-role key bypasses RLS. It lives in Fly secrets, never in the
+- The service-role key bypasses RLS. It lives in server secrets, never in the
   repo, never in a client bundle, never in a `PUBLIC_` variable.
 - **Strip EXIF before publishing any image.** GPS in a photo of someone's home
   is a privacy leak even when the page is noindex and the seller hid the

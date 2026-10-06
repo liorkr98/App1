@@ -425,8 +425,9 @@ function bindHeliograph(): void {
   type Row = [number, number, number];
   const data = JSON.parse(stage.dataset.helio) as {
     tables: { summer: Row[]; winter: Row[] };
-    facing: number;
-    strings: Record<'facing' | 'side' | 'behind' | 'twilight' | 'night' | 'below' | 'altitude', string>;
+    /** null when the seller gave no aspect: the day plays, the facade is not judged. */
+    facing: number | null;
+    strings: Record<'facing' | 'side' | 'behind' | 'twilight' | 'night' | 'up' | 'below' | 'altitude', string>;
     names: Record<string, number>;
   };
   const sun = stage.querySelector<SVGCircleElement>('[data-sun]');
@@ -476,7 +477,9 @@ function bindHeliograph(): void {
         ? data.strings.night
         : alt < 0
           ? data.strings.twilight
-          : gap(bearing, data.facing) < 60
+          : data.facing === null
+            ? data.strings.up
+            : gap(bearing, data.facing) < 60
             ? data.strings.facing
             : gap(bearing, data.facing) < 90
               ? data.strings.side
