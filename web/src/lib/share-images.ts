@@ -7,7 +7,7 @@ import {
 import { cardFor, shareCardKey } from '@/features/listings/share-card';
 import type { Listing } from '@/types/listing';
 
-import { listingFromRow, LISTING_COLUMNS, type ListingRow } from './listing-from-row';
+import { listingFromRow, LISTING_COLUMNS, type ListingRow } from './listing-row-map';
 import { drawCard, drawStory, encode, loadCover, loadShareFonts } from './share-draw';
 import { supabase } from './supabase';
 
