@@ -29,7 +29,6 @@ import { loadEntitlement } from '../../lib/entitlement';
 import { createDraft, uploadOriginal } from '../../lib/listing-draft';
 import { coarseOrigin } from '@/features/sun/anchor';
 import { areaKey, requestArea } from '../../lib/area-request';
-import { enqueuePublishJobs } from '../../lib/listing-jobs';
 import { stripAndResize, uploadDerived } from '../../lib/listing-photo';
 import { loadListing, publishListing, saveListing } from '../../lib/listing-save';
 import { loadProfile } from '../../lib/profile';
@@ -101,6 +100,9 @@ const START: EditorState = {
  * that publishing never feels stuck on it.
  */
 const AREA_AT_PUBLISH_MS = 6_000;
+
+/** Drawing two images and uploading them: a few seconds on a phone on 4G. */
+const SHARE_IMAGES_AT_PUBLISH_MS = 12_000;
 
 /** The paragraph a tone chip writes before the server answers. */
 function draftInVoice(
@@ -1014,28 +1016,33 @@ export default function Editor() {
       const result = await publishListing(id, state, photos, extrasRef.current).catch(
         () => ({ error: 'failed' }) as const,
       );
-      setPublishing(false);
 
       if ('ok' in result) {
         void recordEditorEvent('publish', 'publish_ok', id);
+
+        /*
+         * The WhatsApp card and the story image, drawn on this phone.
+         *
+         * BEFORE the link is shown, because WhatsApp caches a preview hard
+         * (CLAUDE.md §6): a link pasted before its card exists keeps the
+         * plain photograph in that chat for good. Capped, because a slow
+         * upload must not hold the agent's link hostage; a card that lands
+         * later still reaches every chat the link is pasted into after it.
+         */
+        await Promise.race([
+          import('../../lib/share-images').then(({ makeShareImages }) => makeShareImages(id)).catch(() => 'failed'),
+          new Promise((resolve) => window.setTimeout(resolve, SHARE_IMAGES_AT_PUBLISH_MS)),
+        ]);
+
+        setPublishing(false);
         const publishedSlug = result.slug || slug.current;
         if (publishedSlug) {
           slug.current = publishedSlug;
           setPublishedUrl(`${window.location.origin}/a/${publishedSlug}/`);
         }
-        const originals = photos
-          .map((photo) => photo.path)
-          .filter((path): path is string => Boolean(path));
-        void enqueuePublishJobs({
-          listingId: id,
-          originalPaths: originals,
-          ...(photos[0]?.path ? { coverPath: photos[0].path } : {}),
-          price: state.price,
-          ...(slug.current ? { slug: slug.current } : {}),
-          content: JSON.stringify([state.title, state.template, state.accent, state.facts, state.city, state.street]),
-        });
         clearDraft();
       } else {
+        setPublishing(false);
         void recordEditorEvent('publish', 'publish_fail', id);
         setFailure(
           result.error === 'no_photos'

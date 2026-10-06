@@ -19,7 +19,7 @@ import { resolveTemplateId } from '@/features/templates/manifest';
 import { listingBySlug } from './listings';
 import { supabaseConfigured, supabasePublic } from './supabase';
 
-const LISTING_COLUMNS =
+export const LISTING_COLUMNS =
   'id, slug, category, title, description, price, currency, list_price, price_note, facts, media, disclosures, location, seller, template, accent, status, indexable, pre_portal, published_at, og_image_hash, audience, hyad_mark, area_places';
 
 export interface ListingRow {

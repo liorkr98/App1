@@ -5,9 +5,10 @@
 # machines that are not in [processes] below, so every deploy names the two
 # groups. See docs/OSRM.md.
 #
-# Deploy with the "Deploy worker" GitHub Action (.github/workflows/
-# deploy-worker.yml), which runs exactly this from the REPO ROOT so the
-# Dockerfile can see worker/:
+# NOT DEPLOYED since 6 October 2026: the Fly app was deleted for cost and the
+# "Deploy worker" Action removed (docs/PIPELINE.md says what replaced each
+# job). Kept so the worker can return. It deployed from the REPO ROOT so the
+# Dockerfile could see worker/:
 #   fly deploy --app app1-mmbfma --config worker/fly.toml --dockerfile worker/Dockerfile \
 #     --process-groups worker,pdf --ha=false --remote-only
 #

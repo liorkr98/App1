@@ -784,6 +784,9 @@
     "studioMessage": "",
     "studioStory": "",
     "studioFlyer": "",
+    "studioMake": "",
+    "studioMaking": "",
+    "studioMakeFailed": "",
     "kpiLink": "",
     "kpiLinkNote": "",
     "kpiLinkNone": "",
@@ -978,7 +981,9 @@
   },
   "flyer": {
     "qrLabel": "",
-    "scan": ""
+    "scan": "",
+    "print": "",
+    "printHint": ""
   },
   "card": {
     "dossierProperty": "",

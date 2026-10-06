@@ -782,7 +782,10 @@
     "qrDownload": "הורדת QR",
     "studioMessage": "ההודעה המוכנה לשליחה",
     "studioStory": "תמונת סטורי",
-    "studioFlyer": "פלאייר להדפסה (PDF)",
+    "studioFlyer": "פלאייר להדפסה או PDF",
+    "studioMake": "יצירת תמונת סטורי וכרטיס וואטסאפ",
+    "studioMaking": "מכין את התמונות…",
+    "studioMakeFailed": "לא הצליח. לנסות שוב",
     "kpiLink": "זמן עד קישור",
     "kpiLinkNote": "חציון, מתחילת העריכה עד שהקישור נשלח",
     "kpiLinkNone": "יופיע אחרי שתשתפו קישור ראשון",
@@ -977,7 +980,9 @@
   },
   "flyer": {
     "qrLabel": "קוד QR לעמוד המודעה",
-    "scan": "סורקים ומגיעים לעמוד"
+    "scan": "סורקים ומגיעים לעמוד",
+    "print": "שמירה כ־PDF או הדפסה",
+    "printHint": "בטלפון: בוחרים „שמירה כ־PDF” בחלון ההדפסה."
   },
   "card": {
     "dossierProperty": "תיק נכס",
