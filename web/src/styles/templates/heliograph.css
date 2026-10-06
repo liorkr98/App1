@@ -8,8 +8,8 @@
   covered). Between them the sky behind the first screen moves through dawn
   and gold (--hl-sky) and the photographs warm with the hour (--hl-grade).
 
-  The resting frame, without script or motion, is noon in June: the plot,
-  the clock and the state line are rendered by the server at 12:45.
+  The page opens at sunrise, the first hour the sun is up. Scrolling
+  carries it across the balcony to night. Stillness is moved to 12:45.
 */
 
 html[data-template='heliograph'] {
@@ -27,16 +27,13 @@ html[data-template='heliograph'] {
 
 html[data-template='heliograph'] body {
   font-family: var(--ls-font-body);
-  /* The hour's light on the whole page (bindHeliograph sets --hl-sky on
-     <html>). Kept to a fifth of the sky so body text stays above 4.5:1 at
-     every hour; at night the palette itself turns. */
-  background-color: color-mix(in srgb, var(--hl-sky, var(--plaster)) 20%, var(--plaster));
   transition: background-color 0.6s linear, color 0.4s;
 }
 
 html[data-template='heliograph'] section.stage-helio {
+  --hl-sky: var(--plaster);
   padding: 0 0 1.4rem;
-  background: linear-gradient(180deg, var(--hl-sky, var(--plaster)), transparent 85%);
+  background: linear-gradient(180deg, var(--hl-sky), var(--plaster) 85%);
   transition: background 0.6s linear;
 }
 
@@ -81,6 +78,23 @@ html[data-template='heliograph'] .hl-sky {
   gap: 1rem;
   align-items: center;
   padding: 0.6rem var(--gut) 0;
+}
+
+/* Pinned by bindHeliograph while the day plays, so the plot stays in view
+   as the hour moves. Released near the footer. No pin without the script. */
+html[data-template='heliograph'] .hl-sky.is-pinned {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline: 0;
+  z-index: 6;
+  padding-block: 0.6rem 0.8rem;
+  background: linear-gradient(180deg, var(--hl-sky), color-mix(in srgb, var(--hl-sky) 82%, transparent));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-template='heliograph'] .hl-sky.is-pinned {
+    position: static;
+  }
 }
 
 html[data-template='heliograph'] .hl-plot {

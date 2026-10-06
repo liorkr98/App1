@@ -119,27 +119,3 @@ export function facadeSunMinutes(season: Season, lat: number, lng: number, facin
   return minutes;
 }
 
-/**
- * Where to compute the sun from, rounded to 0.1° (~11 km).
- *
- * The listing's own coordinates when it has them; otherwise the street's
- * midpoint from the area lookup (area_places.origin); otherwise the middle
- * of Israel. Real listings had none of the first — nothing geocodes an
- * address — so Heliograph used to drop its sun scene on every published
- * page and look like an ordinary template. Between Eilat and the Golan the
- * sun's height at noon differs by about four degrees, so the fallback still
- * draws a true path; `approx` tells the page to say so.
- */
-export const ISRAEL_CENTRE = { lat: 31.8, lng: 35.0 } as const;
-
-export function sunCoordinates(
-  location: { lat?: number | undefined; lng?: number | undefined } | undefined,
-  origin: { lat: number; lon: number } | undefined,
-): { lat: number; lng: number; approx: boolean } {
-  const round = (value: number) => Math.round(value * 10) / 10;
-  if (typeof location?.lat === 'number' && typeof location.lng === 'number') {
-    return { lat: round(location.lat), lng: round(location.lng), approx: false };
-  }
-  if (origin) return { lat: round(origin.lat), lng: round(origin.lon), approx: false };
-  return { lat: ISRAEL_CENTRE.lat, lng: ISRAEL_CENTRE.lng, approx: true };
-}

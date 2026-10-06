@@ -221,6 +221,83 @@
   padding-block-start: 1.2rem;
 }
 
+.template-group {
+  margin: 1.4rem 0 0.7rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.template-thumb.is-shot {
+  padding: 0;
+  aspect-ratio: 400 / 866;
+}
+
+.thumb-shot {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  object-position: 50% 0;
+}
+
+.step-rail {
+  margin-block-start: 0.85rem;
+}
+
+.step-rail ol {
+  display: flex;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0 0 0.15rem;
+  list-style: none;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.step-pip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  min-inline-size: 4.2rem;
+  padding: 0.35rem 0.4rem;
+  border: 1px solid var(--stone);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.3;
+  cursor: pointer;
+}
+
+.step-pip:hover {
+  border-color: var(--olive);
+  color: var(--ink);
+}
+
+.step-pip:active {
+  transform: scale(0.97);
+}
+
+.step-pip.is-here {
+  border-color: var(--olive);
+  background: var(--olive);
+  color: var(--plaster);
+}
+
+.step-pip:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step-pip:active {
+    transform: none;
+  }
+}
+
 .template-step .hint {
   margin-block-end: 0.85rem;
 }

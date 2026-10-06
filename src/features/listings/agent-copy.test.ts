@@ -195,6 +195,19 @@ describe('another description', () => {
     assert.equal(nextAgentDescription(FLAT, 'טקסט שהסוכן כתב בעצמו.'), agentDescription(FLAT, 0));
   });
 
+  it('writes a different paragraph for each tone, and each one still passes the gate', () => {
+    const pro = nextAgentDescription(FLAT);
+    const warm = nextAgentDescription(FLAT, pro, 'warm');
+    const refined = nextAgentDescription(FLAT, warm, 'refined');
+    assert.notEqual(pro, warm);
+    assert.notEqual(warm, refined);
+    assert.notEqual(refined, pro);
+    assert.equal(warm.includes('מקום לגור בו') || warm.includes('לגור ') || warm.includes('יום־יום'), true);
+    assert.equal(acceptAgentDescription(warm, FLAT), warm);
+    assert.equal(acceptAgentDescription(refined, FLAT), refined);
+    assert.equal(acceptAgentDescription(nextAgentDescription(NO_AREA, '', 'warm'), NO_AREA) !== undefined, true);
+  });
+
   it('differs from the box even when two variants come out the same', () => {
     const sparse: AgentCopyInput = { category: 'property', facts: [fact('rooms', 'חדרים', 3, { type: 'number' })] };
     let text = nextAgentDescription(sparse);
@@ -279,13 +292,13 @@ describe('tone', () => {
   const tones = ['pro', 'warm', 'refined'] as const;
 
   it('gives a different text for each tone, so the chips visibly do something', () => {
-    const texts = tones.map((tone) => agentDescription({ ...FLAT, tone }, 0));
+    const texts = tones.map((tone) => agentDescription(FLAT, 0, tone));
     assert.equal(new Set(texts).size, 3);
   });
 
   it('says the same facts and the same places in every tone', () => {
     for (const tone of tones) {
-      const text = agentDescription({ ...FLAT, tone }, 0);
+      const text = agentDescription(FLAT, 0, tone);
       for (const needle of ['154 מ״ר', 'מרפסת שמש של 25 מ״ר', 'ממ״ד', 'גן גרנית', 'שופרסל אקספרס']) {
         assert.ok(text.includes(needle), `${tone}: ${needle}`);
       }
@@ -294,10 +307,10 @@ describe('tone', () => {
 
   it('passes the same checks in every tone and every variant', () => {
     for (const tone of tones) {
-      for (const text of agentDescriptions({ ...FLAT, tone })) {
-        assert.equal(acceptAgentDescription(text, { ...FLAT, tone }), text, text);
+      for (const text of agentDescriptions(FLAT, tone)) {
+        assert.equal(acceptAgentDescription(text, FLAT), text, text);
       }
-      assert.equal(new Set(agentDescriptions({ ...FLAT, tone })).size, AGENT_VARIANTS, tone);
+      assert.equal(new Set(agentDescriptions(FLAT, tone)).size, AGENT_VARIANTS, tone);
     }
   });
 });

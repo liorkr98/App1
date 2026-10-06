@@ -5,6 +5,8 @@ import {
   canAdvance,
   canPublish,
   MAX_IMAGES,
+  nextStep,
+  reachable,
   stepsFor,
   type EditorState,
   type Step,
@@ -16,7 +18,8 @@ import { NEW_LISTING_TEMPLATE } from '@/features/templates/manifest';
 import { suggestTemplate } from '@/features/templates/suggest';
 import { cleanPlanRooms } from '@/features/listings/rich-media';
 import type { MediaExtras } from '../../lib/listing-row';
-import type { CopyTone } from '@/features/listings/listing-copy';
+import { groundedDescription, type CopyTone } from '@/features/listings/listing-copy';
+import { nextAgentDescription } from '@/features/listings/agent-copy';
 
 import { isProfileComplete } from '@/features/agents/profile';
 import { DEFAULT_ACCENT, isAccentId } from '@/features/agents/accents';
@@ -24,6 +27,7 @@ import { DEFAULT_ACCENT, isAccentId } from '@/features/agents/accents';
 import { t } from '../../lib/i18n';
 import { loadEntitlement } from '../../lib/entitlement';
 import { createDraft, uploadOriginal } from '../../lib/listing-draft';
+import { coarseOrigin } from '@/features/sun/anchor';
 import { areaKey, requestArea } from '../../lib/area-request';
 import { enqueuePublishJobs } from '../../lib/listing-jobs';
 import { stripAndResize, uploadDerived } from '../../lib/listing-photo';
@@ -57,19 +61,6 @@ import { clearDraft, useDraft } from './useDraft';
  * which steps a category has, where a returning seller lands. This file is
  * the presentation of those rules and holds no product logic of its own, so
  * the answer to "why can I not publish" is testable without a browser.
- *
- * BUILT SO FAR: category, photos, facts, description, template.
- *
- * STILL EMPTY — each renders its heading and nothing else:
- *   - preview. It has to show the real listing page, and the site is static
- *     output — so a faithful preview means either a draft URL built by the
- *     pipeline or rendering the page markup twice. That is a design decision,
- *     not a component.
- *
- * Photos are picked and ordered but NOT UPLOADED YET. The target is settled —
- * Supabase Storage, CLAUDE.md §2 — and the buckets already exist in
- * migration 0004; what is missing is the signed-upload call and the
- * credentials to make it, which are not mine to hold.
  *
  * The draft is kept in localStorage (useDraft), because PRD §4 locks "no
  * account until publish" and until the seller pays there is nowhere else to
@@ -111,9 +102,39 @@ const START: EditorState = {
  */
 const AREA_AT_PUBLISH_MS = 6_000;
 
+/** The paragraph a tone chip writes before the server answers. */
+function draftInVoice(
+  category: EditorState['category'],
+  facts: EditorState['facts'],
+  city: string | undefined,
+  previous: string,
+  voice: CopyTone,
+): string {
+  const where = city?.trim();
+  if (category === 'vehicle') {
+    return groundedDescription(
+      { category: 'vehicle', facts, ...(where ? { city: where } : {}) },
+      { tone: voice, alternate: previous.trim() !== '' },
+    );
+  }
+  return nextAgentDescription(
+    { category: 'property', facts, ...(where ? { city: where } : {}) },
+    previous,
+    voice,
+  );
+}
+
 export default function Editor() {
   const [state, setState] = useState<EditorState>(START);
   const [step, setStep] = useState<Step>('category');
+  /**
+   * True until the agent picks a step themselves. Opening a saved listing
+   * lands on the first gap (`nextStep`); once they tap Next, Back or a
+   * step, that choice sticks — a photo finishing its upload must not
+   * yank them to a later screen.
+   */
+  const followGap = useRef(true);
+  const railList = useRef<HTMLOListElement>(null);
 
   /**
    * The photographs live HERE and not in EditorState.
@@ -448,16 +469,20 @@ export default function Editor() {
   descriptionRef.current = state.description;
 
   const [tone, setTone] = useState<CopyTone>('pro');
+  // Street midpoint, rounded, for the sun template's preview. Not part of
+  // EditorState: saving it onto location would publish a pin.
+  const [sunPoint, setSunPoint] = useState<{ lat: number; lng: number } | undefined>();
+  // The row's surroundings, keyed by the address they belong to. A changed
+  // street must not keep showing the previous map.
+  const [surroundings, setSurroundings] = useState<{ key: string; places: unknown } | undefined>();
+  const suggestGen = useRef(0);
 
-  /**
-   * `voice` is the tone to write in when the agent has just tapped a tone
-   * chip: the state update has not landed yet, and the point of the tap is
-   * a new text in that voice now, not on the next press.
-   */
-  const suggest = (retriesLeft = 1, voice: CopyTone = tone) => {
+  const suggest = (retriesLeft = 1, voice?: CopyTone) => {
     const id = listingId.current;
-    if (!id || suggesting) return;
+    if (!id) return;
 
+    const voiceNow = voice ?? tone;
+    const ticket = ++suggestGen.current;
     const previous = descriptionRef.current.trim();
     setSuggesting(true);
     setSuggestFailed(false);
@@ -485,7 +510,7 @@ export default function Editor() {
             Authorization: `Bearer ${token}`,
             Accept: 'text/event-stream',
           },
-          body: JSON.stringify({ listingId: id, previous, tone: voice }),
+          body: JSON.stringify({ listingId: id, previous, tone: voiceNow }),
         });
         if (!response.ok) {
           const failed = (await response.json().catch(() => ({}))) as { error?: unknown };
@@ -507,6 +532,7 @@ export default function Editor() {
           let draft = '';
 
           while (true) {
+            if (ticket !== suggestGen.current) return;
             const { value, done } = await reader.read();
             if (done) break;
             buffer += decoder.decode(value, { stream: true });
@@ -541,6 +567,7 @@ export default function Editor() {
           source = sourceOf(body);
         }
 
+        if (ticket !== suggestGen.current) return;
         if (!text) throw new Error('empty');
 
         setSuggestSource(source);
@@ -564,13 +591,13 @@ export default function Editor() {
          */
         if (areaPending && retriesLeft > 0) {
           setSuggesting(false);
-          window.setTimeout(() => suggest(retriesLeft - 1, voice), 4000);
+          window.setTimeout(() => suggest(retriesLeft - 1, voiceNow), 4000);
           return;
         }
       } catch (error) {
-        setSuggestFailed(error instanceof Error ? error.message : 'failed');
+        if (ticket === suggestGen.current) setSuggestFailed(error instanceof Error ? error.message : 'failed');
       } finally {
-        setSuggesting(false);
+        if (ticket === suggestGen.current) setSuggesting(false);
       }
     })();
   };
@@ -600,6 +627,11 @@ export default function Editor() {
     void uploadPending(next, state.category);
   };
 
+  const addressKey = areaKey(state.city, state.street);
+  const previewPlaces =
+    surroundings && surroundings.key === addressKey ? surroundings.places : undefined;
+  const previewSun = sunPoint ?? (previewPlaces ? coarseOrigin(previewPlaces) : undefined);
+
   const steps = useMemo(() => stepsFor(state.category), [state.category]);
   const outstanding = useMemo(() => blockers(state), [state]);
 
@@ -611,6 +643,7 @@ export default function Editor() {
 
   useEffect(() => {
     void recordEditorEvent(step, 'enter', listingId.current);
+    railList.current?.querySelector('.is-here')?.scrollIntoView({ inline: 'nearest', block: 'nearest' });
   }, [step]);
 
   const blockedSent = useRef<Step | null>(null);
@@ -698,8 +731,13 @@ export default function Editor() {
         );
 
         const location = (row.location ?? {}) as { city?: string; street?: string };
+        const origin = coarseOrigin(row.area_places);
+        if (origin) setSunPoint(origin);
+        const around = areaKey(location.city, location.street);
+        setSurroundings(around && row.area_places ? { key: around, places: row.area_places } : undefined);
         if (isAccentId(row.accent)) accentSource.current = 'manual';
 
+        let opened: EditorState | undefined;
         setState((current) => {
           const {
             ownerConsentDeclaredAt: _declared,
@@ -745,13 +783,20 @@ export default function Editor() {
               ? { tourUrl: String((row.media as { tourUrl: string }).tourUrl) }
               : {}),
           };
+          opened = next;
           return next;
         });
-        // The dashboard's "תצוגה מקדימה" on a draft opens straight on the
-        // preview. Only that step: landing past a step the seller has not
-        // done would hide what is still missing.
+        // "תצוגה מקדימה" on a draft opens that step. Everything else opens
+        // the first gap (nextStep): a finished listing does not make the
+        // agent walk "מה מוכרים?" again, and a missing photo still cannot
+        // be skipped.
         const opening = new URLSearchParams(window.location.search).get('step');
-        setStep(opening === 'preview' ? 'preview' : 'category');
+        if (opening === 'preview') {
+          followGap.current = false;
+          setStep('preview');
+        } else if (opened && followGap.current) {
+          setStep(nextStep(opened));
+        }
       })
       .catch(() => undefined);
 
@@ -761,18 +806,24 @@ export default function Editor() {
   }, [signedIn]);
 
   /**
-   * Restores a saved draft, then lands on step 1. A previous session used to
-   * skip to photos (step 3) because category and details were already filled.
+   * Restores a saved draft onto the first step that still needs work.
    *
    * Entitlement is untouched: `Draft` has no such field. See useDraft.
+   * photoCount is not in the draft either — the photos come back from the
+   * row below, and the landing is recomputed once they have.
    */
   useDraft(
     state,
     (draft) => {
       if (skipDraftRestore.current) return;
       if (draft.accent) accentSource.current = 'manual';
-      setState((current) => ({ ...current, ...draft }));
-      setStep('category');
+      const merged = {
+        ...stateRef.current,
+        ...draft,
+        entitlement: stateRef.current.entitlement,
+      };
+      setState((current) => ({ ...current, ...draft, entitlement: current.entitlement }));
+      if (followGap.current) setStep(nextStep(merged));
       if (!draft.slug || !supabaseConfigured) return;
       void loadListing(draft.slug)
         .then((result) => {
@@ -806,6 +857,9 @@ export default function Editor() {
             })),
           );
           setState((current) => ({ ...current, photoCount: stored.length }));
+          if (followGap.current) {
+            setStep(nextStep({ ...stateRef.current, photoCount: stored.length }));
+          }
           const saved = row.media as {
             floorPlan?: { url?: string; width?: number; height?: number; rooms?: unknown };
             spin?: { id?: string; url?: string; width?: number; height?: number }[];
@@ -874,13 +928,29 @@ export default function Editor() {
     const key = areaKey(current.city, current.street);
     if (!key || areaAskedFor.current === key) return;
     areaAskedFor.current = key;
+    setSunPoint(undefined);
     void requestArea(id).then((answer) => {
+      if (areaAskedFor.current === key && answer?.sun) setSunPoint(answer.sun);
       if (answer?.pending && retry) {
         areaAskedFor.current = undefined;
         window.setTimeout(() => lookUpArea(id, false), 5000);
       }
     });
   };
+
+  // A loaded neighbourhood with no street midpoint still needs a sun. An
+  // address that has not been saved yet waits for the save, which asks too.
+  useEffect(() => {
+    const id = savedRow?.id;
+    const key = areaKey(state.city, state.street);
+    if (!signedIn || !id || sunPoint || !key) return;
+    if (state.category === 'vehicle') return;
+    if (!surroundings || surroundings.key !== key) return;
+    if (coarseOrigin(surroundings.places)) return;
+    lookUpArea(id);
+    // lookUpArea reads the address from a ref and asks once per address.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signedIn, sunPoint, state.city, state.street, state.category, savedRow, surroundings]);
 
   /**
    * Publishes, and hands back the link.
@@ -981,10 +1051,20 @@ export default function Editor() {
 
   const go = (delta: number) => {
     if (delta > 0 && step === 'photos' && photosBusy) return;
+    followGap.current = false;
     setStepMotion(delta < 0 ? 'back' : 'forward');
     persist();
     const target = steps[position + delta];
     if (target) setStep(target);
+  };
+
+  const jump = (target: Step) => {
+    if (target === step || !reachable(state, target)) return;
+    if (step === 'photos' && photosBusy && steps.indexOf(target) > position) return;
+    followGap.current = false;
+    setStepMotion(steps.indexOf(target) < position ? 'back' : 'forward');
+    persist();
+    setStep(target);
   };
 
   /**
@@ -1025,6 +1105,28 @@ export default function Editor() {
           A physical `left` here would fill it backwards, and it would look
           fine in every English screenshot.
         */}
+        <nav className="step-rail" aria-label={t('editor.stepRail')}>
+          <ol ref={railList}>
+            {steps.map((id, index) => {
+              const open = id === step || reachable(state, id);
+              return (
+                <li key={id}>
+                  <button
+                    type="button"
+                    className={id === step ? 'step-pip is-here' : 'step-pip'}
+                    aria-current={id === step ? 'step' : undefined}
+                    aria-label={t(`editor.steps.${id}`)}
+                    disabled={!open || (step === 'photos' && photosBusy && index > position)}
+                    onClick={() => jump(id)}
+                  >
+                    <bdi>{index + 1}</bdi>
+                    <span>{t(`editor.stepShort.${id}`)}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
+        </nav>
         <div className="rail-bar" aria-hidden="true">
           {/*
             A scale factor, not a width. Animating inline-size relaid the bar
@@ -1147,7 +1249,14 @@ export default function Editor() {
         ) : null}
 
         {step === 'preview' ? (
-          <LivePreview state={state} photos={photos} profile={profile} extras={extras} />
+          <LivePreview
+            state={state}
+            photos={photos}
+            profile={profile}
+            extras={extras}
+            sun={previewSun}
+            areaPlaces={previewPlaces}
+          />
         ) : null}
 
         {step === 'publish' ? (
@@ -1183,6 +1292,12 @@ export default function Editor() {
             }}
             accentFromCover={accentSource.current === 'cover'}
             coverTone={coverTone}
+            missingAspect={
+              state.category === 'property' &&
+              !state.facts.some(
+                (fact) => fact.key === 'aspect' && fact.present !== false && typeof fact.value === 'string' && fact.value.trim() !== '',
+              )
+            }
             photos={photos
               .map((photo) => photo.publicUrl ?? photo.url)
               .filter((url): url is string => url.trim() !== '')}
@@ -1193,6 +1308,7 @@ export default function Editor() {
                     facts: state.facts,
                     street: state.street,
                     namedRooms: new Set(photos.map((photo) => photo.room).filter(Boolean)).size,
+                    hasFloorPlan: plan !== undefined,
                   })
                 : undefined
             }
@@ -1219,9 +1335,20 @@ export default function Editor() {
             source={suggestSource}
             tone={tone}
             onTone={(next) => {
+              if (next === tone) return;
               setTone(next);
-              // A tone is a request for a text in that voice: write it now.
-              if (canSuggest && next !== tone) suggest(1, next);
+              // The chip has to change the box on this click. The server
+              // then replaces it with the same voice plus the neighbourhood,
+              // and a model that keeps the old opening is refused.
+              const drafted = draftInVoice(state.category, state.facts, state.city, state.description, next);
+              if (drafted.trim() && drafted.trim() !== state.description.trim()) {
+                setState((current) => ({
+                  ...current,
+                  description: drafted,
+                  generatedDescription: drafted,
+                }));
+              }
+              suggest(1, next);
             }}
           />
         ) : null}
@@ -1294,7 +1421,14 @@ export default function Editor() {
             {t('editor.peekClose')}
           </button>
         ) : null}
-        <LivePreview state={state} photos={photos} profile={profile} extras={extras} />
+        <LivePreview
+          state={state}
+          photos={photos}
+          profile={profile}
+          extras={extras}
+          sun={previewSun}
+          areaPlaces={previewPlaces}
+        />
       </aside>
     ) : null}
 

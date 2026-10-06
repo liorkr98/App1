@@ -409,8 +409,15 @@ function bindGlass(): void {
  * the sun moves on the plot, the clock and the state line follow, the sky
  * behind the first screen takes the hour's colour, the photographs warm, and
  * below the horizon the page turns to its night palette (heliograph.css).
- * At the top of the page, and for a reader who asked for stillness, it rests
- * at a quarter to one in June — the frame the server already rendered.
+ * The top of the page is sunrise — the first hour the sun is up, matching
+ * the frame the server drew — and the bottom is night. The dark hour
+ * before sunrise stays on the arc only, so the listing does not open as
+ * a night page and the first pixels of scroll do not jump backwards.
+ * A reader who asked for stillness stays at a quarter to one in June.
+ *
+ * The plot is pinned while the day plays, then released near the footer.
+ * Mapped across the whole page it used to leave the screen at noon, so the
+ * afternoon happened where nobody could see it.
  */
 function bindHeliograph(): void {
   const stage = document.querySelector<HTMLElement>('[data-helio]');
@@ -418,9 +425,8 @@ function bindHeliograph(): void {
   type Row = [number, number, number];
   const data = JSON.parse(stage.dataset.helio) as {
     tables: { summer: Row[]; winter: Row[] };
-    /** null when the seller gave no aspect: the day plays, the facade is not judged. */
-    facing: number | null;
-    strings: Record<'facing' | 'side' | 'behind' | 'twilight' | 'night' | 'up' | 'below' | 'altitude', string>;
+    facing: number;
+    strings: Record<'facing' | 'side' | 'behind' | 'twilight' | 'night' | 'below' | 'altitude', string>;
     names: Record<string, number>;
   };
   const sun = stage.querySelector<SVGCircleElement>('[data-sun]');
@@ -470,9 +476,7 @@ function bindHeliograph(): void {
         ? data.strings.night
         : alt < 0
           ? data.strings.twilight
-          : data.facing === null
-            ? data.strings.up
-            : gap(bearing, data.facing) < 60
+          : gap(bearing, data.facing) < 60
             ? data.strings.facing
             : gap(bearing, data.facing) < 90
               ? data.strings.side
@@ -484,8 +488,7 @@ function bindHeliograph(): void {
       deg.textContent = `${Math.round(alt)}°`;
       meta.append(`${data.strings.altitude} `, deg, ` · ${compass(bearing)}`);
     }
-    // The hour's light, on the first screen and — softly — on the whole page.
-    root.style.setProperty('--hl-sky', `rgb(${skyAt(alt)})`);
+    stage.style.setProperty('--hl-sky', `rgb(${skyAt(alt)})`);
     const warm = alt > 0 ? Math.max(0, 1 - alt / 30) : 0;
     root.style.setProperty(
       '--hl-grade',
@@ -493,27 +496,54 @@ function bindHeliograph(): void {
         ? 'brightness(.6) saturate(.7) hue-rotate(185deg) sepia(.2)'
         : `sepia(${(warm * 0.45).toFixed(2)}) saturate(${(1 + warm * 0.3).toFixed(2)})`,
     );
-    // Dusk onward is night: the light text palette takes over before the
-    // sky behind it is dark enough to need it.
-    root.classList.toggle('hl-night', alt < -1);
+    root.classList.toggle('hl-night', alt < -4);
   };
 
-  const DAY_FROM = 6.5;
-  const DAY_TO = 21;
   const restIndex = () => Math.round((12.75 - (data.tables[season][0]?.[0] ?? 4.5)) / 0.25);
+  // First hour the sun is above the horizon. Before that the page would
+  // open in the night palette, which is not the listing.
+  const riseIndex = () => {
+    const rows = data.tables[season];
+    const index = rows.findIndex((row) => row[2] >= 0);
+    return index < 0 ? 0 : index;
+  };
+  const sky = stage.querySelector<HTMLElement>('.hl-sky');
+  let hold = stage.querySelector<HTMLElement>('.hl-sky-hold');
+  if (sky && !hold) {
+    hold = document.createElement('div');
+    hold.className = 'hl-sky-hold';
+    hold.setAttribute('aria-hidden', 'true');
+    sky.after(hold);
+  }
+  const placeSky = (progress: number) => {
+    if (!sky || !hold || still) return;
+    const pin = progress > 0.04 && progress < 0.88;
+    if (pin) {
+      if (!sky.classList.contains('is-pinned')) hold.style.blockSize = `${sky.offsetHeight}px`;
+      sky.classList.add('is-pinned');
+      return;
+    }
+    if (sky.classList.contains('is-pinned')) {
+      sky.classList.remove('is-pinned');
+      hold.style.blockSize = '0px';
+    }
+  };
   let frame = 0;
   const onScroll = () => {
     if (frame) return;
     frame = requestAnimationFrame(() => {
       frame = 0;
       const max = document.documentElement.scrollHeight - innerHeight;
-      if (still || max <= 0) return paint(restIndex());
-      // The top of the page is morning and the end of it is night: 06:30 to
-      // 21:00, in the table's quarter-hours. It used to rest at 12:45 and
-      // jump to 04:30 — night — on the first pixel of scroll.
-      const first = data.tables[season][0]?.[0] ?? 4.5;
-      const hour = DAY_FROM + Math.min(1, Math.max(0, scrollY / max)) * (DAY_TO - DAY_FROM);
-      paint(Math.round((hour - first) / 0.25));
+      const last = data.tables[season].length - 1;
+      const rise = riseIndex();
+      if (still || max <= 0) {
+        placeSky(0);
+        return paint(restIndex());
+      }
+      const progress = Math.max(0, Math.min(1, scrollY / max));
+      placeSky(progress);
+      // Sunrise at the top, night at the bottom.
+      paint(Math.round(rise + progress * (last - rise)));
     });
   };
 

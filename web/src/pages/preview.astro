@@ -54,16 +54,7 @@ if (Astro.request.method !== 'POST') {
 }
 ---
 {listing ? (
-  <Fragment>
-    <ListingPage listing={listing} robots="noindex, nofollow" />
-    <script is:inline>
-      // Inert links: the preview is a picture of the page, not a way out.
-      document.addEventListener('click', function (event) {
-        var link = event.target instanceof Element ? event.target.closest('a[href]') : null;
-        if (link) event.preventDefault();
-      }, true);
-    </script>
-  </Fragment>
+  <ListingPage listing={listing} robots="noindex, nofollow" preview />
 ) : (
   <html lang="he" dir="rtl">
     <head>

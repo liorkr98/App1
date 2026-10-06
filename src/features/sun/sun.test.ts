@@ -1,15 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import {
-  ASPECT_BEARING,
-  bearingGap,
-  facadeSunMinutes,
-  ISRAEL_CENTRE,
-  seasonMoment,
-  sunCoordinates,
-  sunPosition,
-} from './sun.js';
+import { coarseOrigin, coarseSunPoint, ISRAEL_CENTRE, sunAnchor } from './anchor.js';
+import { ASPECT_BEARING, bearingGap, facadeSunMinutes, seasonMoment, sunPosition } from './sun.js';
 
 // Dizengoff, Tel Aviv.
 const LAT = 32.0808;
@@ -66,20 +59,41 @@ describe('sun position', () => {
   });
 });
 
-describe('sunCoordinates', () => {
-  it('uses the listing coordinates first, rounded so they do not locate the flat', () => {
-    assert.deepEqual(sunCoordinates({ lat: 32.08081, lng: 34.77412 }, { lat: 31, lon: 35 }), {
-      lat: 32.1,
-      lng: 34.8,
-      approx: false,
+const aspect = (value: string) => ({ key: 'aspect', value, present: true });
+
+describe('sun anchor', () => {
+  it('rounds a pin to 0.1° and keeps a street exact', () => {
+    const anchor = sunAnchor({
+      facts: [aspect('דרום')],
+      location: { street: 'דיזנגוף', lat: 32.0808, lng: 34.7741 },
     });
+    assert.deepEqual(anchor, { lat: 32.1, lng: 34.8, facing: 180, approx: false });
   });
 
-  it('falls back to the street midpoint from the area lookup', () => {
-    assert.deepEqual(sunCoordinates({}, { lat: 32.0227, lon: 34.7779 }), { lat: 32, lng: 34.8, approx: false });
+  it('uses the street midpoint when the listing has no pin', () => {
+    const anchor = sunAnchor({
+      facts: [aspect('צפון־מזרח')],
+      location: { street: 'סוקולוב' },
+      origin: { lat: 32.0165, lon: 34.7792 },
+    });
+    assert.equal(anchor?.approx, true);
+    assert.equal(anchor?.lat, 32);
+    assert.equal(anchor?.lng, 34.8);
+    assert.equal(anchor?.facing, 45);
   });
 
-  it('falls back to the middle of Israel, and says it is approximate', () => {
-    assert.deepEqual(sunCoordinates(undefined, undefined), { ...ISRAEL_CENTRE, approx: true });
+  it('draws nothing without an aspect', () => {
+    assert.equal(sunAnchor({ facts: [], location: { lat: 32.1, lng: 34.8 } }), undefined);
+    assert.equal(coarseSunPoint(51.5, -0.1), undefined);
+  });
+
+  it('falls back to the middle of Israel, approximate, when there is no point', () => {
+    assert.deepEqual(sunAnchor({ facts: [aspect('דרום')], location: { street: 'סוקולוב' } }), {
+      ...ISRAEL_CENTRE,
+      facing: 180,
+      approx: true,
+    });
+    assert.equal(coarseSunPoint(51.5, -0.1), undefined);
+    assert.deepEqual(coarseOrigin({ origin: { lat: 32.016, lon: 34.779 } }), { lat: 32, lng: 34.8 });
   });
 });

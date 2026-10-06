@@ -56,13 +56,6 @@ export interface AgentCopyInput {
   sellerNotes?: string;
   /** The surroundings, when the address was looked up (api/area.ts). */
   places?: AreaPlaces;
-  /**
-   * The voice the agent chose (מקצועי / חם / מוקפד). It changes the opening,
-   * the neighbourhood's wording and the closing — never which facts are said.
-   * Before, only the model heard it, so without a model all three chips gave
-   * the same text.
-   */
-  tone?: CopyTone;
 }
 
 /** Answered, and not a confirmed absence. Absence belongs to the grid (§7). */
@@ -108,24 +101,25 @@ function homePhrase(facts: readonly Fact[]): string {
   return `דירת ${grouped(rooms)} חדרים`;
 }
 
-function opening(input: AgentCopyInput, variant: number): string {
+function opening(input: AgentCopyInput, variant: number, tone: CopyTone = 'pro'): string {
   const home = homePhrase(input.facts);
   const hood = input.places ? nearest(input.places.neighbourhoods)[0]?.name : undefined;
   const city = input.city;
-  const where = [hood ? `בשכונת ${hood}` : undefined, city ? `ב${city}` : undefined]
-    .filter(Boolean)
-    .join(' ');
+  const where = city && hood ? `בשכונת ${hood} ב${city}` : city ? `ב${city}` : '';
 
-  if (input.tone === 'warm') {
-    if (variant === 1) return where ? `${where} מחכה לכם ${home}.` : `מחכה לכם ${home}.`;
-    if (variant === 2) return where ? `${home} ${where} — בואו לראות אותה מקרוב.` : `${home} — בואו לראות אותה מקרוב.`;
-    return where ? `בואו להכיר ${home} ${where}.` : `בואו להכיר ${home}.`;
+  // The same facts, a different voice. 'pro' is the agent's listing voice
+  // below; warm and refined exist so the tone chips change the paragraph
+  // even when no model is configured.
+  if (tone === 'warm') {
+    if (variant === 1) return where ? `לגור ${where}: ${home}.` : `${home}.`;
+    if (variant === 2) return where ? `${home} ${where} — הבית ליום־יום.` : `${home} — הבית ליום־יום.`;
+    return where ? `${home} ${where}. מקום לגור בו.` : `${home}. מקום לגור בו.`;
   }
-  if (input.tone === 'refined') {
-    const place = [hood ? `שכונת ${hood}` : undefined, city].filter(Boolean).join(', ');
-    if (variant === 1) return place ? `${place}. ${home}.` : `${home}.`;
-    if (variant === 2) return place ? `${home}, ${place}.` : `${home}.`;
-    return place ? `${home}. ${place}.` : `${home}.`;
+  if (tone === 'refined') {
+    if (!where) return `${home}.`;
+    if (variant === 1) return `${where}. ${home}.`;
+    if (variant === 2) return `${home} — ${where}.`;
+    return `${home}. ${where}.`;
   }
 
   if (variant === 1) {
@@ -276,7 +270,7 @@ function timer(): (place: AreaPlace) => string {
   };
 }
 
-function neighbourhood(input: AgentCopyInput, variant: number): string | undefined {
+function neighbourhood(input: AgentCopyInput, variant: number, tone: CopyTone = 'pro'): string | undefined {
   const places = input.places;
   if (!places || !hasPlaces(places)) return undefined;
   const near = around(places);
@@ -296,36 +290,6 @@ function neighbourhood(input: AgentCopyInput, variant: number): string | undefin
   const say = (text: string | undefined, line: (text: string) => string) => {
     if (text) lines.push(line(text));
   };
-
-  // Warm and refined keep one wording each and let the variant reorder it.
-  const toned: Record<'warm' | 'refined', { intro: string; parts: [() => string | undefined, (text: string) => string][] }> = {
-    warm: {
-      intro: '',
-      parts: [
-        [transit, (text) => `ברגל מהבית: ${text}.`],
-        [shops, (text) => `לקניות של כל יום — ${text}.`],
-        [schools, (text) => `לילדים, בקרבת מקום: ${text}.`],
-        [leisure, (text) => `ולשעות הפנויות — ${text}.`],
-      ],
-    },
-    refined: {
-      intro: '',
-      parts: [
-        [transit, (text) => `תחבורה — ${text}.`],
-        [shops, (text) => `מסחר — ${text}.`],
-        [schools, (text) => `חינוך — ${text}.`],
-        [leisure, (text) => `פנאי — ${text}.`],
-      ],
-    },
-  };
-  if (input.tone === 'warm' || input.tone === 'refined') {
-    const { intro, parts } = toned[input.tone];
-    const order = [parts, [parts[2]!, parts[3]!, parts[1]!, parts[0]!], [parts[1]!, parts[0]!, parts[3]!, parts[2]!]][variant] ?? parts;
-    for (const [text, line] of order) say(text(), line);
-    if (lines.length === 0) return undefined;
-    return [intro, ...lines].filter((part) => part !== '').join(' ');
-  }
-
   if (variant === 1) {
     say(transit(), (text) => `במרחק הליכה נמצאות ${text}.`);
     say(shops(), (text) => `לקניות היומיומיות יש את ${text}.`);
@@ -344,8 +308,12 @@ function neighbourhood(input: AgentCopyInput, variant: number): string | undefin
   }
   if (lines.length === 0) return undefined;
 
-  // Variant 0 is already a list of "label: names", so it takes no intro.
-  const intro = ['', 'על השכונה:', 'מה יש בסביבה?'][variant] ?? '';
+  const intros: Record<CopyTone, readonly string[]> = {
+    pro: ['', 'על השכונה:', 'מה יש בסביבה?'],
+    warm: ['מסביב, ביום־יום:', 'השכונה ביום־יום:', 'ומסביב:'],
+    refined: ['בסביבה.', 'הסביבה.', 'מסביב.'],
+  };
+  const intro = intros[tone][variant] ?? '';
   return [intro, ...lines].filter((part) => part !== '').join(' ');
 }
 
@@ -368,20 +336,28 @@ const CLOSINGS: Record<CopyTone, readonly string[]> = {
     'לתיאום צפייה בנכס אפשר לפנות ישירות בוואטסאפ.',
   ],
   warm: [
-    'נשמח לארח אתכם לביקור ולהכיר את הבית מקרוב.',
-    'רוצים לראות בעיניים? כתבו לנו בוואטסאפ ונקבע.',
-    'מוזמנים לבוא, להסתובב ולהרגיש את המקום.',
+    'נשמח להראות את הדירה ולענות על שאלות.',
+    'אפשר לתאם ביקור ולראות את הדירה מקרוב.',
+    'לשאלות ולתיאום ביקור — כותבים לנו.',
   ],
-  refined: ['ביקור בתיאום מראש.', 'לתיאום ביקור — בוואטסאפ.', 'פרטים נוספים ותיאום צפייה לפי בקשה.'],
+  refined: ['לתיאום ביקור.', 'לפרטים ולצפייה בנכס.', 'פנייה לתיאום ביקור מתקבלת ישירות.'],
 };
 
-function closing(input: AgentCopyInput, variant: number): string {
+function closing(input: AgentCopyInput, variant: number, tone: CopyTone = 'pro'): string {
   const terms = [
     entryPhrase(input.facts),
     has(input.facts, 'has_tenants') ? 'הנכס מושכר כעת.' : undefined,
   ].filter((part): part is string => part !== undefined);
-  const lines = CLOSINGS[input.tone ?? 'pro'];
+  const lines = CLOSINGS[tone];
   return [...terms, lines[variant] ?? lines[0]].join(' ');
+}
+
+/** Warm leads with how it is to be there; refined breaks the comma list up. */
+function voiced(tone: CopyTone, line: string | undefined, warmLead: string): string | undefined {
+  if (!line) return undefined;
+  if (tone === 'warm') return `${warmLead} ${line}`;
+  if (tone === 'refined') return line.replace(/, /g, '. ');
+  return line;
 }
 
 // -------------------------------------------------------------------- the text
@@ -391,25 +367,25 @@ function closing(input: AgentCopyInput, variant: number): string {
  * Property only — a car has no neighbourhood and keeps listing-copy.ts.
  * Empty when the seller answered nothing that could be said.
  */
-export function agentDescription(input: AgentCopyInput, variant = 0): string {
+export function agentDescription(input: AgentCopyInput, variant = 0, tone: CopyTone = 'pro'): string {
   const v = ((variant % AGENT_VARIANTS) + AGENT_VARIANTS) % AGENT_VARIANTS;
-  const apartmentLine = apartment(input, v);
-  const buildingLine = building(input, v);
+  const apartmentLine = voiced(tone, apartment(input, v), 'כך זה בפנים.');
+  const buildingLine = voiced(tone, building(input, v), 'ועוד בנכס:');
   if (!apartmentLine && !buildingLine && numberOf(input.facts, 'rooms') === undefined) return '';
 
-  const property = [opening(input, v), apartmentLine, buildingLine]
+  const property = [opening(input, v, tone), apartmentLine, buildingLine]
     .filter((part): part is string => part !== undefined)
     .join(' ');
-  const area = neighbourhood(input, v);
+  const area = neighbourhood(input, v, tone);
 
-  return [property, area, closing(input, v)]
+  return [property, area, closing(input, v, tone)]
     .filter((part): part is string => part !== undefined && part !== '')
     .join('\n\n');
 }
 
-/** Every variant, so a caller can pick one that differs from the last. */
-export function agentDescriptions(input: AgentCopyInput): string[] {
-  return Array.from({ length: AGENT_VARIANTS }, (_, variant) => agentDescription(input, variant));
+/** Every variant of one voice, so a caller can pick one that differs from the last. */
+export function agentDescriptions(input: AgentCopyInput, tone: CopyTone = 'pro'): string[] {
+  return Array.from({ length: AGENT_VARIANTS }, (_, variant) => agentDescription(input, variant, tone));
 }
 
 const same = (a: string, b: string) => a.replace(/\s+/g, ' ').trim() === b.replace(/\s+/g, ' ').trim();
@@ -422,8 +398,8 @@ const same = (a: string, b: string) => a.replace(/\s+/g, ' ').trim() === b.repla
  * two; and when the box holds something else (the model's text, or the
  * agent's own edit), the first variant that differs from it.
  */
-export function nextAgentDescription(input: AgentCopyInput, previous = ''): string {
-  const variants = agentDescriptions(input);
+export function nextAgentDescription(input: AgentCopyInput, previous = '', tone: CopyTone = 'pro'): string {
+  const variants = agentDescriptions(input, tone);
   const before = previous.trim();
   if (before === '') return variants[0] ?? '';
 

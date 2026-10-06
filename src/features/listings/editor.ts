@@ -379,3 +379,18 @@ export function nextStep(state: EditorState): Step {
 
   return 'publish';
 }
+
+/**
+ * Whether the seller may OPEN this step.
+ *
+ * Everything up to and including the first step that still needs work
+ * (`nextStep`). Later steps stay closed, so a missing photo cannot be
+ * skipped by jumping to the template. Steps that do not belong to this
+ * category (a plate on a flat, rooms on a car) are closed too.
+ */
+export function reachable(state: EditorState, step: Step): boolean {
+  const steps = stepsFor(state.category);
+  const target = steps.indexOf(step);
+  if (target === -1) return false;
+  return target <= steps.indexOf(nextStep(state));
+}
