@@ -82,8 +82,13 @@ describe('sun anchor', () => {
     assert.equal(anchor?.facing, 45);
   });
 
-  it('draws nothing without an aspect', () => {
-    assert.equal(sunAnchor({ facts: [], location: { lat: 32.1, lng: 34.8 } }), undefined);
+  it('still draws the day without an aspect, with no facade', () => {
+    assert.deepEqual(sunAnchor({ facts: [], location: { street: 'דיזנגוף', lat: 32.1, lng: 34.8 } }), {
+      lat: 32.1,
+      lng: 34.8,
+      facing: null,
+      approx: false,
+    });
     assert.equal(coarseSunPoint(51.5, -0.1), undefined);
   });
 

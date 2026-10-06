@@ -7,14 +7,19 @@ import { ASPECT_BEARING } from './sun.js';
  * Coordinates are rounded to 0.1° — about 11 km — before any sun table is
  * built, and the HTML only gets that table. A street midpoint from the area
  * lookup is enough; with no point at all the middle of Israel is, marked
- * approximate. A listing with no aspect has no sun.
+ * approximate. A listing with no aspect still has its sun, without the
+ * facade (facing: null).
  */
 
 export interface SunAnchor {
   lat: number;
   lng: number;
-  /** Compass degrees the balcony faces. 0 is north. */
-  facing: number;
+  /**
+   * Compass degrees the balcony faces, 0 is north; null when the seller gave
+   * no aspect. The day still plays then — the sun's path and the light —
+   * but nothing is said about the facade.
+   */
+  facing: number | null;
   /** True when the point is a street or a town, not a front door. */
   approx: boolean;
 }
@@ -65,8 +70,7 @@ export function sunAnchor(input: {
       typeof fact.value === 'string' &&
       fact.value.trim() !== '',
   );
-  const facing = typeof aspect?.value === 'string' ? facingOf(aspect.value) : undefined;
-  if (facing === undefined) return undefined;
+  const facing = (typeof aspect?.value === 'string' ? facingOf(aspect.value) : undefined) ?? null;
 
   const lat = input.location?.lat;
   const lng = input.location?.lng;

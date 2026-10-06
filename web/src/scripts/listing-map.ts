@@ -60,8 +60,8 @@ const ATTRIBUTION =
   '<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap contributors</a> · <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a>';
 const HEBREW_FONT = '/fonts/heebo-hebrew.woff2';
 const HEBREW_RANGE = ['U+0590-05FF', 'U+FB1D-FB4F'];
-/** A map that has not painted by now is not going to; the drawing stays. */
-const GIVE_UP_MS = 15_000;
+/** A map with no first frame by now is not going to draw; the drawing stays. */
+const GIVE_UP_MS = 20_000;
 
 /** Whether this browser, on this connection, should get a live map at all. */
 function wanted(): boolean {
@@ -149,17 +149,39 @@ function popupContent(pin: LiveMapPayload['pins'][number]): HTMLElement {
   return box;
 }
 
+/**
+ * `#mapdebug` on a listing's link writes each step of loading into the map
+ * box, so a phone screenshot says exactly where a map that does not appear
+ * stopped. Nothing is shown without it, and nothing is ever sent anywhere.
+ */
+function debugLog(host: HTMLElement): (step: string) => void {
+  if (location.hash !== '#mapdebug') return () => undefined;
+  const panel = document.createElement('pre');
+  panel.className = 'live-debug';
+  panel.dir = 'ltr';
+  host.append(panel);
+  const started = performance.now();
+  return (step) => {
+    panel.textContent += `${Math.round(performance.now() - started)}ms ${step}\n`;
+  };
+}
+
 export async function mountLiveMap(host: HTMLElement): Promise<void> {
+  const log = debugLog(host);
   const raw = host.querySelector('script[type="application/json"]')?.textContent;
-  if (!raw || !wanted()) return;
+  if (!raw) return log('no map data on the page');
+  if (!wanted()) return log('skipped: no WebGL2, or data saver is on');
   const data = JSON.parse(raw) as LiveMapPayload;
+  log(`data: ${data.pins.length} pins, base ${BASE}`);
 
   let lib: typeof MapLibre;
   try {
     await stylesheet(`${BASE}maplibre-gl.css`);
+    log('css loaded');
     lib = (await import(/* @vite-ignore */ `${BASE}maplibre-gl.mjs`)) as typeof MapLibre;
-  } catch {
-    return;
+    log(`maplibre ${lib.getVersion?.() ?? '?'} loaded`);
+  } catch (error) {
+    return log(`library failed: ${String(error)}`);
   }
 
   const box = document.createElement('div');
@@ -170,11 +192,12 @@ export async function mountLiveMap(host: HTMLElement): Promise<void> {
   host.dataset.live = 'loading';
 
   const accent = getComputedStyle(host).getPropertyValue('--ls-accent').trim() || '#4a5d3a';
-  let painted = false;
-  let map: MapLibre.Map;
+  let shown = false;
+  let map: MapLibre.Map | undefined;
 
-  const giveUp = () => {
-    if (painted) return;
+  const giveUp = (why: string) => {
+    if (shown) return;
+    log(`gave up: ${why}`);
     try {
       map?.remove();
     } catch {
@@ -183,6 +206,19 @@ export async function mountLiveMap(host: HTMLElement): Promise<void> {
     box.remove();
     delete host.dataset.live;
   };
+
+  // Shown at its first complete frame (`load`), not when every tile has
+  // arrived (`idle`) — on a phone the second can take long enough that the
+  // map used to be given up on while it was working.
+  const show = () => {
+    if (shown) return;
+    shown = true;
+    window.clearTimeout(timer);
+    host.dataset.live = 'ready';
+    log('shown');
+  };
+
+  const timer = window.setTimeout(() => giveUp(`no first frame in ${GIVE_UP_MS / 1000}s`), GIVE_UP_MS);
 
   try {
     map = new lib.Map({
@@ -214,35 +250,56 @@ export async function mountLiveMap(host: HTMLElement): Promise<void> {
         'Marker.Title': data.text.marker,
       },
     });
-  } catch {
-    giveUp();
+  } catch (error) {
+    giveUp(`map could not start: ${String(error)}`);
     return;
   }
+  const live = map;
+  log('map created');
 
-  map.touchZoomRotate.disableRotation();
-  map.addControl(new lib.NavigationControl({ showCompass: false }), 'top-left');
-  map.addControl(new lib.FullscreenControl(), 'top-left');
+  live.touchZoomRotate.disableRotation();
+  live.addControl(new lib.NavigationControl({ showCompass: false }), 'top-left');
+  live.addControl(new lib.FullscreenControl(), 'top-left');
 
-  const timer = window.setTimeout(giveUp, GIVE_UP_MS);
-  map.on('error', () => {
-    if (!painted) giveUp();
+  /*
+   * Only a style that cannot load is fatal. A tile, a glyph range or an icon
+   * that fails is one missing square or label on a working map, and giving
+   * up over it — as this did — threw the whole map away for one 404.
+   */
+  let styled = false;
+  live.on('error', (event: { error?: { message?: string } }) => {
+    const message = event.error?.message ?? 'unknown error';
+    log(`error: ${message}`);
+    if (!styled) giveUp(`style failed: ${message}`);
   });
 
-  map.on('style.load', () => {
-    hebrewLabels(map);
-    map.addSource('home', { type: 'geojson', data: circle(data.center, data.homeRadiusM) });
-    map.addLayer({
-      id: 'home-fill',
-      type: 'fill',
-      source: 'home',
-      paint: { 'fill-color': accent, 'fill-opacity': 0.16 },
-    });
-    map.addLayer({
-      id: 'home-line',
-      type: 'line',
-      source: 'home',
-      paint: { 'line-color': accent, 'line-width': 1.5, 'line-opacity': 0.6 },
-    });
+  live.on('style.load', () => {
+    styled = true;
+    log('style loaded');
+    // Our additions must never cost the map itself: each is on its own.
+    try {
+      hebrewLabels(live);
+      log('hebrew labels set');
+    } catch (error) {
+      log(`hebrew labels skipped: ${String(error)}`);
+    }
+    try {
+      live.addSource('home', { type: 'geojson', data: circle(data.center, data.homeRadiusM) });
+      live.addLayer({
+        id: 'home-fill',
+        type: 'fill',
+        source: 'home',
+        paint: { 'fill-color': accent, 'fill-opacity': 0.16 },
+      });
+      live.addLayer({
+        id: 'home-line',
+        type: 'line',
+        source: 'home',
+        paint: { 'line-color': accent, 'line-width': 1.5, 'line-opacity': 0.6 },
+      });
+    } catch (error) {
+      log(`home circle skipped: ${String(error)}`);
+    }
   });
 
   for (const pin of data.pins) {
@@ -252,12 +309,9 @@ export async function mountLiveMap(host: HTMLElement): Promise<void> {
     new lib.Marker({ element: pinElement(pin), anchor: 'center' })
       .setLngLat([pin.lon, pin.lat])
       .setPopup(popup)
-      .addTo(map);
+      .addTo(live);
   }
 
-  map.once('idle', () => {
-    painted = true;
-    window.clearTimeout(timer);
-    host.dataset.live = 'ready';
-  });
+  live.once('load', show);
+  live.once('idle', () => log('all tiles in'));
 }

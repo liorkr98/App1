@@ -1221,3 +1221,20 @@ html[data-preview] .cta-dock{
 html[data-preview] body{
   padding-block-end:1.5rem;
 }
+/* #mapdebug only (listing-map.ts): the steps of loading, over the map. */
+.live-debug{
+  position:absolute;
+  inset-inline:0;
+  inset-block-end:0;
+  z-index:5;
+  max-block-size:60%;
+  overflow:auto;
+  margin:0;
+  padding:.4rem .6rem;
+  font:11px/1.4 ui-monospace,monospace;
+  white-space:pre-wrap;
+  text-align:start;
+  color:#fff;
+  background:rgba(0,0,0,.72);
+  pointer-events:none;
+}
