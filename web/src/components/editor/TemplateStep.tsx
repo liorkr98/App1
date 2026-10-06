@@ -2,9 +2,9 @@ import type { CSSProperties } from 'react';
 
 import { ACCENTS, type AccentId, isAccentId } from '@/features/agents/accents';
 import type { ListingCategory } from '@/features/listings/schemas';
-import { templateFits, templateSpec } from '@/features/templates/manifest';
+import { CATALOGUE, pickerTemplates, templateSpec } from '@/features/templates/manifest';
 import type { SuggestReason } from '@/features/templates/suggest';
-import { TEMPLATE_IDS, type TemplateId } from '@/types/listing';
+import type { TemplateId } from '@/types/listing';
 
 import { t } from '../../lib/i18n';
 
@@ -23,6 +23,8 @@ interface Props {
   accentFromCover?: boolean;
   /** What the cover suggests, offered as one tap when a brand colour holds. */
   coverTone?: AccentId | undefined;
+  /** No aspect fact yet: Heliograph would render without its sun. */
+  missingAspect?: boolean;
 }
 
 /**
@@ -41,15 +43,14 @@ export function TemplateStep({
   suggestion,
   accentFromCover = false,
   coverTone,
+  missingAspect = false,
 }: Props) {
   const palette = isAccentId(accent) ? accent : 'olive';
-  // Every template when the category is not chosen yet; otherwise only those
-  // drawn for it. Still enumerated from TEMPLATE_IDS, never a second list.
-  const offered = category ? TEMPLATE_IDS.filter((id) => templateFits(id, category)) : TEMPLATE_IDS;
-  const featured = offered.filter((id) => {
-    const spec = templateSpec(id);
-    return spec.ls !== undefined || spec.composed !== undefined;
-  });
+  // The catalogue of twelve for this category, the suggestion first. An old
+  // listing's own 1.x template stays on offer under "classic", so opening it
+  // never silently changes what its link shows (manifest.ts pickerTemplates).
+  const offered = pickerTemplates(category ?? 'property', chosen);
+  const featured = offered.filter((id) => CATALOGUE.includes(id));
   if (suggestion && featured.includes(suggestion.id)) {
     featured.splice(0, featured.length, suggestion.id, ...featured.filter((id) => id !== suggestion.id));
   }
@@ -152,6 +153,12 @@ export function TemplateStep({
       ) : null}
 
       <p className="hint">{t('editor.templates.hint')}</p>
+
+      {chosen === 'heliograph' && missingAspect ? (
+        <p className="review-flag" role="status">
+          {t('editor.templates.needsAspect')}
+        </p>
+      ) : null}
 
       <h2 className="template-group">{t('editor.templates.groupNew')}</h2>
       <ul className="template-grid">{featured.map(card)}</ul>

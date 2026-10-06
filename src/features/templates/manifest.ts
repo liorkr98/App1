@@ -117,7 +117,49 @@ export function templateFor(template: TemplateId, category: ListingCategory): Te
   return templateFits(template, category) ? template : CATEGORY_FALLBACK;
 }
 
-/** The ids the picker offers for a category, in TEMPLATE_IDS order. */
+/** Every id that can be drawn for a category, in TEMPLATE_IDS order. */
 export function templatesFor(category: ListingCategory): TemplateId[] {
   return TEMPLATE_IDS.filter((id) => templateFits(id, category));
+}
+
+/**
+ * THE CATALOGUE: the twelve templates chosen in the prototype rounds (plan
+ * §12b), in the order the picker shows them. Homes lead with Aurora and the
+ * two built on data only this listing has (its sun, its walk); cars get
+ * Showroom and Dossier.
+ *
+ * The other ids are still valid — a page published with `agency` keeps
+ * rendering exactly as it was sent — but they are no longer OFFERED. The
+ * picker used to list all twenty-one with the nine 1.x skins first, which
+ * differ from each other by a colour and a font: an agent tapping through
+ * them reasonably concluded that the template does not change anything.
+ */
+export const CATALOGUE: readonly TemplateId[] = [
+  'aurora',
+  'heliograph',
+  'walk',
+  'blueprint',
+  'monolith',
+  'atelier',
+  'glass',
+  'poster',
+  'zine',
+  'ticket',
+  'showroom',
+  'dossier',
+];
+
+/** What a new listing starts on, before the agent chooses. */
+export const NEW_LISTING_TEMPLATE: TemplateId = 'aurora';
+
+/**
+ * What the picker offers: the catalogue for this category, and — when a
+ * listing being edited carries an older template — that one too, first, so
+ * opening an old listing never silently changes what its link shows.
+ */
+export function pickerTemplates(category: ListingCategory, current?: TemplateId): TemplateId[] {
+  const offered = CATALOGUE.filter((id) => templateFits(id, category));
+  return current && !offered.includes(current) && templateFits(current, category)
+    ? [current, ...offered]
+    : offered;
 }

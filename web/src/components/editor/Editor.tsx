@@ -14,6 +14,7 @@ import {
 import { blankFacts, reconcileFacts } from '@/features/listings/fact-entry';
 import { isPhotoRoom } from '@/features/listings/photo-rooms';
 import { LISTING_CATEGORIES, schemaFor } from '@/features/listings/schemas';
+import { NEW_LISTING_TEMPLATE } from '@/features/templates/manifest';
 import { suggestTemplate } from '@/features/templates/suggest';
 import { cleanPlanRooms } from '@/features/listings/rich-media';
 import type { MediaExtras } from '../../lib/listing-row';
@@ -79,7 +80,7 @@ const START: EditorState = {
   photoCount: 0,
   facts: [],
   description: '',
-  template: 'agency',
+  template: NEW_LISTING_TEMPLATE,
 
   // ========================== HUMAN REVIEW ==========================
   // CLAUDE.md §8: I may build the paywall and may NOT decide entitlement.
@@ -228,7 +229,8 @@ export default function Editor() {
    */
   const [failure, setFailure] = useState<string | undefined>(undefined);
   const [suggesting, setSuggesting] = useState(false);
-  const [suggestFailed, setSuggestFailed] = useState(false);
+  /** Why the last suggestion failed, by the server's own error code. */
+  const [suggestFailed, setSuggestFailed] = useState<string | false>(false);
   /**
    * Where the text in the box came from: the model, or the writer that needs
    * none — and if the latter, why. Shown under the box, because "the AI wrote
@@ -491,6 +493,16 @@ export default function Editor() {
         const token = data.session?.access_token;
         if (!token) throw new Error('no_session');
 
+        /*
+         * Save first. The server reads the facts and the address from the
+         * ROW, never from this request — and arriving at this step fires
+         * the suggestion while the save of the step just left is still in
+         * flight. The server then read an older row, often one with no
+         * facts yet, and the editor reported a failure. A save that fails
+         * here is not fatal: the row may already be current.
+         */
+        await saveListing(id, stateRef.current, photos, extrasRef.current).catch(() => undefined);
+
         const response = await fetch('/api/description', {
           method: 'POST',
           headers: {
@@ -500,7 +512,10 @@ export default function Editor() {
           },
           body: JSON.stringify({ listingId: id, previous, tone: voiceNow }),
         });
-        if (!response.ok) throw new Error(String(response.status));
+        if (!response.ok) {
+          const failed = (await response.json().catch(() => ({}))) as { error?: unknown };
+          throw new Error(typeof failed.error === 'string' ? failed.error : String(response.status));
+        }
 
         const streamed = (response.headers.get('content-type') ?? '').includes(
           'text/event-stream',
@@ -579,8 +594,8 @@ export default function Editor() {
           window.setTimeout(() => suggest(retriesLeft - 1, voiceNow), 4000);
           return;
         }
-      } catch {
-        if (ticket === suggestGen.current) setSuggestFailed(true);
+      } catch (error) {
+        if (ticket === suggestGen.current) setSuggestFailed(error instanceof Error ? error.message : 'failed');
       } finally {
         if (ticket === suggestGen.current) setSuggesting(false);
       }
@@ -1277,6 +1292,12 @@ export default function Editor() {
             }}
             accentFromCover={accentSource.current === 'cover'}
             coverTone={coverTone}
+            missingAspect={
+              state.category === 'property' &&
+              !state.facts.some(
+                (fact) => fact.key === 'aspect' && fact.present !== false && typeof fact.value === 'string' && fact.value.trim() !== '',
+              )
+            }
             photos={photos
               .map((photo) => photo.publicUrl ?? photo.url)
               .filter((url): url is string => url.trim() !== '')}
@@ -1302,7 +1323,15 @@ export default function Editor() {
             onChange={(description) => setState((current) => ({ ...current, description }))}
             onSuggest={canSuggest ? () => suggest() : undefined}
             suggesting={suggesting}
-            suggestFailed={suggestFailed ? t('editor.description.suggestFailed') : undefined}
+            suggestFailed={
+              suggestFailed === false
+                ? undefined
+                : suggestFailed === 'no_facts'
+                  ? t('editor.description.failedNoFacts')
+                  : suggestFailed === 'no_session' || suggestFailed === 'unauthenticated'
+                    ? t('editor.description.failedSignIn')
+                    : t('editor.description.suggestFailed')
+            }
             source={suggestSource}
             tone={tone}
             onTone={(next) => {

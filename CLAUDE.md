@@ -71,6 +71,7 @@ sellers are secondary. When a design decision trades one against the other,
 | Worker | **Fly.io** container, Postgres job queue |
 | Images | **sharp**/libvips, local, no external API in v1 |
 | PDF | **Puppeteer**, in its own Fly process group |
+| Listing map | **MapLibre GL JS** 6, self-served from a versioned path, with **OpenFreeMap** tiles. Lazy: loaded only when the map section nears the screen. Decided 5 Oct 2026 — see below. |
 | Payments | **Undecided.** Build behind a provider interface (PRD §6) |
 
 **`/a/[slug]` renders per request. Everything else is still a static file.**
@@ -187,6 +188,17 @@ day OSRM is inconvenient.
 > answers `/table/v1/foot/…` with 200 and returns CAR times: 162 seconds for a
 > hop Valhalla's pedestrian costing puts at 277. A profile is what the graph
 > was built with, not a segment of the URL. Measured, not assumed.
+
+> **5 October 2026: the listing map is live.** The agent asked for an
+> interactive map, so the buyer's browser now requests map tiles — a
+> deliberate exception to "the page reads only from us", with three limits:
+> tiles load only after first paint, when the map section is near the
+> screen; the map never shows more than the street (a soft circle round the
+> street's midpoint, no building pin, and a seller who hid the street gets no
+> map at all); and the drawing stays as the map whenever WebGL, data saver or
+> the tile host says no. The pins, names and walking minutes still come from
+> the listing row. MapLibre draws right-to-left text itself (no RTL plugin);
+> Hebrew labels use our self-hosted Heebo through the style's font faces.
 
 Do not introduce a dependency without asking. Justify: what it does, size,
 last publish date, and why the stack above cannot do it.

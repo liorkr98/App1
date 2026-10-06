@@ -277,6 +277,13 @@ jobs:
         working-directory: web
         run: npx playwright test speed
 
+      # Text below the first screen readable on every template (6 Oct 2026:
+      # six paper templates had near-white text on a light card). Blocking.
+      - name: Readable text on every template
+        if: ${{ !cancelled() }}
+        working-directory: web
+        run: npx playwright test contrast
+
       - name: Screenshots (reported, not blocking, for now)
         if: ${{ !cancelled() }}
         continue-on-error: true

@@ -4,7 +4,8 @@
  * mini-screen, and an editor card. Every Living Surfaces template (an `ls`
  * entry in the manifest) also has the homepage's screenshot of its first
  * screen, web/public/home/templates/{id}.webp — the row links to the live
- * page, and a missing picture is a hole in the catalogue. A new template without those three is a
+ * page, and a missing picture is a hole in the catalogue. The editor offers
+ * the manifest's CATALOGUE, and each of its ids must be a drawn template. A new template without those three is a
  * redesign CI cannot police (DESIGN-CONTRACT §8 / PHOTO-TOUR).
  *
  * Run: node scripts/verify-template-ids.mjs
@@ -63,8 +64,26 @@ for (const id of ids) {
 if (!home.includes('TEMPLATE_IDS')) {
   problems.push('homepage mini-screens are not driven from TEMPLATE_IDS');
 }
-if (!picker.includes('TEMPLATE_IDS')) {
-  problems.push('editor picker is not driven from TEMPLATE_IDS');
+/*
+ * The picker offers the CATALOGUE (manifest.ts, 6 Oct 2026), not every id:
+ * the 1.x skins stay valid for old rows but are no longer offered. So the
+ * picker must be driven by pickerTemplates, and every catalogue entry must
+ * be a real id with its own Living Surfaces entry — a catalogue that names
+ * an id the manifest does not draw would offer a card that renders nothing.
+ */
+if (!picker.includes('pickerTemplates')) {
+  problems.push('editor picker is not driven from the manifest catalogue (pickerTemplates)');
+}
+const catalogue = manifest.match(/export const CATALOGUE: readonly TemplateId\[\] = \[([^\]]+)\]/);
+if (!catalogue) {
+  problems.push('could not read CATALOGUE from src/features/templates/manifest.ts');
+} else {
+  for (const id of [...catalogue[1].matchAll(/'([^']+)'/g)].map((m) => m[1])) {
+    if (!ids.includes(id)) problems.push(`catalogue names ${id}, which is not in TEMPLATE_IDS`);
+    if (!new RegExp(`\\b${id}: \\{[^}]*ls: '`).test(manifest)) {
+      problems.push(`catalogue names ${id}, which has no Living Surfaces entry in the manifest`);
+    }
+  }
 }
 
 if (problems.length > 0) {

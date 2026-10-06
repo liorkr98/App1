@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import type { AreaPlaces } from '../../types/listing.js';
-import { areaMap, composedMapSrc, hasWalkTimes } from './area-map.js';
+import { areaMap, composedMapSrc, hasWalkTimes, HOME_RADIUS_M, liveMapData } from './area-map.js';
 
 const at = (name: string, lat: number, lon: number, walkMinutes?: number) => ({
   name,
@@ -167,5 +167,41 @@ describe('hasWalkTimes', () => {
       hasWalkTimes({ ...HOLON, schools: [], transit: [], parks: [], community: [], shops: [] }),
       false,
     );
+  });
+});
+
+describe('liveMapData', () => {
+  const map = areaMap(HOLON)!;
+  const live = liveMapData(map);
+
+  it('centres on the street, not on any building', () => {
+    assert.deepEqual(live.center, [34.7779, 32.0227]);
+    assert.equal(live.homeRadiusM, HOME_RADIUS_M);
+    assert.ok(HOME_RADIUS_M >= 100, 'a home circle smaller than a block reads as a pin');
+  });
+
+  it('carries the same pins, keys and minutes as the drawing and its list', () => {
+    assert.deepEqual(
+      live.pins.map((pin) => [pin.key, pin.name, pin.walkMinutes]),
+      map.pins.map((pin) => [pin.key, pin.name, pin.walkMinutes]),
+    );
+    const stop = live.pins.find((pin) => pin.name === 'חנקין/סוקולוב');
+    assert.deepEqual([stop?.lon, stop?.lat], [34.7776, 32.0232]);
+  });
+
+  it('frames every pin and the home, west-south then east-north', () => {
+    const [[west, south], [east, north]] = live.bounds;
+    assert.ok(west < east && south < north);
+    for (const pin of live.pins) {
+      assert.ok(pin.lon > west && pin.lon < east, pin.name);
+      assert.ok(pin.lat > south && pin.lat < north, pin.name);
+    }
+    // The margin covers the home circle on every side.
+    const metresSouth = (live.center[1] - south) * 111_320;
+    assert.ok(metresSouth >= HOME_RADIUS_M);
+  });
+
+  it('is plain JSON, so the page can hand it to a script', () => {
+    assert.deepEqual(JSON.parse(JSON.stringify(live)), live);
   });
 });

@@ -4,9 +4,12 @@ import { describe, it } from 'node:test';
 
 import { TEMPLATE_IDS } from '../../types/listing.js';
 import {
+  CATALOGUE,
   CATEGORY_FALLBACK,
   DEFAULT_TEMPLATE,
   LEGACY_TEMPLATE_ALIASES,
+  NEW_LISTING_TEMPLATE,
+  pickerTemplates,
   TEMPLATE_MANIFEST,
   knownTemplateId,
   resolveTemplateId,
@@ -92,5 +95,28 @@ describe('template manifest', () => {
     for (const [id, spec] of Object.entries(TEMPLATE_MANIFEST)) {
       if (spec.composed) assert.ok(spec.keyCells && spec.keyCells > 0, id);
     }
+  });
+});
+
+describe('the catalogue the picker offers', () => {
+  it('is the twelve chosen templates, each drawn by its own stage', () => {
+    assert.equal(CATALOGUE.length, 12);
+    for (const id of CATALOGUE) assert.ok(TEMPLATE_MANIFEST[id].composed, id);
+  });
+
+  it('offers homes ten and cars ten, never the other category\'s', () => {
+    assert.equal(pickerTemplates('property').length, 10);
+    assert.ok(!pickerTemplates('property').includes('showroom'));
+    assert.equal(pickerTemplates('vehicle').length, 10);
+    assert.ok(!pickerTemplates('vehicle').includes('heliograph'));
+  });
+
+  it('keeps an old listing\'s own template on offer, first', () => {
+    assert.equal(pickerTemplates('property', 'agency')[0], 'agency');
+    assert.deepEqual(pickerTemplates('property', 'aurora'), pickerTemplates('property'));
+  });
+
+  it('starts a new listing on a catalogue template', () => {
+    assert.ok(CATALOGUE.includes(NEW_LISTING_TEMPLATE));
   });
 });

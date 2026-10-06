@@ -599,3 +599,19 @@ beaconReadToAgent();
 // The depth hero (P7): its module loads only on a page that has a map.
 const depthImage = document.querySelector<HTMLImageElement>('img[data-depth]');
 if (depthImage) void import('./depth').then(({ bindDepth }) => bindDepth(depthImage)).catch(() => undefined);
+
+// The live neighbourhood map (PR B): MapLibre and the tiles load only when
+// the map section is about to be seen, never on first load. Until it has
+// painted — and for good if it cannot — the drawing stays (listing-map.ts).
+const liveMapHost = document.querySelector<HTMLElement>('[data-live-map]');
+if (liveMapHost && 'IntersectionObserver' in window) {
+  const nearby = new IntersectionObserver(
+    (entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return;
+      nearby.disconnect();
+      void import('./listing-map').then(({ mountLiveMap }) => mountLiveMap(liveMapHost)).catch(() => undefined);
+    },
+    { rootMargin: '300px 0px' },
+  );
+  nearby.observe(liveMapHost);
+}

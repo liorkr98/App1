@@ -363,5 +363,23 @@ html[data-template='heliograph'].hl-night {
   --muted: #a7a89c;
   --muted-warm: #a7a89c;
   --absent: #a7a89c;
+  /* The agent's colour, lifted for the dark: links, walking minutes and the
+     WhatsApp button stayed dark green on near-black after dusk. */
+  --olive: var(--accent-lift, #7e9a62);
+  /* The Living Surfaces tokens turn with the page (tokens.css onyx), or text
+     drawn with them stays paper-dark on the night ground. */
+  --ls-ground: #0b0c0a;
+  --ls-surface: #161713;
+  --ls-ink: #f2f0ea;
+  --ls-ink-2: #a7a89c;
+  --ls-line: rgba(242, 240, 234, 0.12);
+  --ls-accent: var(--accent-lift, #86b79a);
+  --ls-on-accent: #0b0c0a;
   color-scheme: dark;
+}
+
+/* The neighbourhood card is a light mix by day; at night that mix turned
+   mid-grey and the grey text on it fell to 3.1:1. */
+html[data-template='heliograph'].hl-night .enrich {
+  background: var(--stone-warm);
 }

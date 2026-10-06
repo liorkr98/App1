@@ -6,7 +6,8 @@ import { ASPECT_BEARING } from './sun.js';
  * The page never receives a precise point (CLAUDE.md §7, the stage comment).
  * Coordinates are rounded to 0.1° — about 11 km — before any sun table is
  * built, and the HTML only gets that table. A street midpoint from the area
- * lookup is enough; a listing with no aspect, or no point at all, has no sun.
+ * lookup is enough; with no point at all the middle of Israel is, marked
+ * approximate. A listing with no aspect has no sun.
  */
 
 export interface SunAnchor {
@@ -76,8 +77,19 @@ export function sunAnchor(input: {
     return { ...coarse, facing, approx };
   }
 
-  if (!input.origin) return undefined;
-  const coarse = coarseSunPoint(input.origin.lat, input.origin.lon);
-  if (!coarse) return undefined;
-  return { ...coarse, facing, approx: true };
+  if (input.origin) {
+    const coarse = coarseSunPoint(input.origin.lat, input.origin.lon);
+    if (!coarse) return undefined;
+    return { ...coarse, facing, approx: true };
+  }
+
+  // No pin and no street midpoint (the area lookup has not run, or found
+  // nothing): the middle of Israel. Between Eilat and the Golan the noon sun
+  // differs by about four degrees, so the path is still true to the country,
+  // and `approx` makes the page say the place is approximate. Before this a
+  // seller who chose the sun template saw an ordinary page and no reason.
+  return { ...ISRAEL_CENTRE, facing, approx: true };
 }
+
+/** Roughly the middle of the country, already at the 0.1° the page may use. */
+export const ISRAEL_CENTRE = { lat: 31.8, lng: 35 } as const;

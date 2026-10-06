@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { coarseOrigin, coarseSunPoint, sunAnchor } from './anchor.js';
+import { coarseOrigin, coarseSunPoint, ISRAEL_CENTRE, sunAnchor } from './anchor.js';
 import { ASPECT_BEARING, bearingGap, facadeSunMinutes, seasonMoment, sunPosition } from './sun.js';
 
 // Dizengoff, Tel Aviv.
@@ -82,9 +82,17 @@ describe('sun anchor', () => {
     assert.equal(anchor?.facing, 45);
   });
 
-  it('draws nothing without an aspect or a point', () => {
+  it('draws nothing without an aspect', () => {
     assert.equal(sunAnchor({ facts: [], location: { lat: 32.1, lng: 34.8 } }), undefined);
-    assert.equal(sunAnchor({ facts: [aspect('דרום')], location: { street: 'סוקולוב' } }), undefined);
+    assert.equal(coarseSunPoint(51.5, -0.1), undefined);
+  });
+
+  it('falls back to the middle of Israel, approximate, when there is no point', () => {
+    assert.deepEqual(sunAnchor({ facts: [aspect('דרום')], location: { street: 'סוקולוב' } }), {
+      ...ISRAEL_CENTRE,
+      facing: 180,
+      approx: true,
+    });
     assert.equal(coarseSunPoint(51.5, -0.1), undefined);
     assert.deepEqual(coarseOrigin({ origin: { lat: 32.016, lon: 34.779 } }), { lat: 32, lng: 34.8 });
   });

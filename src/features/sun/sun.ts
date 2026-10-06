@@ -118,3 +118,4 @@ export function facadeSunMinutes(season: Season, lat: number, lng: number, facin
   }
   return minutes;
 }
+
