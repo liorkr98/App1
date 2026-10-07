@@ -1532,6 +1532,27 @@ textarea {
   margin-block-start: 0.45rem;
 }
 
+/* Where the neighbourhood lookup stands (AreaLine.tsx). */
+.area-line {
+  margin-block: 0.5rem 0;
+  font-size: var(--t-label);
+  line-height: 1.5;
+  color: var(--muted);
+}
+.area-line.is-ready {
+  color: var(--olive, #4a5d3a);
+  font-weight: 600;
+}
+.area-line.is-not_found,
+.area-line.is-failed {
+  color: #8c2f1e;
+}
+.publish-note {
+  margin-block: 0.6rem 0;
+  font-size: var(--t-label);
+  color: var(--muted);
+}
+
 .field-error {
   margin-block-start: 0.35rem;
   font-size: 0.9rem;

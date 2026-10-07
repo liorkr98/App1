@@ -25,6 +25,8 @@
 import { deepseekDelta } from '@/features/listings/sse';
 
 const DEFAULT_URL = 'https://api.deepseek.com/v1/chat/completions';
+/** Exported for the admin status check (web/src/pages/api/status.ts). */
+export const DEEPSEEK_URL = DEFAULT_URL;
 
 /**
  * Long enough for a paragraph, short enough that a hung provider does not
@@ -85,15 +87,21 @@ export async function deepseekParagraph(
       signal: AbortSignal.timeout(request.timeoutMs ?? TIMEOUT_MS),
     });
 
-    if (!response.ok) return undefined;
+    if (!response.ok) {
+      modelLog(`http_${response.status}`);
+      return undefined;
+    }
 
     const body = (await response.json()) as {
       choices?: { message?: { content?: unknown } }[];
     };
     const content = body.choices?.[0]?.message?.content;
 
-    return typeof content === 'string' && content.trim() !== '' ? content : undefined;
-  } catch {
+    if (typeof content === 'string' && content.trim() !== '') return content;
+    modelLog('empty');
+    return undefined;
+  } catch (error) {
+    modelLog(failureCode(error));
     return undefined;
   }
 }
@@ -128,7 +136,10 @@ export async function deepseekParagraphStreaming(
       signal: AbortSignal.timeout(request.timeoutMs ?? TIMEOUT_MS),
     });
 
-    if (!response.ok || !response.body) return undefined;
+    if (!response.ok || !response.body) {
+      modelLog(`http_${response.status}`);
+      return undefined;
+    }
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
@@ -156,8 +167,29 @@ export async function deepseekParagraphStreaming(
       onToken(tail);
     }
 
-    return full.trim() === '' ? undefined : full;
-  } catch {
+    if (full.trim() === '') {
+      modelLog('empty');
+      return undefined;
+    }
+    return full;
+  } catch (error) {
+    modelLog(failureCode(error));
     return undefined;
   }
+}
+
+/**
+ * Why the model gave nothing, as a code for the Worker log (Cloudflare
+ * Observability). Never the prompt or the reply: both are the seller's
+ * listing (CLAUDE.md §9). Before 7 Oct 2026 every failure here was silent,
+ * so "the AI never answers" could not be told apart from "the AI answers and
+ * every reply is refused".
+ */
+function modelLog(code: string): void {
+  console.warn(`deepseek ${code}`);
+}
+
+function failureCode(error: unknown): string {
+  const name = error instanceof Error ? error.name : '';
+  return name === 'TimeoutError' || name === 'AbortError' ? 'timeout' : 'network';
 }

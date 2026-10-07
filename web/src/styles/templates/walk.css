@@ -92,6 +92,81 @@ html[data-template='walk'] .wk-door .price-note {
   text-align: start;
 }
 
+/* ---------- The route, previewed on the first screen (7 Oct 2026) ----------
+   The door and the three nearest stops on one dashed line, read from the
+   inline start. Without it a real listing's first screen was photo, title,
+   price — the plain layout — and the route only began below the fold. */
+html[data-template='walk'] .wk-teaser {
+  list-style: none;
+  margin: 1.1rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.4rem;
+  position: relative;
+}
+
+html[data-template='walk'] .wk-teaser::before {
+  content: '';
+  position: absolute;
+  inset-inline: 7px;
+  inset-block-start: 6px;
+  border-block-start: 2px dashed color-mix(in srgb, var(--wk-ink) 55%, transparent);
+}
+
+html[data-template='walk'] .wk-teaser li {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 0.15rem;
+  padding-block-start: 1.2rem;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+html[data-template='walk'] .wk-teaser li::before {
+  content: '';
+  position: absolute;
+  inset-block-start: 1px;
+  inset-inline-start: 0;
+  inline-size: 12px;
+  block-size: 12px;
+  border-radius: 50%;
+  background: var(--ls-ground, #f6f4ef);
+  border: 3px solid var(--wk-ink);
+  box-sizing: border-box;
+}
+
+html[data-template='walk'] .wk-teaser .wk-teaser-home::before {
+  display: none;
+}
+
+html[data-template='walk'] .wk-teaser .wk-teaser-home {
+  padding-block-start: 0;
+  font-weight: 700;
+  color: var(--wk-ink);
+}
+
+html[data-template='walk'] .wk-teaser .wk-teaser-home .wk-dot {
+  inline-size: 12px;
+  block-size: 12px;
+  margin-block-end: 0.35rem;
+}
+
+html[data-template='walk'] .wk-teaser-min {
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--wk-ink);
+}
+
+html[data-template='walk'] .wk-teaser-name {
+  overflow-wrap: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 /* ---------- The route ---------- */
 
 html[data-template='walk'] .wk-route {

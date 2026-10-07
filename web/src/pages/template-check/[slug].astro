@@ -9,6 +9,8 @@ import {
   propertyListing,
   withNamedRooms,
 } from '../../lib/listings';
+import { realShapedListings } from '../../lib/real-shaped';
+import { CATALOGUE, templateFits } from '@/features/templates/manifest';
 
 export function getStaticPaths() {
   const applyTemplate = (listing: Listing, id: TemplateId): Listing => {
@@ -34,7 +36,15 @@ export function getStaticPaths() {
       props: { listing: applyTemplate(listing, id) },
     })),
   );
-  return [...demos, ...templates, ...fixturePages, ...combos];
+  // Every catalogue template on a listing shaped like a real one (no rooms,
+  // no plan, no enrichment; with and without the stored neighbourhood).
+  const real = realShapedListings.flatMap((listing) =>
+    CATALOGUE.filter((id) => templateFits(id, listing.category)).map((id) => ({
+      params: { slug: `${listing.slug}-${id}` },
+      props: { listing: { ...listing, template: id } },
+    })),
+  );
+  return [...demos, ...templates, ...fixturePages, ...combos, ...real];
 }
 
 const { listing } = Astro.props;

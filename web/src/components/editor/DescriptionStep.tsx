@@ -44,6 +44,8 @@ interface Props {
   facts: readonly Fact[];
   onChange: (text: string) => void;
   onSuggest?: (() => void) | undefined;
+  /** The neighbourhood lookup is still working; the first draft waits for it. */
+  waitingForArea?: boolean | undefined;
   suggesting?: boolean;
   suggestFailed?: string | undefined;
   /** Who wrote the text the last suggestion put in the box. */
@@ -67,6 +69,7 @@ export function DescriptionStep({
   onChange,
   onSuggest,
   suggesting,
+  waitingForArea = false,
   suggestFailed,
   source,
   tone = 'pro',
@@ -109,7 +112,9 @@ export function DescriptionStep({
       {onSuggest ? (
         <div className="suggest">
           <button type="button" className="suggest-button" onClick={onSuggest} disabled={suggesting}>
-            {suggesting
+            {waitingForArea && !suggesting
+              ? t('editor.description.waitingArea')
+              : suggesting
               ? t('editor.description.suggesting')
               : text.trim() === ''
                 ? t('editor.description.suggest')

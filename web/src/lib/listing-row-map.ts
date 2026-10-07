@@ -15,6 +15,7 @@ import {
   type TemplateId,
 } from '@/types/listing';
 import { canonicalSellerRole } from '@/features/agents/profile';
+import { publicStreet } from '@/features/listings/control-surface';
 import { parseEnrichmentBlock } from '@/features/listings/enrichment-payload';
 import { descriptionOrArea } from '@/features/listings/neighborhood-note';
 import { OSM_ATTRIBUTION, type AreaPlace, type AreaPlaces } from '@/features/listings/area-note';
@@ -261,7 +262,12 @@ export function listingFromRow(row: ListingRow): Listing | undefined {
   const location = isRecord(row.location) && typeof row.location.city === 'string'
     ? {
         city: row.location.city,
-        ...(typeof row.location.street === 'string' ? { street: row.location.street } : {}),
+        // The street, never the building: the house number stays on the row
+        // for the neighbourhood lookup and never reaches a public surface
+        // (publicStreet, 7 Oct 2026).
+        ...(typeof row.location.street === 'string' && publicStreet(row.location.street)
+          ? { street: publicStreet(row.location.street) }
+          : {}),
         ...(lat !== undefined ? { lat } : {}),
         ...(lng !== undefined ? { lng } : {}),
       }

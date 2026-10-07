@@ -6,6 +6,7 @@ import {
   ogPriceFragment,
   priceHeadline,
   publicPlace,
+  publicStreet,
   showListingMap,
   whatsappPrefill,
 } from './control-surface.js';
@@ -71,5 +72,29 @@ describe('whatsappPrefill', () => {
       whatsappPrefill('property', 'דיזנגוף 99, תל אביב־יפו'),
       'היי, ראיתי את הדירה בדיזנגוף 99, תל אביב־יפו ואשמח לפרטים',
     );
+  });
+});
+
+describe('publicStreet — the street, never the building (7 Oct 2026)', () => {
+  it('drops a plain house number', () => {
+    assert.equal(publicStreet('הקישון 43'), 'הקישון');
+    assert.equal(publicStreet('דיזנגוף 99'), 'דיזנגוף');
+  });
+
+  it('drops letters, ranges, slashes and "מס׳"', () => {
+    assert.equal(publicStreet('הרצל 5א'), 'הרצל');
+    assert.equal(publicStreet('הרצל 5 א'), 'הרצל');
+    assert.equal(publicStreet('בן יהודה 43/2'), 'בן יהודה');
+    assert.equal(publicStreet('אלנבי 10-12'), 'אלנבי');
+    assert.equal(publicStreet("ז'בוטינסקי מס' 7"), "ז'בוטינסקי");
+    assert.equal(publicStreet('שד׳ רוטשילד, 12'), 'שד׳ רוטשילד');
+  });
+
+  it('keeps a street with no number as typed', () => {
+    assert.equal(publicStreet('  שדרות   ירושלים '), 'שדרות ירושלים');
+  });
+
+  it('keeps a street whose name is a number', () => {
+    assert.equal(publicStreet('רחוב 10'), 'רחוב 10');
   });
 });

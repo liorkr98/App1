@@ -217,6 +217,8 @@ import '../styles/dash.css';
           flyerUrl?: string;
         } | null;
         location: { city?: string; street?: string } | null;
+        /** The stored neighbourhood; `{}` until a lookup has succeeded. */
+        area_places?: Record<string, unknown> | null;
         views?: number;
         waTaps?: number;
       };
@@ -1122,6 +1124,38 @@ import '../styles/dash.css';
             }),
           );
         }
+        /*
+         * A property with no stored neighbourhood has no map and no walking
+         * minutes on its page. Before 7 Oct 2026 a lookup that failed at
+         * publish stayed failed for good; this asks again, in the background,
+         * and the page shows the map on its next visit.
+         */
+        const placed = row.area_places && typeof row.area_places.city === 'string';
+        if (row.category === 'property' && row.id && row.location?.street && !placed) {
+          const listingId = row.id;
+          const status = document.createElement('p');
+          status.className = 'studio-area';
+          status.setAttribute('role', 'status');
+          const ask = (self: HTMLButtonElement, attempt = 0) => {
+            self.disabled = true;
+            status.textContent = t('editor.area.working');
+            void import('../lib/area-request')
+              .then(({ requestArea, areaSettled }) =>
+                requestArea(listingId).then((answer) => ({ answer, settled: areaSettled(answer?.status) })),
+              )
+              .catch(() => ({ answer: undefined, settled: false }))
+              .then(({ answer, settled }) => {
+                if (!settled && attempt < 3) {
+                  window.setTimeout(() => ask(self, attempt + 1), [5000, 15000, 30000][attempt]);
+                  return;
+                }
+                const key = answer?.status === 'ready' ? 'refreshed' : (answer?.status ?? 'failed');
+                status.textContent = key === 'refreshed' ? t('dash.areaRefreshed') : t(`editor.area.${key === 'working' ? 'failed' : key}`);
+                self.disabled = key === 'refreshed';
+              });
+          };
+          made.append(button(t('dash.areaRefresh'), 'act', (self) => ask(self)), status);
+        }
         const flyer = document.createElement('a');
         flyer.className = 'act';
         flyer.href = `/a/${encodeURIComponent(row.slug)}/flyer/`;
@@ -1208,7 +1242,7 @@ import '../styles/dash.css';
          */
         const { data, error } = await client
           .from('listings')
-          .select('id, slug, title, price, status, category, template, media, location, published_at')
+          .select('id, slug, title, price, status, category, template, media, location, published_at, area_places')
           .order('created_at', { ascending: false });
         if (error) return show('failed');
         rows = (data ?? []) as Row[];

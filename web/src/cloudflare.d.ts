@@ -18,6 +18,12 @@
  * through a server route (web/src/pages/api/description.ts).
  */
 declare module 'cloudflare:workers' {
+  /**
+   * Keeps the Worker alive until the promise settles, after the response has
+   * gone (web/src/pages/api/area.ts). Throws outside a request context.
+   */
+  export function waitUntil(promise: Promise<unknown>): void;
+
   export const env: {
     /**
      * DeepSeek, for the suggested Hebrew listing description.

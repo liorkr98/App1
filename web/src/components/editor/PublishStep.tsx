@@ -1,7 +1,9 @@
 import type { Blocker, EditorState } from '@/features/listings/editor';
 
+import type { AreaClientStatus } from '../../lib/area-request';
 import { t } from '../../lib/i18n';
 import { ADDONS } from '../../lib/tiers';
+import { AreaLine } from './AreaLine';
 
 interface Props {
   state: EditorState;
@@ -11,6 +13,11 @@ interface Props {
   publishedUrl?: string | undefined;
   publishedSlug?: string | undefined;
   publishing: boolean;
+  /** What publishing is waiting on right now, e.g. the neighbourhood. */
+  publishNote?: string | undefined;
+  /** Where the neighbourhood lookup stands, shown before the button. */
+  areaStatus?: AreaClientStatus | undefined;
+  areaCount?: number | undefined;
   /**
    * Why the last publish attempt did not produce a link.
    *
@@ -57,6 +64,9 @@ export function PublishStep({
   publishedUrl,
   publishedSlug,
   publishing,
+  publishNote,
+  areaStatus,
+  areaCount,
   failure,
   onPublish,
   onCopy,
@@ -175,6 +185,8 @@ export function PublishStep({
         </p>
       ) : null}
 
+      {publishedUrl ? null : <AreaLine status={areaStatus} count={areaCount} />}
+
       <button
         type="button"
         className="publish-button"
@@ -183,6 +195,11 @@ export function PublishStep({
       >
         {publishing ? t('editor.publish.working') : t('editor.publish.action')}
       </button>
+      {publishing && publishNote ? (
+        <p className="publish-note" role="status">
+          {publishNote}
+        </p>
+      ) : null}
 
       {/*
         The add-ons shelf (P6), UI only. Nothing here can be bought yet:

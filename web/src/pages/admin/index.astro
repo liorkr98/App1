@@ -130,6 +130,21 @@ import '../../styles/tokens.css';
         align-items: center;
         min-block-size: 44px;
       }
+      .checks {
+        list-style: none;
+        margin: 0.8rem 0 0;
+        padding: 0;
+        display: grid;
+        gap: 0.45rem;
+        line-height: 1.5;
+      }
+      .checks li {
+        padding: 0.55rem 0.8rem;
+        border-radius: 10px;
+        background: var(--stone-warm);
+      }
+      .checks .is-ok b { color: var(--olive); }
+      .checks .is-bad b { color: #8c2f1e; }
       .stats {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
@@ -186,6 +201,7 @@ import '../../styles/tokens.css';
 
       <div id="ops" class="ops">
         <nav class="jump" aria-label={t('admin.title')}>
+          <a href="#status">{t('admin.status')}</a>
           <a href="#overview">{t('admin.overview')}</a>
           <a href="#users">{t('admin.users')}</a>
           <a href="#funnel">{t('admin.funnel')}</a>
@@ -194,6 +210,12 @@ import '../../styles/tokens.css';
           <a href="#ingest">{t('admin.ingest')}</a>
           <a href="#grants">{t('admin.grantSection')}</a>
         </nav>
+
+        <section id="status">
+          <h2>{t('admin.status')}</h2>
+          <p class="say">{t('admin.statusLead')}</p>
+          <ul class="checks" id="checks"><li>{t('admin.statusChecking')}</li></ul>
+        </section>
 
         <section id="overview">
           <h2>{t('admin.overview')}</h2>
@@ -333,6 +355,28 @@ import '../../styles/tokens.css';
         }
         $('ops').classList.add('is-on');
         $('sign-out').hidden = false;
+
+        // Everything the product leans on, checked from the Worker (api/status).
+        void fetch('/api/status', { headers: { Authorization: `Bearer ${session.session.access_token}` } })
+          .then((response) => (response.ok ? response.json() : Promise.reject(new Error(String(response.status)))))
+          .then((body: { checks?: { key: string; ok: boolean; detail: string }[] }) => {
+            const list = $('checks');
+            list.textContent = '';
+            for (const check of body.checks ?? []) {
+              const item = document.createElement('li');
+              item.className = check.ok ? 'is-ok' : 'is-bad';
+              const name = document.createElement('b');
+              name.textContent = `${check.ok ? '✓' : '✗'} ${t(`admin.check.${check.key}`)}`;
+              const detail = document.createElement('span');
+              const known = t(`admin.checkDetail.${check.detail}`);
+              detail.append(' — ', known.startsWith('admin.') ? bdi(check.detail) : known);
+              item.append(name, detail);
+              list.append(item);
+            }
+          })
+          .catch(() => {
+            $('checks').textContent = t('admin.statusFailed');
+          });
 
         const overview = await client.rpc('admin_site_overview');
         const row = Array.isArray(overview.data) ? overview.data[0] : overview.data;

@@ -4,7 +4,7 @@ import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 
 import {
-  acceptAgentDescription,
+  checkAgentDescription,
   AGENT_SYSTEM_PROMPT,
   agentPrompt,
   nextAgentDescription,
@@ -132,6 +132,7 @@ async function modelText(call: ModelCall): Promise<Response> {
   };
 
   if (!call.apiKey) {
+    console.warn('deepseek no_key');
     const answer = fallbackFor('no_key');
     return call.stream ? sse(async (send) => send('done', answer)) : json(answer, 200);
   }
@@ -245,11 +246,12 @@ export const POST: APIRoute = async ({ request }) => {
 
   // ------------------------------------------------------------------- a flat
   //
-  // The surroundings, from the row's cache or looked up now (one path with
-  // /api/area). `pending` means OpenStreetMap did not answer in time: the
-  // text is written without a neighbourhood and the editor asks once more in
-  // a moment, when a second attempt usually lands.
-  const { places, pending } = await ensureAreaPlaces(client, listingId, row);
+  // The surroundings, from the row's cache only: /api/area owns the lookup,
+  // and the editor asks for a description once that lookup has settled.
+  // `pending` means there is no stored answer yet for this address: the text
+  // is written without a neighbourhood and the editor asks again when the
+  // area lands.
+  const { places, pending } = await ensureAreaPlaces(client, listingId, row, { lookUp: false });
 
   const input: AgentCopyInput = {
     category: row.category,
@@ -267,8 +269,10 @@ export const POST: APIRoute = async ({ request }) => {
     system: AGENT_SYSTEM_PROMPT,
     user: appendRewrite(appendTone(agentPrompt(input), tone), previous),
     check: (raw) => {
-      const accepted = acceptAgentDescription(raw, input);
-      return accepted ? notRepeated(accepted) : 'rejected';
+      const checked = checkAgentDescription(raw, input);
+      if ('text' in checked) return notRepeated(checked.text);
+      console.warn(`description rejected ${checked.reason}`);
+      return 'rejected';
     },
     fallback: { text: fallbackText, source: 'facts', area: places !== undefined, areaPending: pending },
     stream,

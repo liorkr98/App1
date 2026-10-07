@@ -1,7 +1,7 @@
 ---
 import type { Image, Listing } from '@/types/listing';
 import { labeledWalkItems } from '@/features/listings/photo-rooms';
-import { walkStops, type WalkStop } from '@/features/listings/walk-stops';
+import { areaWalkStops, walkStops, type WalkStop } from '@/features/listings/walk-stops';
 import { categoryLabel, modeLabel } from '../../lib/enrichment';
 import { GALLERY_WIDTHS, HERO_WIDTHS, largest, srcset } from '../../lib/images';
 import type { FactCell } from '../../lib/facts';
@@ -26,19 +26,42 @@ interface Props {
  * arrive in the order a buyer would reach them — routed walking minutes from
  * the enrichment, never straight-line distance (CLAUDE.md §2).
  *
- * No enrichment (a moshav we have never fetched): the same route walks
- * through the rooms instead, and says why. Never an empty route.
+ * Where the stops come from, first that has any:
+ *   1. the verified enrichment (demo fixtures; nothing writes it for real
+ *      listings yet),
+ *   2. the neighbourhood /api/area stored on the row — what a real listing
+ *      has (7 Oct 2026: Walk used to skip this, so every real Walk page had
+ *      no route and looked like the plain layout),
+ *   3. the photos' rooms, saying why,
+ *   4. the home's own numbers, as a walk through the flat.
+ * Never an empty route, and the three nearest stops are on the first screen.
  */
 const { listing, photos, cells, perUnit } = Astro.props;
 const cover = listing.media.cover;
 const lines = titleLines(listing);
 const place = stagePlace(listing);
-const stops: WalkStop[] =
+const enriched: WalkStop[] =
   listing.enrichment?.category === 'property' ? walkStops(listing.enrichment) : [];
+const stops: WalkStop[] =
+  enriched.length > 0 ? enriched : listing.areaPlaces ? areaWalkStops(listing.areaPlaces) : [];
 const rooms = stops.length === 0
   ? labeledWalkItems(photos).filter((p, i, all) => all.findIndex((o) => o.room === p.room) === i)
   : [];
+// Nothing around and no rooms named: the walk goes through the home's own
+// numbers, which every listing has.
+const homeStops = stops.length === 0 && rooms.length === 0 ? cells.slice(0, 4) : [];
 const farthest = stops.at(-1)?.minutes;
+// The first screen's preview of the route: the three nearest stops, or the
+// first three of the walk through the home.
+const teaser: { lead: string; isolate: boolean; name: string; minutes: boolean }[] =
+  stops.length > 0
+    ? stops.slice(0, 3).map((stop) => ({ lead: String(stop.minutes), isolate: true, name: stop.name, minutes: true }))
+    : (homeStops.length > 0 ? homeStops : cells).slice(0, 3).map((cell) => ({
+        lead: cell.displayValue,
+        isolate: Boolean(cell.bdi),
+        name: cell.label,
+        minutes: false,
+      }));
 
 const kindOf = (stop: WalkStop): string => {
   switch (stop.kind) {
@@ -50,6 +73,8 @@ const kindOf = (stop: WalkStop): string => {
       return categoryLabel(stop.category);
     case 'civic':
       return t(`listing.civicKind.${stop.civic}`);
+    case 'area':
+      return t(`listing.walk.group.${stop.group}`);
   }
 };
 ---
@@ -85,20 +110,36 @@ const kindOf = (stop: WalkStop): string => {
         <p class="wk-from"><span class="wk-dot" aria-hidden="true"></span><span>{t('listing.walk.door')} · <Prose text={place} /></span></p>
       )}
       <PriceBar {...priceProps(listing, perUnit)} />
+      {teaser.length > 0 && (
+        <ol class="wk-teaser" aria-label={t('listing.walk.teaser')}>
+          <li class="wk-teaser-home"><span class="wk-dot" aria-hidden="true"></span>{t('listing.walk.door')}</li>
+          {teaser.map((item) => (
+            <li>
+              <span class="wk-teaser-min">
+                {item.isolate ? <bdi>{item.lead}</bdi> : item.lead}
+                {item.minutes && <Fragment>{' '}{t('listing.mapNearbyMin')}</Fragment>}
+              </span>
+              <span class="wk-teaser-name"><Prose text={item.name} /></span>
+            </li>
+          ))}
+        </ol>
+      )}
     </div>
   </div>
 
-  {(stops.length > 0 || rooms.length > 0) && (
+  {(stops.length > 0 || rooms.length > 0 || homeStops.length > 0) && (
     <div class="wk-route">
       {stops.length > 0 && farthest !== undefined ? (
         <h2 class="wk-title">
           <bdi>{stops.length}</bdi> {t('listing.walk.places')} <bdi>{farthest}</bdi> {t('listing.walk.minutes')}
         </h2>
-      ) : (
+      ) : rooms.length > 0 ? (
         <Fragment>
           <h2 class="wk-title">{t('listing.walk.rooms')}</h2>
           <p class="wk-note">{t('listing.walk.roomsNote')}</p>
         </Fragment>
+      ) : (
+        <h2 class="wk-title">{t('listing.walk.home')}</h2>
       )}
       <div class="wk-track">
         <svg class="wk-line" viewBox="0 0 10 100" preserveAspectRatio="none" aria-hidden="true">
@@ -115,6 +156,15 @@ const kindOf = (stop: WalkStop): string => {
                 {stop.kind === 'transit' && stop.routes.length > 0 && (
                   <span><bdi>{stop.routes.slice(0, 4).join(', ')}</bdi></span>
                 )}
+              </div>
+            </li>
+          ))}
+          {homeStops.map((cell, index) => (
+            <li class="wk-stop wk-fact">
+              <span class="wk-pin"><bdi>{index + 1}</bdi></span>
+              <div class="wk-card">
+                <em>{cell.label}</em>
+                <b>{cell.bdi ? <bdi>{cell.displayValue}</bdi> : cell.displayValue}</b>
               </div>
             </li>
           ))}

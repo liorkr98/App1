@@ -1,7 +1,9 @@
 import type { ListingCategory } from '@/features/listings/schemas';
 
 import { num } from '../../lib/format';
+import type { AreaClientStatus } from '../../lib/area-request';
 import { t } from '../../lib/i18n';
+import { AreaLine } from './AreaLine';
 
 interface Props {
   category: ListingCategory;
@@ -13,6 +15,9 @@ interface Props {
   titleError?: boolean;
   priceError?: boolean;
   cityError?: boolean;
+  /** Where the neighbourhood lookup for this address stands. */
+  areaStatus?: AreaClientStatus | undefined;
+  areaCount?: number | undefined;
   onChange: (patch: {
     title?: string;
     price?: number;
@@ -55,6 +60,8 @@ export function DetailsStep({
   titleError = false,
   priceError = false,
   cityError = false,
+  areaStatus,
+  areaCount,
   onChange,
 }: Props) {
   const isProperty = category === 'property';
@@ -174,6 +181,7 @@ export function DetailsStep({
             maxLength={60}
           />
           <p className="field-hint">{t('editor.details.streetHint')}</p>
+          <AreaLine status={areaStatus} count={areaCount} />
         </div>
       )}
     </>

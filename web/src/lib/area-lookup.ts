@@ -35,6 +35,7 @@ export async function withWalkMinutes(
   if (flat.length === 0) return places;
 
   const minutes = await walkMinutes(places.origin, flat);
+  if (minutes.every((value) => value === undefined)) areaLog('routing_failed');
   const byName = new Map(flat.map((place, index) => [place.name, minutes[index]]));
 
   const timed = (group: readonly AreaPlace[]): AreaPlace[] =>
@@ -78,13 +79,23 @@ export function cachedPlaces(
   return cached as AreaPlaces;
 }
 
+/**
+ * What a lookup ended as. The editor shows the agent a line for each, and the
+ * Worker logs every one that is not `ready` (Cloudflare Observability).
+ *
+ *   ready       places are stored on the row
+ *   none        the street was found, nothing named around it
+ *   no_address  no city or street to look up
+ *   not_found   OpenStreetMap has no such street in that city, as spelled
+ *   failed      no instance answered; worth retrying
+ */
+export type AreaStatus = 'ready' | 'none' | 'no_address' | 'not_found' | 'failed';
+
 export interface AreaResult {
   /** The places, cached or freshly fetched; undefined when there are none. */
   places: AreaPlaces | undefined;
-  /**
-   * There was an address to look up and OpenStreetMap did not answer in time.
-   * Worth one quiet retry from the editor; a listing with no street is not.
-   */
+  status: AreaStatus;
+  /** `failed`, kept as its own flag for callers that only ask "retry?". */
   pending: boolean;
   /**
    * The street midpoint, when the lookup has one. The sun template rounds it;
@@ -94,16 +105,33 @@ export interface AreaResult {
 }
 
 /**
+ * One line per outcome worth knowing about, and never the address: a reason
+ * code is enough to tell a busy Overpass from a misspelled street, and an
+ * address in a log is personal data (CLAUDE.md §9).
+ */
+export function areaLog(code: string): void {
+  console.warn(`area_lookup ${code}`);
+}
+
+/**
  * The surroundings for a listing row, fetching and storing them when the cache
  * is missing or is for another address.
  *
- * The write goes through the owner's own client and policy — it is their row —
- * and a failed write is not worth failing the caller for.
+ * The write goes through the owner's own client and policy — it is their row.
+ * A street with nothing named around it is stored too, so the next call does
+ * not ask Overpass the same question again.
  */
 export async function ensureAreaPlaces(
   client: SupabaseClient,
   listingId: string,
   row: { location?: unknown; area_places?: unknown },
+  /**
+   * `false` reads the cache and never asks Overpass. The description route
+   * uses it: /api/area owns the lookup, and a second query racing it for the
+   * same row only doubled the load on a donated service and held the
+   * description back for up to half a minute.
+   */
+  options: { lookUp?: boolean } = {},
 ): Promise<AreaResult> {
   const location = (typeof row.location === 'object' && row.location !== null ? row.location : {}) as {
     city?: unknown;
@@ -111,35 +139,50 @@ export async function ensureAreaPlaces(
   };
   const city = typeof location.city === 'string' ? location.city.trim() : '';
   const street = typeof location.street === 'string' ? location.street.trim() : '';
-  if (!city || !street) return { places: undefined, pending: false };
+  if (!city || !street) return { places: undefined, status: 'no_address', pending: false };
 
   const where = addressForQuery(city, street);
-  if (!where) return { places: undefined, pending: false };
+  if (!where) return { places: undefined, status: 'no_address', pending: false };
 
   const cached = cachedPlaces(row.area_places, where);
   if (cached) {
+    const found = hasPlaces(cached);
     return {
-      places: hasPlaces(cached) ? cached : undefined,
+      places: found ? cached : undefined,
+      status: found ? 'ready' : 'none',
       pending: false,
       ...(cached.origin ? { origin: cached.origin } : {}),
     };
   }
 
-  const fetched = await areaPlaces(where.city, where.street);
-  if (!fetched) return { places: undefined, pending: true };
+  if (options.lookUp === false) return { places: undefined, status: 'failed', pending: true };
 
-  const routed = await withWalkMinutes(fetched);
-  if (!routed || !hasPlaces(routed)) {
-    return {
-      places: undefined,
-      pending: false,
-      ...(routed?.origin ? { origin: routed.origin } : {}),
-    };
+  const lookup = await areaPlaces(where.city, where.street);
+  if (lookup.status === 'not_found') {
+    areaLog('street_not_found');
+    return { places: undefined, status: 'not_found', pending: false };
   }
+  if (lookup.status === 'failed') {
+    areaLog(`failed ${lookup.reason}`);
+    return { places: undefined, status: 'failed', pending: true };
+  }
+
+  const routed = (await withWalkMinutes(lookup.places)) ?? lookup.places;
+  const found = hasPlaces(routed);
 
   // Kept on the row so the next press costs nothing, so the published page can
   // draw the map, and so it carries the ODbL credit for text derived from
   // these names (CLAUDE.md §10).
-  await client.from('listings').update({ area_places: routed }).eq('id', listingId);
-  return { places: routed, pending: false, ...(routed.origin ? { origin: routed.origin } : {}) };
+  const { error } = await client.from('listings').update({ area_places: routed }).eq('id', listingId);
+  if (error) {
+    areaLog('write_failed');
+    return { places: undefined, status: 'failed', pending: true };
+  }
+  if (!found) areaLog('none_named');
+  return {
+    places: found ? routed : undefined,
+    status: found ? 'ready' : 'none',
+    pending: false,
+    ...(routed.origin ? { origin: routed.origin } : {}),
+  };
 }

@@ -39,16 +39,19 @@ import type { AreaPlaces } from '@/features/listings/area-note';
  */
 
 /**
- * Two instances, tried in order.
+ * Three instances, tried in order.
  *
  * Overpass answers 504 under load often enough to matter — it did so twice
- * while this was being tested — and a second public instance is the standard
- * way consumers cope. One request each, at most, and only when the first
+ * while this was being tested — and another public instance is the standard
+ * way consumers cope. One request each, at most, and only when the one before
  * fails.
  */
-const ENDPOINTS = [
+export const OVERPASS_ENDPOINTS = [
   'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
+  // Added 7 Oct 2026: with two, a busy minute on both left a published
+  // listing with no map at all.
+  'https://overpass.private.coffee/api/interpreter',
 ];
 
 /** Overpass asks for identification, and being identifiable is fair. */
@@ -67,9 +70,9 @@ const RADIUS_M = 600;
  *
  * A healthy instance answers this query in five to nine seconds. A loaded one
  * does not answer at all — it sits until it 504s, and waiting longer buys
- * nothing. Two instances at twelve seconds is a worst case of twenty-four,
- * with the fallback paragraph already written and a retry the editor can make
- * later.
+ * nothing. Three instances at twelve seconds is a worst case of thirty-six,
+ * which /api/area runs in the background (waitUntil) rather than holding the
+ * editor's request open for.
  */
 const TIMEOUT_MS = 12_000;
 
@@ -126,8 +129,16 @@ out center tags 300;
 .scope out center tags 60;`;
 }
 
+/** What one lookup came back with. */
+export type AreaLookup =
+  | { status: 'ok'; places: AreaPlaces }
+  /** Overpass answered: no such street in that city, as spelled. */
+  | { status: 'not_found' }
+  /** No instance answered usefully; worth retrying later. */
+  | { status: 'failed'; reason: string };
+
 /**
- * The named neighbours of an address, or undefined.
+ * The named neighbours of an address.
  *
  * ONLY WITH A STREET. Without one there is nothing to centre on, and the
  * tempting fallback — the city's centre point — would name real schools and
@@ -135,20 +146,20 @@ out center tags 300;
  * confidently is worse than a plainer description, so the caller falls back to
  * the seller's own facts instead.
  *
- * Undefined for every failure: a timeout, a rate limit, an unknown city, a
- * street OSM spells in a way the pattern still missed. None of it is worth
- * failing a request over.
+ * "NOT FOUND" AND "FAILED" ARE DIFFERENT ANSWERS. They used to be one
+ * undefined, so a street OSM spells differently looked exactly like a busy
+ * minute: the editor waited and retried, and the agent was never told to check
+ * the spelling. A failure carries a reason code for the log — never the
+ * address (CLAUDE.md §9).
  */
-export async function areaPlaces(
-  city: string,
-  street: string,
-): Promise<AreaPlaces | undefined> {
+export async function areaPlaces(city: string, street: string): Promise<AreaLookup> {
   const where = addressForQuery(city, street);
-  if (!where) return undefined;
+  if (!where) return { status: 'not_found' };
 
   const query = areaQuery(where.city, where.street);
+  const reasons: string[] = [];
 
-  for (const endpoint of ENDPOINTS) {
+  for (const [index, endpoint] of OVERPASS_ENDPOINTS.entries()) {
     try {
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -160,22 +171,27 @@ export async function areaPlaces(
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
 
-      if (!response.ok) continue;
+      if (!response.ok) {
+        reasons.push(`overpass${index}_${response.status}`);
+        continue;
+      }
 
       const body = (await response.json()) as { elements?: OsmElement[] };
       if (!Array.isArray(body.elements) || body.elements.length === 0) {
-        // A real answer meaning "no such street here". Asking a second
-        // instance the same question gets the same answer from the same data.
-        return undefined;
+        // A real answer meaning "no such street here" (the query also returns
+        // the matched street, so an empty answer is not "no places"). Asking a
+        // second instance the same question gets the same answer.
+        return { status: 'not_found' };
       }
 
-      return placesFromOsm(body.elements, where);
-    } catch {
-      // Timeout or transport failure: worth trying the other instance.
+      return { status: 'ok', places: placesFromOsm(body.elements, where) };
+    } catch (error) {
+      const name = error instanceof Error ? error.name : 'error';
+      reasons.push(`overpass${index}_${name === 'TimeoutError' ? 'timeout' : 'network'}`);
     }
   }
 
-  return undefined;
+  return { status: 'failed', reason: reasons.join(',') };
 }
 
 /**
