@@ -6,20 +6,26 @@ name: Update screenshots
 # reasons that are not changes (web/playwright.config.ts).
 #
 # Manual only: Actions → Update screenshots → Run workflow, on the branch whose
-# look is the new truth. It never commits and needs no write permission: the
-# PNGs come out as an artifact, and the change is committed from there like
-# any other, so a new baseline is always a reviewed diff.
+# look is the new truth. It COMMITS the PNGs to that branch (7 Oct 2026; it
+# used to only upload an artifact, and nothing could download it from the
+# cloud sessions this repo is built in, so the baselines were never made).
+# A new baseline is still a reviewed diff: it lands on a feature branch and
+# reaches main only through a pull request. It refuses to run on main.
+#
+# A push made with GITHUB_TOKEN does not start Verify. The next push to the
+# branch does, and compares against these.
 
 on:
   workflow_dispatch: {}
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   screenshots:
     name: Make screenshot baselines
     runs-on: ubuntu-latest
+    if: ${{ github.ref != 'refs/heads/main' }}
 
     steps:
       - uses: actions/checkout@v5
@@ -50,3 +56,15 @@ jobs:
           name: screenshots
           path: web/e2e/__screenshots__
           retention-days: 14
+
+      - name: Commit them to this branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add web/e2e/__screenshots__
+          if git diff --cached --quiet; then
+            echo 'Baselines unchanged.'
+            exit 0
+          fi
+          git commit -m 'Screenshot baselines from the Update screenshots workflow'
+          git push origin HEAD:${{ github.ref_name }}

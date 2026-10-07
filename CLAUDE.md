@@ -230,7 +230,9 @@ web/              Astro. Its own package.json, tsconfig and lint pass.
   src/components/       one concern each
   src/lib/              formatting, facts, enrichment queries
 worker/           image enhancement, OG, PDF — NOT DEPLOYED since 6 Oct 2026 (§2)
-ingest/           Fly scheduled jobs: schools, GTFS, OSM
+ingest/           schools, GTFS, OSM import jobs — NEVER DEPLOYED, nothing scheduled.
+                  The area on a listing comes from /api/area at authoring time
+                  (Overpass + Valhalla, cached on the row). See docs/INGEST.md
 supabase/
   migrations/     numbered, append-only. Never rewrite an applied migration.
 locales/

@@ -36,4 +36,15 @@ export default function speedReport(): void {
   console.log(`\n${table}`);
   const summary = process.env.GITHUB_STEP_SUMMARY;
   if (summary) fs.appendFileSync(summary, `${table}\n`);
+
+  /*
+   * The same numbers as one check annotation. The job summary above can only
+   * be read in the browser; an annotation can be read through the API, so the
+   * week of numbers BLOCK_TIMING waits for can actually be collected. One
+   * line: an annotation is cut at its first newline.
+   */
+  if (process.env.GITHUB_ACTIONS) {
+    const line = rows.map(({ name, result }) => `${name} ${result.lcp}/${result.longest}/${result.cls}`).join(' | ');
+    console.log(`::notice title=Speed (LCP ms/longest task ms/CLS)::${line}`);
+  }
 }
