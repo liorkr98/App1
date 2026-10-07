@@ -210,7 +210,17 @@
       "back": "",
       "rooms": "",
       "roomsNote": "",
-      "routed": ""
+      "routed": "",
+      "teaser": "",
+      "home": "",
+      "group": {
+        "bus": "",
+        "rail": "",
+        "school": "",
+        "park": "",
+        "community": "",
+        "shop": ""
+      }
     },
     "poster": {
       "fig": ""
@@ -255,7 +265,8 @@
       "attribution": "",
       "close": "",
       "marker": ""
-    }
+    },
+    "blueprintSheet": ""
   },
   "notFound": {
     "title": "",
@@ -370,7 +381,8 @@
       },
       "noArea": "",
       "failedNoFacts": "",
-      "failedSignIn": ""
+      "failedSignIn": "",
+      "waitingArea": ""
     },
     "review": {
       "title": "",
@@ -429,7 +441,9 @@
       "dossierNote": "",
       "ticket": "",
       "ticketNote": "",
-      "needsAspect": ""
+      "needsAspect": "",
+      "walkNeeds": "",
+      "blueprintNeeds": ""
     },
     "photosHint": "",
     "photosGuide": "",
@@ -519,7 +533,8 @@
       "failed": "",
       "noPhotos": "",
       "saveFailed": "",
-      "share": ""
+      "share": "",
+      "waitingArea": ""
     },
     "plateLookup": "",
     "plateLooking": "",
@@ -574,7 +589,14 @@
       "count": "",
       "clear": ""
     },
-    "uploadRetry": ""
+    "uploadRetry": "",
+    "area": {
+      "working": "",
+      "ready": "",
+      "none": "",
+      "not_found": "",
+      "failed": ""
+    }
   },
   "home": {
     "tagline": "",
@@ -801,7 +823,9 @@
     "restore": "",
     "restoredDone": "",
     "restoredFailed": "",
-    "more": ""
+    "more": "",
+    "areaRefresh": "",
+    "areaRefreshed": ""
   },
   "legal": {
     "terms": "",
@@ -936,7 +960,29 @@
     "statusSold": "",
     "statusArchived": "",
     "statLink": "",
-    "statPublishTime": ""
+    "statPublishTime": "",
+    "status": "",
+    "statusLead": "",
+    "statusChecking": "",
+    "statusFailed": "",
+    "check": {
+      "ai": "",
+      "overpass": "",
+      "routing": "",
+      "database": ""
+    },
+    "checkDetail": {
+      "ok": "",
+      "no_key": "",
+      "timeout": "",
+      "network": "",
+      "http_401": "",
+      "http_402": "",
+      "ok_0035": "",
+      "missing_0035": "",
+      "valhalla_ok": "",
+      "osrm_ok": ""
+    }
   },
   "lab": {
     "title": "",

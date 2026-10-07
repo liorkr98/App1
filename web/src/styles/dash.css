@@ -1219,8 +1219,17 @@ h1 {
 
 .studio-made {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-end;
   gap: 0.9rem;
+}
+
+.studio-area {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--muted);
 }
 
 .studio-story {

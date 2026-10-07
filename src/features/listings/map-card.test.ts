@@ -2,15 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import type { ListingLocation } from '../../types/listing.js';
-import { googleMapsUrl, mapCardSrc, navigationTarget, wazeNavigateUrl } from './map-card.js';
-
-describe('mapCardSrc', () => {
-  it('is an inline SVG, not a third-party tile', () => {
-    const src = mapCardSrc();
-    assert.match(src, /^data:image\/svg\+xml;charset=utf-8,/);
-    assert.equal(src.startsWith('https://'), false);
-  });
-});
+import { googleMapsUrl, navigationTarget, wazeNavigateUrl } from './map-card.js';
 
 describe('wazeNavigateUrl', () => {
   it('builds a Waze link from a finite coordinate and drops a bad one', () => {

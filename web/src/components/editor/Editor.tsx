@@ -28,7 +28,8 @@ import { t } from '../../lib/i18n';
 import { loadEntitlement } from '../../lib/entitlement';
 import { createDraft, uploadOriginal } from '../../lib/listing-draft';
 import { coarseOrigin } from '@/features/sun/anchor';
-import { areaKey, requestArea } from '../../lib/area-request';
+import { areaKey, areaSettled, requestArea, type AreaClientStatus } from '../../lib/area-request';
+import { allPlaces, type AreaPlaces } from '@/features/listings/area-note';
 import { stripAndResize, uploadDerived } from '../../lib/listing-photo';
 import { loadListing, publishListing, saveListing } from '../../lib/listing-save';
 import { loadProfile } from '../../lib/profile';
@@ -96,10 +97,20 @@ const START: EditorState = {
 };
 
 /**
- * Long enough for a cached answer or a quick Overpass reply, short enough
- * that publishing never feels stuck on it.
+ * How long publish waits for the neighbourhood (decided 7 Oct 2026).
+ *
+ * It was six seconds, which a cold Overpass lookup (five to nine on a good
+ * minute) usually lost, so listings went live with no map. Twenty, with a
+ * line saying what it is waiting for; after that it publishes anyway and the
+ * server's background lookup (waitUntil in /api/area) fills the page in.
  */
-const AREA_AT_PUBLISH_MS = 6_000;
+const AREA_AT_PUBLISH_MS = 20_000;
+
+/** How long the description step waits for a lookup still working. */
+const AREA_WAIT_MS = 25_000;
+
+/** Asking /api/area again after a failed or unfinished answer. */
+const AREA_RETRY_MS = [5_000, 15_000, 30_000] as const;
 
 /** Drawing two images and uploading them: a few seconds on a phone on 4G. */
 const SHARE_IMAGES_AT_PUBLISH_MS = 12_000;
@@ -219,6 +230,8 @@ export default function Editor() {
   const [profile, setProfile] = useState<AgentProfile>({});
   const [publishedUrl, setPublishedUrl] = useState<string | undefined>(undefined);
   const [publishing, setPublishing] = useState(false);
+  // What publish is waiting on, when it is waiting on something nameable.
+  const [publishNote, setPublishNote] = useState<string | undefined>();
 
   /**
    * Why the last publish, or the last save, did not work.
@@ -477,9 +490,13 @@ export default function Editor() {
   // The row's surroundings, keyed by the address they belong to. A changed
   // street must not keep showing the previous map.
   const [surroundings, setSurroundings] = useState<{ key: string; places: unknown } | undefined>();
+  // Where the neighbourhood lookup stands, for the address it was asked for.
+  const [area, setArea] = useState<{ key: string; status: AreaClientStatus; count?: number } | undefined>();
+  const areaRef = useRef(area);
+  areaRef.current = area;
   const suggestGen = useRef(0);
 
-  const suggest = (retriesLeft = 1, voice?: CopyTone) => {
+  const suggest = (voice?: CopyTone) => {
     const id = listingId.current;
     if (!id) return;
 
@@ -524,7 +541,6 @@ export default function Editor() {
         );
 
         let text = '';
-        let areaPending = false;
         let source: SuggestSource | undefined;
 
         if (streamed && response.body) {
@@ -557,7 +573,6 @@ export default function Editor() {
                 const body = JSON.parse(event.data) as SuggestAnswer;
                 if (typeof body.error === 'string') throw new Error(body.error);
                 text = typeof body.text === 'string' ? body.text.trim() : draft.trim();
-                areaPending = body.areaPending === true;
                 source = sourceOf(body);
               }
             }
@@ -565,7 +580,6 @@ export default function Editor() {
         } else {
           const body = (await response.json()) as SuggestAnswer;
           text = typeof body.text === 'string' ? body.text.trim() : '';
-          areaPending = body.areaPending === true;
           source = sourceOf(body);
         }
 
@@ -579,23 +593,9 @@ export default function Editor() {
           generatedDescription: text,
         }));
 
-        /*
-         * The paragraph about the address is the one worth waiting for.
-         *
-         * `areaPending` means the server had a street to look up and
-         * OpenStreetMap did not answer in time — a busy minute on a public
-         * service, which a second attempt usually gets past. The seller
-         * already has a description in the box, so this replaces it quietly
-         * rather than making them wait for it.
-         *
-         * ONE retry. Anything more would queue requests against a service run
-         * on donations for a paragraph the seller can also just write.
-         */
-        if (areaPending && retriesLeft > 0) {
-          setSuggesting(false);
-          window.setTimeout(() => suggest(retriesLeft - 1, voiceNow), 4000);
-          return;
-        }
+        // No neighbourhood yet: the box keeps this text, and the effect
+        // below asks again once /api/area has stored the area — unless the
+        // seller has edited it by then.
       } catch (error) {
         if (ticket === suggestGen.current) setSuggestFailed(error instanceof Error ? error.message : 'failed');
       } finally {
@@ -613,15 +613,53 @@ export default function Editor() {
    * replaces it; a description they have already written is never overwritten.
    */
   const autoSuggested = useRef(false);
+  /*
+   * WAIT FOR THE NEIGHBOURHOOD, briefly (7 Oct 2026). The description used to
+   * be written the moment the step opened, usually before the area lookup had
+   * landed, so it had no neighbourhood paragraph and never got one. Now a
+   * property waits while the lookup is still working — up to AREA_WAIT_MS,
+   * then writes without it — and is rewritten once when the area lands, if
+   * the seller has not touched the text.
+   */
+  const [areaWaitOver, setAreaWaitOver] = useState(false);
+  useEffect(() => {
+    if (step !== 'description') return;
+    const timer = window.setTimeout(() => setAreaWaitOver(true), AREA_WAIT_MS);
+    return () => window.clearTimeout(timer);
+  }, [step]);
+  const waitingForArea =
+    step === 'description' &&
+    state.category === 'property' &&
+    !areaWaitOver &&
+    area !== undefined &&
+    area.key === areaKey(state.city, state.street) &&
+    area.status === 'working';
+
   useEffect(() => {
     if (step !== 'description' || autoSuggested.current) return;
     if (!canSuggest || state.description.trim() !== '') return;
+    if (waitingForArea) return;
     autoSuggested.current = true;
     suggest();
     // `suggest` is stable enough for this: it reads the listing id from a ref
     // and guards on `suggesting`, so it cannot fire twice for one arrival.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, canSuggest, state.description]);
+  }, [step, canSuggest, state.description, waitingForArea]);
+
+  // The area landed after a description was written without it: write it
+  // again, once per address, unless the seller has edited the text.
+  const rewroteForArea = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (step !== 'description' || state.category !== 'property') return;
+    const key = areaKey(state.city, state.street);
+    if (!key || area?.key !== key || area.status !== 'ready') return;
+    if (!suggestSource || suggestSource.area || suggesting) return;
+    if (state.description.trim() !== (state.generatedDescription ?? '').trim()) return;
+    if (rewroteForArea.current === key) return;
+    rewroteForArea.current = key;
+    suggest();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, area, suggestSource, suggesting, state.description, state.generatedDescription]);
 
   const changePhotos = (next: EditorPhoto[]) => {
     setPhotos(next);
@@ -921,24 +959,53 @@ export default function Editor() {
    * Once per address: the key is remembered, so walking back and forth
    * through the steps costs nothing, and a changed street asks again. The
    * server reads the address from the row, which is why this runs only after
-   * a save. A busy OpenStreetMap gets one retry a few seconds later.
+   * a save. Anything short of a settled answer — a busy Overpass, a dropped
+   * request, a lookup still running in the background — is asked again after
+   * 5, 15 and 30 seconds (it used to be once, and only for "pending").
    */
   const areaAskedFor = useRef<string | undefined>(undefined);
-  const lookUpArea = (id: string, retry = true) => {
+  const lookUpArea = (id: string, attempt = 0) => {
     const current = stateRef.current;
     if (current.category !== 'property') return;
     const key = areaKey(current.city, current.street);
-    if (!key || areaAskedFor.current === key) return;
-    areaAskedFor.current = key;
-    setSunPoint(undefined);
+    if (!key) return;
+    if (attempt === 0) {
+      if (areaAskedFor.current === key) return;
+      areaAskedFor.current = key;
+      setSunPoint(undefined);
+    }
+    if (areaAskedFor.current !== key) return;
+    setArea({ key, status: 'working' });
     void requestArea(id).then((answer) => {
-      if (areaAskedFor.current === key && answer?.sun) setSunPoint(answer.sun);
-      if (answer?.pending && retry) {
-        areaAskedFor.current = undefined;
-        window.setTimeout(() => lookUpArea(id, false), 5000);
+      if (areaAskedFor.current !== key) return;
+      if (answer?.sun) setSunPoint(answer.sun);
+      if (answer?.areaPlaces) setSurroundings({ key, places: answer.areaPlaces });
+      const status = answer?.status ?? 'failed';
+      if (!areaSettled(status) && attempt < AREA_RETRY_MS.length) {
+        setArea({ key, status: 'working' });
+        window.setTimeout(() => lookUpArea(id, attempt + 1), AREA_RETRY_MS[attempt]);
+        return;
       }
+      const count = answer?.areaPlaces ? allPlaces(answer.areaPlaces as AreaPlaces).length : undefined;
+      setArea({ key, status: areaSettled(status) ? status : 'failed', ...(count ? { count } : {}) });
     });
   };
+
+  /*
+   * Ask as soon as the listing exists and the address is filled in — not only
+   * at the next step change. The address step comes before the photos, and
+   * the row is created with the first photo, so this is the earliest moment
+   * the server can read an address. Typing is debounced.
+   */
+  useEffect(() => {
+    if (!savedRow?.id || state.category !== 'property') return;
+    const key = areaKey(state.city, state.street);
+    if (!key || areaAskedFor.current === key) return;
+    const timer = window.setTimeout(() => persist(), 800);
+    return () => window.clearTimeout(timer);
+    // persist reads the latest state from refs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [savedRow?.id, state.city, state.street, state.category]);
 
   // A loaded neighbourhood with no street midpoint still needs a sun. An
   // address that has not been saved yet waits for the save, which asks too.
@@ -1006,11 +1073,21 @@ export default function Editor() {
        * lookup that finishes after publish still reaches every later visit,
        * and the agent's link is worth more than a few seconds of waiting.
        */
-      if (state.category === 'property' && areaKey(state.city, state.street)) {
-        await Promise.race([
-          requestArea(id),
-          new Promise((resolve) => window.setTimeout(resolve, AREA_AT_PUBLISH_MS)),
-        ]);
+      const key = areaKey(state.city, state.street);
+      if (state.category === 'property' && key) {
+        // A lookup that gave up earlier gets a fresh round now.
+        if (areaRef.current?.key === key && areaRef.current.status === 'failed') areaAskedFor.current = undefined;
+        lookUpArea(id);
+        if (!areaSettled(areaRef.current?.key === key ? areaRef.current.status : undefined)) {
+          setPublishNote(t('editor.publish.waitingArea'));
+          const until = Date.now() + AREA_AT_PUBLISH_MS;
+          while (Date.now() < until) {
+            const now = areaRef.current;
+            if (now?.key === key && areaSettled(now.status)) break;
+            await new Promise((resolve) => window.setTimeout(resolve, 300));
+          }
+          setPublishNote(undefined);
+        }
       }
 
       const result = await publishListing(id, state, photos, extrasRef.current).catch(
@@ -1169,6 +1246,8 @@ export default function Editor() {
             priceNote={state.priceNote ?? ''}
             titleError={here.some((blocker) => blocker.code === 'titleMissing')}
             cityError={here.some((blocker) => blocker.code === 'cityMissing')}
+            areaStatus={area && area.key === addressKey ? area.status : undefined}
+            areaCount={area && area.key === addressKey ? area.count : undefined}
             onChange={(patch) => setState((current) => ({ ...current, ...patch }))}
           />
         ) : null}
@@ -1273,6 +1352,9 @@ export default function Editor() {
             publishedUrl={publishedUrl}
             publishedSlug={slug.current ?? undefined}
             publishing={publishing}
+            publishNote={publishNote}
+            areaStatus={state.category === 'property' && area && area.key === addressKey ? area.status : undefined}
+            areaCount={area && area.key === addressKey ? area.count : undefined}
             failure={failure}
             onPublish={publish}
             onCopy={(url) =>
@@ -1330,6 +1412,7 @@ export default function Editor() {
             onChange={(description) => setState((current) => ({ ...current, description }))}
             onSuggest={canSuggest ? () => suggest() : undefined}
             suggesting={suggesting}
+            waitingForArea={waitingForArea && state.description.trim() === ''}
             suggestFailed={
               suggestFailed === false
                 ? undefined
@@ -1355,7 +1438,7 @@ export default function Editor() {
                   generatedDescription: drafted,
                 }));
               }
-              suggest(1, next);
+              suggest(next);
             }}
           />
         ) : null}

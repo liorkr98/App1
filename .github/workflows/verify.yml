@@ -284,6 +284,14 @@ jobs:
         working-directory: web
         run: npx playwright test contrast
 
+      # Every template keeps its own look on a listing shaped like a real one
+      # (no rooms, no plan, no enrichment), and no page shows a pin or a house
+      # number (7 Oct 2026). Blocking.
+      - name: Templates on real-shaped listings
+        if: ${{ !cancelled() }}
+        working-directory: web
+        run: npx playwright test templates
+
       - name: Screenshots (reported, not blocking, for now)
         if: ${{ !cancelled() }}
         continue-on-error: true

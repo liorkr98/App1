@@ -159,6 +159,14 @@ export function TemplateStep({
           {t('editor.templates.needsAspect')}
         </p>
       ) : null}
+      {/* What the two data-led templates draw on, so the agent knows what to
+          add rather than wondering why the page looks plainer than the demo. */}
+      {chosen === 'walk' ? (
+        <p className="hint" role="status">{t('editor.templates.walkNeeds')}</p>
+      ) : null}
+      {chosen === 'blueprint' ? (
+        <p className="hint" role="status">{t('editor.templates.blueprintNeeds')}</p>
+      ) : null}
 
       <h2 className="template-group">{t('editor.templates.groupNew')}</h2>
       <ul className="template-grid">{featured.map(card)}</ul>

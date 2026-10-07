@@ -491,27 +491,52 @@ const AREA_CLAIM = /דקות הליכה|דקה הליכה|תחנת |בית ספ�
  * superlative. Failing is cheap — the fallback is the same structure.
  */
 export function acceptAgentDescription(raw: string, input: AgentCopyInput): string | undefined {
+  const checked = checkAgentDescription(raw, input);
+  return 'text' in checked ? checked.text : undefined;
+}
+
+/**
+ * The same check, saying which rule refused the reply. The reason is a code
+ * for the Worker log (description.ts) — never the text, which is the seller's
+ * listing (CLAUDE.md §9) — so a run of refusals can be told apart from a
+ * model that is simply not answering.
+ */
+export type RejectionReason =
+  | 'length'
+  | 'not_hebrew'
+  | 'link'
+  | 'model_name'
+  | 'banned_words'
+  | 'reserved_topic'
+  | 'numbers'
+  | 'ungrounded_place'
+  | 'area_without_places';
+
+export function checkAgentDescription(
+  raw: string,
+  input: AgentCopyInput,
+): { text: string } | { reason: RejectionReason } {
   const text = tidyParagraphs(raw);
 
-  if (text.length < MIN_CHARS || text.length > MAX_CHARS) return undefined;
-  if (!HEBREW.test(text)) return undefined;
-  if (/https?:\/\//i.test(text)) return undefined;
-  if (/deepseek|openai|chatgpt|gpt/i.test(text)) return undefined;
-  if (findBannedWords(text).length > 0) return undefined;
-  if (findReservedTopics(text).length > 0) return undefined;
+  if (text.length < MIN_CHARS || text.length > MAX_CHARS) return { reason: 'length' };
+  if (!HEBREW.test(text)) return { reason: 'not_hebrew' };
+  if (/https?:\/\//i.test(text)) return { reason: 'link' };
+  if (/deepseek|openai|chatgpt|gpt/i.test(text)) return { reason: 'model_name' };
+  if (findBannedWords(text).length > 0) return { reason: 'banned_words' };
+  if (findReservedTopics(text).length > 0) return { reason: 'reserved_topic' };
 
   const places = input.places && hasPlaces(input.places) ? input.places : undefined;
   const minutes = places ? routedMinutes(places) : new Set<string>();
   const unsupported = findUnsupportedNumbers(text, input.facts).filter((number) => !minutes.has(number));
-  if (unsupported.length > 0) return undefined;
+  if (unsupported.length > 0) return { reason: 'numbers' };
 
   if (places) {
-    if (!mentionsGrounded(text, places)) return undefined;
+    if (!mentionsGrounded(text, places)) return { reason: 'ungrounded_place' };
   } else if (AREA_CLAIM.test(text)) {
-    return undefined;
+    return { reason: 'area_without_places' };
   }
 
-  return text;
+  return { text };
 }
 
 /**

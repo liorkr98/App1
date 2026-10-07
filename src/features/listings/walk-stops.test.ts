@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import type { PropertyEnrichment } from '../../types/listing.js';
-import { walkStops } from './walk-stops.js';
+import { areaWalkStops, walkStops } from './walk-stops.js';
 
 const SRC = { sourceName: 'OpenStreetMap', sourceDate: '2026-09-05' };
 const enrichment = (overrides: Partial<PropertyEnrichment> = {}): PropertyEnrichment => ({
@@ -63,5 +63,43 @@ describe('walk stops', () => {
       }),
     );
     assert.equal(stops.length, 0);
+  });
+});
+
+describe('areaWalkStops — the route from the stored neighbourhood', () => {
+  const places = {
+    city: 'תל אביב',
+    street: 'הקישון',
+    origin: { lat: 32.0566, lon: 34.7701 },
+    neighbourhoods: [{ name: 'פלורנטין', lat: 32.05, lon: 34.76 }],
+    schools: [{ name: 'בית ספר בלפור', lat: 32.05, lon: 34.77, walkMinutes: 4 }],
+    transit: [
+      { name: 'הקישון/אברבנאל', lat: 32.05, lon: 34.76, walkMinutes: 1, mode: 'bus' as const },
+      { name: 'תחנת אליפלט', lat: 32.05, lon: 34.76, walkMinutes: 7, mode: 'rail' as const },
+    ],
+    parks: [{ name: 'גינת לוינסקי', lat: 32.05, lon: 34.77 }],
+    community: [],
+    shops: [{ name: 'שוק לוינסקי', lat: 32.05, lon: 34.77, walkMinutes: 4 }],
+  };
+
+  it('orders stops by routed minutes and labels them by group', () => {
+    const stops = areaWalkStops(places);
+    assert.deepEqual(
+      stops.map((stop) => [stop.name, stop.minutes, stop.kind === 'area' ? stop.group : '']),
+      [
+        ['הקישון/אברבנאל', 1, 'bus'],
+        ['בית ספר בלפור', 4, 'school'],
+        ['שוק לוינסקי', 4, 'shop'],
+        ['תחנת אליפלט', 7, 'rail'],
+      ],
+    );
+  });
+
+  it('drops a place with no routed minutes — never a guessed time (CLAUDE.md §2)', () => {
+    assert.ok(!areaWalkStops(places).some((stop) => stop.name === 'גינת לוינסקי'));
+  });
+
+  it('never lists a neighbourhood name as a stop', () => {
+    assert.ok(!areaWalkStops(places).some((stop) => stop.name === 'פלורנטין'));
   });
 });

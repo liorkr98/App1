@@ -79,6 +79,11 @@ const roomLabel = (image: Image) => (image.room ? t(`editor.rooms.${image.room}`
 const mosaic = photos.slice(0, 5);
 const floorPlan = listing.media.floorPlan;
 
+// Blueprint's sheet, when there is no plan to show: the area as a
+// dimension line, and up to three other numbers in the title block.
+const sheetArea = cells.find((cell) => cell.key === 'area_sqm');
+const sheetCells = cells.filter((cell) => cell !== sheetArea).slice(0, 3);
+
 // Blueprint's room viewer: the first photo of each labelled room, in walk
 // order. Unlabelled photos give no rooms, and the viewer shows the cover.
 const rooms = labeledWalkItems(photos).filter(
@@ -346,6 +351,27 @@ const priceProps = {
         ))}
         {shots[0] && roomLabel(shots[0]) && (
           <figcaption class="bp-label" aria-live="polite">{roomLabel(shots[0])}</figcaption>
+        )}
+        {/* No plan (most real listings): the photograph is drawn as a sheet
+            instead — a dimension line, crop marks and a title block of the
+            listing's own numbers — so the first screen still reads as
+            Blueprint without inventing a plan (7 Oct 2026). */}
+        {!floorPlan && sheetCells.length > 0 && (
+          <div class="bp-sheet" aria-hidden="true">
+            <span class="bp-crop bp-crop-a"></span>
+            <span class="bp-crop bp-crop-b"></span>
+            <span class="bp-crop bp-crop-c"></span>
+            <span class="bp-crop bp-crop-d"></span>
+            {sheetArea && (
+              <span class="bp-dim"><span>{sheetArea.bdi ? <bdi>{sheetArea.displayValue}</bdi> : sheetArea.displayValue} {sheetArea.label}</span></span>
+            )}
+            <dl class="bp-titleblock">
+              <div><dt>{t('listing.blueprintSheet')}</dt><dd><bdi>01</bdi></dd></div>
+              {sheetCells.map((cell) => (
+                <div><dt>{cell.label}</dt><dd>{cell.bdi ? <bdi>{cell.displayValue}</bdi> : cell.displayValue}</dd></div>
+              ))}
+            </dl>
+          </div>
         )}
       </figure>
     </div>

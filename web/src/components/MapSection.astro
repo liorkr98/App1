@@ -5,7 +5,6 @@ import { mapNearbyItems } from '@/features/listings/nearby-map';
 import { composedMapSrc } from '@/features/listings/area-map';
 import { googleMapsUrl, navigationTarget, wazeNavigateUrl } from '@/features/listings/map-card';
 import { publicPlace } from '@/features/listings/control-surface';
-import { walkPhrase } from '@/features/listings/hebrew-plural';
 import { t } from '../lib/i18n';
 import AreaMap from './AreaMap.astro';
 import Prose from './Prose.astro';
@@ -14,25 +13,23 @@ import WalkMinutes from './WalkMinutes.astro';
 
 interface Props {
   location: ListingLocation;
-  mapImageUrl: string;
   enrichment?: PropertyEnrichment;
   /**
    * The neighbourhood drawn from OpenStreetMap coordinates, when the address
-   * was looked up. Replaces the generic pin card, because a map of the actual
-   * surroundings is worth more than a decorative one.
+   * was looked up. Without it the section is the street line alone.
    */
   areaMap?: AreaMapData | undefined;
   areaAttribution?: string | undefined;
 }
 
-const { location, mapImageUrl, enrichment, areaMap, areaAttribution } = Astro.props;
+const { location, enrichment, areaMap, areaAttribution } = Astro.props;
 
 const address = publicPlace(location);
 const nearby = enrichment ? mapNearbyItems(enrichment) : [];
 const point = navigationTarget(location);
 const waze = point ? wazeNavigateUrl(point.lat, point.lng) : undefined;
 const google = point ? googleMapsUrl(point.lat, point.lng) : undefined;
-const zoomSrc = areaMap ? composedMapSrc(areaMap) : mapImageUrl;
+const zoomSrc = areaMap ? composedMapSrc(areaMap) : undefined;
 ---
 {
   /**
@@ -40,36 +37,22 @@ const zoomSrc = areaMap ? composedMapSrc(areaMap) : mapImageUrl;
    * approximate meeting area, not an address; pinning a private car for sale
    * to a home address on a public page is a theft risk.
    *
-   * The image is a local SVG pin card. Where the address was looked up,
-   * AreaMap draws the neighbourhood and a live map loads over it once the
-   * section nears the screen (scripts/listing-map.ts; CLAUDE.md §2, the
-   * 5 Oct 2026 map note). Chips on the image are already-routed
-   * walking minutes (OSRM at publish). The named list under it repeats them.
-   * Omitted when that payload has nothing for a group. No live query at render.
+   * Where the address was looked up, AreaMap draws the neighbourhood and a
+   * live map loads over it once the section nears the screen
+   * (scripts/listing-map.ts; CLAUDE.md §2, the 5 Oct 2026 map note).
+   *
+   * NO PIN, EVER (7 Oct 2026). Without a looked-up neighbourhood this used to
+   * show a drawn street grid with a big location pin in the middle — a pin on
+   * nothing, which read as "this building" on a page whose rule is "the street
+   * area only". Now the section is the street line alone, and the dashboard
+   * offers to look the area up again. No live query at render.
    */
 }
 <section class="map reveal">
   <SectionLabel text={t('listing.section.map')} />
   <h2>{t('listing.mapTitle')}</h2>
 
-  {areaMap && areaAttribution ? (
-    <AreaMap map={areaMap} attribution={areaAttribution} />
-  ) : (
-  <div class="map-stage">
-    <button type="button" class="map-open" data-map-open>
-      <img src={mapImageUrl} alt={t('listing.mapAlt')} loading="lazy" decoding="async" width="800" height="400" />
-    </button>
-    {nearby.map((item) => (
-      <span
-        class={`map-pin map-pin--${item.kind}`}
-        aria-label={`${walkPhrase(item.walkMinutes)} ל${t(`listing.mapNearby.${item.kind}`)}`}
-      >
-        <span class="map-pin-mins"><bdi>{item.walkMinutes}</bdi></span>
-        <span class="map-pin-unit">{t('listing.mapNearbyMin')}</span>
-      </span>
-    ))}
-  </div>
-  )}
+  {areaMap && areaAttribution ? <AreaMap map={areaMap} attribution={areaAttribution} /> : null}
 
   <div class="addr"><Prose text={address} /></div>
   {(waze || google) && (
@@ -83,12 +66,14 @@ const zoomSrc = areaMap ? composedMapSrc(areaMap) : mapImageUrl;
     </div>
   )}
 
-  <dialog id="listing-map" class="map-dialog" aria-label={t('listing.mapTitle')}>
-    <button type="button" class="lightbox-close" data-map-close>{t('listing.closeLightbox')}</button>
-    <div class="map-zoom">
-      <img src={zoomSrc} alt="" width="4800" height="3000" />
-    </div>
-  </dialog>
+  {zoomSrc && (
+    <dialog id="listing-map" class="map-dialog" aria-label={t('listing.mapTitle')}>
+      <button type="button" class="lightbox-close" data-map-close>{t('listing.closeLightbox')}</button>
+      <div class="map-zoom">
+        <img src={zoomSrc} alt="" width="4800" height="3000" />
+      </div>
+    </dialog>
+  )}
   {nearby.length > 0 && (
     <ul class="map-nearby">
       {nearby.map((item) => (

@@ -144,7 +144,7 @@ export const propertyListing: Listing = {
 
   // Street present, so the map section renders. Coordinates are the Sokolov
   // corridor in Holon for the demo pin — this listing is not for sale.
-  location: { city: 'חולון', street: 'סוקולוב 42', lat: 32.0165, lng: 34.7792 },
+  location: { city: 'חולון', street: 'סוקולוב', lat: 32.0165, lng: 34.7792 },
   seller: { name: 'ליאור', phone: '972500000000', role: 'בעל הדירה' },
   template: 'editorial',
   status: 'published',

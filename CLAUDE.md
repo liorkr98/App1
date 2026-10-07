@@ -230,7 +230,9 @@ web/              Astro. Its own package.json, tsconfig and lint pass.
   src/components/       one concern each
   src/lib/              formatting, facts, enrichment queries
 worker/           image enhancement, OG, PDF — NOT DEPLOYED since 6 Oct 2026 (§2)
-ingest/           Fly scheduled jobs: schools, GTFS, OSM
+ingest/           schools, GTFS, OSM import jobs — NEVER DEPLOYED, nothing scheduled.
+                  The area on a listing comes from /api/area at authoring time
+                  (Overpass + Valhalla, cached on the row). See docs/INGEST.md
 supabase/
   migrations/     numbered, append-only. Never rewrite an applied migration.
 locales/
@@ -374,6 +376,12 @@ date it was current.
   ordinary cell. An unbacked badge is worse than no badge.
 - **Never present data as a valuation.** No appraisal, no estimate of worth.
 - **Never publish a licence plate.** It is a lookup key only.
+- **The street, never the building** (7 Oct 2026). No house number and no
+  location pin on any public surface — page, card, story, flyer, preview.
+  `publicStreet()` strips the number where a row becomes a listing; the row
+  keeps it for the neighbourhood lookup. Without a looked-up neighbourhood the
+  location section is the street line alone. `web/e2e/templates.spec.ts`
+  asserts both.
 - Missing enrichment is normal. A group with no results is **omitted** — never
   an empty block, a placeholder, or an error.
 
@@ -509,6 +517,7 @@ leave it out.
 - Display OSM data without ODbL attribution (§10)
 - Scrape a commercial portal (§10)
 - Publish a licence plate, or present data as a valuation (§7)
+- Show a house number or a location pin on a public page (§7)
 - Render an empty enrichment block instead of omitting it (§7)
 - Query an external source at page render time — ingestion is scheduled, the
   page reads only from us

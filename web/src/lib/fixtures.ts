@@ -154,7 +154,7 @@ export const tlvListing: Listing = {
     tourUrl: 'https://my.matterport.com/show/?m=T4V7A',
   },
   enrichment: tlvEnrichment,
-  location: { city: 'תל אביב־יפו', street: 'דיזנגוף 99', lat: 32.0808, lng: 34.7741 },
+  location: { city: 'תל אביב־יפו', street: 'דיזנגוף', lat: 32.0808, lng: 34.7741 },
   seller: {
     name: 'נועה כהן',
     phone: '972521110001',
