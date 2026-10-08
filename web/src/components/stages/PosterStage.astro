@@ -53,7 +53,7 @@ const idx = (n: number) => String(n).padStart(2, '0');
       {rest.map((cell, i) => (
         <div>
           <dt class="po-idx"><bdi>{idx(i + 2)}</bdi> — {cell.label}</dt>
-          <dd>{cell.bdi ? <bdi>{cell.displayValue}</bdi> : cell.displayValue}</dd>
+          <dd style={`--len:${cell.displayValue.length}`}>{cell.bdi ? <bdi>{cell.displayValue}</bdi> : cell.displayValue}</dd>
         </div>
       ))}
     </dl>

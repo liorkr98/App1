@@ -107,7 +107,10 @@ html[data-template='poster'] .po-row dd {
   font-family: var(--ls-font-display);
   font-variation-settings: 'wdth' 62.5;
   font-weight: 800;
-  font-size: clamp(2.2rem, 11vw, 6rem);
+  /* Sized by length, like the giant numeral: "2" can be huge, "128,000" in a
+     third of a phone cannot. At 11vw for everything, a car's km and test date
+     ran into each other and off the screen (found 8 Oct 2026). */
+  font-size: clamp(1.4rem, min(11vw, calc(60vw / var(--len, 3))), 6rem);
   line-height: 0.85;
   white-space: nowrap;
 }

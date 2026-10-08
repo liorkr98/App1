@@ -1,7 +1,9 @@
 import type { AreaPlaces, Listing } from '@/types/listing';
 import { OSM_ATTRIBUTION } from '@/features/listings/area-note';
+import { propertySchema } from '@/features/listings/schemas';
 
 import { golfListing, tlvListing } from './fixtures';
+import { answer } from './listing-facts';
 
 /**
  * A listing shaped like the ones agents actually publish (7 Oct 2026).
@@ -53,6 +55,19 @@ export const realListing: Listing = {
   description:
     'למכירה בתל אביב: דירת 2 חדרים בפלורנטין. מדובר בדירה של 60 מ״ר, בקומה 4 מתוך 4, עם מרפסת שמש וכיווני אוויר מערב.\n\nמוזמנים לתאם ביקור ולהתרשם מקרוב.',
   price: 3500000,
+  // The facts of the flat in the title — a 2-room roof flat — rather than
+  // the 4-room demo it borrows photos from, so the page reads as one listing.
+  facts: answer(propertySchema, {
+    rooms: 2,
+    area_sqm: 60,
+    floor: 4,
+    total_floors: 4,
+    balcony_sqm: 12,
+    aspect: 'מערב',
+    elevator: { absent: true },
+    shelter: true,
+    condition: 'שמור',
+  }),
   media: {
     // As the editor saves them: no room labels, no plan, no tour.
     cover,

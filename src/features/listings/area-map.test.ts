@@ -25,6 +25,15 @@ const HOLON: AreaPlaces = {
 };
 
 describe('areaMap', () => {
+  it('numbers the places nearest first, places without a time last', () => {
+    const map = areaMap({ ...HOLON, schools: [...HOLON.schools, at('בלי זמן', 32.0215, 34.7765)] });
+    assert.ok(map);
+    const minutes = map.pins.map((pin) => pin.walkMinutes ?? Infinity);
+    assert.deepEqual(minutes, [...minutes].sort((a, b) => a - b));
+    assert.equal(map.pins.at(-1)?.name, 'בלי זמן');
+    assert.equal(map.pins[0]?.key, '1');
+  });
+
   it('puts the flat on the tiles and everything else where it is', () => {
     const map = areaMap(HOLON);
     assert.ok(map);
@@ -102,13 +111,17 @@ describe('areaMap', () => {
     assert.ok(tight.height <= 1024, 'a phone should not get a map and nothing else');
   });
 
-  it('composes one picture with no text node and a 16:10 frame', () => {
+  it('composes one picture, a 16:10 frame, whose only text is each pin\'s own numeral', () => {
     const map = areaMap(HOLON);
     assert.ok(map);
     const src = decodeURIComponent(composedMapSrc(map));
     assert.match(src, /width="1600"/);
     assert.match(src, /height="1000"/);
-    assert.equal(src.includes('<text'), false);
+    // Digits alone: no Hebrew in the drawing, so nothing a bidi pass could
+    // reorder, and the numbers match the list under the map.
+    const texts = [...src.matchAll(/<text[^>]*>([^<]*)<\/text>/g)].map((m) => m[1]);
+    assert.deepEqual(texts, map.pins.map((pin) => pin.key));
+    assert.ok(texts.every((text) => /^\d+$/.test(text ?? '')));
     assert.equal(src.includes('tile.openstreetmap.org'), false);
   });
 
