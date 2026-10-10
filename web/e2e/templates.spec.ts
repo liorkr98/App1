@@ -89,3 +89,60 @@ test('the signature check fires when a template loses its signature', async ({ b
   await expect(tab.locator(SIGNATURE.walk!).first()).not.toBeVisible();
   await context.close();
 });
+
+/**
+ * No text in the first screen crosses the screen edge or runs into its
+ * neighbour (8 Oct 2026: on a car, Poster's "128,000" and "06/2027" were set
+ * at one size for every value, overlapped and ran off the phone — clipped by
+ * the page, so no sideways scroll gave it away).
+ */
+test.describe('first-screen text stays on the phone and apart', () => {
+  for (const { id, slug } of PAGES) {
+    test(`${slug}-${id}`, async ({ browser }) => {
+      const context = await browser.newContext({ viewport: PHONE, locale: 'he-IL', reducedMotion: 'reduce' });
+      const tab = await context.newPage();
+      await tab.goto(`${BASE}/template-check/${slug}-${id}/`, { waitUntil: 'load' });
+      const problems = await tab.evaluate(() => {
+        const vw = document.documentElement.clientWidth;
+        const out: string[] = [];
+        const scrolls = (el: Element) => {
+          for (let node = el.parentElement; node; node = node.parentElement) {
+            if (/(auto|scroll)/.test(getComputedStyle(node).overflowX)) return true;
+          }
+          return false;
+        };
+        const texts = [...document.querySelectorAll('.stage :is(h1, dd, dt, b, strong, p)')].filter((el) => {
+          if (!el.textContent?.trim() || el.closest('[aria-hidden="true"]') || scrolls(el)) return false;
+          const box = el.getBoundingClientRect();
+          return box.width > 0 && box.top < 844 * 1.2;
+        });
+        for (const el of texts) {
+          const range = document.createRange();
+          range.selectNodeContents(el);
+          const box = range.getBoundingClientRect();
+          if (box.left < -1 || box.right > vw + 1) out.push(`off screen: "${el.textContent!.trim().slice(0, 20)}"`);
+        }
+        // Siblings in one row of numbers must not overlap.
+        for (const row of document.querySelectorAll('.stage dl')) {
+          const values = [...row.querySelectorAll('dd')].map((dd) => {
+            const range = document.createRange();
+            range.selectNodeContents(dd);
+            return { text: dd.textContent!.trim(), box: range.getBoundingClientRect() };
+          });
+          for (let i = 0; i < values.length; i += 1) {
+            for (let j = i + 1; j < values.length; j += 1) {
+              const a = values[i]!.box;
+              const b = values[j]!.box;
+              const overlap = Math.min(a.right, b.right) - Math.max(a.left, b.left) > 2 &&
+                Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 2;
+              if (overlap) out.push(`overlap: "${values[i]!.text}" / "${values[j]!.text}"`);
+            }
+          }
+        }
+        return [...new Set(out)];
+      });
+      await context.close();
+      expect(problems, `${id} on ${slug}`).toEqual([]);
+    });
+  }
+});

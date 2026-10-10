@@ -80,11 +80,15 @@ export function composedMapSrc(map: AreaMap): string {
   const height = 1000;
   const sx = width / map.width;
   const sy = height / map.height;
+  // Each dot carries its number, matching the list under the map (8 Oct
+  // 2026: the dots were blank, so "3 · גינת לוינסקי" pointed at nothing).
+  // One or two digits on their own, so there is nothing for bidi to reorder.
   const pins = map.pins
-    .map(
-      (pin) =>
-        `<circle cx="${Math.round(pin.x * sx)}" cy="${Math.round(pin.y * sy)}" r="22" fill="#4a5d3a"/>`,
-    )
+    .map((pin) => {
+      const cx = Math.round(pin.x * sx);
+      const cy = Math.round(pin.y * sy);
+      return `<circle cx="${cx}" cy="${cy}" r="26" fill="#4a5d3a" stroke="#fbfaf7" stroke-width="4"/><text x="${cx}" y="${cy}" dy="0.36em" text-anchor="middle" font-family="Heebo, Arial, sans-serif" font-size="30" font-weight="700" fill="#fbfaf7">${pin.key}</text>`;
+    })
     .join('');
   const origin = `<circle cx="${Math.round(map.origin.x * sx)}" cy="${Math.round(map.origin.y * sy)}" r="16" fill="#fbfaf7"/><circle cx="${Math.round(map.origin.x * sx)}" cy="${Math.round(map.origin.y * sy)}" r="9" fill="#191a15"/>`;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}"><rect width="${width}" height="${height}" fill="#e4dfd4"/>${pins}${origin}</svg>`;
@@ -104,17 +108,21 @@ const MAX_ZOOM = 16;
 
 /**
  * Pin index. A Hebrew letter reads as a word (א is "a", not "1"), so the
- * list prints a numeral and the page wraps it in <bdi>. The drawing itself
- * has no text node — a digit inside SVG <text> cannot be isolated.
+ * list prints a numeral and the page wraps it in <bdi>. The drawing prints
+ * the same numeral alone in each dot, where no Hebrew sits beside it.
  */
 
 /**
  * Which places go on the map, in which order.
  *
- * One from each group before a second from any of them, so eight pins describe
- * the neighbourhood rather than eight bus stops. Within that, the ones with a
- * routed walking time come first — they are the ones the page can say most
- * about.
+ * WHICH: one from each group before a second from any of them, so eight pins
+ * describe the neighbourhood rather than eight bus stops.
+ *
+ * ORDER: nearest first by routed walking time, places without one last. The
+ * pins are numbered in this order and the list under the map reads it top to
+ * bottom; it used to keep the group rotation, so the list ran 1, 4, 5, 4, 4,
+ * 7 and then 2 minutes at the very end (found reviewing every template,
+ * 8 Oct 2026).
  */
 function chosen(places: AreaPlaces): AreaPlace[] {
   const groups = [places.transit, places.schools, places.parks, places.community, places.shops];
@@ -127,7 +135,15 @@ function chosen(places: AreaPlaces): AreaPlace[] {
     }
   }
 
-  return picked;
+  // Stable: equal minutes keep the rotation's order.
+  return picked
+    .map((place, index) => ({ place, index }))
+    .sort((a, b) => {
+      const am = a.place.walkMinutes ?? Number.POSITIVE_INFINITY;
+      const bm = b.place.walkMinutes ?? Number.POSITIVE_INFINITY;
+      return am - bm || a.index - b.index;
+    })
+    .map(({ place }) => place);
 }
 
 /** Which group a place came from, so the drawing can colour it. */

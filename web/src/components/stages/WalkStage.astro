@@ -119,7 +119,9 @@ const kindOf = (stop: WalkStop): string => {
                 {item.isolate ? <bdi>{item.lead}</bdi> : item.lead}
                 {item.minutes && <Fragment>{' '}{t('listing.mapNearbyMin')}</Fragment>}
               </span>
-              <span class="wk-teaser-name"><Prose text={item.name} /></span>
+              {/* A stop is often "street/street": let it wrap after the slash,
+                  never in the middle of a word. */}
+              <span class="wk-teaser-name"><Prose text={item.name.replace(/\//g, '/\u200b')} /></span>
             </li>
           ))}
         </ol>
