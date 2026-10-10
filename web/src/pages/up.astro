@@ -1,0 +1,180 @@
+---
+import { t } from '../lib/i18n';
+import Site from '../layouts/Site.astro';
+import '../styles/enter.css';
+import '../styles/up.css';
+
+/**
+ * Upload from your phone — the page the editor's QR code opens (0036).
+ *
+ * A static file like every page but /a/{slug}. The token rides in the URL's
+ * fragment (`/up/#<token>`), which a browser never sends to a server and never
+ * puts in a Referer, so it does not land in a log. The script reads it, asks
+ * /api/phone-upload whether it is still good, and sends each photograph there
+ * after redrawing it on a canvas — the same stripAndResize the editor uses,
+ * so the GPS in a photo of someone's home never leaves the phone (CLAUDE.md §9).
+ *
+ * No sign-in, on purpose: the agent is standing in the flat with the phone in
+ * one hand. The token is the permission, and it expires in thirty minutes.
+ *
+ * Never indexed.
+ */
+---
+
+<Site title={`${t('phoneUpload.title')} · ${t('common.brand')}`} robots="noindex,nofollow" account={false}>
+  <div class="site-shell en">
+    <div class="en-glow" aria-hidden="true"></div>
+    <div class="en-card up-card">
+      <h1 class="site-h2">{t('phoneUpload.title')}</h1>
+      <p class="site-sub">{t('phoneUpload.lead')}</p>
+
+      <p class="up-status" id="status" role="status" aria-live="polite">{t('phoneUpload.checking')}</p>
+
+      <div class="up-actions" id="actions" hidden>
+        <label class="site-btn site-btn-primary up-pick">
+          <input type="file" accept="image/*" capture="environment" id="camera" />
+          <span>{t('phoneUpload.camera')}</span>
+        </label>
+        <label class="site-btn site-btn-ghost up-pick">
+          <input type="file" accept="image/*" multiple id="gallery" />
+          <span>{t('phoneUpload.gallery')}</span>
+        </label>
+        <p class="up-privacy">{t('phoneUpload.privacy')}</p>
+      </div>
+
+      <p class="up-progress" id="progress" aria-live="polite"></p>
+      <ul class="up-shots" id="shots" aria-label={t('phoneUpload.title')}></ul>
+    </div>
+  </div>
+
+  <script>
+    import { isPortalToken } from '@/features/listings/phone-portal';
+    import { formatValue, parts } from '../lib/i18n';
+    import { stripAndResize } from '../lib/photo-strip';
+
+    /** One message as nodes, every value in its own <bdi> (CLAUDE.md §4.2). */
+    function message(path: string, values: Record<string, number> = {}): DocumentFragment {
+      const out = document.createDocumentFragment();
+      for (const part of parts(path)) {
+        if ('text' in part) {
+          out.append(part.text);
+          continue;
+        }
+        const value = values[part.slot];
+        if (value === undefined) {
+          out.append(`{${part.slot}}`);
+          continue;
+        }
+        const bdi = document.createElement('bdi');
+        bdi.textContent = formatValue(value);
+        out.append(bdi);
+      }
+      return out;
+    }
+
+    const status = document.getElementById('status')!;
+    const actions = document.getElementById('actions')!;
+    const progress = document.getElementById('progress')!;
+    const shots = document.getElementById('shots')!;
+    const camera = document.getElementById('camera') as HTMLInputElement;
+    const gallery = document.getElementById('gallery') as HTMLInputElement;
+
+    const token = location.hash.replace(/^#/, '');
+    let sent = 0;
+    let stopped = false;
+
+    const say = (path: string, values?: Record<string, number>, tone: 'good' | 'bad' | '' = '') => {
+      status.replaceChildren(message(path, values));
+      status.className = `up-status${tone ? ` is-${tone}` : ''}`;
+    };
+
+    /** A refusal that ends the session: no more picking on this page. */
+    const stop = (path: string, values?: Record<string, number>) => {
+      stopped = true;
+      actions.hidden = true;
+      say(path, values, 'bad');
+    };
+
+    const errorPath = (code: string | undefined): string =>
+      code === 'expired' ? 'phoneUpload.expired'
+        : code === 'unknown' ? 'phoneUpload.unknown'
+          : code === 'not_configured' ? 'phoneUpload.notSetUp'
+            : 'phoneUpload.unavailable';
+
+    const showSent = () => say('phoneUpload.sent', { count: sent }, 'good');
+
+    async function check(): Promise<void> {
+      if (!isPortalToken(token)) return stop('phoneUpload.unknown');
+      try {
+        const response = await fetch('/api/phone-upload', { headers: { 'X-Portal-Token': token } });
+        const body = (await response.json().catch(() => ({}))) as { error?: string; sent?: number };
+        if (!response.ok) return stop(errorPath(body.error));
+        sent = body.sent ?? 0;
+        actions.hidden = false;
+        if (sent > 0) showSent();
+        else status.replaceChildren();
+      } catch {
+        say('phoneUpload.unavailable', undefined, 'bad');
+      }
+    }
+
+    async function sendAll(files: File[]): Promise<void> {
+      let failed = 0;
+      for (const [index, file] of files.entries()) {
+        if (stopped) return;
+        progress.replaceChildren(message('phoneUpload.sending', { done: index + 1, total: files.length }));
+
+        const item = document.createElement('li');
+        item.className = 'is-sending';
+        shots.prepend(item);
+
+        // Redrawn on a canvas: pixels only, no EXIF, no GPS (listing-photo.ts).
+        const processed = await stripAndResize(file);
+        if (!processed) {
+          failed += 1;
+          item.className = 'is-failed';
+          continue;
+        }
+        const thumb = document.createElement('img');
+        thumb.alt = '';
+        thumb.src = URL.createObjectURL(processed.blob);
+        item.append(thumb);
+
+        try {
+          const response = await fetch(`/api/phone-upload?w=${processed.width}&h=${processed.height}`, {
+            method: 'POST',
+            headers: { 'X-Portal-Token': token, 'Content-Type': 'image/webp' },
+            body: processed.blob,
+          });
+          const body = (await response.json().catch(() => ({}))) as { error?: string; sent?: number };
+          if (response.ok) {
+            sent = body.sent ?? sent + 1;
+            item.className = 'is-sent';
+            showSent();
+            continue;
+          }
+          failed += 1;
+          item.className = 'is-failed';
+          if (body.error === 'full') return stop('phoneUpload.full', { count: sent });
+          if (response.status === 410 || response.status === 404 || response.status === 503) {
+            return stop(errorPath(body.error));
+          }
+        } catch {
+          failed += 1;
+          item.className = 'is-failed';
+        }
+      }
+      progress.replaceChildren(failed > 0 ? message('phoneUpload.failedSome', { count: failed }) : message('phoneUpload.done'));
+    }
+
+    for (const input of [camera, gallery]) {
+      input.addEventListener('change', () => {
+        const files = [...(input.files ?? [])];
+        input.value = '';
+        if (files.length > 0) void sendAll(files);
+      });
+    }
+
+    void check();
+  </script>
+</Site>
