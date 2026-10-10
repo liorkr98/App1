@@ -2,7 +2,7 @@
 --
 -- The agent builds a listing on a computer and the photographs are on their
 -- phone. The editor shows a QR code; the phone opens /up/#<token> with no
--- sign-in, and every photograph it sends lands in this listing's inbox. The
+-- sign-in, and every photograph it sends lands in the inbox of this listing. The
 -- editor, which stays open on the computer, collects them into its own photo
 -- list and saves them the ordinary way — the editor remains the only writer
 -- of listings.media. Two writers is how photographs were lost before
@@ -15,8 +15,12 @@
 --     opens a new one.
 --   * Nothing here can be inserted or edited directly by a client: a portal
 --     is made and closed by the two functions below, which check ownership.
---   * The phone's uploads are written by /api/phone-upload with the service
---     role, AFTER that route has matched the token's hash to an open portal.
+--   * Uploads from the phone are written by /api/phone-upload with the service
+--     role, AFTER that route has matched the hash of the token to an open portal.
+--
+-- Written to be pasted into the Supabase SQL editor whole: no apostrophes in
+-- any comment, named dollar quotes on the two function bodies, and every statement
+-- safe to run again.
 --
 -- EXIF (CLAUDE.md §9): the phone strips each photograph by redrawing it on a
 -- canvas (web/src/lib/listing-photo.ts), and the route refuses any WebP that
@@ -38,6 +42,7 @@ alter table public.photo_portals enable row level security;
 
 -- The owner may see their own portals (the editor reads the expiry back).
 -- No insert, update or delete policy: the functions below are the only way.
+drop policy if exists "photo_portals_select_own" on public.photo_portals;
 create policy "photo_portals_select_own"
   on public.photo_portals
   for select
@@ -61,6 +66,7 @@ alter table public.photo_inbox enable row level security;
 
 -- The owner reads what arrived, and deletes a row once the editor has taken
 -- the photograph into its own list. Inserts come from the service role only.
+drop policy if exists "photo_inbox_select_own" on public.photo_inbox;
 create policy "photo_inbox_select_own"
   on public.photo_inbox
   for select
@@ -73,6 +79,7 @@ create policy "photo_inbox_select_own"
     )
   );
 
+drop policy if exists "photo_inbox_delete_own" on public.photo_inbox;
 create policy "photo_inbox_delete_own"
   on public.photo_inbox
   for delete
@@ -96,7 +103,7 @@ returns jsonb
 language plpgsql
 security definer
 set search_path = public, pg_temp
-as $$
+as $fn$
 declare
   v_owner uuid := auth.uid();
   v_token text;
@@ -126,7 +133,7 @@ begin
 
   return jsonb_build_object('id', v_portal.id, 'token', v_token, 'expiresAt', v_portal.expires_at);
 end;
-$$;
+$fn$;
 
 revoke all on function public.create_photo_portal(uuid) from public, anon;
 grant execute on function public.create_photo_portal(uuid) to authenticated;
@@ -139,13 +146,13 @@ returns void
 language plpgsql
 security definer
 set search_path = public, pg_temp
-as $$
+as $fn$
 begin
   update public.photo_portals
   set closed_at = coalesce(closed_at, now())
   where id = p_portal_id and owner_id = auth.uid();
 end;
-$$;
+$fn$;
 
 revoke all on function public.close_photo_portal(uuid) from public, anon;
 grant execute on function public.close_photo_portal(uuid) to authenticated;
