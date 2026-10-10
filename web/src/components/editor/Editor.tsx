@@ -12,6 +12,7 @@ import {
   type Step,
 } from '@/features/listings/editor';
 import { blankFacts, reconcileFacts } from '@/features/listings/fact-entry';
+import { photoCoverage } from '@/features/listings/photo-coverage';
 import { isPhotoRoom } from '@/features/listings/photo-rooms';
 import { LISTING_CATEGORIES, schemaFor } from '@/features/listings/schemas';
 import { NEW_LISTING_TEMPLATE } from '@/features/templates/manifest';
@@ -48,6 +49,8 @@ import { PublishStep } from './PublishStep';
 import { DisclosuresStep } from './DisclosuresStep';
 import { FactsStep } from './FactsStep';
 import { Message } from './Message';
+import { PhonePortal, type InboxPhoto } from './PhonePortal';
+import { PhotoChecklist } from './PhotoChecklist';
 import { PhotosStep, type EditorPhoto } from './PhotosStep';
 import { PlateStep } from './PlateStep';
 import { RoomsStep } from './RoomsStep';
@@ -159,6 +162,9 @@ export default function Editor() {
    * actual photos ever disagreeing.
    */
   const [photos, setPhotos] = useState<EditorPhoto[]>([]);
+  // For callbacks that outlive a render (the phone poll in PhonePortal).
+  const photosRef = useRef(photos);
+  photosRef.current = photos;
 
   /**
    * Where this listing's accent came from, so each source knows what it may
@@ -365,6 +371,69 @@ export default function Editor() {
     } catch {
       return undefined;
     }
+  };
+
+  /** The listing row, created on demand — the phone needs one to add to. */
+  const ensureListing = async (): Promise<string | undefined> => {
+    if (!supabaseConfigured || !signedIn || !state.category) return undefined;
+    if (!listingId.current) {
+      const draft = await createDraft(state.category);
+      listingId.current = draft.id;
+      slug.current = draft.slug;
+      setSavedRow({ id: draft.id, slug: draft.slug });
+    }
+    return listingId.current;
+  };
+
+  /**
+   * Photographs the phone sent (PhonePortal). They are already public copies
+   * — stripped and re-encoded on the phone, checked again by the server — so
+   * they join the list as uploaded and are saved the ordinary way. The
+   * editor stays the one writer of `media`.
+   *
+   * Keyed by inbox id, so a poll that repeats after a failed save cannot add
+   * the same photograph twice. Over the cap, the newest are not kept.
+   */
+  const takeFromPhone = async (arrived: InboxPhoto[]): Promise<Set<string>> => {
+    const current = photosRef.current;
+    const kept = new Set<string>();
+    const fresh: EditorPhoto[] = [];
+    for (const photo of arrived) {
+      const id = `phone:${photo.id}`;
+      if (current.some((existing) => existing.id === id)) {
+        kept.add(photo.id);
+        continue;
+      }
+      if (current.length + fresh.length >= MAX_IMAGES) continue;
+      kept.add(photo.id);
+      fresh.push({
+        id,
+        url: photo.url,
+        name: '',
+        publicUrl: photo.url,
+        width: photo.width,
+        height: photo.height,
+        status: 'uploaded',
+      });
+    }
+    if (fresh.length === 0) return kept;
+
+    const next = [...current, ...fresh];
+    photosRef.current = next;
+    setPhotos(next);
+    setState((existing) => ({ ...existing, photoCount: next.length }));
+
+    const id = listingId.current;
+    if (id) {
+      const result = await saveListing(id, stateRef.current, next, extrasRef.current).catch(
+        () => ({ error: 'failed' }) as const,
+      );
+      if ('error' in result) {
+        setFailure(t('errors.upload'));
+        throw new Error('save failed');
+      }
+    }
+    return kept;
   };
 
   const uploadPlan = async (file: File) => {
@@ -673,6 +742,12 @@ export default function Editor() {
   const previewSun = sunPoint ?? (previewPlaces ? coarseOrigin(previewPlaces) : undefined);
 
   const steps = useMemo(() => stepsFor(state.category), [state.category]);
+  // Which photographs the facts owe the buyer (photo-coverage.ts). Advice:
+  // shown on the photo, room and publish steps, never read by publish.
+  const coverage = useMemo(
+    () => photoCoverage(state.category, state.facts, photos),
+    [state.category, state.facts, photos],
+  );
   const outstanding = useMemo(() => blockers(state), [state]);
 
   const position = steps.indexOf(step);
@@ -1260,6 +1335,8 @@ export default function Editor() {
               signedIn={signedIn}
               category={state.category}
             />
+            <PhonePortal signedIn={signedIn} ensureListing={ensureListing} onPhotos={takeFromPhone} />
+            <PhotoChecklist coverage={coverage} count={photos.length} />
             {state.category === 'vehicle' && signedIn ? (
               <SpinEditor frames={spin} onFrames={setSpin} onUpload={uploadSpin} uploading={extraUploading} />
             ) : null}
@@ -1269,6 +1346,7 @@ export default function Editor() {
         {step === 'rooms' ? (
           <>
             <RoomsStep photos={photos} onChange={changePhotos} />
+            <PhotoChecklist coverage={coverage} count={photos.length} />
             {signedIn ? (
               <PlanEditor plan={plan} onPlan={setPlan} onUpload={uploadPlan} uploading={extraUploading} />
             ) : null}
@@ -1355,6 +1433,7 @@ export default function Editor() {
             publishNote={publishNote}
             areaStatus={state.category === 'property' && area && area.key === addressKey ? area.status : undefined}
             areaCount={area && area.key === addressKey ? area.count : undefined}
+            photoCheck={<PhotoChecklist coverage={coverage} count={photos.length} variant="line" />}
             failure={failure}
             onPublish={publish}
             onCopy={(url) =>

@@ -292,6 +292,14 @@ jobs:
         working-directory: web
         run: npx playwright test templates
 
+      # Upload from your phone (/up/): a bad or expired code is refused, and
+      # what the phone sends is a WebP with no EXIF — no GPS from a photo of
+      # somebody's home (CLAUDE.md §9, 10 Oct 2026). Blocking.
+      - name: Upload from your phone
+        if: ${{ !cancelled() }}
+        working-directory: web
+        run: npx playwright test phone-upload
+
       - name: Screenshots (reported, not blocking, for now)
         if: ${{ !cancelled() }}
         continue-on-error: true
