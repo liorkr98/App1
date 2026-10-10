@@ -28,7 +28,6 @@ interface Props {
 
 interface Portal {
   id: string;
-  token: string;
   expiresAt: string;
 }
 
@@ -71,13 +70,21 @@ export function PhonePortal({ signedIn, ensureListing, onPhotos }: Props) {
       const listingId = await ensureListing();
       if (!listingId) throw new Error('no listing');
       listingRef.current = listingId;
-      const { data, error } = await supabase().rpc('create_photo_portal', { p_listing_id: listingId });
-      const made = data as Partial<Portal> | null;
-      if (error || !made?.id || !made.token || !made.expiresAt) throw new Error('no portal');
-      const next = { id: made.id, token: made.token, expiresAt: made.expiresAt };
-      // Only loaded when a panel opens: the editor does not carry the encoder.
-      const { qrDrawing } = await import('../../lib/qr');
-      setQr(qrDrawing(`${location.origin}/up/#${next.token}`));
+      const { data } = await supabase().auth.getSession();
+      const accessToken = data.session?.access_token;
+      if (!accessToken) throw new Error('no session');
+      // The server makes the portal as this agent and draws the QR, so the
+      // editor never downloads the QR encoder (api/phone-portal.ts).
+      const response = await fetch('/api/phone-portal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ listingId }),
+      });
+      if (!response.ok) throw new Error('no portal');
+      const made = (await response.json()) as Partial<Portal> & { qr?: { box: number; d: string } };
+      if (!made.id || !made.expiresAt || !made.qr) throw new Error('no portal');
+      const next = { id: made.id, expiresAt: made.expiresAt };
+      setQr(made.qr);
       setPortal(next);
     } catch {
       setFailed(true);
