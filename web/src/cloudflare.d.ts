@@ -48,5 +48,17 @@ declare module 'cloudflare:workers' {
      * records why the public OSRM demo server cannot be used.
      */
     OSRM_URL?: string;
+
+    /**
+     * The Supabase SERVICE-ROLE key. It bypasses RLS.
+     *
+     *   npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+     *
+     * Read only by web/src/lib/supabase-service.ts, for one route:
+     * /api/phone-upload, after it has matched an upload-from-phone token
+     * (0036). Optional: without it the phone upload answers "not set up"
+     * and everything else works. Never in a PUBLIC_ variable (CLAUDE.md §9).
+     */
+    SUPABASE_SERVICE_ROLE_KEY?: string;
   };
 }

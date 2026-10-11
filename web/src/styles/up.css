@@ -1,0 +1,97 @@
+/* Upload from your phone (pages/up.astro). The sign-in card, with two big buttons. */
+
+.up-status {
+  margin-block: 1.2rem 0;
+  line-height: 1.5;
+  color: var(--ls-ink-2);
+}
+.up-status:empty {
+  display: none;
+}
+.up-status.is-good {
+  color: var(--ls-accent);
+  font-weight: 600;
+}
+.up-status.is-bad {
+  color: #e08a7a;
+  font-weight: 600;
+}
+
+.up-actions {
+  display: grid;
+  gap: 0.75rem;
+  margin-block-start: 1.4rem;
+}
+.up-actions[hidden] {
+  display: none;
+}
+
+/* The file input is the control; the label is how it looks. Visually hidden,
+   not display:none, so it stays focusable and reachable by a screen reader. */
+.en-card .up-pick {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-block-size: 3.4rem;
+  font-size: 1.15rem;
+  cursor: pointer;
+}
+.en-card .up-pick input {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  opacity: 0;
+  overflow: hidden;
+}
+/* The card styles every label as a small grey caption (enter.css); these
+   labels are buttons, so they take the button's own colours back. */
+.en-card .up-pick.site-btn-primary {
+  color: var(--ls-ground);
+}
+.en-card .up-pick.site-btn-ghost {
+  color: var(--ls-ink);
+}
+.en-card .up-pick:focus-within {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+.up-privacy,
+.up-progress {
+  margin: 0.4rem 0 0;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--ls-ink-2);
+}
+
+.up-shots {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(4.5rem, 1fr));
+  gap: 0.5rem;
+}
+.up-shots li {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--ls-surface);
+  border: 2px solid transparent;
+}
+.up-shots li.is-sending {
+  opacity: 0.55;
+}
+.up-shots li.is-sent {
+  border-color: var(--ls-accent);
+}
+.up-shots li.is-failed {
+  border-color: #e08a7a;
+}
+.up-shots img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  display: block;
+}

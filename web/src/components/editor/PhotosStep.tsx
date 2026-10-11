@@ -124,7 +124,9 @@ export function PhotosStep({
 }: Props) {
   const [dragging, setDragging] = useState<number | null>(null);
   const strip = useFlip(photos.map((photo) => photo.id).join('|'));
-  const warnings = photoWarnings(photos);
+  // A flat gets the room checklist under this step (PhotoChecklist), which
+  // owns the "how many" advice; the flat eight is for a car.
+  const warnings = photoWarnings(photos).filter((warning) => category !== 'property' || warning !== 'few');
   const warningCopy: Record<(typeof warnings)[number], string> = {
     few: t('editor.photosWarnFew'),
     portraitCover: t('editor.photosWarnPortrait'),

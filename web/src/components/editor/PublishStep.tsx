@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import type { Blocker, EditorState } from '@/features/listings/editor';
 
 import type { AreaClientStatus } from '../../lib/area-request';
@@ -18,6 +20,8 @@ interface Props {
   /** Where the neighbourhood lookup stands, shown before the button. */
   areaStatus?: AreaClientStatus | undefined;
   areaCount?: number | undefined;
+  /** The photo checklist's one-line form (PhotoChecklist). Advice only. */
+  photoCheck?: ReactNode;
   /**
    * Why the last publish attempt did not produce a link.
    *
@@ -67,6 +71,7 @@ export function PublishStep({
   publishNote,
   areaStatus,
   areaCount,
+  photoCheck,
   failure,
   onPublish,
   onCopy,
@@ -186,6 +191,7 @@ export function PublishStep({
       ) : null}
 
       {publishedUrl ? null : <AreaLine status={areaStatus} count={areaCount} />}
+      {publishedUrl ? null : photoCheck}
 
       <button
         type="button"

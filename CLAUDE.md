@@ -468,6 +468,16 @@ the summary.
 - Never log PII. Scrub before send.
 - Job payloads carry client-supplied paths and the worker reads them with the
   service role — always validate that a path is inside the listing it claims.
+- **Upload from your phone** (10 Oct 2026, migration 0036). The editor's QR
+  opens `/up/#<token>` with no sign-in, so the token is the permission: it
+  covers one listing for 30 minutes, and only its SHA-256 is stored.
+  - `SUPABASE_SERVICE_ROLE_KEY` is a Worker secret read by
+    `/api/phone-upload` alone, and only after the token matches an open
+    portal.
+  - The route refuses any WebP with an EXIF or XMP chunk. The phone strips
+    first, the server checks anyway.
+  - Phone photos land in `photo_inbox`; the editor collects them and stays
+    the only writer of `listings.media`.
 
 ---
 

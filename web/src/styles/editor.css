@@ -1547,6 +1547,118 @@ textarea {
 .area-line.is-failed {
   color: #8c2f1e;
 }
+/* Upload from your phone (PhonePortal.tsx): the QR code and what arrived. */
+.phone-portal {
+  margin-block: 1rem 0;
+}
+.phone-portal.is-open {
+  display: grid;
+  grid-template-columns: minmax(9rem, 12rem) 1fr;
+  gap: 1rem;
+  align-items: start;
+  padding: 1rem;
+  border: 1px solid var(--line, rgba(0, 0, 0, 0.12));
+  border-radius: 10px;
+}
+.phone-portal-code svg {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  border-radius: 6px;
+}
+.phone-portal-text h3 {
+  margin: 0 0 0.3rem;
+  font-size: var(--t-label);
+  font-weight: 600;
+}
+.phone-portal-text p {
+  margin: 0 0 0.4rem;
+  line-height: 1.5;
+}
+.phone-portal-count {
+  font-weight: 600;
+}
+.phone-portal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-block-start: 0.4rem;
+}
+@media (max-width: 30rem) {
+  .phone-portal.is-open {
+    grid-template-columns: 1fr;
+  }
+  .phone-portal-code {
+    max-inline-size: 14rem;
+  }
+}
+
+/* Which photographs the facts owe the buyer (PhotoChecklist.tsx). Advice. */
+.photo-check {
+  margin-block: 1rem 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line, rgba(0, 0, 0, 0.12));
+  border-radius: 10px;
+  line-height: 1.5;
+}
+.photo-check h3 {
+  margin: 0 0 0.5rem;
+  font-size: var(--t-label);
+  font-weight: 600;
+}
+.photo-check ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.3rem;
+}
+.photo-check-rooms li {
+  display: grid;
+  grid-template-columns: 1.2rem 1fr auto;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+.photo-check-state {
+  font-size: var(--t-label);
+  color: var(--muted);
+}
+.photo-check-rooms .is-ok .photo-check-mark,
+.photo-check-rooms .is-ok .photo-check-state {
+  color: var(--olive, #4a5d3a);
+  font-weight: 600;
+}
+.photo-check-rooms .is-missing:not(.is-optional) .photo-check-state {
+  color: #8c2f1e;
+  font-weight: 600;
+}
+.photo-check-notes {
+  margin-block-start: 0.6rem !important;
+  font-size: var(--t-label);
+  color: var(--muted);
+}
+.photo-check-notes .is-failed {
+  color: #8c2f1e;
+  font-weight: 600;
+}
+.photo-check-notes .is-ready,
+.photo-check-line.is-ready {
+  color: var(--olive, #4a5d3a);
+  font-weight: 600;
+}
+.photo-check-line {
+  margin-block: 0.5rem 0;
+  font-size: var(--t-label);
+  line-height: 1.5;
+  color: var(--muted);
+}
+.photo-check-line p {
+  margin: 0;
+}
+.photo-check-line ul {
+  margin: 0.2rem 0 0;
+  padding-inline-start: 1.1rem;
+}
 .publish-note {
   margin-block: 0.6rem 0;
   font-size: var(--t-label);

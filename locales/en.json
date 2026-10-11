@@ -596,6 +596,36 @@
       "none": "",
       "not_found": "",
       "failed": ""
+    },
+    "checklist": {
+      "title": "",
+      "bedrooms": "",
+      "row": "",
+      "ok": "",
+      "missing": "",
+      "unsure": "",
+      "suggested": "",
+      "unlabeled": "",
+      "failed": "",
+      "pending": "",
+      "total": "",
+      "ready": "",
+      "uploaded": "",
+      "before": "",
+      "missingRooms": ""
+    },
+    "phone": {
+      "open": "",
+      "title": "",
+      "lead": "",
+      "expires": "",
+      "waiting": "",
+      "arrived": "",
+      "expired": "",
+      "renew": "",
+      "close": "",
+      "failed": "",
+      "signIn": ""
     }
   },
   "home": {
@@ -1036,5 +1066,22 @@
     "dossierVehicle": "",
     "ticketTrip": "",
     "ticketTo": ""
+  },
+  "phoneUpload": {
+    "title": "",
+    "lead": "",
+    "camera": "",
+    "gallery": "",
+    "checking": "",
+    "sent": "",
+    "sending": "",
+    "failedSome": "",
+    "expired": "",
+    "unknown": "",
+    "notSetUp": "",
+    "full": "",
+    "unavailable": "",
+    "privacy": "",
+    "done": ""
   }
 }
