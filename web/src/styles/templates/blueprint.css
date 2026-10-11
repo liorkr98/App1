@@ -394,9 +394,12 @@ html[data-template='blueprint'] .facts {
     animation: stage-fade 0.9s var(--ease-out) 0.7s both;
   }
 
+  /* Drawn in from a third already on the sheet, not from nothing: a plan
+     clipped to zero is not painted, and holds the largest paint back
+     (stage.css, stage-fade, 11 Oct 2026). */
   @keyframes bp-draw {
     from {
-      clip-path: inset(0 0 0 100%);
+      clip-path: inset(0 0 0 66%);
     }
 
     to {

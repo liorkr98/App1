@@ -15,8 +15,16 @@ import { SITE_PAGES, TEMPLATE_PAGES } from './pages';
  * they are written to the job summary and flagged on the test, not failed.
  * Flip BLOCK_TIMING once a week of numbers shows how far they wander — a
  * check that fails at random is a check people learn to ignore.
+ *
+ * FLIPPED 11 Oct 2026. Eight runs from 7–10 Oct wandered by about 100 ms
+ * per page. Four templates were steadily over the 2 s limit (Ticket 2.65 s,
+ * Blueprint 2.46, Showroom 2.08, Dossier 2.04) because their entrance
+ * animations started the main element invisible. Once those animations
+ * started from a visible floor, every page in CI came in under both limits:
+ * the slowest is Zine at 1.88 s, and the longest task is under 100 ms.
+ * From here a slow page fails the build.
  */
-const BLOCK_TIMING = false;
+const BLOCK_TIMING = true;
 
 const RUNS = 3;
 

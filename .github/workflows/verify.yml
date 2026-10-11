@@ -273,7 +273,7 @@ jobs:
         working-directory: web
         run: npx playwright install --with-deps chromium
 
-      - name: Speed on a cheap phone (layout shift blocks)
+      - name: Speed on a cheap phone (load time, long tasks and layout shift block)
         working-directory: web
         run: npx playwright test speed
 
@@ -295,6 +295,13 @@ jobs:
       # Upload from your phone (/up/): a bad or expired code is refused, and
       # what the phone sends is a WebP with no EXIF — no GPS from a photo of
       # somebody's home (CLAUDE.md §9, 10 Oct 2026). Blocking.
+      # The cover photograph drifts as the page scrolls, inside its frame,
+      # and stays still under reduced motion (11 Oct 2026). Blocking.
+      - name: Cover parallax
+        if: ${{ !cancelled() }}
+        working-directory: web
+        run: npx playwright test parallax
+
       - name: Upload from your phone
         if: ${{ !cancelled() }}
         working-directory: web

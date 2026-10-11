@@ -397,9 +397,14 @@ html:is([data-template='gallery'], [data-template='showcase'], [data-template='a
     }
   }
 
+  /* From a VISIBLE floor, never from nothing (11 Oct 2026). An element that
+     starts at opacity 0 does not count as painted, so a price or a photo
+     that faded in held the page's largest paint back by its whole delay:
+     Showroom and Blueprint measured 2.5–2.7 s on a cheap phone with this
+     at 0, under 2 s without it. 0.35 still reads as a fade. */
   @keyframes stage-fade {
     from {
-      opacity: 0;
+      opacity: 0.35;
       transform: translateY(16px);
     }
   }
@@ -437,6 +442,77 @@ html:is([data-template='gallery'], [data-template='showcase'], [data-template='a
     html:is([data-template='gallery'], [data-template='showcase'], [data-template='aurora'], [data-template='blueprint'], [data-template='monolith'], [data-template='atelier'], [data-template='glass'], [data-template='showroom'], [data-template='heliograph'], [data-template='walk'], [data-template='poster'], [data-template='zine'], [data-template='dossier'], [data-template='ticket']) .stage {
       view-timeline-name: --listing-hero;
       view-timeline-axis: block;
+    }
+  }
+}
+
+/* ---------- Parallax on the cover photograph (11 Oct 2026) ----------
+
+   As the buyer scrolls past the first screen, the main photograph moves
+   slower than the page and opens up a little, so the frame reads as a
+   window rather than a print. Every design whose first screen is a
+   photograph in a frame gets the same motion, written once.
+
+   - CSS only: a scroll-driven animation, no script, no listener (the
+     listing's 12 KB budget is untouched).
+   - The individual `translate` and `scale` properties, not `transform`, so
+     it composes with the slow push of .ls-breathe and with the depth tilt
+     (scripts/depth.ts) instead of replacing them.
+   - At rest the photograph is exactly as the agent framed it. It grows by
+     25% as it leaves, and never drifts further than that growth covers,
+     so the frame never shows an edge.
+   - The frame clips. Nothing changes the layout, so nothing shifts.
+   - Off for reduced motion, and a browser without scroll timelines keeps
+     the still photograph. Transform only: the largest paint is unaffected. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    html[data-template='aurora'] .cine-frame,
+    html[data-template='atelier'] .at-photo,
+    html[data-template='heliograph'] .hl-photo,
+    html[data-template='monolith'] .mono-wipe,
+    html[data-template='walk'] .wk-cover,
+    html[data-template='glass'] .gl-shot,
+    html[data-template='dossier'] .ds-photo {
+      overflow: clip;
+    }
+
+    html[data-template='aurora'] .cine-img,
+    html[data-template='atelier'] .at-photo img,
+    html[data-template='heliograph'] .hl-photo img,
+    html[data-template='monolith'] .mono-img,
+    html[data-template='walk'] .wk-cover img,
+    html[data-template='glass'] .gl-shot img,
+    html[data-template='dossier'] .ds-photo img {
+      animation: cover-drift linear both;
+      /* The page's own scroll over its first screen, not view(): several
+         designs hide overflow on a wrapper, and view() would bind to that
+         wrapper — which never scrolls — and the photo would never move. */
+      animation-timeline: scroll(root block);
+      animation-range: 0 100svh;
+      transform-origin: center;
+    }
+
+    /* The three that already breathe keep breathing: both animations, one
+       on the clock and one on the scroll. */
+    html[data-template='aurora'] .cine-img.ls-breathe,
+    html[data-template='atelier'] .at-photo img.ls-breathe,
+    html[data-template='monolith'] .mono-img.ls-breathe {
+      animation:
+        ls-breathe 26s ease-in-out 1.2s infinite alternate,
+        cover-drift linear both;
+      animation-timeline: auto, scroll(root block);
+      animation-range: normal, 0 100svh;
+    }
+
+    @keyframes cover-drift {
+      from {
+        translate: 0 0;
+        scale: 1;
+      }
+      to {
+        translate: 0 12%;
+        scale: 1.25;
+      }
     }
   }
 }

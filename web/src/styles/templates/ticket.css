@@ -281,10 +281,14 @@ html[data-template='ticket'] .stage-ticket .highlights {
     animation: tk-print 1.1s var(--ease-out) 0.1s both;
   }
 
+  /* Printed out of the slot — but already half out on the first frame. A
+     ticket clipped to nothing is not painted, and Ticket waited 2.6–3.5 s
+     for its largest paint on a cheap phone; started half-printed it is
+     visible at once and still reads as coming out of the machine. */
   @keyframes tk-print {
     from {
       transform: translateY(-40px);
-      clip-path: inset(0 0 100% 0);
+      clip-path: inset(0 0 55% 0);
     }
 
     to {
