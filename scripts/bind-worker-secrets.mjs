@@ -12,7 +12,14 @@
  * `wrangler deploy` runs wrangler.jsonc `build.command` before it uploads.
  * This script uses that moment: if the build environment holds
  * DEEPSEEK_API_KEY or SUPABASE_SERVICE_ROLE_KEY, it attaches them to the
- * Worker as real secrets. The upload that follows keeps secrets.
+ * latest Worker version. The upload that follows keeps secrets
+ * (`keepSecrets` copies secret bindings from that latest version).
+ *
+ * `wrangler secret bulk` is the wrong command here. It deploys the secret
+ * edit, and Cloudflare refuses once the latest uploaded version is not the
+ * one serving traffic — the state a preview `versions upload` leaves, and
+ * the error on the second Workers Builds deploy. `versions secret bulk`
+ * patches that latest version and does not deploy it.
  *
  * Values are written to a mode-600 file and never printed. Outside Workers
  * Builds the script does nothing, so a laptop `wrangler deploy` cannot
@@ -41,6 +48,18 @@ export function runtimeSecrets(env) {
   return found;
 }
 
+/**
+ * Arguments after `wrangler`. `versions secret bulk` updates the latest
+ * uploaded version without deploying it, which is the only bulk command
+ * that succeeds while a preview version is ahead of production.
+ *
+ * @param {string} file
+ * @returns {string[]}
+ */
+export function secretBulkArgs(file) {
+  return ['versions', 'secret', 'bulk', file];
+}
+
 function main() {
   if (process.env.BESIVOV_SECRET_BIND === '1') return;
   if (process.env.WORKERS_CI !== '1') return;
@@ -55,7 +74,7 @@ function main() {
   const file = path.join(os.tmpdir(), `besivov-secrets-${process.pid}.json`);
   fs.writeFileSync(file, JSON.stringify(found), { mode: 0o600 });
   try {
-    const result = spawnSync('npx', ['--yes', 'wrangler', 'secret', 'bulk', file], {
+    const result = spawnSync('npx', ['--yes', 'wrangler', ...secretBulkArgs(file)], {
       stdio: 'inherit',
       env: { ...process.env, BESIVOV_SECRET_BIND: '1' },
     });

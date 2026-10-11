@@ -293,9 +293,14 @@ build list is invisible on the site (`no_key`, and phone upload
 `not_configured`).
 
 `scripts/bind-worker-secrets.mjs` runs at the start of `wrangler deploy` and
-copies those two names from the build environment onto the Worker. The
-runtime place for them, if you set them by hand, is Settings → Variables &
-Secrets, then Deploy.
+copies those two names from the build environment onto the latest Worker
+version with `wrangler versions secret bulk`. The deploy that is already
+running then uploads the new code and keeps those secrets. `wrangler secret
+bulk` is not used: it tries to deploy the secret edit and fails with
+"the latest version of your Worker isn't currently deployed" as soon as a
+preview `versions upload` is ahead of production. The runtime place for
+them, if you set them by hand, is Settings → Variables & Secrets, then
+Deploy.
 
 ### Why not just delete the Expo remnant
 
