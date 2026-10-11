@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { runtimeSecrets } from './bind-worker-secrets.mjs';
+import { runtimeSecrets, secretBulkArgs } from './bind-worker-secrets.mjs';
 
 test('copies only the two runtime secrets', () => {
   const found = runtimeSecrets({
@@ -14,6 +14,15 @@ test('copies only the two runtime secrets', () => {
     DEEPSEEK_API_KEY: 'deepseek-secret',
     SUPABASE_SERVICE_ROLE_KEY: 'service-secret',
   });
+});
+
+test('patches the latest version instead of deploying a secret edit', () => {
+  assert.deepEqual(secretBulkArgs('/tmp/secrets.json'), [
+    'versions',
+    'secret',
+    'bulk',
+    '/tmp/secrets.json',
+  ]);
 });
 
 test('skips a secret that is missing or empty', () => {

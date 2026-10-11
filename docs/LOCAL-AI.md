@@ -10,9 +10,10 @@ npx wrangler secret put DEEPSEEK_API_KEY
 A value saved under Workers Builds → Settings → Build → Variables and
 secrets is not that. It exists only while the site is building. The deploy
 copies `DEEPSEEK_API_KEY` and `SUPABASE_SERVICE_ROLE_KEY` from that build
-environment onto the Worker (`scripts/bind-worker-secrets.mjs`). The same
-name under Settings → Variables & Secrets is already a runtime secret and
-does not need the copy.
+environment onto the latest Worker version
+(`scripts/bind-worker-secrets.mjs`, via `wrangler versions secret bulk`).
+The same name under Settings → Variables & Secrets is already a runtime
+secret and does not need the copy.
 
 The model is `deepseek-flash`. It can see a picture. The description model
 does not. The key never goes in the browser and never goes in git.

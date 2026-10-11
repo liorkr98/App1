@@ -43,8 +43,10 @@
   // bind-worker-secrets runs first. The dashboard list "Variables and
   // secrets" under Build is the build environment only. DEEPSEEK_API_KEY
   // and SUPABASE_SERVICE_ROLE_KEY have to be Worker secrets or the request
-  // never sees them. The script copies them across when Workers Builds
-  // provides them, and does nothing on a laptop.
+  // never sees them. The script copies them onto the latest version with
+  // `wrangler versions secret bulk` (not `secret bulk`, which fails once
+  // a preview upload is ahead of production). This deploy then inherits
+  // them. The script does nothing on a laptop.
   "build": {
     "command": "node scripts/bind-worker-secrets.mjs && (test -f web/dist/server/entry.mjs || npm run build)"
   },
