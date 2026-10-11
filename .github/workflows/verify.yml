@@ -297,6 +297,14 @@ jobs:
       # somebody's home (CLAUDE.md §9, 10 Oct 2026). Blocking.
       # The cover photograph drifts as the page scrolls, inside its frame,
       # and stays still under reduced motion (11 Oct 2026). Blocking.
+      # The new-listing flow stays simple: four screens, Next never greyed
+      # out, no tap target under 48px, no sideways scroll (11 Oct 2026).
+      # Blocking.
+      - name: New listing in four simple screens
+        if: ${{ !cancelled() }}
+        working-directory: web
+        run: npx playwright test editor-flow
+
       - name: Cover parallax
         if: ${{ !cancelled() }}
         working-directory: web

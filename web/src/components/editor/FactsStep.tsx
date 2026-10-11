@@ -15,6 +15,15 @@ interface Props {
   onChange: (facts: Fact[]) => void;
   audience: ListingAudience | undefined;
   onAudience: (audience: ListingAudience | undefined) => void;
+  /**
+   * Which facts this instance asks (11 Oct 2026). The details screen asks
+   * the few a page needs (`only`); "more details" asks the rest (`except`),
+   * with the audience question and the hint. Neither: everything, as before.
+   */
+  only?: readonly string[];
+  except?: readonly string[];
+  /** The audience question and the hint line. Default true. */
+  extras?: boolean;
 }
 
 /**
@@ -33,7 +42,17 @@ interface Props {
  *
  * Required fields have no אין control. A flat with no rooms is not a listing.
  */
-export function FactsStep({ category, facts, onChange, audience, onAudience }: Props) {
+export function FactsStep({
+  category,
+  facts,
+  onChange,
+  audience,
+  onAudience,
+  only,
+  except,
+  extras = true,
+}: Props) {
+  const asked = (key: string) => (only ? only.includes(key) : true) && !(except?.includes(key) ?? false);
   return (
     <>
       {/*
@@ -48,7 +67,7 @@ export function FactsStep({ category, facts, onChange, audience, onAudience }: P
         investorLead rather than a category check: a category that declares no
         investor ordering has nothing to reorder, so there is nothing to ask.
       */}
-      {schemaFor(category).investorLead ? (
+      {extras && schemaFor(category).investorLead ? (
       <fieldset className="audience">
         <legend>{t('editor.audienceTitle')}</legend>
         <p className="hint">{t('editor.audienceHint')}</p>
@@ -89,11 +108,11 @@ export function FactsStep({ category, facts, onChange, audience, onAudience }: P
       </fieldset>
       ) : null}
 
-      <p className="hint">{t('editor.factsHint')}</p>
+      {extras ? <p className="hint">{t('editor.factsHint')}</p> : null}
 
       <ul className="facts-entry">
         {facts
-          .filter((fact) => factShown(factDefinition(category, fact.key), audience, facts))
+          .filter((fact) => asked(fact.key) && factShown(factDefinition(category, fact.key), audience, facts))
           .map((fact) => (
           <li key={fact.key} className={fact.present ? 'fact-row' : 'fact-row absent'}>
             <div className="fact-head">

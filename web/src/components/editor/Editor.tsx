@@ -2,15 +2,18 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperti
 
 import {
   blockers,
-  canAdvance,
   canPublish,
+  ESSENTIAL_FACTS,
   MAX_IMAGES,
-  nextStep,
-  reachable,
-  stepsFor,
+  nextScreen,
+  SCREEN_STEP,
+  SCREENS,
+  screenBlockers,
+  screenOf,
   type EditorState,
-  type Step,
+  type Screen,
 } from '@/features/listings/editor';
+import { autoTitle } from '@/features/listings/auto-title';
 import { blankFacts, reconcileFacts } from '@/features/listings/fact-entry';
 import { photoCoverage } from '@/features/listings/photo-coverage';
 import { isPhotoRoom } from '@/features/listings/photo-rooms';
@@ -142,7 +145,12 @@ function draftInVoice(
 
 export default function Editor() {
   const [state, setState] = useState<EditorState>(START);
-  const [step, setStep] = useState<Step>('category');
+  /**
+   * Which of the four screens is open (11 Oct 2026; editor.ts, "FOUR
+   * SCREENS"). The eleven steps still exist inside them — a blocker still
+   * names its step — but the agent only ever moves between four.
+   */
+  const [screen, setScreen] = useState<Screen>('photos');
   /**
    * True until the agent picks a step themselves. Opening a saved listing
    * lands on the first gap (`nextStep`); once they tap Next, Back or a
@@ -150,7 +158,13 @@ export default function Editor() {
    * yank them to a later screen.
    */
   const followGap = useRef(true);
-  const railList = useRef<HTMLOListElement>(null);
+  /**
+   * A brand-new listing gets its design chosen for it on the "ready" screen
+   * (suggestTemplate). One opened from a draft or the dashboard keeps the
+   * design it has; one the agent changed by hand keeps theirs.
+   */
+  const freshListing = useRef(true);
+  const templateChosen = useRef(false);
 
   /**
    * The photographs live HERE and not in EditorState.
@@ -692,12 +706,12 @@ export default function Editor() {
    */
   const [areaWaitOver, setAreaWaitOver] = useState(false);
   useEffect(() => {
-    if (step !== 'description') return;
+    if (screen !== 'ready') return;
     const timer = window.setTimeout(() => setAreaWaitOver(true), AREA_WAIT_MS);
     return () => window.clearTimeout(timer);
-  }, [step]);
+  }, [screen]);
   const waitingForArea =
-    step === 'description' &&
+    screen === 'ready' &&
     state.category === 'property' &&
     !areaWaitOver &&
     area !== undefined &&
@@ -705,7 +719,7 @@ export default function Editor() {
     area.status === 'working';
 
   useEffect(() => {
-    if (step !== 'description' || autoSuggested.current) return;
+    if (screen !== 'ready' || autoSuggested.current) return;
     if (!canSuggest || state.description.trim() !== '') return;
     if (waitingForArea) return;
     autoSuggested.current = true;
@@ -713,13 +727,29 @@ export default function Editor() {
     // `suggest` is stable enough for this: it reads the listing id from a ref
     // and guards on `suggesting`, so it cannot fire twice for one arrival.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, canSuggest, state.description, waitingForArea]);
+  }, [screen, canSuggest, state.description, waitingForArea]);
+
+  // No model to ask (signed out, or no listing row yet): the box still
+  // arrives written, from the agent's own answers, so "ready" is never a
+  // blank box. The model rewrites it later if it can.
+  useEffect(() => {
+    if (screen !== 'ready' || canSuggest || state.description.trim() !== '') return;
+    const drafted = draftInVoice(state.category, state.facts, state.city, '', tone);
+    if (drafted.trim()) {
+      setState((current) =>
+        current.description.trim() === ''
+          ? { ...current, description: drafted, generatedDescription: drafted }
+          : current,
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen, canSuggest]);
 
   // The area landed after a description was written without it: write it
   // again, once per address, unless the seller has edited the text.
   const rewroteForArea = useRef<string | undefined>(undefined);
   useEffect(() => {
-    if (step !== 'description' || state.category !== 'property') return;
+    if (screen !== 'ready' || state.category !== 'property') return;
     const key = areaKey(state.city, state.street);
     if (!key || area?.key !== key || area.status !== 'ready') return;
     if (!suggestSource || suggestSource.area || suggesting) return;
@@ -728,7 +758,7 @@ export default function Editor() {
     rewroteForArea.current = key;
     suggest();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, area, suggestSource, suggesting, state.description, state.generatedDescription]);
+  }, [screen, area, suggestSource, suggesting, state.description, state.generatedDescription]);
 
   const changePhotos = (next: EditorPhoto[]) => {
     setPhotos(next);
@@ -741,7 +771,45 @@ export default function Editor() {
     surroundings && surroundings.key === addressKey ? surroundings.places : undefined;
   const previewSun = sunPoint ?? (previewPlaces ? coarseOrigin(previewPlaces) : undefined);
 
-  const steps = useMemo(() => stepsFor(state.category), [state.category]);
+  /*
+   * The title writes itself from the facts ("דירת 4 חדרים בחולון") until the
+   * agent types their own (auto-title.ts). An empty title blocks publishing,
+   * and a blank box asking for a headline is where people stop.
+   */
+  const lastAutoTitle = useRef('');
+  useEffect(() => {
+    const made = autoTitle(state.category, state.facts, state.city);
+    const previous = lastAutoTitle.current;
+    lastAutoTitle.current = made;
+    if (!made) return;
+    setState((current) =>
+      (current.title.trim() === '' || current.title === previous) && current.title !== made
+        ? { ...current, title: made }
+        : current,
+    );
+  }, [state.category, state.facts, state.city]);
+
+  const templateSuggestion = state.category
+    ? suggestTemplate({
+        category: state.category,
+        facts: state.facts,
+        street: state.street,
+        namedRooms: new Set(photos.map((photo) => photo.room).filter(Boolean)).size,
+        hasFloorPlan: plan !== undefined,
+      })
+    : undefined;
+
+  // Arriving at "ready" on a new listing: the design is chosen for the agent,
+  // once. They can change it there; a draft keeps the one it has.
+  const autoTemplated = useRef(false);
+  useEffect(() => {
+    if (screen !== 'ready' || autoTemplated.current) return;
+    autoTemplated.current = true;
+    if (!freshListing.current || templateChosen.current || !templateSuggestion) return;
+    const chosen = templateSuggestion.id;
+    setState((current) => (current.template === chosen ? current : { ...current, template: chosen }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen]);
   // Which photographs the facts owe the buyer (photo-coverage.ts). Advice:
   // shown on the photo, room and publish steps, never read by publish.
   const coverage = useMemo(
@@ -750,27 +818,27 @@ export default function Editor() {
   );
   const outstanding = useMemo(() => blockers(state), [state]);
 
-  const position = steps.indexOf(step);
-  const here = outstanding.filter((blocker) => blocker.step === step);
+  const position = SCREENS.indexOf(screen);
+  const here = useMemo(() => screenBlockers(state, screen), [state, screen]);
   const photosBusy = photos.some(
     (photo) => photo.status === 'local' || photo.status === 'uploading',
   );
 
   useEffect(() => {
-    void recordEditorEvent(step, 'enter', listingId.current);
-    railList.current?.querySelector('.is-here')?.scrollIntoView({ inline: 'nearest', block: 'nearest' });
-  }, [step]);
+    void recordEditorEvent(SCREEN_STEP[screen], 'enter', listingId.current);
+    window.scrollTo({ top: 0 });
+  }, [screen]);
 
-  const blockedSent = useRef<Step | null>(null);
+  const blockedSent = useRef<Screen | null>(null);
   useEffect(() => {
     if (here.length === 0) {
       blockedSent.current = null;
       return;
     }
-    if (blockedSent.current === step) return;
-    blockedSent.current = step;
-    void recordEditorEvent(step, 'blocked', listingId.current);
-  }, [here.length, step]);
+    if (blockedSent.current === screen) return;
+    blockedSent.current = screen;
+    void recordEditorEvent(SCREEN_STEP[screen], 'blocked', listingId.current);
+  }, [here.length, screen]);
 
   /**
    * "מודעה חדשה" passes ?fresh=1 so a previous session cannot skip the seller
@@ -906,11 +974,12 @@ export default function Editor() {
         // agent walk "מה מוכרים?" again, and a missing photo still cannot
         // be skipped.
         const opening = new URLSearchParams(window.location.search).get('step');
+        freshListing.current = false;
         if (opening === 'preview') {
           followGap.current = false;
-          setStep('preview');
+          setScreen('ready');
         } else if (opened && followGap.current) {
-          setStep(nextStep(opened));
+          setScreen(nextScreen(opened));
         }
       })
       .catch(() => undefined);
@@ -938,7 +1007,8 @@ export default function Editor() {
         entitlement: stateRef.current.entitlement,
       };
       setState((current) => ({ ...current, ...draft, entitlement: current.entitlement }));
-      if (followGap.current) setStep(nextStep(merged));
+      freshListing.current = false;
+      if (followGap.current) setScreen(nextScreen(merged));
       if (!draft.slug || !supabaseConfigured) return;
       void loadListing(draft.slug)
         .then((result) => {
@@ -973,7 +1043,7 @@ export default function Editor() {
           );
           setState((current) => ({ ...current, photoCount: stored.length }));
           if (followGap.current) {
-            setStep(nextStep({ ...stateRef.current, photoCount: stored.length }));
+            setScreen(nextScreen({ ...stateRef.current, photoCount: stored.length }));
           }
           const saved = row.media as {
             floorPlan?: { url?: string; width?: number; height?: number; rooms?: unknown };
@@ -1205,25 +1275,27 @@ export default function Editor() {
     })();
   };
 
-  /** Which way the last step change went, so the next step slides in from there. */
+  /** Which way the last screen change went, so the next one slides in from there. */
   const [stepMotion, setStepMotion] = useState<'forward' | 'back'>('forward');
 
-  const go = (delta: number) => {
-    if (delta > 0 && step === 'photos' && photosBusy) return;
+  /**
+   * Next and Back are never disabled (11 Oct 2026). A greyed-out button with
+   * no reason is the moment an agent gives up; what is still missing is
+   * listed in words on the publish screen, each with a way to go and fix it.
+   * Photos still uploading keep uploading on the next screen.
+   */
+  /** "More details" opens itself only when "fix" sent the agent to it. */
+  const [openMore, setOpenMore] = useState(false);
+  const goTo = (target: Screen) => {
+    if (target === screen) return;
     followGap.current = false;
-    setStepMotion(delta < 0 ? 'back' : 'forward');
+    setStepMotion(SCREENS.indexOf(target) < position ? 'back' : 'forward');
     persist();
-    const target = steps[position + delta];
-    if (target) setStep(target);
+    setScreen(target);
   };
-
-  const jump = (target: Step) => {
-    if (target === step || !reachable(state, target)) return;
-    if (step === 'photos' && photosBusy && steps.indexOf(target) > position) return;
-    followGap.current = false;
-    setStepMotion(steps.indexOf(target) < position ? 'back' : 'forward');
-    persist();
-    setStep(target);
+  const go = (delta: number) => {
+    const target = SCREENS[position + delta];
+    if (target) goTo(target);
   };
 
   /**
@@ -1243,318 +1315,345 @@ export default function Editor() {
     );
   };
 
+  const isProperty = state.category === 'property';
+  const essential = state.category ? ESSENTIAL_FACTS[state.category] : [];
+  const setFacts = (facts: EditorState['facts']) => setState((current) => ({ ...current, facts }));
+  const setAudience = (audience: EditorState['audience']) =>
+    setState((current) => {
+      if (audience === undefined) {
+        const { audience: _omitted, ...rest } = current;
+        return rest;
+      }
+      return { ...current, audience };
+    });
+
   return (
     <div className="editor-shell">
     <div className="editor">
-      <header className="rail">
-        <p className="rail-count">
-          <Message
-            path="editor.stepOf"
-            values={{ current: position + 1, total: steps.length }}
-          />
-        </p>
-        <h1 className="rail-title">{t(`editor.steps.${step}`)}</h1>
-
+      <header className="flow-head">
         {/*
-          The bar is decoration for a number that is already stated above it,
-          so it is hidden from assistive technology rather than given a role
-          that would read the same fact twice.
-
-          It fills from the INLINE START, which in Hebrew is the right edge.
-          A physical `left` here would fill it backwards, and it would look
-          fine in every English screenshot.
+          Four dots and the screen's name. The count is said in words for a
+          screen reader; the dots are the same fact drawn, so they are hidden
+          from it. Dot 1 is the inline START, which in Hebrew is the right.
         */}
-        <nav className="step-rail" aria-label={t('editor.stepRail')}>
-          <ol ref={railList}>
-            {steps.map((id, index) => {
-              const open = id === step || reachable(state, id);
-              return (
-                <li key={id}>
-                  <button
-                    type="button"
-                    className={id === step ? 'step-pip is-here' : 'step-pip'}
-                    aria-current={id === step ? 'step' : undefined}
-                    aria-label={t(`editor.steps.${id}`)}
-                    disabled={!open || (step === 'photos' && photosBusy && index > position)}
-                    onClick={() => jump(id)}
-                  >
-                    <bdi>{index + 1}</bdi>
-                    <span>{t(`editor.stepShort.${id}`)}</span>
-                  </button>
-                </li>
-              );
-            })}
-          </ol>
-        </nav>
-        <div className="rail-bar" aria-hidden="true">
-          {/*
-            A scale factor, not a width. Animating inline-size relaid the bar
-            out on every frame; a transform is composited. The custom property
-            needs the cast because React's CSSProperties has no index
-            signature for one.
-          */}
-          <div
-            className="rail-fill"
-            style={{ '--progress': (position + 1) / steps.length } as CSSProperties}
-          />
-        </div>
+        <p className="flow-count">
+          <Message path="editor.stepOf" values={{ current: position + 1, total: SCREENS.length }} />
+        </p>
+        <ol className="flow-dots" aria-hidden="true">
+          {SCREENS.map((id, index) => (
+            <li key={id} className={index < position ? 'is-done' : index === position ? 'is-here' : undefined}>
+              <span>{t(`editor.flow.dot.${id}`)}</span>
+            </li>
+          ))}
+        </ol>
+        <h1 className="flow-title">{t(`editor.flow.${screen}.title`)}</h1>
+        <p className="flow-lead">{t(`editor.flow.${screen}.lead`)}</p>
       </header>
 
-      {/* Keyed by step so each arrival is a fresh element and its entrance
+      {/* Keyed by screen so each arrival is a fresh element and its entrance
           plays; the direction follows the reading order (editor.css). */}
-      <section
-        key={step}
-        data-motion={stepMotion}
-        className={step === 'template' ? 'step step-templates' : 'step'}
-      >
-        {step === 'category' ? (
-          <CategoryStep chosen={state.category} onChoose={choose} />
-        ) : null}
-
-        {step === 'details' && state.category ? (
-          <DetailsStep
-            category={state.category}
-            title={state.title}
-            price={state.price}
-            city={state.city ?? ''}
-            street={state.street ?? ''}
-            priceNote={state.priceNote ?? ''}
-            titleError={here.some((blocker) => blocker.code === 'titleMissing')}
-            cityError={here.some((blocker) => blocker.code === 'cityMissing')}
-            areaStatus={area && area.key === addressKey ? area.status : undefined}
-            areaCount={area && area.key === addressKey ? area.count : undefined}
-            onChange={(patch) => setState((current) => ({ ...current, ...patch }))}
-          />
-        ) : null}
-
-        {step === 'photos' ? (
+      <section key={screen} data-motion={stepMotion} className={`step screen screen-${screen}`}>
+        {screen === 'photos' ? (
           <>
-            <PhotosStep
-              photos={photos}
-              onChange={changePhotos}
-              signedIn={signedIn}
+            <CategoryStep chosen={state.category} onChoose={choose} />
+            {state.category ? (
+              <>
+                <PhotosStep
+                  photos={photos}
+                  onChange={changePhotos}
+                  signedIn={signedIn}
+                  category={state.category}
+                />
+                <PhonePortal signedIn={signedIn} ensureListing={ensureListing} onPhotos={takeFromPhone} />
+                <PhotoChecklist coverage={coverage} count={photos.length} />
+                {photosBusy ? <p className="hint">{t('editor.flow.uploadingNote')}</p> : null}
+              </>
+            ) : null}
+          </>
+        ) : null}
+
+        {screen === 'details' && state.category ? (
+          <>
+            {state.category === 'vehicle' ? (
+              <PlateStep
+                plate={plate}
+                onPlate={setPlate}
+                declared={declaredOwner}
+                onDeclare={setDeclaredOwner}
+                facts={state.facts}
+                onFacts={setFacts}
+              />
+            ) : null}
+
+            <DetailsStep
               category={state.category}
+              title={state.title}
+              price={state.price}
+              city={state.city ?? ''}
+              street={state.street ?? ''}
+              priceNote={state.priceNote ?? ''}
+              fields={isProperty ? ['city', 'street', 'price'] : ['price', 'city']}
+              cityError={here.some((blocker) => blocker.code === 'cityMissing')}
+              areaStatus={area && area.key === addressKey ? area.status : undefined}
+              areaCount={area && area.key === addressKey ? area.count : undefined}
+              onChange={(patch) => setState((current) => ({ ...current, ...patch }))}
             />
-            <PhonePortal signedIn={signedIn} ensureListing={ensureListing} onPhotos={takeFromPhone} />
-            <PhotoChecklist coverage={coverage} count={photos.length} />
-            {state.category === 'vehicle' && signedIn ? (
-              <SpinEditor frames={spin} onFrames={setSpin} onUpload={uploadSpin} uploading={extraUploading} />
-            ) : null}
-          </>
-        ) : null}
 
-        {step === 'rooms' ? (
-          <>
-            <RoomsStep photos={photos} onChange={changePhotos} />
-            <PhotoChecklist coverage={coverage} count={photos.length} />
-            {signedIn ? (
-              <PlanEditor plan={plan} onPlan={setPlan} onUpload={uploadPlan} uploading={extraUploading} />
-            ) : null}
-          </>
-        ) : null}
+            <FactsStep
+              category={state.category}
+              facts={state.facts}
+              onChange={setFacts}
+              audience={state.audience}
+              onAudience={setAudience}
+              only={essential}
+              extras={false}
+            />
 
-        {step === 'plate' ? (
-          <PlateStep
-            plate={plate}
-            onPlate={setPlate}
-            declared={declaredOwner}
-            onDeclare={setDeclaredOwner}
-            facts={state.facts}
-            onFacts={(facts) => setState((current) => ({ ...current, facts }))}
-          />
-        ) : null}
-
-        {step === 'consent' ? (
-          <ConsentStep
-            declaredAt={state.ownerConsentDeclaredAt}
-            ownerName={state.ownerConsentName ?? ''}
-            onDeclare={(ownerConsentDeclaredAt) =>
-              setState((current) => {
-                if (ownerConsentDeclaredAt === undefined) {
-                  const { ownerConsentDeclaredAt: _omitted, ...rest } = current;
-                  return rest;
-                }
-                return { ...current, ownerConsentDeclaredAt };
-              })
-            }
-            onOwnerName={(name) =>
-              setState((current) => {
-                const { ownerConsentName: _omitted, ...rest } = current;
-                return name.trim() === '' ? rest : { ...rest, ownerConsentName: name };
-              })
-            }
-          />
-        ) : null}
-
-        {step === 'facts' && state.category ? (
-          <FactsStep
-            category={state.category}
-            facts={state.facts}
-            onChange={(facts) => setState((current) => ({ ...current, facts }))}
-            audience={state.audience}
-            onAudience={(audience) =>
-              setState((current) => {
-                if (audience === undefined) {
-                  const { audience: _omitted, ...rest } = current;
-                  return rest;
-                }
-                return { ...current, audience };
-              })
-            }
-          />
-        ) : null}
-
-        {step === 'disclosures' ? (
-          <DisclosuresStep
-            items={state.disclosures ?? []}
-            category={state.category}
-            onChange={(disclosures) => setState((current) => ({ ...current, disclosures }))}
-          />
-        ) : null}
-
-        {step === 'preview' ? (
-          <LivePreview
-            state={state}
-            photos={photos}
-            profile={profile}
-            extras={extras}
-            sun={previewSun}
-            areaPlaces={previewPlaces}
-          />
-        ) : null}
-
-        {step === 'publish' ? (
-          <PublishStep
-            state={state}
-            blockers={outstanding}
-            publishedUrl={publishedUrl}
-            publishedSlug={slug.current ?? undefined}
-            publishing={publishing}
-            publishNote={publishNote}
-            areaStatus={state.category === 'property' && area && area.key === addressKey ? area.status : undefined}
-            areaCount={area && area.key === addressKey ? area.count : undefined}
-            photoCheck={<PhotoChecklist coverage={coverage} count={photos.length} variant="line" />}
-            failure={failure}
-            onPublish={publish}
-            onCopy={(url) =>
-              void navigator.clipboard
-                .writeText(url)
-                // Copying the fresh link is the first share (time to link, 0035).
-                .then(() => (slug.current ? recordListingEvent(slug.current, 'share', null) : undefined))
-                .catch(() => undefined)
-            }
-            onIndexable={(indexable) => setState((current) => ({ ...current, indexable }))}
-            onPrePortal={(prePortal) => setState((current) => ({ ...current, prePortal }))}
-          />
-        ) : null}
-
-        {step === 'template' ? (
-          <TemplateStep
-            category={state.category}
-            chosen={state.template}
-            onChoose={(template) => setState((current) => ({ ...current, template }))}
-            accent={state.accent ?? profile.accent ?? undefined}
-            onAccent={(accent) => {
-              accentSource.current = 'manual';
-              setState((current) => ({ ...current, accent }));
-            }}
-            accentFromCover={accentSource.current === 'cover'}
-            coverTone={coverTone}
-            missingAspect={
-              state.category === 'property' &&
-              !state.facts.some(
-                (fact) => fact.key === 'aspect' && fact.present !== false && typeof fact.value === 'string' && fact.value.trim() !== '',
-              )
-            }
-            photos={photos
-              .map((photo) => photo.publicUrl ?? photo.url)
-              .filter((url): url is string => url.trim() !== '')}
-            suggestion={
-              state.category
-                ? suggestTemplate({
-                    category: state.category,
-                    facts: state.facts,
-                    street: state.street,
-                    namedRooms: new Set(photos.map((photo) => photo.room).filter(Boolean)).size,
-                    hasFloorPlan: plan !== undefined,
+            {isProperty ? (
+              <ConsentStep
+                declaredAt={state.ownerConsentDeclaredAt}
+                ownerName={state.ownerConsentName ?? ''}
+                onDeclare={(ownerConsentDeclaredAt) =>
+                  setState((current) => {
+                    if (ownerConsentDeclaredAt === undefined) {
+                      const { ownerConsentDeclaredAt: _omitted, ...rest } = current;
+                      return rest;
+                    }
+                    return { ...current, ownerConsentDeclaredAt };
                   })
-                : undefined
-            }
-          />
+                }
+                onOwnerName={(name) =>
+                  setState((current) => {
+                    const { ownerConsentName: _omitted, ...rest } = current;
+                    return name.trim() === '' ? rest : { ...rest, ownerConsentName: name };
+                  })
+                }
+              />
+            ) : null}
+
+            {/* Everything a page does not need. Closed by default, and
+                nothing in here blocks publishing except the title, which is
+                written automatically and only shows up as missing if the
+                agent clears it. */}
+            <details className="more" open={openMore || undefined}>
+              <summary className="more-summary">
+                <span className="more-title">{t('editor.flow.more')}</span>
+                <span className="more-hint">{t(isProperty ? 'editor.flow.moreHintProperty' : 'editor.flow.moreHintVehicle')}</span>
+              </summary>
+              <div className="more-body">
+                <DetailsStep
+                  category={state.category}
+                  title={state.title}
+                  price={state.price}
+                  city={state.city ?? ''}
+                  street={state.street ?? ''}
+                  priceNote={state.priceNote ?? ''}
+                  fields={['title', 'priceNote']}
+                  titleError={here.some((blocker) => blocker.code === 'titleMissing')}
+                  onChange={(patch) => setState((current) => ({ ...current, ...patch }))}
+                />
+                <FactsStep
+                  category={state.category}
+                  facts={state.facts}
+                  onChange={setFacts}
+                  audience={state.audience}
+                  onAudience={setAudience}
+                  except={essential}
+                />
+                <DisclosuresStep
+                  items={state.disclosures ?? []}
+                  category={state.category}
+                  onChange={(disclosures) => setState((current) => ({ ...current, disclosures }))}
+                />
+                {isProperty ? (
+                  <>
+                    <RoomsStep photos={photos} onChange={changePhotos} />
+                    {signedIn ? (
+                      <PlanEditor plan={plan} onPlan={setPlan} onUpload={uploadPlan} uploading={extraUploading} />
+                    ) : null}
+                  </>
+                ) : signedIn ? (
+                  <SpinEditor frames={spin} onFrames={setSpin} onUpload={uploadSpin} uploading={extraUploading} />
+                ) : null}
+              </div>
+            </details>
+          </>
         ) : null}
 
-        {step === 'description' ? (
-          <DescriptionStep
-            text={state.description}
-            generated={state.generatedDescription}
-            facts={state.facts}
-            onChange={(description) => setState((current) => ({ ...current, description }))}
-            onSuggest={canSuggest ? () => suggest() : undefined}
-            suggesting={suggesting}
-            waitingForArea={waitingForArea && state.description.trim() === ''}
-            suggestFailed={
-              suggestFailed === false
-                ? undefined
-                : suggestFailed === 'no_facts'
-                  ? t('editor.description.failedNoFacts')
-                  : suggestFailed === 'no_session' || suggestFailed === 'unauthenticated'
-                    ? t('editor.description.failedSignIn')
-                    : t('editor.description.suggestFailed')
-            }
-            source={suggestSource}
-            tone={tone}
-            onTone={(next) => {
-              if (next === tone) return;
-              setTone(next);
-              // The chip has to change the box on this click. The server
-              // then replaces it with the same voice plus the neighbourhood,
-              // and a model that keeps the old opening is refused.
-              const drafted = draftInVoice(state.category, state.facts, state.city, state.description, next);
-              if (drafted.trim() && drafted.trim() !== state.description.trim()) {
-                setState((current) => ({
-                  ...current,
-                  description: drafted,
-                  generatedDescription: drafted,
-                }));
+        {screen === 'ready' ? (
+          <>
+            <div className="ready-preview">
+              <LivePreview
+                state={state}
+                photos={photos}
+                profile={profile}
+                extras={extras}
+                sun={previewSun}
+                areaPlaces={previewPlaces}
+              />
+            </div>
+
+            <h2 className="ready-head">{t('editor.flow.textTitle')}</h2>
+            <DescriptionStep
+              text={state.description}
+              generated={state.generatedDescription}
+              facts={state.facts}
+              onChange={(description) => setState((current) => ({ ...current, description }))}
+              onSuggest={canSuggest ? () => suggest() : undefined}
+              suggesting={suggesting}
+              waitingForArea={waitingForArea && state.description.trim() === ''}
+              suggestFailed={
+                suggestFailed === false
+                  ? undefined
+                  : suggestFailed === 'no_facts'
+                    ? t('editor.description.failedNoFacts')
+                    : suggestFailed === 'no_session' || suggestFailed === 'unauthenticated'
+                      ? t('editor.description.failedSignIn')
+                      : t('editor.description.suggestFailed')
               }
-              suggest(next);
-            }}
-          />
+              source={suggestSource}
+              tone={tone}
+              onTone={(next) => {
+                if (next === tone) return;
+                setTone(next);
+                // The chip has to change the box on this click. The server
+                // then replaces it with the same voice plus the neighbourhood,
+                // and a model that keeps the old opening is refused.
+                const drafted = draftInVoice(state.category, state.facts, state.city, state.description, next);
+                if (drafted.trim() && drafted.trim() !== state.description.trim()) {
+                  setState((current) => ({
+                    ...current,
+                    description: drafted,
+                    generatedDescription: drafted,
+                  }));
+                }
+                suggest(next);
+              }}
+            />
+
+            <h2 className="ready-head">{t('editor.flow.designTitle')}</h2>
+            <p className="ready-design">
+              <Message
+                path="editor.flow.designNow"
+                values={{ name: t(`editor.templates.${state.template ?? 'aurora'}`) }}
+              />
+            </p>
+            <details className="more">
+              <summary className="more-summary">
+                <span className="more-title">{t('editor.flow.changeDesign')}</span>
+              </summary>
+              <div className="more-body step-templates">
+                <TemplateStep
+                  category={state.category}
+                  chosen={state.template}
+                  onChoose={(template) => {
+                    templateChosen.current = true;
+                    setState((current) => ({ ...current, template }));
+                  }}
+                  accent={state.accent ?? profile.accent ?? undefined}
+                  onAccent={(accent) => {
+                    accentSource.current = 'manual';
+                    setState((current) => ({ ...current, accent }));
+                  }}
+                  accentFromCover={accentSource.current === 'cover'}
+                  coverTone={coverTone}
+                  missingAspect={
+                    state.category === 'property' &&
+                    !state.facts.some(
+                      (fact) =>
+                        fact.key === 'aspect' &&
+                        fact.present !== false &&
+                        typeof fact.value === 'string' &&
+                        fact.value.trim() !== '',
+                    )
+                  }
+                  photos={photos
+                    .map((photo) => photo.publicUrl ?? photo.url)
+                    .filter((url): url is string => url.trim() !== '')}
+                  suggestion={templateSuggestion}
+                />
+              </div>
+            </details>
+          </>
+        ) : null}
+
+        {screen === 'publish' ? (
+          <>
+            {/* What still stands between the agent and their link, in
+                words, each with the way back to fix it. The button below is
+                the same gate as always (canPublish; CLAUDE.md §8). */}
+            {outstanding.length > 0 && !publishedUrl ? (
+              <section className="missing" role="status">
+                <h2 className="missing-title">{t('editor.flow.missingTitle')}</h2>
+                <ul>
+                  {outstanding
+                    // The payment line is PublishStep's own, beside the button.
+                    .filter((blocker) => blocker.code !== 'paymentRequired' && blocker.code !== 'paymentUnverified')
+                    .map((blocker) => (
+                    <li key={`${blocker.code}:${blocker.factLabel ?? ''}`}>
+                      <span>
+                        <Message
+                          path={`editor.blockers.${blocker.code}`}
+                          values={{ max: MAX_IMAGES, label: blocker.factLabel ?? '' }}
+                        />
+                      </span>
+                      {blocker.code === 'sellerMissing' ? (
+                        <a className="missing-fix" href="/me/">
+                          {t('editor.flow.completeProfile')}
+                        </a>
+                      ) : screenOf(blocker.step) !== 'publish' ? (
+                        <button
+                          type="button"
+                          className="missing-fix"
+                          onClick={() => {
+                            // The title lives under "more details": open it.
+                            if (blocker.code === 'titleMissing') setOpenMore(true);
+                            goTo(screenOf(blocker.step));
+                          }}
+                        >
+                          {t('editor.flow.fix')}
+                        </button>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+
+            <PublishStep
+              state={state}
+              blockers={outstanding}
+              publishedUrl={publishedUrl}
+              publishedSlug={slug.current ?? undefined}
+              publishing={publishing}
+              publishNote={publishNote}
+              areaStatus={state.category === 'property' && area && area.key === addressKey ? area.status : undefined}
+              areaCount={area && area.key === addressKey ? area.count : undefined}
+              photoCheck={<PhotoChecklist coverage={coverage} count={photos.length} variant="line" />}
+              shelf={false}
+              failure={failure}
+              onPublish={publish}
+              onCopy={(url) =>
+                void navigator.clipboard
+                  .writeText(url)
+                  // Copying the fresh link is the first share (time to link, 0035).
+                  .then(() => (slug.current ? recordListingEvent(slug.current, 'share', null) : undefined))
+                  .catch(() => undefined)
+              }
+              onIndexable={(indexable) => setState((current) => ({ ...current, indexable }))}
+              onPrePortal={(prePortal) => setState((current) => ({ ...current, prePortal }))}
+            />
+          </>
         ) : null}
       </section>
 
-      {step === 'photos' && photosBusy ? (
-        <p className="hint">{t('editor.photosUploading')}</p>
-      ) : null}
-
-      {/* A save that failed is said out loud on whatever step the seller is
-          on. The publish step gets it inside PublishStep, beside the button
-          that did nothing. */}
-      {failure && step !== 'publish' ? (
+      {/* A save that failed is said out loud on whatever screen the agent is
+          on. The publish screen gets it inside PublishStep, beside the
+          button that did nothing. */}
+      {failure && screen !== 'publish' ? (
         <p className="publish-failure" role="alert">
           {failure}
         </p>
-      ) : null}
-
-      {here.length > 0 && step !== 'details' ? (
-        <section className="blockers" role="alert">
-          <h2 className="blockers-title">{t('editor.blockedTitle')}</h2>
-          <ul>
-            {here.map((blocker) => (
-              <li key={`${blocker.code}:${blocker.factLabel ?? ''}`}>
-                {/*
-                  Both placeholders every time. Only the message that contains
-                  one uses it, and passing the cap from MAX_IMAGES keeps 25 in
-                  the single place that defines it.
-                */}
-                <Message
-                  path={`editor.blockers.${blocker.code}`}
-                  values={{ max: MAX_IMAGES, label: blocker.factLabel ?? '' }}
-                />
-              </li>
-            ))}
-          </ul>
-        </section>
       ) : null}
 
       {/*
@@ -1562,28 +1661,25 @@ export default function Editor() {
         would have to flip in Hebrew (§4.3) — but ‹ and › are bidi-MIRRORED
         characters: the browser already flips them inside an RTL paragraph, so
         writing the flipped one flips it twice and both arrows end up pointing
-        the same way. The icons come with the design pass, as SVG, where the
-        flip is ours to control.
+        the same way.
       */}
-      <footer className="nav">
-        <button type="button" className="nav-back" onClick={() => go(-1)} disabled={position <= 0}>
-          {t('common.back')}
-        </button>
-
-        <button
-          type="button"
-          className="nav-next"
-          onClick={() => go(1)}
-          disabled={
-            position >= steps.length - 1 || !canAdvance(step, state) || (step === 'photos' && photosBusy)
-          }
-        >
-          {t('common.next')}
-        </button>
-      </footer>
+      {publishedUrl ? null : (
+        <footer className="nav">
+          {position > 0 ? (
+            <button type="button" className="nav-back" onClick={() => go(-1)}>
+              {t('common.back')}
+            </button>
+          ) : null}
+          {position < SCREENS.length - 1 ? (
+            <button type="button" className="nav-next" onClick={() => go(1)}>
+              {t(`editor.flow.next.${screen}`)}
+            </button>
+          ) : null}
+        </footer>
+      )}
     </div>
 
-    {step !== 'preview' ? (
+    {screen === 'photos' || screen === 'details' ? (
       <aside className={peekOpen ? 'facsimile is-open' : 'facsimile'} aria-label={t('editor.facsimile')}>
         {peekOpen ? (
           <button type="button" className="peek-close" onClick={() => setPeekOpen(false)}>
@@ -1600,12 +1696,6 @@ export default function Editor() {
         />
       </aside>
     ) : null}
-
-    {step !== 'preview' ? (
-      <button type="button" className="peek-open" onClick={() => setPeekOpen(true)}>
-        {t('editor.peek')}
-      </button>
-    ) : null}
     </div>
   );
 }
@@ -1616,27 +1706,35 @@ interface CategoryProps {
 }
 
 /**
- * The first question, and the one that decides the rest of the flow — a
- * vehicle gets a plate step and a property does not.
- *
- * The list comes from the schema registry rather than being written out here,
- * so a third category appears in this picker by existing.
+ * Apartment or car: two big buttons with a drawing each, at the top of the
+ * first screen. The list comes from the schema registry, so a third
+ * category appears here by existing.
  */
 function CategoryStep({ chosen, onChoose }: CategoryProps) {
   return (
-    <ul className="choices">
-      {LISTING_CATEGORIES.map((category) => (
-        <li key={category}>
-          <button
-            type="button"
-            className={category === chosen ? 'choice chosen' : 'choice'}
-            aria-pressed={category === chosen}
-            onClick={() => onChoose(category)}
-          >
-            {schemaFor(category).label}
-          </button>
-        </li>
-      ))}
-    </ul>
+    <div className="kind">
+      <p className="kind-question">{t('editor.flow.kindQuestion')}</p>
+      <ul className="kind-choices">
+        {LISTING_CATEGORIES.map((category) => (
+          <li key={category}>
+            <button
+              type="button"
+              className={category === chosen ? 'kind-choice chosen' : 'kind-choice'}
+              aria-pressed={category === chosen}
+              onClick={() => onChoose(category)}
+            >
+              <svg viewBox="0 0 48 48" aria-hidden="true" className="kind-icon">
+                {category === 'vehicle' ? (
+                  <path d="M8 30l4-10c1-2 3-3 5-3h14c2 0 4 1 5 3l4 10v7h-5v-3H13v3H8v-7zm7-1a3 3 0 100 .1zm18 0a3 3 0 100 .1zM14 26h20l-3-7H17l-3 7z" />
+                ) : (
+                  <path d="M24 8L6 22h5v18h10V30h6v10h10V22h5L24 8z" />
+                )}
+              </svg>
+              <span>{schemaFor(category).label}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

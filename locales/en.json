@@ -626,6 +626,50 @@
       "close": "",
       "failed": "",
       "signIn": ""
+    },
+    "flow": {
+      "dot": {
+        "photos": "",
+        "details": "",
+        "ready": "",
+        "publish": ""
+      },
+      "photos": {
+        "title": "",
+        "lead": ""
+      },
+      "details": {
+        "title": "",
+        "lead": ""
+      },
+      "ready": {
+        "title": "",
+        "lead": ""
+      },
+      "publish": {
+        "title": "",
+        "lead": ""
+      },
+      "next": {
+        "photos": "",
+        "details": "",
+        "ready": ""
+      },
+      "kindQuestion": "",
+      "uploadingNote": "",
+      "more": "",
+      "moreHintProperty": "",
+      "moreHintVehicle": "",
+      "previewLabel": "",
+      "textTitle": "",
+      "designTitle": "",
+      "designNow": "",
+      "changeDesign": "",
+      "missingTitle": "",
+      "fix": "",
+      "addPhotosBig": "",
+      "photoTips": "",
+      "completeProfile": ""
     }
   },
   "home": {
