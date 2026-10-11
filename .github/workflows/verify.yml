@@ -273,7 +273,7 @@ jobs:
         working-directory: web
         run: npx playwright install --with-deps chromium
 
-      - name: Speed on a cheap phone (layout shift blocks)
+      - name: Speed on a cheap phone (load time, long tasks and layout shift block)
         working-directory: web
         run: npx playwright test speed
 
