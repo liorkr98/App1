@@ -39,8 +39,14 @@
   // web/dist/server/entry.mjs was not found." Wrangler itself still runs
   // this command on deploy / versions upload. Skip when the dashboard (or
   // a local astro build) already produced the Worker.
+  //
+  // bind-worker-secrets runs first. The dashboard list "Variables and
+  // secrets" under Build is the build environment only. DEEPSEEK_API_KEY
+  // and SUPABASE_SERVICE_ROLE_KEY have to be Worker secrets or the request
+  // never sees them. The script copies them across when Workers Builds
+  // provides them, and does nothing on a laptop.
   "build": {
-    "command": "test -f web/dist/server/entry.mjs || npm run build"
+    "command": "node scripts/bind-worker-secrets.mjs && (test -f web/dist/server/entry.mjs || npm run build)"
   },
 
   "observability": {
