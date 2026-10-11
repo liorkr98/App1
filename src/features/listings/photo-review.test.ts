@@ -21,6 +21,10 @@ describe('parsePhotoReview', () => {
     });
     assert.equal(parsePhotoReview({ room: 'ballroom', issues: ['nope'], tip: 'sing' }), undefined);
     assert.equal(parsePhotoReview('dark'), undefined);
+    assert.deepEqual(
+      parsePhotoReview('{"room":"balcony","confidence":0.9,"issues":[],"score":5}'),
+      { room: 'balcony', confidence: 0.9, issues: [], score: 5 },
+    );
   });
 });
 

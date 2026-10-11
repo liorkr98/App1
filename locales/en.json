@@ -647,6 +647,8 @@
     },
     "review": {
       "waiting": "",
+      "looking": "",
+      "noKey": "",
       "cover": "",
       "rotate": "",
       "issues": {

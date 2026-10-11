@@ -7,7 +7,8 @@ async function sha256Hex(text: string): Promise<string> {
 }
 
 /**
- * Asks the Mac to look at this set of photographs, once.
+ * Queues a review_photos job. The editor does not call this: it asks
+ * /api/photo-review, and DeepSeek looks at the photograph there.
  *
  * `enqueue_job` resets a matching row to queued. A job that already exists
  * for this hash is left alone, so opening the editor does not start the

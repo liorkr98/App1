@@ -1,10 +1,26 @@
 /**
- * What the Mac may write about a photograph, and nothing else.
+ * What DeepSeek may write about a photograph, and nothing else.
  *
  * Hebrew is not in here. The model returns one of these keys; the editor
  * reads the sentence from locales/. An answer that is not one of these keys
  * is dropped, never guessed into a label.
+ *
+ * The picture goes to `deepseek-flash` on the Worker, with the same
+ * DEEPSEEK_API_KEY as the description. The system text has to say "json"
+ * and show an example, which is what that API requires for JSON output.
  */
+
+export const PHOTO_REVIEW_SYSTEM = [
+  'You label one real-estate photograph. Reply with json only.',
+  'Example: {"room":"kitchen","confidence":0.8,"issues":["dark"],"tip":"turnOnLight","score":3}',
+  'room: living, kitchen, bedroom, bathroom, balcony, outdoor, or other.',
+  'confidence: a number from 0 to 1.',
+  'issues: any of dark, blurry, tilted, sideways, portraitCover, clutter, person, documents, plate, blownWindow, tooClose.',
+  'tip: one of openCurtain, stepBack, turnOnLight, straighten, retake, hidePlate, clearClutter.',
+  'score: an integer from 1 to 5. 5 is the best cover photograph.',
+].join(' ');
+
+export const PHOTO_REVIEW_USER = 'Label this photograph.';
 
 import { isPhotoRoom, type PhotoRoom } from './photo-rooms.js';
 
@@ -49,8 +65,17 @@ const tipSet = new Set<string>(REVIEW_TIPS);
 
 /** A model answer. Undefined means no label and no advice. */
 export function parsePhotoReview(value: unknown): PhotoReview | undefined {
-  if (typeof value !== 'object' || value === null) return undefined;
-  const record = value as Record<string, unknown>;
+  let parsed: unknown = value;
+  if (typeof parsed === 'string') {
+    const text = parsed.trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      return undefined;
+    }
+  }
+  if (typeof parsed !== 'object' || parsed === null) return undefined;
+  const record = parsed as Record<string, unknown>;
   const issues = Array.isArray(record.issues)
     ? record.issues.filter((item): item is ReviewIssue => typeof item === 'string' && issueSet.has(item))
     : [];

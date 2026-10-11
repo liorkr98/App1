@@ -10,6 +10,10 @@ import type { EditorPhoto } from './PhotosStep';
 interface Props {
   listingId: string | undefined;
   photos: readonly EditorPhoto[];
+  /** looking: DeepSeek is reading a photograph. no_key: the Worker has no key. */
+  status?: 'idle' | 'looking' | 'no_key';
+  /** Bumped when a photograph's advice has been stored. */
+  refreshKey?: number;
   onLabel: (id: string, room: PhotoRoom) => void;
   onCover: (id: string) => void;
   onRotate: (id: string) => void;
@@ -24,14 +28,11 @@ interface Row {
   score: number | null;
 }
 
-const WAIT_MS = 3 * 60 * 1000;
-
 /**
- * Advice from the Mac, when it is on. It never blocks a step. A room the
- * agent already named is left alone.
+ * Advice from DeepSeek. It never blocks a step. A room the agent already
+ * named is left alone.
  */
-export function PhotoAdvice({ listingId, photos, onLabel, onCover, onRotate }: Props) {
-  const [waiting, setWaiting] = useState(false);
+export function PhotoAdvice({ listingId, photos, status = 'idle', refreshKey = 0, onLabel, onCover, onRotate }: Props) {
   const [rows, setRows] = useState<Row[]>([]);
   const applied = useRef(new Set<string>());
 
@@ -46,18 +47,6 @@ export function PhotoAdvice({ listingId, photos, onLabel, onCover, onRotate }: P
         .select('photo_path, room, room_confidence, issues, tip, score')
         .eq('listing_id', listingId);
       if (!stopped && Array.isArray(data)) setRows(data as Row[]);
-
-      const { data: jobs } = await client
-        .from('jobs')
-        .select('status, created_at')
-        .eq('listing_id', listingId)
-        .eq('job_type', 'review_photos')
-        .eq('status', 'queued');
-      const old = (jobs ?? []).some((job) => {
-        const created = Date.parse(String((job as { created_at?: string }).created_at ?? ''));
-        return Number.isFinite(created) && Date.now() - created > WAIT_MS;
-      });
-      if (!stopped) setWaiting(old);
     };
 
     void look();
@@ -66,7 +55,7 @@ export function PhotoAdvice({ listingId, photos, onLabel, onCover, onRotate }: P
       stopped = true;
       window.clearInterval(timer);
     };
-  }, [listingId]);
+  }, [listingId, refreshKey]);
 
   useEffect(() => {
     for (const photo of photos) {
@@ -97,7 +86,8 @@ export function PhotoAdvice({ listingId, photos, onLabel, onCover, onRotate }: P
 
   return (
     <div className="photo-advice">
-      {waiting ? <p className="field-hint">{t('editor.review.waiting')}</p> : null}
+      {status === 'looking' ? <p className="field-hint">{t('editor.review.looking')}</p> : null}
+      {status === 'no_key' ? <p className="field-hint">{t('editor.review.noKey')}</p> : null}
       {photos.map((photo) => {
         const row = photo.publicUrl ? rows.find((item) => photo.publicUrl?.includes(item.photo_path)) : undefined;
         const review = row

@@ -35,7 +35,6 @@ import { coarseOrigin } from '@/features/sun/anchor';
 import { areaKey, areaSettled, requestArea, type AreaClientStatus } from '../../lib/area-request';
 import { allPlaces, type AreaPlaces } from '@/features/listings/area-note';
 import { stripAndResize, uploadDerived } from '../../lib/listing-photo';
-import { enqueuePhotoReview } from '../../lib/review-job';
 import { loadListing, publishListing, saveListing } from '../../lib/listing-save';
 import { loadProfile } from '../../lib/profile';
 import { recordEditorEvent } from '../../lib/editor-events';
@@ -841,6 +840,8 @@ export default function Editor() {
   };
 
   const reviewKey = useRef('');
+  const [photoCheck, setPhotoCheck] = useState<'idle' | 'looking' | 'no_key'>('idle');
+  const [adviceTick, setAdviceTick] = useState(0);
   const publicPhotoKey = photos.flatMap((photo) => (photo.publicUrl ? [photo.publicUrl] : [])).join('\n');
   useEffect(() => {
     const id = savedRow?.id;
@@ -848,7 +849,38 @@ export default function Editor() {
       return;
     }
     reviewKey.current = publicPhotoKey;
-    void enqueuePhotoReview(id, publicPhotoKey.split('\n')).catch(() => undefined);
+    setPhotoCheck('looking');
+    void (async () => {
+      try {
+        const { data } = await supabase().auth.getSession();
+        const token = data.session?.access_token;
+        if (!token) {
+          setPhotoCheck('idle');
+          return;
+        }
+        await saveListing(id, stateRef.current, photosRef.current, extrasRef.current).catch(() => undefined);
+        let remaining = 1;
+        let previous = Number.POSITIVE_INFINITY;
+        let reason = '';
+        for (let round = 0; remaining > 0 && remaining < previous && round < 25; round += 1) {
+          previous = remaining;
+          const response = await fetch('/api/photo-review', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ listingId: id }),
+          });
+          const body = (await response.json().catch(() => ({}))) as { remaining?: unknown; reason?: unknown };
+          reason = typeof body.reason === 'string' ? body.reason : '';
+          if (!response.ok || reason === 'no_key' || reason === 'no_answer') break;
+          remaining = typeof body.remaining === 'number' ? body.remaining : 0;
+          setAdviceTick((tick) => tick + 1);
+        }
+        setPhotoCheck(reason === 'no_key' ? 'no_key' : 'idle');
+        setAdviceTick((tick) => tick + 1);
+      } catch {
+        setPhotoCheck('idle');
+      }
+    })();
   }, [publicPhotoKey, savedRow?.id, signedIn]);
 
   const addressKey = areaKey(state.city, state.street);
@@ -1457,6 +1489,8 @@ export default function Editor() {
                 <PhotoAdvice
                   listingId={savedRow?.id}
                   photos={photos}
+                  status={photoCheck}
+                  refreshKey={adviceTick}
                   onLabel={labelRoom}
                   onCover={makeCover}
                   onRotate={rotatePhoto}

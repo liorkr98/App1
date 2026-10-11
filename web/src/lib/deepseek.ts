@@ -29,6 +29,14 @@ const DEFAULT_URL = 'https://api.deepseek.com/v1/chat/completions';
 export const DEEPSEEK_URL = DEFAULT_URL;
 
 /**
+ * The model that can see a photograph. `deepseek-chat` is the description
+ * model and refuses an image. `deepseek-flash` is the vision model on the
+ * same key. The legacy name `deepseek-v4-flash-vision-exp` is retired and
+ * served by this one.
+ */
+export const DEEPSEEK_VISION_MODEL = 'deepseek-flash';
+
+/**
  * Long enough for a paragraph, short enough that a hung provider does not
  * hold the agent's editor open. The fallback is already written by then.
  */
@@ -174,6 +182,69 @@ export async function deepseekParagraphStreaming(
     return full;
   } catch (error) {
     modelLog(failureCode(error));
+    return undefined;
+  }
+}
+
+export interface VisionRequest {
+  apiKey: string;
+  system: string;
+  /** The sentence next to the picture. The picture itself is `imageUrl`. */
+  user: string;
+  imageUrl: string;
+  baseUrl?: string;
+  timeoutMs?: number;
+}
+
+/**
+ * One photograph, one JSON answer, or undefined.
+ *
+ * Thinking is off: a room label does not need a chain of thought, and the
+ * default thinking pass is the slow expensive one. `detail: low` asks the
+ * model to look at a 512px copy. The key stays on the Worker.
+ */
+export async function deepseekVision(request: VisionRequest): Promise<string | undefined> {
+  try {
+    const response = await fetch(request.baseUrl ?? DEFAULT_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${request.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: DEEPSEEK_VISION_MODEL,
+        thinking: { type: 'disabled' },
+        response_format: { type: 'json_object' },
+        max_tokens: 300,
+        temperature: 0.2,
+        messages: [
+          { role: 'system', content: request.system },
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: request.user },
+              { type: 'image_url', image_url: { url: request.imageUrl, detail: 'low' } },
+            ],
+          },
+        ],
+      }),
+      signal: AbortSignal.timeout(request.timeoutMs ?? 20_000),
+    });
+
+    if (!response.ok) {
+      modelLog(`vision_http_${response.status}`);
+      return undefined;
+    }
+
+    const body = (await response.json()) as {
+      choices?: { message?: { content?: unknown } }[];
+    };
+    const content = body.choices?.[0]?.message?.content;
+    if (typeof content === 'string' && content.trim() !== '') return content;
+    modelLog('vision_empty');
+    return undefined;
+  } catch (error) {
+    modelLog(`vision_${failureCode(error)}`);
     return undefined;
   }
 }

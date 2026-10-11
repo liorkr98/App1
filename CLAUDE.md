@@ -71,6 +71,7 @@ sellers are secondary. When a design decision trades one against the other,
 | Worker | **None running.** Fly.io was deleted 6 Oct 2026 for cost — see below. `worker/` is kept, not deployed |
 | Share images | **Canvas, in the agent's browser** at publish: the WhatsApp card and the story image (`web/src/lib/share-images.ts`) |
 | Video | **Silent Ken Burns in the browser**, from photographs the page already loaded. An mp4 or webm exists only when the agent asks, encoded on their machine. A camera clip is kept only after its location boxes are renamed; the page never autoplays. No cloud encoder. |
+| Photo check | **DeepSeek** (`deepseek-flash`) on the Worker, the same `DEEPSEEK_API_KEY` as the description. It sees the photograph. Advice never blocks publish. |
 | Images | The browser's re-encode (EXIF stripped, resized). sharp lives in `worker/`, idle |
 | PDF | **The phone's print sheet.** `/a/{slug}/flyer/` has a "save as PDF" button |
 | Listing map | **MapLibre GL JS** 6, self-served from a versioned path, with **OpenFreeMap** tiles. Lazy: loaded only when the map section nears the screen. Decided 5 Oct 2026 — see below. |

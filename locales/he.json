@@ -646,6 +646,8 @@
     },
     "review": {
       "waiting": "בדיקת התמונות ממתינה למחשב.",
+      "looking": "DeepSeek מסתכל על התמונות.",
+      "noKey": "חסר המפתח DEEPSEEK_API_KEY בשרת",
       "cover": "תמונת שער",
       "rotate": "סיבוב",
       "issues": {

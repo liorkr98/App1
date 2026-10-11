@@ -1,58 +1,28 @@
-# Photo check on this Mac
+# Photo check
 
-One-time setup for the advice in the editor. The model runs here, not in
-the cloud. Nothing in this file is a secret.
-
-The check never blocks publish. When this computer is off, a job that has
-been waiting a few minutes shows as waiting in the editor.
-
-Expect roughly 30–90 seconds a photograph. Measure the first run. Do not
-treat that range as a promise.
-
-## 1. The model
-
-Install [Ollama](https://ollama.com), then:
+DeepSeek looks at each photograph from the editor. It is the same key the
+description already uses, on the Worker:
 
 ```bash
-ollama pull gemma3:4b
+npx wrangler secret put DEEPSEEK_API_KEY
 ```
 
-That is about 3.3 GB. This Mac is Intel, so it runs on the CPU.
+The model is `deepseek-flash`. It can see a picture. The description model
+does not. The key never goes in the browser and never goes in git.
 
-## 2. The key
+Apply these two files in the Supabase SQL editor, in order, if they are
+not there yet:
 
-Create `worker/.env` on this machine. It is gitignored. Never commit it.
+- `supabase/migrations/0037_photo_reviews.sql`
+- `supabase/migrations/0038_photo_review_owner.sql`
 
-```
-SUPABASE_URL=https://<project>.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=<the service role key>
-```
+Until they are applied, the editor still works and simply has no advice.
+Advice never blocks publish.
 
-The service role bypasses row security. It stays in this file.
+The check runs when the photographs are on the listing. One picture at a
+time. Hebrew on screen comes from `locales/`, not from the model.
 
-Apply `supabase/migrations/0037_photo_reviews.sql` in the Supabase SQL
-editor once. Until that runs, the editor still works and simply has no
-advice.
-
-## 3. Run it
-
-From the repo:
-
-```bash
-npm run review --prefix worker
-```
-
-The command claims every `review_photos` job, writes one row per
-photograph into `photo_reviews`, and exits when the queue is empty. It
-does not write the room onto the listing. The editor applies a room only
-when the agent has not named one.
-
-Ollama must be running (`ollama serve`, which the app usually starts).
-The default address is `http://127.0.0.1:11434`. `OLLAMA_MODEL` overrides
-`gemma3:4b` if you set it in the same `.env`.
-
-## 4. Optional: start with the Mac
-
-A LaunchAgent can run the same command when you log in. Point it at
-`npm run review --prefix worker` with this repo as the working directory.
-Leave it off if you would rather run the command yourself.
+`npm run review --prefix worker` drains a `review_photos` job that is
+already queued. It calls the same DeepSeek key from `worker/.env`
+(`DEEPSEEK_API_KEY`, plus `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`).
+That file is gitignored. The editor does not need that command.

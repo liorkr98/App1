@@ -1,5 +1,3 @@
-import sharp from 'sharp';
-
 import { db } from '../db.js';
 import { listingDerivedPath } from '../depth/allow.js';
 import { env } from '../env.js';
@@ -7,36 +5,27 @@ import { parseReviewAnswer } from '../photo-review.js';
 import { JobFailure, type JobContext } from '../types.js';
 
 /**
- * review_photos: one pass over the listing's public photographs, on the
- * owner's Mac, through Ollama. Nothing here writes listings.media, and an
- * answer that does not parse is skipped.
+ * review_photos: one pass over the listing's public photographs, through
+ * DeepSeek. The same key as the description. The editor normally asks
+ * /api/photo-review itself; this drain is for a job already sitting in the
+ * queue. Nothing here writes listings.media.
  *
- * Expect 30–90s a photograph. Measure the first run; do not assume it.
+ * The prompt matches src/features/listings/photo-review.ts. This package
+ * cannot import that file.
  */
 
-const MODEL = process.env.OLLAMA_MODEL ?? 'gemma3:4b';
-const OLLAMA = (process.env.OLLAMA_URL ?? 'http://127.0.0.1:11434').replace(/\/+$/, '');
+const MODEL = 'deepseek-flash';
+const ENDPOINT = (process.env.DEEPSEEK_API_URL ?? 'https://api.deepseek.com/v1/chat/completions').replace(/\/+$/, '');
 
-const PROMPT = [
-  'Label this real-estate photograph. Reply with JSON only.',
+const SYSTEM = [
+  'You label one real-estate photograph. Reply with json only.',
+  'Example: {"room":"kitchen","confidence":0.8,"issues":["dark"],"tip":"turnOnLight","score":3}',
   'room: living, kitchen, bedroom, bathroom, balcony, outdoor, or other.',
   'confidence: a number from 0 to 1.',
   'issues: any of dark, blurry, tilted, sideways, portraitCover, clutter, person, documents, plate, blownWindow, tooClose.',
   'tip: one of openCurtain, stepBack, turnOnLight, straighten, retake, hidePlate, clearClutter.',
   'score: an integer from 1 to 5. 5 is the best cover photograph.',
 ].join(' ');
-
-const FORMAT = {
-  type: 'object',
-  properties: {
-    room: { type: 'string' },
-    confidence: { type: 'number' },
-    issues: { type: 'array', items: { type: 'string' } },
-    tip: { type: 'string' },
-    score: { type: 'integer' },
-  },
-  required: ['issues', 'score'],
-};
 
 function photoUrls(media: unknown): string[] {
   if (typeof media !== 'object' || media === null) return [];
@@ -45,27 +34,42 @@ function photoUrls(media: unknown): string[] {
   return urls.filter((url): url is string => typeof url === 'string');
 }
 
-async function ask(image: string): Promise<unknown> {
+async function ask(imageUrl: string): Promise<unknown> {
+  const apiKey = process.env.DEEPSEEK_API_KEY;
+  if (!apiKey) throw new JobFailure('deepseek_unavailable', true);
   let response: Response;
   try {
-    response = await fetch(`${OLLAMA}/api/chat`, {
+    response = await fetch(ENDPOINT, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      signal: AbortSignal.timeout(180_000),
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${apiKey}`,
+      },
+      signal: AbortSignal.timeout(20_000),
       body: JSON.stringify({
         model: MODEL,
-        think: false,
-        stream: false,
-        format: FORMAT,
-        messages: [{ role: 'user', content: PROMPT, images: [image] }],
+        thinking: { type: 'disabled' },
+        response_format: { type: 'json_object' },
+        max_tokens: 300,
+        temperature: 0.2,
+        messages: [
+          { role: 'system', content: SYSTEM },
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: 'Label this photograph.' },
+              { type: 'image_url', image_url: { url: imageUrl, detail: 'low' } },
+            ],
+          },
+        ],
       }),
     });
   } catch {
-    throw new JobFailure('ollama_unavailable', true);
+    throw new JobFailure('deepseek_unavailable', true);
   }
-  if (!response.ok) throw new JobFailure('ollama_unavailable', true);
-  const body = (await response.json()) as { message?: { content?: unknown } };
-  return body.message?.content;
+  if (!response.ok) throw new JobFailure('deepseek_unavailable', true);
+  const body = (await response.json()) as { choices?: { message?: { content?: unknown } }[] };
+  return body.choices?.[0]?.message?.content;
 }
 
 export async function reviewPhotos({ job, progress }: JobContext): Promise<Record<string, unknown>> {
@@ -80,25 +84,7 @@ export async function reviewPhotos({ job, progress }: JobContext): Promise<Recor
   let reviewed = 0;
   let skipped = 0;
   for (const [index, photo] of paths.entries()) {
-    let bytes: Buffer;
-    try {
-      const response = await fetch(photo.url);
-      if (!response.ok) {
-        skipped += 1;
-        continue;
-      }
-      bytes = Buffer.from(await response.arrayBuffer());
-    } catch {
-      skipped += 1;
-      continue;
-    }
-
-    const shrunk = await sharp(bytes)
-      .rotate()
-      .resize(768, 768, { fit: 'inside', withoutEnlargement: true })
-      .jpeg({ quality: 80 })
-      .toBuffer();
-    const parsed = parseReviewAnswer(await ask(shrunk.toString('base64')));
+    const parsed = parseReviewAnswer(await ask(photo.url));
     if (!parsed) {
       skipped += 1;
       continue;
