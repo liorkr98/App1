@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "test": "tsc --outDir test-build && node --test \"test-build/**/*.test.js\"",
     "start": "node dist/index.js",
-    "dev": "node --watch src/index.ts"
+    "dev": "node --watch src/index.ts",
+    "review": "tsc -p tsconfig.build.json && node --env-file=.env dist/review.js"
   },
   "dependencies": {
     "@huggingface/transformers": "4.3.0",

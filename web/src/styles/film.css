@@ -1,0 +1,90 @@
+/*
+  Silent Ken Burns over photographs the page already loaded.
+
+  direction: ltr because a pan is a camera move. Motion runs only when the
+  viewer allows it and, on a listing, only after they check נגן. The first
+  still starts visible at scale 1. Fade keyframes assume the fade is a
+  quarter of a still (ken-burns.ts).
+*/
+
+.film {
+  position: relative;
+  direction: ltr;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  background: var(--stone, #e7e1d6);
+}
+
+.film-still {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  opacity: 0;
+  scale: 1;
+  --show: film-show;
+  --move: film-in;
+}
+
+.film-still.is-first { opacity: 1; }
+
+/* Beats `.gallery img { aspect-ratio: 4/3 }` and template overrides of it. */
+.gallery .film .film-still { aspect-ratio: auto; }
+
+.film-tile { grid-column: 1 / -1; }
+
+.film-play {
+  position: absolute;
+  z-index: 2;
+  inset-block-end: 0.75rem;
+  inset-inline-start: 0.75rem;
+  margin: 0;
+  padding: 0.4rem 0.8rem;
+  border-radius: 99px;
+  background: #fff;
+  color: #15140f;
+  font: 800 0.82rem / 1.5 inherit;
+  cursor: pointer;
+}
+
+.film-stop { display: none; }
+
+@media (prefers-reduced-motion: no-preference) {
+  #listing-film:checked ~ .film-play .film-go { display: none; }
+  #listing-film:checked ~ .film-play .film-stop { display: inline; }
+
+  #listing-film:checked ~ .film-still {
+    animation-name: var(--show), var(--move);
+    animation-duration: var(--s);
+    animation-delay: calc(var(--i) * (var(--s) - var(--d)));
+    animation-timing-function: linear, ease-in-out;
+    animation-iteration-count: 1;
+    animation-fill-mode: none;
+  }
+
+  @keyframes film-show {
+    0% { opacity: 0; }
+    25%, 75% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  @keyframes film-show-first {
+    0%, 75% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  @keyframes film-in {
+    to { scale: 1.12; }
+  }
+
+  @keyframes film-out {
+    from { scale: 1.12; }
+    to { scale: 1; }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .film-play,
+  #listing-film { display: none; }
+}

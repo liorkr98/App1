@@ -131,6 +131,9 @@
     "nextPhoto": "",
     "showAllPhotos": "",
     "currentPhoto": "",
+    "filmPlay": "",
+    "filmStop": "",
+    "filmCaption": "",
     "mapTitle": "",
     "mapAlt": "",
     "mapNavigate": "",
@@ -625,7 +628,51 @@
       "renew": "",
       "close": "",
       "failed": "",
-      "signIn": ""
+      "signIn": "",
+      "localOnly": "",
+      "onHost": ""
+    },
+    "film": {
+      "make": "",
+      "upload": "",
+      "working": "",
+      "failed": "",
+      "needSave": "",
+      "needPhotos": "",
+      "location": "",
+      "tooLong": "",
+      "tooBig": "",
+      "hevc": "",
+      "ready": ""
+    },
+    "review": {
+      "waiting": "",
+      "looking": "",
+      "noKey": "",
+      "cover": "",
+      "rotate": "",
+      "issues": {
+        "dark": "",
+        "blurry": "",
+        "tilted": "",
+        "sideways": "",
+        "portraitCover": "",
+        "clutter": "",
+        "person": "",
+        "documents": "",
+        "plate": "",
+        "blownWindow": "",
+        "tooClose": ""
+      },
+      "tips": {
+        "openCurtain": "",
+        "stepBack": "",
+        "turnOnLight": "",
+        "straighten": "",
+        "retake": "",
+        "hidePlate": "",
+        "clearClutter": ""
+      }
     },
     "flow": {
       "dot": {

@@ -1,0 +1,106 @@
+---
+import { FILM_FADE_SEC, FILM_STILL_SEC, filmClock, filmDuration, filmFrames } from '@/features/listings/ken-burns';
+import type { Image } from '@/types/listing';
+import type { ListingVideo } from '@/features/listings/rich-media';
+import { GALLERY_WIDTHS, largest } from '../lib/images';
+import { t } from '../lib/i18n';
+import '../styles/film.css';
+
+interface Props {
+  images: Image[];
+  video?: ListingVideo;
+  /** Hero: the phone's finished frame. Gallery: a tile with a play control. */
+  mode?: 'gallery' | 'hero';
+}
+
+const { images, video, mode = 'gallery' } = Astro.props;
+const frames = filmFrames(images.length);
+const seconds = video?.seconds ?? filmDuration(frames.length);
+const clock = filmClock(seconds);
+const hero = mode === 'hero';
+
+/** Pan keyframes stay off pages that never pan, so the heavy listing stays under 900KB. */
+const moveOf = (motion: string) =>
+  motion === 'out' ? 'film-out' : motion === 'panRight' ? 'film-pan-right' : motion === 'panLeft' ? 'film-pan-left' : '';
+
+const stillStyle = (motion: string, index: number) => {
+  const move = moveOf(motion);
+  return `--i:${index}${index === 0 ? ';--show:film-show-first' : ''}${move ? `;--move:${move}` : ''}`;
+};
+
+const motions = new Set(frames.map((frame) => frame.motion));
+const extra = [
+  motions.has('panRight')
+    ? '@keyframes film-pan-right{0%{translate:0;scale:1}20%{translate:0;scale:1.08}to{translate:6%;scale:1.08}}'
+    : '',
+  motions.has('panLeft')
+    ? '@keyframes film-pan-left{0%{translate:0;scale:1}20%{translate:0;scale:1.08}to{translate:-6%;scale:1.08}}'
+    : '',
+  video
+    ? '.film-tile video{display:block;inline-size:100%;max-block-size:70svh;object-fit:contain;background:#1c1917}'
+    : '',
+].filter(Boolean);
+const extraCss = extra.length > 0 ? `<style>${extra.join('')}</style>` : '';
+---
+
+{extraCss ? <Fragment set:html={extraCss} /> : null}
+
+{hero && frames.length > 0 && (
+  <div class="film hm-film" style={`--s:${FILM_STILL_SEC}s;--d:${FILM_FADE_SEC}s`}>
+    {frames.map((frame) => {
+      const image = images[frame.index];
+      return image ? (
+        <img
+          class={`film-still${frame.index === 0 ? ' is-first' : ''}`}
+          style={stillStyle(frame.motion, frame.index)}
+          src={largest(image, GALLERY_WIDTHS)}
+          alt=""
+          width={image.width}
+          height={image.height}
+        />
+      ) : null;
+    })}
+  </div>
+)}
+
+{!hero && (video || frames.length > 0) && (
+  <figure class="film-tile">
+    {video ? (
+      <video
+        controls
+        playsinline
+        preload="none"
+        poster={video.posterUrl}
+        width={video.width}
+        height={video.height}
+        src={video.url}
+      />
+    ) : (
+      <div class="film" style={`--s:${FILM_STILL_SEC}s;--d:${FILM_FADE_SEC}s`}>
+        <input class="visually-hidden" type="checkbox" id="listing-film" />
+        {frames.map((frame) => {
+          const image = images[frame.index];
+          return image ? (
+            <img
+              class={`film-still${frame.index === 0 ? ' is-first' : ''}`}
+              style={stillStyle(frame.motion, frame.index)}
+              src={largest(image, GALLERY_WIDTHS)}
+              alt=""
+              width={image.width}
+              height={image.height}
+            />
+          ) : null;
+        })}
+        <label class="film-play" for="listing-film">
+          <span class="film-go">{t('listing.filmPlay')}</span>
+          <span class="film-stop">{t('listing.filmStop')}</span>
+        </label>
+      </div>
+    )}
+    <figcaption>
+      {t('listing.filmCaption')}
+      {' '}
+      <bdi>{clock}</bdi>
+    </figcaption>
+  </figure>
+)}

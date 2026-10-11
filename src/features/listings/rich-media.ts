@@ -61,6 +61,54 @@ export function spinFrames<T>(frames: readonly T[] | undefined): T[] {
  * worker records both; a map for a cover that has since been replaced is
  * refused rather than drawn under the wrong picture.
  */
+export const VIDEO_CODECS = ['h264', 'hevc', 'vp8', 'vp9'] as const;
+export type StoredVideoCodec = (typeof VIDEO_CODECS)[number];
+
+export interface ListingVideo {
+  url: string;
+  posterUrl?: string;
+  width: number;
+  height: number;
+  seconds: number;
+  codec: StoredVideoCodec;
+}
+
+/**
+ * A video the page may play. Wrong host, wrong folder, a missing bound, or
+ * an unnamed codec means no video — the same drop as a depth map for the
+ * wrong cover. The file has to live under this listing's `browser/` prefix,
+ * which is the only place the agent's browser may write.
+ */
+export function cleanVideo(value: unknown, listingId: string): ListingVideo | undefined {
+  if (typeof value !== 'object' || value === null) return undefined;
+  const record = value as Record<string, unknown>;
+  if (typeof record.url !== 'string' || !record.url.startsWith('https://')) return undefined;
+  let url: URL;
+  try {
+    url = new URL(record.url);
+  } catch {
+    return undefined;
+  }
+  if (!url.pathname.includes(`/${listingId}/browser/`)) return undefined;
+  const width = num(record.width);
+  const height = num(record.height);
+  const seconds = num(record.seconds);
+  if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0 || width > 4000 || height > 4000) {
+    return undefined;
+  }
+  if (!Number.isFinite(seconds) || seconds <= 0 || seconds > 60) return undefined;
+  if (typeof record.codec !== 'string' || !(VIDEO_CODECS as readonly string[]).includes(record.codec)) return undefined;
+  const poster = typeof record.posterUrl === 'string' && record.posterUrl.startsWith('https://') ? record.posterUrl : undefined;
+  return {
+    url: record.url,
+    width,
+    height,
+    seconds: Math.round(seconds),
+    codec: record.codec as StoredVideoCodec,
+    ...(poster ? { posterUrl: poster } : {}),
+  };
+}
+
 export function depthFor(depth: unknown, coverUrl: string): string | undefined {
   if (typeof depth !== 'object' || depth === null) return undefined;
   const record = depth as Record<string, unknown>;

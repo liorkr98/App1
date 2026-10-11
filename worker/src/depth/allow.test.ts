@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { publicDerivedUrl } from './allow.js';
+import { listingDerivedPath, publicDerivedUrl } from './allow.js';
 
 const SUPABASE = 'https://abc.supabase.co';
 
@@ -24,5 +24,17 @@ describe('publicDerivedUrl', () => {
     ]) {
       assert.equal(publicDerivedUrl(bad, SUPABASE), undefined, String(bad));
     }
+  });
+});
+
+describe('listingDerivedPath', () => {
+  it('keeps a file in this listing and refuses the next listing', () => {
+    const own = `${SUPABASE}/storage/v1/object/public/derived/l1/browser/cover.webp`;
+    assert.equal(listingDerivedPath(own, SUPABASE, 'l1'), 'l1/browser/cover.webp');
+    assert.equal(listingDerivedPath(own, SUPABASE, 'l2'), undefined);
+    assert.equal(
+      listingDerivedPath(`${SUPABASE}/storage/v1/object/public/derived/l1/depth/x.webp`, SUPABASE, 'l1'),
+      undefined,
+    );
   });
 });

@@ -2,7 +2,14 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { describe, it } from 'node:test';
 
-import { checkWebp, hashPortalToken, isDimension, isPortalToken, phoneUploadPath } from './phone-portal.js';
+import {
+  checkWebp,
+  hashPortalToken,
+  isDimension,
+  isPortalToken,
+  phoneReachableOrigin,
+  phoneUploadPath,
+} from './phone-portal.js';
 
 /** A RIFF/WEBP container from chunks, sizes and padding written as the spec says. */
 function webp(chunks: [string, number][]): Uint8Array {
@@ -32,6 +39,23 @@ describe('portal token', () => {
   it('hashes the way Postgres does: sha256 of the UTF-8 text, as hex', async () => {
     const token = '0123456789abcdef'.repeat(4);
     assert.equal(await hashPortalToken(token), createHash('sha256').update(token, 'utf8').digest('hex'));
+  });
+});
+
+describe('phoneReachableOrigin', () => {
+  it('keeps the public Worker and the custom domain', () => {
+    assert.equal(phoneReachableOrigin('https://besivov.liorkr98.workers.dev'), 'https://besivov.liorkr98.workers.dev');
+    assert.equal(phoneReachableOrigin('https://hasivuv.com/new/'), 'https://hasivuv.com');
+    assert.equal(phoneReachableOrigin('https://www.hasivuv.com'), 'https://www.hasivuv.com');
+  });
+
+  it('refuses a machine the phone cannot see', () => {
+    assert.equal(phoneReachableOrigin('http://localhost:4321'), undefined);
+    assert.equal(phoneReachableOrigin('http://127.0.0.1:4321'), undefined);
+    assert.equal(phoneReachableOrigin('https://192.168.1.8:4321'), undefined);
+    assert.equal(phoneReachableOrigin('https://besivov.liorkr98.works.dev'), undefined);
+    assert.equal(phoneReachableOrigin('http://besivov.liorkr98.workers.dev'), undefined);
+    assert.equal(phoneReachableOrigin('not a url'), undefined);
   });
 });
 

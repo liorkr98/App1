@@ -9,35 +9,24 @@ Neither half touches billing (CLAUDE.md §8).
 
 ---
 
-## 1. AI photo check, with the owner's Mac as the processor
+## 1. AI photo check
 
 ### Decided
-- **No paid vision API, no credits.** The owner's own computer runs a free
-  open model through **Ollama**. DeepSeek (the description model) cannot see
-  images.
-- **The machine is a Mac with an Intel chip**: CPU only, so a small model
-  (`gemma3:4b`, ≈3.3 GB) and a measured, honest speed — expect roughly
-  30–90 s per photo, to be measured on the first run, not assumed. If it is
-  too slow, the fallback is a room-only classifier.
+- **11 Oct 2026.** The connected DeepSeek key is the model that sees the
+  photographs. `deepseek-flash` accepts an image on that same key. The
+  description call stays on its own model. The key is the Worker secret
+  `DEEPSEEK_API_KEY`. Advice never blocks publish, and the wording on
+  screen comes from `locales/`.
 - **The AI labels rooms itself**, only on unlabelled photos and only when
   confident; the agent can change it; a room the agent set is never
   overwritten (`docs/PHOTO-TOUR.md` "Recognition, later").
 - **Advice never blocks publishing** — same rule as `photo-guidance.ts`.
 
 ### Design
-- **The queue already exists**: the `jobs` table, `enqueue_job` (callable by
-  the owner) and `claim_job` (service role), migrations 0003 and 0024.
-  - The editor enqueues `review_photos` after an upload batch.
-  - The job is keyed by the photo list, so the same set is never re-checked.
-- **`worker/` runs on the Mac** with a new handler,
-  `worker/src/handlers/review-photos.ts`. It runs only that job type, via
-  `npm run review --prefix worker`. For each job it:
-  1. reads the listing's photo URLs from the row;
-  2. checks that each URL is inside that listing's folder (§9);
-  3. downloads the EXIF-stripped public copies and shrinks them to ≈768 px;
-  4. calls Ollama on localhost with plain `fetch` (no npm dependency), with a
-     JSON-schema `format` and thinking off;
-  5. writes results per photo as they finish.
+- **The editor asks `/api/photo-review`.** The Worker holds the key, reads
+  the photograph from the listing row, and sends only a public file inside
+  that listing's `browser/` folder. One picture per request. Thinking is
+  off. The model looks at a 512px copy (`detail: low`).
 
   The model returns:
 
@@ -62,17 +51,12 @@ Neither half touches billing (CLAUDE.md §8).
   - issue chips with a retake tip;
   - "use as cover" on the best-scoring photo;
   - one-tap rotate for a sideways photo;
-  - "AI check: waiting for the computer" when the job is still unclaimed
-    after a few minutes, because the Mac is off.
+  - "DeepSeek מסתכל על התמונות" while a photograph is being read. A missing
+    key says so. Neither message blocks the next step.
 
   Room labels feed the room checklist (`photo-coverage.ts`).
-- **One-time owner setup** — to be written as `docs/LOCAL-AI.md`:
-  1. install Ollama and run `ollama pull gemma3:4b`;
-  2. create `worker/.env` on the Mac with the Supabase service key — the
-     owner creates it, it is never committed;
-  3. optionally, a launchd auto-start.
-
-  The migration is applied in the Supabase SQL editor.
+- **Setup** is `docs/LOCAL-AI.md`: the Worker secret, and migrations 0037
+  and 0038 in the SQL editor.
 
 ---
 

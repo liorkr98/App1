@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { describe, it } from 'node:test';
 
-import { cleanPlanRooms, depthFor, SPIN_MIN, spinFrames } from './rich-media.js';
+import { cleanPlanRooms, cleanVideo, depthFor, SPIN_MIN, spinFrames } from './rich-media.js';
 
 describe('cleanPlanRooms', () => {
   it('keeps rooms inside the plan, rounded', () => {
@@ -45,6 +45,25 @@ describe('depthFor', () => {
     assert.equal(depthFor(depth, 'https://x.test/c.webp'), 'https://x.test/d.webp');
     assert.equal(depthFor(depth, 'https://x.test/new-cover.webp'), undefined);
     assert.equal(depthFor({ url: 'javascript:x', cover: 'c' }, 'c'), undefined);
+  });
+});
+
+describe('cleanVideo', () => {
+  const video = {
+    url: 'https://cdn.test/storage/v1/object/public/derived/abc/browser/video-1.mp4',
+    posterUrl: 'https://cdn.test/storage/v1/object/public/derived/abc/browser/video-1.webp',
+    width: 1080,
+    height: 1920,
+    seconds: 15.2,
+    codec: 'h264',
+  };
+
+  it('keeps a file under this listing and drops anything else', () => {
+    assert.equal(cleanVideo(video, 'abc')?.seconds, 15);
+    assert.equal(cleanVideo(video, 'other'), undefined);
+    assert.equal(cleanVideo({ ...video, codec: 'gif' }, 'abc'), undefined);
+    assert.equal(cleanVideo({ ...video, seconds: 90 }, 'abc'), undefined);
+    assert.equal(cleanVideo({ ...video, url: 'http://cdn.test/abc/browser/v.mp4' }, 'abc'), undefined);
   });
 });
 

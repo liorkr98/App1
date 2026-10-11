@@ -11,6 +11,9 @@ import Site from '../layouts/Site.astro';
 import { TEMPLATE_IDS } from '@/types/listing';
 import { templateFits, templateSpec } from '@/features/templates/manifest';
 import '../styles/home.css';
+import '../styles/film.css';
+import Film from '../components/Film.astro';
+import { filmDuration } from '@/features/listings/ken-burns';
 
 /**
  * The homepage (היעד 2.0, plan §7.1). Onyx: the product demo is the page.
@@ -69,7 +72,7 @@ const wow = [
   // Built in P7 (the editor takes the frames, Showroom turns them); no demo
   // listing has a real sequence yet, so the tile says so without a link.
   { key: 'Spin', live: true, image: largest(golfListing.media.cover, GALLERY_WIDTHS) },
-  { key: 'Video', live: false, image: photoOf(1) },
+  { key: 'Video', live: true, href: '#hero', image: photoOf(1) },
   { key: 'Staging', live: false, image: photoOf(2) },
 ] as const;
 
@@ -82,7 +85,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
   description={t('home.subTagline')}
   og={{ image: ogImage, title: t('common.brand'), description: t('home.subTagline') }}
 >
-  <section class="hm-hero ls-grain">
+  <section class="hm-hero ls-grain" id="hero">
     <div class="hm-aurora" aria-hidden="true"></div>
     <div class="site-shell hm-hero-grid">
       <div class="hm-copy">
@@ -102,7 +105,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
       {/* Rests on the finished listing (state 3). The script plays the steps
           only when motion is allowed and the phone is on screen. */}
       <div class="hm-phone" role="img" aria-label={t('home.builderLabel')}>
-        <div class="hm-screen" data-builder data-state="3">
+        <div class="hm-screen" data-builder data-state="3" data-film-ms={Math.round(filmDuration(builderPhotos.length) * 1000)}>
           <p class="hm-step" data-step aria-hidden="true">
             <span data-n="0">{t('home.build1')}</span>
             <span data-n="1">{t('home.build2')}</span>
@@ -123,6 +126,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
               {image.room && <span class="hm-room">{t(`editor.rooms.${image.room}`)}</span>}
             </div>
           ))}
+          <Film images={builderPhotos} mode="hero" />
           <div class="hm-shade"></div>
           <div class="hm-ui">
             <p class="hm-ui-title">{titleLines.map((line) => <span><Prose text={line} /></span>)}</p>
@@ -307,7 +311,8 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
     // while it is on screen.
     const builder = document.querySelector<HTMLElement>('[data-builder]');
     if (builder && !still) {
-      const HOLD = [1500, 1900, 1900, 3400];
+      const filmMs = Number(builder.dataset.filmMs);
+      const HOLD = [1500, 1900, 1900, Number.isFinite(filmMs) && filmMs > 0 ? filmMs + 400 : 3400];
       let state = 3;
       let timer = 0;
       const step = () => {

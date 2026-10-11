@@ -15,7 +15,14 @@ export type JobStatus = 'queued' | 'processing' | 'done' | 'failed';
  * constraint in 0003_jobs.sql still permits them — deliberately left wide, so
  * that restoring the handlers is a code change and not a migration.
  */
-export type JobType = 'enhance_images' | 'generate_og' | 'render_pdf' | 'render_story' | 'depth_map' | 'render_card';
+export type JobType =
+  | 'enhance_images'
+  | 'generate_og'
+  | 'render_pdf'
+  | 'render_story'
+  | 'depth_map'
+  | 'render_card'
+  | 'review_photos';
 
 export interface Job {
   id: string;
