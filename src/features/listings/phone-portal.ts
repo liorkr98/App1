@@ -11,6 +11,38 @@ export function isPortalToken(value: unknown): value is string {
   return typeof value === 'string' && /^[0-9a-f]{64}$/.test(value);
 }
 
+/**
+ * Hosts a phone on a cellular network can open.
+ *
+ * The QR used to copy whatever host the editor was opened on. A laptop on
+ * localhost, or hasivuv.com before it has DNS, is a code the phone cannot
+ * reach — the browser says there is no server. The public Worker is the
+ * host that answers today; the custom domain joins this list the day it
+ * resolves (docs/DEPLOY.md).
+ */
+const PHONE_REACHABLE_HOSTS = new Set([
+  'besivov.liorkr98.workers.dev',
+  'hasivuv.com',
+  'www.hasivuv.com',
+]);
+
+/** Where the editor tells the agent to go when this host is not one of those. */
+export const PHONE_PUBLIC_EDITOR = 'https://besivov.liorkr98.workers.dev/new/';
+
+/** The origin a phone can open, or undefined when the QR would point at a private machine. */
+export function phoneReachableOrigin(origin: string): string | undefined {
+  let url: URL;
+  try {
+    url = new URL(origin);
+  } catch {
+    return undefined;
+  }
+  if (url.protocol !== 'https:' || url.username !== '' || url.password !== '') return undefined;
+  if (url.port !== '') return undefined;
+  if (!PHONE_REACHABLE_HOSTS.has(url.hostname)) return undefined;
+  return url.origin;
+}
+
 /** SHA-256 as lowercase hex — what 0036 stores, computed the same way. */
 export async function hashPortalToken(token: string): Promise<string> {
   const digest = await globalThis.crypto.subtle.digest('SHA-256', new TextEncoder().encode(token));

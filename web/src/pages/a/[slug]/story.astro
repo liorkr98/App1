@@ -72,7 +72,11 @@ const titleSize = flatTitle.length > 60 ? 72 : flatTitle.length > 36 ? 86 : 104;
         grid-template-rows: minmax(640px, 1fr) auto;
       }
       .st-photo { position: relative; overflow: hidden; }
-      .st-photo img { inline-size: 100%; block-size: 100%; object-fit: cover; display: block; }
+      .st-photo img { inline-size: 100%; block-size: 100%; object-fit: cover; display: block; scale: 1; }
+      @media (prefers-reduced-motion: no-preference) {
+        .st-photo img { animation: st-push 8s linear forwards; }
+        @keyframes st-push { from { scale: 1; } to { scale: 1.08; } }
+      }
       .st-photo::after {
         content: '';
         position: absolute;

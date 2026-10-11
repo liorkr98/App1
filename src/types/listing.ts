@@ -1,4 +1,4 @@
-import type { PlanRoom } from '@/features/listings/rich-media.js';
+import type { ListingVideo, PlanRoom } from '@/features/listings/rich-media.js';
 import type { LogoPlacement } from '@/features/agents/logo-placement.js';
 import type { ListingCategory } from '@/features/listings/schemas/index.js';
 import type { PhotoRoom } from '@/features/listings/photo-rooms.js';
@@ -402,6 +402,12 @@ export interface Media {
    * made from (rich-media.ts depthFor). Absent means a flat photograph.
    */
   depthUrl?: string;
+  /**
+   * One silent film, played only when a buyer taps. Absent means the page
+   * shows the CSS film over the photographs instead. Checked by cleanVideo:
+   * the file has to live under this listing's browser/ prefix.
+   */
+  video?: ListingVideo;
   /**
    * The designed WhatsApp card (1200 × 630) and the content key it was made
    * for (share-card.ts). The page uses it only while the key still matches.

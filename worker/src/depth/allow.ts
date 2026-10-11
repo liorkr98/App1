@@ -22,3 +22,16 @@ export function publicDerivedUrl(value: unknown, supabaseUrl: string): string | 
   if (url.pathname.includes('..') || url.username || url.password) return undefined;
   return url.href;
 }
+
+/**
+ * The object path inside `derived`, and only when it is this listing's
+ * `browser/` folder. A cover URL on the row is client-supplied.
+ */
+export function listingDerivedPath(value: unknown, supabaseUrl: string, listingId: string): string | undefined {
+  const href = publicDerivedUrl(value, supabaseUrl);
+  if (!href || listingId === '') return undefined;
+  const path = decodeURIComponent(new URL(href).pathname).slice('/storage/v1/object/public/derived/'.length);
+  const folder = `${listingId}/browser/`;
+  if (!path.startsWith(folder) || path.slice(folder.length).includes('/') || path.includes('..')) return undefined;
+  return path;
+}

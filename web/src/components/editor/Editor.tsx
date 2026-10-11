@@ -16,11 +16,11 @@ import {
 import { autoTitle } from '@/features/listings/auto-title';
 import { blankFacts, reconcileFacts } from '@/features/listings/fact-entry';
 import { photoCoverage } from '@/features/listings/photo-coverage';
-import { isPhotoRoom } from '@/features/listings/photo-rooms';
+import { isPhotoRoom, type PhotoRoom } from '@/features/listings/photo-rooms';
 import { LISTING_CATEGORIES, schemaFor } from '@/features/listings/schemas';
 import { NEW_LISTING_TEMPLATE } from '@/features/templates/manifest';
 import { suggestTemplate } from '@/features/templates/suggest';
-import { cleanPlanRooms } from '@/features/listings/rich-media';
+import { cleanPlanRooms, cleanVideo, type ListingVideo } from '@/features/listings/rich-media';
 import type { MediaExtras } from '../../lib/listing-row';
 import { groundedDescription, type CopyTone } from '@/features/listings/listing-copy';
 import { nextAgentDescription } from '@/features/listings/agent-copy';
@@ -35,6 +35,7 @@ import { coarseOrigin } from '@/features/sun/anchor';
 import { areaKey, areaSettled, requestArea, type AreaClientStatus } from '../../lib/area-request';
 import { allPlaces, type AreaPlaces } from '@/features/listings/area-note';
 import { stripAndResize, uploadDerived } from '../../lib/listing-photo';
+import { enqueuePhotoReview } from '../../lib/review-job';
 import { loadListing, publishListing, saveListing } from '../../lib/listing-save';
 import { loadProfile } from '../../lib/profile';
 import { recordEditorEvent } from '../../lib/editor-events';
@@ -52,7 +53,9 @@ import { PublishStep } from './PublishStep';
 import { DisclosuresStep } from './DisclosuresStep';
 import { FactsStep } from './FactsStep';
 import { Message } from './Message';
+import { FilmFile } from './FilmFile';
 import { PhonePortal, type InboxPhoto } from './PhonePortal';
+import { PhotoAdvice } from './PhotoAdvice';
 import { PhotoChecklist } from './PhotoChecklist';
 import { PhotosStep, type EditorPhoto } from './PhotosStep';
 import { PlateStep } from './PlateStep';
@@ -212,8 +215,12 @@ export default function Editor() {
    */
   const [plan, setPlan] = useState<PlanDraft | undefined>(undefined);
   const [spin, setSpin] = useState<SpinFrame[]>([]);
+  const [video, setVideo] = useState<ListingVideo | undefined>(undefined);
   const [extraUploading, setExtraUploading] = useState(false);
-  const extras = useMemo<MediaExtras>(() => ({ plan, spin }), [plan, spin]);
+  const extras = useMemo<MediaExtras>(
+    () => ({ plan, spin, ...(video ? { video } : {}) }),
+    [plan, spin, video],
+  );
   const extrasRef = useRef(extras);
   extrasRef.current = extras;
 
@@ -766,6 +773,84 @@ export default function Editor() {
     void uploadPending(next, state.category);
   };
 
+  const acceptVideo = (next: ListingVideo) => {
+    setVideo(next);
+    const id = savedRow?.id ?? listingId.current;
+    if (!id || !supabaseConfigured || !signedIn) return;
+    void saveListing(id, stateRef.current, photosRef.current, { ...extrasRef.current, video: next }).catch(
+      () => undefined,
+    );
+  };
+
+  const labelRoom = (id: string, room: PhotoRoom) => {
+    changePhotos(photosRef.current.map((photo) => (photo.id === id ? { ...photo, room } : photo)));
+  };
+
+  const makeCover = (id: string) => {
+    const current = photosRef.current;
+    const index = current.findIndex((photo) => photo.id === id);
+    if (index <= 0) return;
+    const next = current.slice();
+    const [picked] = next.splice(index, 1);
+    if (!picked) return;
+    next.unshift(picked);
+    changePhotos(next);
+  };
+
+  const rotatePhoto = (id: string) => {
+    const listing = savedRow?.id ?? listingId.current;
+    const source = photosRef.current.find((photo) => photo.id === id)?.publicUrl;
+    if (!listing || !source) return;
+    const image = new Image();
+    image.crossOrigin = 'anonymous';
+    image.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = image.naturalHeight;
+      canvas.height = image.naturalWidth;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      ctx.translate(canvas.width, 0);
+      ctx.rotate(Math.PI / 2);
+      ctx.drawImage(image, 0, 0);
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        void uploadDerived(listing, `rotate-${Date.now()}.webp`, {
+          blob,
+          width: canvas.width,
+          height: canvas.height,
+        }).then((uploaded) => {
+          if ('error' in uploaded) return;
+          changePhotos(
+            photosRef.current.map((photo) =>
+              photo.id === id
+                ? {
+                    ...photo,
+                    url: uploaded.url,
+                    publicUrl: uploaded.url,
+                    width: canvas.width,
+                    height: canvas.height,
+                    status: 'uploaded',
+                  }
+                : photo,
+            ),
+          );
+        });
+      }, 'image/webp', 0.9);
+    };
+    image.src = source;
+  };
+
+  const reviewKey = useRef('');
+  const publicPhotoKey = photos.flatMap((photo) => (photo.publicUrl ? [photo.publicUrl] : [])).join('\n');
+  useEffect(() => {
+    const id = savedRow?.id;
+    if (!id || !signedIn || !supabaseConfigured || publicPhotoKey === '' || reviewKey.current === publicPhotoKey) {
+      return;
+    }
+    reviewKey.current = publicPhotoKey;
+    void enqueuePhotoReview(id, publicPhotoKey.split('\n')).catch(() => undefined);
+  }, [publicPhotoKey, savedRow?.id, signedIn]);
+
   const addressKey = areaKey(state.city, state.street);
   const previewPlaces =
     surroundings && surroundings.key === addressKey ? surroundings.places : undefined;
@@ -894,6 +979,8 @@ export default function Editor() {
           cover?: { id?: string; url?: string; alt?: string; room?: string };
           gallery?: { id?: string; url?: string; alt?: string; room?: string }[];
         };
+        const savedVideo = cleanVideo((row.media as { video?: unknown }).video, listingId.current);
+        if (savedVideo) setVideo(savedVideo);
         const stored = [media.cover, ...(media.gallery ?? [])].filter(
           (image): image is { id?: string; url?: string; alt?: string; room?: string } =>
             Boolean(image?.url),
@@ -1023,6 +1110,8 @@ export default function Editor() {
             cover?: { id?: string; url?: string; alt?: string; room?: string };
             gallery?: { id?: string; url?: string; alt?: string; room?: string }[];
           };
+          const savedVideo = cleanVideo((row.media as { video?: unknown }).video, listingId.current);
+          if (savedVideo) setVideo(savedVideo);
           const stored = [media.cover, ...(media.gallery ?? [])].filter(
             (image): image is { id?: string; url?: string; alt?: string; room?: string } =>
               Boolean(image?.url),
@@ -1365,6 +1454,13 @@ export default function Editor() {
                   category={state.category}
                 />
                 <PhonePortal signedIn={signedIn} ensureListing={ensureListing} onPhotos={takeFromPhone} />
+                <PhotoAdvice
+                  listingId={savedRow?.id}
+                  photos={photos}
+                  onLabel={labelRoom}
+                  onCover={makeCover}
+                  onRotate={rotatePhoto}
+                />
                 <PhotoChecklist coverage={coverage} count={photos.length} />
                 {photosBusy ? <p className="hint">{t('editor.flow.uploadingNote')}</p> : null}
               </>
@@ -1492,6 +1588,7 @@ export default function Editor() {
                 areaPlaces={previewPlaces}
               />
             </div>
+            <FilmFile photos={photos} listingId={savedRow?.id} onVideo={acceptVideo} />
 
             <h2 className="ready-head">{t('editor.flow.textTitle')}</h2>
             <DescriptionStep

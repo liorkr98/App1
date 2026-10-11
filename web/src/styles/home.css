@@ -622,9 +622,42 @@
   justify-content: center;
 }
 
+/* The finished frame. Hidden until that state, and hidden when motion is
+   reduced, so the first paint stays the still cover. */
+.hm-film {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: transparent;
+  aspect-ratio: auto;
+}
+
+.hm-film .film-still {
+  aspect-ratio: auto;
+  object-fit: cover;
+}
+
 /* ---------- Motion ---------- */
 
 @media (prefers-reduced-motion: no-preference) {
+  .hm-screen[data-state='3'] .hm-film {
+    display: block;
+  }
+
+  .hm-screen[data-state='3'] .hm-photo:not([data-i='0']) {
+    z-index: 4;
+  }
+
+  .hm-screen[data-state='3'] .hm-film .film-still {
+    animation-name: var(--show), var(--move);
+    animation-duration: var(--s);
+    animation-delay: calc(var(--i) * (var(--s) - var(--d)));
+    animation-timing-function: linear, ease-in-out;
+    animation-fill-mode: none;
+    animation-iteration-count: 1;
+  }
+
   .hm-aurora {
     animation: hm-spin 48s linear infinite;
   }

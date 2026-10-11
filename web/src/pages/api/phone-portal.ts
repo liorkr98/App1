@@ -1,5 +1,7 @@
 import type { APIRoute } from 'astro';
 
+import { PHONE_PUBLIC_EDITOR, phoneReachableOrigin } from '@/features/listings/phone-portal';
+
 import { qrDrawing } from '../../lib/qr';
 import { supabaseAsUser, supabaseConfigured } from '../../lib/supabase';
 
@@ -40,6 +42,10 @@ export const POST: APIRoute = async ({ request, url }) => {
   }
   if (!listingId) return json({ error: 'bad_request' }, 400);
 
+  // Before a portal exists. A code for localhost is a phone that finds no server.
+  const reachable = phoneReachableOrigin(url.origin);
+  if (!reachable) return json({ error: 'local_only', openAt: PHONE_PUBLIC_EDITOR }, 409);
+
   const { data, error } = await supabaseAsUser(token).rpc('create_photo_portal', { p_listing_id: listingId });
   const made = data as { id?: unknown; token?: unknown; expiresAt?: unknown } | null;
   if (error || typeof made?.id !== 'string' || typeof made.token !== 'string' || typeof made.expiresAt !== 'string') {
@@ -47,5 +53,13 @@ export const POST: APIRoute = async ({ request, url }) => {
     return json({ error: 'unavailable' }, 502);
   }
 
-  return json({ id: made.id, expiresAt: made.expiresAt, qr: qrDrawing(`${url.origin}/up/#${made.token}`) }, 200);
+  return json(
+    {
+      id: made.id,
+      expiresAt: made.expiresAt,
+      host: new URL(reachable).host,
+      qr: qrDrawing(`${reachable}/up/#${made.token}`),
+    },
+    200,
+  );
 };

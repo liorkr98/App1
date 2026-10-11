@@ -3,7 +3,7 @@ import { isAccentId } from '@/features/agents/accents';
 import { toSeller, type AgentProfile } from '@/features/agents/profile';
 import { schemaFor } from '@/features/listings/schemas';
 import type { PhotoRoom } from '@/features/listings/photo-rooms';
-import type { PlanRoom } from '@/features/listings/rich-media';
+import type { ListingVideo, PlanRoom } from '@/features/listings/rich-media';
 import type { EditorPhoto } from '../components/editor/PhotosStep';
 
 /**
@@ -40,6 +40,7 @@ export interface SavedPhoto {
 export interface MediaExtras {
   plan?: { url: string; width: number; height: number; rooms: readonly PlanRoom[] } | undefined;
   spin?: readonly { id: string; url: string; width: number; height: number }[] | undefined;
+  video?: ListingVideo | undefined;
 }
 
 export function toMedia(photos: readonly SavedPhoto[], tourUrl?: string, extras: MediaExtras = {}) {
@@ -95,6 +96,7 @@ export function toMedia(photos: readonly SavedPhoto[], tourUrl?: string, extras:
     ...(extras.spin && extras.spin.length > 0
       ? { spin: extras.spin.map((frame) => ({ id: frame.id, url: frame.url, alt: '', width: frame.width, height: frame.height })) }
       : {}),
+    ...(extras.video ? { video: extras.video } : {}),
   };
 }
 

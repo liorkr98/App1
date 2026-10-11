@@ -21,7 +21,7 @@ import { descriptionOrArea } from '@/features/listings/neighborhood-note';
 import { OSM_ATTRIBUTION, type AreaPlace, type AreaPlaces } from '@/features/listings/area-note';
 import { applyPicks, rankEveryday } from '@/features/listings/place-rank';
 import { isPhotoRoom } from '@/features/listings/photo-rooms';
-import { cleanPlanRooms, depthFor, spinFrames } from '@/features/listings/rich-media';
+import { cleanPlanRooms, cleanVideo, depthFor, spinFrames } from '@/features/listings/rich-media';
 import { cardFor } from '@/features/listings/share-card';
 import { resolveTemplateId } from '@/features/templates/manifest';
 
@@ -186,7 +186,7 @@ function asImage(value: Record<string, unknown>, fallbackId: string) {
   };
 }
 
-function asMedia(value: unknown): Media | undefined {
+function asMedia(value: unknown, listingId: string): Media | undefined {
   if (!isRecord(value) || !isRecord(value.cover) || typeof value.cover.url !== 'string') {
     return undefined;
   }
@@ -213,6 +213,7 @@ function asMedia(value: unknown): Media | undefined {
       : [],
   );
   const depthUrl = depthFor(value.depth, cover.url);
+  const video = cleanVideo(value.video, listingId);
   const https = (url: unknown) => (typeof url === 'string' && url.startsWith('https://') ? url : undefined);
   const storyUrl = https(value.storyUrl);
   const flyerUrl = https(value.flyerUrl);
@@ -228,6 +229,7 @@ function asMedia(value: unknown): Media | undefined {
     ...(floorPlan ? { floorPlan } : {}),
     ...(spin.length > 0 ? { spin } : {}),
     ...(depthUrl ? { depthUrl } : {}),
+    ...(video ? { video } : {}),
     ...(storyUrl ? { storyUrl } : {}),
     ...(flyerUrl ? { flyerUrl } : {}),
     ...(card ? { card } : {}),
@@ -251,7 +253,7 @@ export function listingFromRow(row: ListingRow): Listing | undefined {
   }
 
   const seller = asSeller(row.seller);
-  const media = asMedia(row.media);
+  const media = asMedia(row.media, row.id);
   if (!seller || !media) return undefined;
 
   const enrichment = enrichmentFromRow(row);

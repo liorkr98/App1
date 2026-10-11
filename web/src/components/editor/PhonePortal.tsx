@@ -29,6 +29,7 @@ interface Props {
 interface Portal {
   id: string;
   expiresAt: string;
+  host: string;
 }
 
 const POLL_MS = 3_000;
@@ -52,6 +53,7 @@ export function PhonePortal({ signedIn, ensureListing, onPhotos }: Props) {
   const [portal, setPortal] = useState<Portal | undefined>(undefined);
   const [opening, setOpening] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [openAt, setOpenAt] = useState<string | undefined>(undefined);
   const [expired, setExpired] = useState(false);
   const [arrived, setArrived] = useState(0);
   const [qr, setQr] = useState<{ box: number; d: string } | undefined>(undefined);
@@ -65,6 +67,7 @@ export function PhonePortal({ signedIn, ensureListing, onPhotos }: Props) {
     if (!supabaseConfigured) return;
     setOpening(true);
     setFailed(false);
+    setOpenAt(undefined);
     setExpired(false);
     try {
       const listingId = await ensureListing();
@@ -80,10 +83,18 @@ export function PhonePortal({ signedIn, ensureListing, onPhotos }: Props) {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
         body: JSON.stringify({ listingId }),
       });
+      const made = (await response.json()) as Partial<Portal> & {
+        qr?: { box: number; d: string };
+        error?: string;
+        openAt?: string;
+      };
+      if (response.status === 409 && made.error === 'local_only') {
+        setOpenAt(typeof made.openAt === 'string' ? made.openAt : undefined);
+        return;
+      }
       if (!response.ok) throw new Error('no portal');
-      const made = (await response.json()) as Partial<Portal> & { qr?: { box: number; d: string } };
-      if (!made.id || !made.expiresAt || !made.qr) throw new Error('no portal');
-      const next = { id: made.id, expiresAt: made.expiresAt };
+      if (!made.id || !made.expiresAt || !made.host || !made.qr) throw new Error('no portal');
+      const next = { id: made.id, expiresAt: made.expiresAt, host: made.host };
       setQr(made.qr);
       setPortal(next);
     } catch {
@@ -161,6 +172,11 @@ export function PhonePortal({ signedIn, ensureListing, onPhotos }: Props) {
         <button type="button" className="secondary phone-open" onClick={() => void open()} disabled={opening}>
           {t('editor.phone.open')}
         </button>
+        {openAt ? (
+          <p className="field-error" role="alert">
+            <Message path="editor.phone.localOnly" values={{ url: openAt }} />
+          </p>
+        ) : null}
         {failed ? (
           <p className="field-error" role="alert">
             {t('editor.phone.failed')}
@@ -188,6 +204,9 @@ export function PhonePortal({ signedIn, ensureListing, onPhotos }: Props) {
       <div className="phone-portal-text">
         <h3>{t('editor.phone.title')}</h3>
         <p>{t('editor.phone.lead')}</p>
+        <p className="field-hint">
+          <Message path="editor.phone.onHost" values={{ host: portal.host }} />
+        </p>
         {expired ? (
           <p className="field-error" role="status">
             {t('editor.phone.expired')}

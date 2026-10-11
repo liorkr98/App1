@@ -271,7 +271,11 @@ const shareHref = whatsappShareUrl(
     tourUrl={listing.media.tourUrl}
   />
 
-  <Gallery images={galleryImages} />
+  <Gallery
+    images={galleryImages}
+    film={[listing.media.cover, ...galleryImages]}
+    video={listing.media.video}
+  />
 
   {/* Below the seller's own content, deliberately: what they came to publish
       comes first, and the enrichment is what makes the page worth forwarding
