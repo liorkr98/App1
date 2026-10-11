@@ -282,6 +282,21 @@ answer** — a preview URL per pull request is the only way to look at a change
 on a real device before it is merged, and this is a product whose whole output
 is a page viewed on a phone.
 
+### Build secrets are not the Worker
+
+Settings → Build → Variables and secrets is the build environment.
+`PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY` and `SITE_URL` belong
+there, because Astro inlines them. `DEEPSEEK_API_KEY` and
+`SUPABASE_SERVICE_ROLE_KEY` do not: the photo check and the phone upload
+read them from the Worker at request time. A key that lives only in the
+build list is invisible on the site (`no_key`, and phone upload
+`not_configured`).
+
+`scripts/bind-worker-secrets.mjs` runs at the start of `wrangler deploy` and
+copies those two names from the build environment onto the Worker. The
+runtime place for them, if you set them by hand, is Settings → Variables &
+Secrets, then Deploy.
+
 ### Why not just delete the Expo remnant
 
 Because it is the EAS project anchor, and EAS is the fallback CI. Removing it
