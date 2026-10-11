@@ -394,3 +394,80 @@ export function reachable(state: EditorState, step: Step): boolean {
   if (target === -1) return false;
   return target <= steps.indexOf(nextStep(state));
 }
+
+/* ============================ FOUR SCREENS ============================
+ *
+ * The editor as an agent sees it (11 Oct 2026). Eleven steps were eleven
+ * decisions for a person who wants a link to send; four screens, each with
+ * one big button, are what the owner asked for ("agents aren't very
+ * technological — it must be super simple").
+ *
+ * The STEPS above are kept, because the rules are written against them: a
+ * blocker still names the step it belongs to, and each step now lives inside
+ * one screen. Nothing about what blocks publishing changes here — only how
+ * it is grouped and shown.
+ *
+ *   photos   apartment or car, the photographs, upload from the phone
+ *   details  address, price, the few facts a page needs — and, for a flat,
+ *            the owner's consent; everything else under "more details"
+ *   ready    the text and the design, made automatically, with the preview
+ *   publish  one button, then WhatsApp
+ * ===================================================================== */
+
+export const SCREENS = ['photos', 'details', 'ready', 'publish'] as const;
+
+export type Screen = (typeof SCREENS)[number];
+
+const SCREEN_OF: Record<Step, Screen> = {
+  category: 'photos',
+  photos: 'photos',
+  details: 'details',
+  rooms: 'details',
+  plate: 'details',
+  consent: 'details',
+  facts: 'details',
+  disclosures: 'details',
+  description: 'ready',
+  template: 'ready',
+  preview: 'ready',
+  publish: 'publish',
+};
+
+/** The screen a step is shown on. */
+export function screenOf(step: Step): Screen {
+  return SCREEN_OF[step];
+}
+
+/**
+ * The step a screen reports itself as, for the editor's own event log
+ * (editor_events keys on step names; a new name would be a migration).
+ */
+export const SCREEN_STEP: Record<Screen, Step> = {
+  photos: 'photos',
+  details: 'details',
+  ready: 'description',
+  publish: 'publish',
+};
+
+/** What still stands between this screen and a publishable listing. */
+export function screenBlockers(state: EditorState, screen: Screen): Blocker[] {
+  return blockers(state).filter((blocker) => screenOf(blocker.step) === screen);
+}
+
+/**
+ * Where a returning agent lands: the screen holding the first thing left to
+ * do, or the publish screen when nothing is.
+ */
+export function nextScreen(state: EditorState): Screen {
+  return screenOf(nextStep(state));
+}
+
+/**
+ * The facts asked on the details screen itself. Everything else waits under
+ * "more details (optional)". The required ones are always here, so nothing
+ * that blocks publishing is ever hidden.
+ */
+export const ESSENTIAL_FACTS: Record<ListingCategory, readonly string[]> = {
+  property: ['rooms', 'area_sqm', 'floor', 'total_floors'],
+  vehicle: ['make', 'model', 'year', 'mileage', 'hand'],
+};

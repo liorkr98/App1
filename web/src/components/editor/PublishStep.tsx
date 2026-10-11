@@ -22,6 +22,10 @@ interface Props {
   areaCount?: number | undefined;
   /** The photo checklist's one-line form (PhotoChecklist). Advice only. */
   photoCheck?: ReactNode;
+  /** The "coming soon" add-ons shelf. Off in the four-screen flow: nothing
+      on it can be bought, and it is reading between the agent and the
+      button. */
+  shelf?: boolean;
   /**
    * Why the last publish attempt did not produce a link.
    *
@@ -72,6 +76,7 @@ export function PublishStep({
   areaStatus,
   areaCount,
   photoCheck,
+  shelf = true,
   failure,
   onPublish,
   onCopy,
@@ -213,6 +218,7 @@ export function PublishStep({
         it never stands between an agent and their link. It reads nothing
         and decides nothing (CLAUDE.md §8).
       */}
+      {shelf ? (
       <section className="addon-shelf" aria-labelledby="addon-shelf-title">
         <h3 id="addon-shelf-title">{t('editor.addons.title')}</h3>
         <ul>
@@ -225,6 +231,7 @@ export function PublishStep({
           ))}
         </ul>
       </section>
+      ) : null}
     </>
   );
 }

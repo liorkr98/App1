@@ -13,8 +13,16 @@ import {
   reachable,
   MAX_IMAGES,
   stepsFor,
+  ESSENTIAL_FACTS,
+  nextScreen,
+  SCREEN_STEP,
+  SCREENS,
+  screenBlockers,
+  screenOf,
+  STEPS,
   type EditorState,
 } from './editor.js';
+import { schemaFor } from './schemas/index.js';
 
 const fact = (key: string, label: string, value: Fact['value'], required = false): Fact => ({
   key,
@@ -457,5 +465,46 @@ describe('reachable — which steps can be opened', () => {
   it('never opens a step the category does not have', () => {
     assert.equal(reachable(ready(), 'plate'), false);
     assert.equal(reachable({ ...ready(), category: 'vehicle' }, 'rooms'), false);
+  });
+});
+
+describe('four screens (11 Oct 2026)', () => {
+  it('every step lives on one of the four screens, and every screen is used', () => {
+    for (const step of STEPS) assert.ok(SCREENS.includes(screenOf(step)), step);
+    assert.deepEqual(
+      SCREENS.filter((screen) => STEPS.some((step) => screenOf(step) === screen)),
+      [...SCREENS],
+    );
+    // Photographs first: the agent starts with what is on their phone.
+    assert.equal(screenOf('category'), 'photos');
+    assert.equal(screenOf('photos'), 'photos');
+  });
+
+  it('a blank listing lands on the photos screen, a finished one on publish', () => {
+    const { category: _category, ...blank } = ready();
+    assert.equal(nextScreen(blank), 'photos');
+    assert.equal(nextScreen(ready()), 'publish');
+  });
+
+  it('screen blockers are exactly the blockers of that screen', () => {
+    const state = { ...ready(), title: '', description: '' };
+    const all = blockers(state);
+    const grouped = SCREENS.flatMap((screen) => screenBlockers(state, screen));
+    assert.equal(grouped.length, all.length, 'no blocker is lost between screens');
+    assert.ok(screenBlockers(state, 'details').some((blocker) => blocker.code === 'titleMissing'));
+    assert.ok(screenBlockers(state, 'ready').some((blocker) => blocker.code === 'descriptionEmpty'));
+  });
+
+  it('the required facts are always on the details screen itself', () => {
+    for (const category of ['property', 'vehicle'] as const) {
+      const required = schemaFor(category).facts.filter((fact) => fact.required).map((fact) => fact.key);
+      for (const key of required) {
+        assert.ok(ESSENTIAL_FACTS[category].includes(key), `${category}.${key} is required but hidden under more`);
+      }
+    }
+  });
+
+  it('each screen reports itself as a step the event log already knows', () => {
+    for (const screen of SCREENS) assert.ok(STEPS.includes(SCREEN_STEP[screen]));
   });
 });

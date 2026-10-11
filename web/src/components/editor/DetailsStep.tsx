@@ -1,9 +1,15 @@
+import type { ReactNode } from 'react';
+
 import type { ListingCategory } from '@/features/listings/schemas';
 
 import { num } from '../../lib/format';
 import type { AreaClientStatus } from '../../lib/area-request';
 import { t } from '../../lib/i18n';
 import { AreaLine } from './AreaLine';
+
+export type DetailField = 'title' | 'price' | 'priceNote' | 'city' | 'street';
+
+const ALL_FIELDS: readonly DetailField[] = ['title', 'price', 'priceNote', 'city', 'street'];
 
 interface Props {
   category: ListingCategory;
@@ -18,6 +24,12 @@ interface Props {
   /** Where the neighbourhood lookup for this address stands. */
   areaStatus?: AreaClientStatus | undefined;
   areaCount?: number | undefined;
+  /**
+   * Which fields, in which order (11 Oct 2026). The details screen asks the
+   * address and the price; the title (made automatically) and the price
+   * note wait under "more details". Defaults to every field.
+   */
+  fields?: readonly DetailField[];
   onChange: (patch: {
     title?: string;
     price?: number;
@@ -62,13 +74,14 @@ export function DetailsStep({
   cityError = false,
   areaStatus,
   areaCount,
+  fields = ALL_FIELDS,
   onChange,
 }: Props) {
   const isProperty = category === 'property';
 
-  return (
-    <>
-      <div className="field">
+  const blocks: Record<DetailField, ReactNode> = {
+    title: (
+      <div className="field" key="title">
         <label className="field-label" htmlFor="d-title">
           {t('editor.details.title')}
         </label>
@@ -89,8 +102,10 @@ export function DetailsStep({
           </p>
         ) : null}
       </div>
+    ),
 
-      <div className="field">
+    price: (
+      <div className="field" key="price">
         <label className="field-label" htmlFor="d-price">
           {t('editor.details.price')}
         </label>
@@ -124,8 +139,10 @@ export function DetailsStep({
           </p>
         ) : null}
       </div>
+    ),
 
-      <div className="field">
+    priceNote: (
+      <div className="field" key="priceNote">
         <label className="field-label" htmlFor="d-price-note">
           {t('editor.details.priceNote')}
         </label>
@@ -139,8 +156,10 @@ export function DetailsStep({
         />
         <p className="field-hint">{t('editor.details.priceNoteHint')}</p>
       </div>
+    ),
 
-      <div className="field">
+    city: (
+      <div className="field" key="city">
         <label className="field-label" htmlFor="d-city">
           {isProperty ? t('editor.details.city') : t('editor.details.vehicleArea')}
         </label>
@@ -163,12 +182,13 @@ export function DetailsStep({
           </p>
         ) : null}
       </div>
+    ),
 
-      {/* No street for a vehicle, and it is not hidden by CSS — it is not
-          rendered. A field that exists in the DOM is a field that can be
-          filled by autofill and published by accident. */}
-      {isProperty && (
-        <div className="field">
+    /* No street for a vehicle, and it is not hidden by CSS — it is not
+       rendered. A field that exists in the DOM is a field that can be
+       filled by autofill and published by accident. */
+    street: isProperty ? (
+        <div className="field" key="street">
           <label className="field-label" htmlFor="d-street">
             {t('editor.details.street')}
           </label>
@@ -183,7 +203,8 @@ export function DetailsStep({
           <p className="field-hint">{t('editor.details.streetHint')}</p>
           <AreaLine status={areaStatus} count={areaCount} />
         </div>
-      )}
-    </>
-  );
+    ) : null,
+  };
+
+  return <>{fields.map((field) => blocks[field])}</>;
 }

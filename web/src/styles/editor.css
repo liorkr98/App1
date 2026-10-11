@@ -58,71 +58,17 @@
   padding-block-end: 8.5rem;
 }
 
-/* ---------- Progress rail ---------- */
-
-.rail {
-  padding: 1.75rem var(--gut) 1.25rem;
-  border-block-end: 1px solid var(--stone);
-}
-
-.rail-count {
-  font-size: var(--t-label);
-  font-weight: 600;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-}
-
-/* The step name is the page's headline. Same role as .hero-title on a
-   listing, one size down: --t-h2 rather than --t-hero, because a form
-   heading that fills the screen is a form heading in the way. */
-.rail-title {
-  font-family: 'Frank Ruhl Libre', serif;
-  font-weight: 700;
-  font-size: var(--t-h2);
-  line-height: 1.2;
-  letter-spacing: -0.015em;
-  margin-block-start: 0.2rem;
-}
-
 /*
   A hairline that fills, not a rounded pill on a track. The page already draws
   1px stone rules between everything; the progress indicator is one of those
-  rules with olive laid over it, so it reads as part of the structure rather
-  than as a widget sitting on top of it.
-*/
-.rail-bar {
+  rules with olive laid over it {
   block-size: 2px;
   background: var(--stone);
   margin-block-start: 1rem;
   overflow: hidden;
 }
 
-/*
-  Scaled, not resized.
-
-  This animated `inline-size` before, which is a LAYOUT-DRIVING property: every
-  frame forces the browser to lay the element out again, and the impeccable
-  motion reference bans exactly that (alongside width, height, top and left).
-  A transform is composited instead and costs nothing per frame.
-
-  The origin is the RIGHT edge — 100% in physical terms — because that is the
-  inline start of an RTL document, and this product is RTL by construction
-  (CLAUDE.md §4). Written as a percentage rather than the keyword so it does
-  not read as a physical-side declaration.
-*/
-.rail-fill {
-  block-size: 100%;
-  inline-size: 100%;
-  background: var(--olive);
-  transform-origin: 100% 50%;
-  transform: scaleX(var(--progress, 0));
-  transition: transform 0.3s var(--ease-out);
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .rail-fill {
-    transition: none;
-  }
 }
 
 /* ---------- Steps ---------- */
@@ -148,55 +94,6 @@
   /* Counts change as the seller adds photos; lining figures stop the line
      shifting under them. */
   font-variant-numeric: tabular-nums;
-}
-
-/* ---------- Choices ----------
-   Hairline rows, like .fact. The selected one is marked by an olive rule on
-   the reading edge and a heavier weight — two signals, since colour alone
-   excludes anyone who cannot see it. */
-
-.choices {
-  list-style: none;
-}
-
-.choice {
-  display: block;
-  inline-size: 100%;
-  padding-block: 1.1rem;
-  padding-inline-start: 0.9rem;
-  font: inherit;
-  font-size: 1.05rem;
-  text-align: start;
-  color: var(--ink);
-  background: none;
-  border: 0;
-  border-block-start: 1px solid var(--stone);
-  border-inline-start: 2px solid transparent;
-  cursor: pointer;
-}
-
-.choices li:first-child .choice {
-  border-block-start: none;
-}
-
-.choice {
-  transition:
-    transform var(--press) var(--ease-out),
-    background var(--press) var(--ease-out),
-    border-color var(--press) var(--ease-out);
-}
-
-.choice:hover {
-  background: var(--stone-warm);
-}
-
-.choice:active {
-  transform: scale(0.99);
-}
-
-.choice.chosen {
-  border-inline-start-color: var(--olive);
-  font-weight: 600;
 }
 
 .choice-name {
@@ -240,62 +137,7 @@
   object-position: 50% 0;
 }
 
-.step-rail {
-  margin-block-start: 0.85rem;
-}
-
-.step-rail ol {
-  display: flex;
-  gap: 0.35rem;
-  margin: 0;
-  padding: 0 0 0.15rem;
-  list-style: none;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.step-pip {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.1rem;
-  min-inline-size: 4.2rem;
-  padding: 0.35rem 0.4rem;
-  border: 1px solid var(--stone);
-  border-radius: 8px;
-  background: transparent;
-  color: var(--muted);
-  font: inherit;
-  font-size: 0.72rem;
-  font-weight: 700;
-  line-height: 1.3;
-  cursor: pointer;
-}
-
-.step-pip:hover {
-  border-color: var(--olive);
-  color: var(--ink);
-}
-
-.step-pip:active {
-  transform: scale(0.97);
-}
-
-.step-pip.is-here {
-  border-color: var(--olive);
-  background: var(--olive);
-  color: var(--plaster);
-}
-
-.step-pip:disabled {
-  cursor: default;
-  opacity: 0.4;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .step-pip:active {
-    transform: none;
-  }
 }
 
 .template-step .hint {
@@ -1228,31 +1070,6 @@ textarea {
   color: var(--muted);
 }
 
-.shot-room {
-  display: block;
-  margin-block-start: 0.35rem;
-}
-
-.shot-room-label {
-  display: block;
-  font-size: 0.66rem;
-  color: var(--muted);
-  margin-block-end: 0.15rem;
-}
-
-.shot-room select {
-  inline-size: 100%;
-  box-sizing: border-box;
-  padding-block: 0.3rem;
-  padding-inline: 0.4rem;
-  font: inherit;
-  font-size: 0.75rem;
-  color: var(--ink);
-  background: var(--plaster);
-  border: 1px solid var(--stone);
-  border-radius: 3px;
-}
-
 /* The file input is hidden and its label is the control: a native file input
    cannot be styled and announces itself in English on most phones. */
 .picker {
@@ -1370,31 +1187,6 @@ textarea {
   background: #fbf0ed;
   border-inline-start: 3px solid #a8341d;
   border-radius: 6px;
-}
-
-/* ---------- Blockers ----------
-   #F5F2EA is the .flaws panel from the vehicle reference — the page's
-   existing colour for "things worth knowing before you commit", which is
-   exactly what this is. */
-
-.blockers {
-  padding: 1.1rem var(--gut);
-  background: var(--stone-warm);
-  border-block-start: 1px solid var(--stone);
-  /* --muted on --stone-warm is 4.35:1. Same carry-down as the homepage steps. */
-  --muted: #67685f;
-}
-
-.blockers-title {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--muted);
-  margin-block-end: 0.3rem;
-}
-
-.blockers ul {
-  padding-inline-start: 1.1rem;
-  font-size: 0.95rem;
 }
 
 /* ---------- Navigation ----------
@@ -1965,7 +1757,6 @@ textarea {
   }
 }
 
-.peek-open,
 .peek-close {
   display: inline-flex;
   align-items: center;
@@ -1983,19 +1774,8 @@ textarea {
   transition: transform var(--dur-press) var(--ease-out);
 }
 
-.peek-open:active,
 .peek-close:active {
   transform: scale(0.97);
-}
-
-.peek-open {
-  position: fixed;
-  inset-block-end: calc(8.5rem + env(safe-area-inset-bottom));
-  inset-inline-end: var(--gut);
-  z-index: 30;
-  background: var(--ink);
-  color: var(--plaster);
-  border-color: var(--ink);
 }
 
 .facsimile.is-open {
@@ -2049,7 +1829,6 @@ textarea {
     padding-block-start: 1rem;
   }
 
-  .peek-open,
   .peek-close {
     display: none;
   }
@@ -2628,4 +2407,446 @@ textarea {
       background-position: -110% 0;
     }
   }
+}
+
+/* =====================================================================
+   THE SITE'S OWN LOOK, AND FOUR SIMPLE SCREENS (11 Oct 2026)
+
+   The editor was drawn in the listing page's older vocabulary — Frank Ruhl
+   headings, olive slabs, 6px corners — while every other page of the site
+   moved to Living Surfaces (pill buttons, the condensed display face, soft
+   cards). An agent left the homepage and arrived somewhere else. The owner
+   asked for the same design, on the light background (paper), and for a
+   flow simple enough for agents who are not technical.
+
+   The rules above keep their meaning; their palette is pointed at the
+   paper tokens here, once, as dash.css does for the dashboard. What follows
+   is the new flow's own pieces: the four dots, the apartment/car choice,
+   "more details", the publish checklist, and the bottom buttons as the
+   site's pills. Touch targets are at least 52px (the site's button height).
+   ===================================================================== */
+
+.new-shell {
+  --plaster: var(--ls-ground);
+  --card: var(--ls-surface);
+  --ink: var(--ls-ink);
+  --ink-deep: var(--ls-ink);
+  --muted: var(--ls-ink-2);
+  --stone: rgba(18, 19, 16, 0.12);
+  --stone-warm: rgba(18, 19, 16, 0.05);
+  --olive: var(--ls-accent);
+  --olive-lift: var(--ls-accent);
+  border-block-start: 0;
+  font-family: var(--ls-font-body);
+  font-size: 1.04rem;
+  line-height: 1.6;
+  color: var(--ls-ink);
+}
+
+.new-shell :is(h1, h2, h3, legend) {
+  font-family: var(--ls-font-display);
+  font-variation-settings: 'wdth' var(--ls-wdth-display);
+}
+
+/* ---------- The head: four dots and the screen's name ---------- */
+
+.flow-head {
+  display: grid;
+  gap: 0.55rem;
+  padding: 1.6rem var(--gut) 1.2rem;
+}
+
+.flow-count {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--ls-ink-2);
+}
+
+/* Dot 1 sits at the inline start — the right edge in Hebrew. */
+.flow-dots {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.flow-dots li {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--ls-ink-2);
+}
+
+.flow-dots li::before {
+  content: '';
+  block-size: 6px;
+  border-radius: var(--ls-r-pill);
+  background: var(--ls-line);
+}
+
+.flow-dots li.is-done::before,
+.flow-dots li.is-here::before {
+  background: var(--ls-accent);
+}
+
+.flow-dots li.is-here {
+  color: var(--ls-ink);
+}
+
+.flow-title {
+  margin: 0.4rem 0 0;
+  font-size: clamp(2.1rem, 8vw, 3rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: 0;
+}
+
+.flow-lead {
+  margin: 0;
+  max-inline-size: 40ch;
+  font-size: 1.08rem;
+  color: var(--ls-ink-2);
+}
+
+/* ---------- Apartment or car ---------- */
+
+.kind {
+  display: grid;
+  gap: 0.7rem;
+  margin-block-end: 1.4rem;
+}
+
+.kind-question {
+  margin: 0;
+  font-weight: 800;
+  font-size: 1.15rem;
+}
+
+.kind-choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kind-choice {
+  display: grid;
+  justify-items: center;
+  gap: 0.4rem;
+  inline-size: 100%;
+  min-block-size: 120px;
+  padding: 1.1rem 0.8rem;
+  font: inherit;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--ls-ink);
+  background: var(--ls-surface);
+  border: 2px solid var(--ls-line);
+  border-radius: var(--ls-r-card);
+  cursor: pointer;
+  transition:
+    transform var(--ls-dur-1) var(--ls-ease-expo),
+    border-color var(--ls-dur-1) var(--ls-ease-expo);
+}
+
+.kind-choice:hover {
+  border-color: var(--ls-ink-2);
+}
+
+.kind-choice:active {
+  transform: scale(0.97);
+}
+
+.kind-choice.chosen {
+  border-color: var(--ls-accent);
+  box-shadow: inset 0 0 0 1px var(--ls-accent);
+}
+
+.kind-icon {
+  inline-size: 46px;
+  block-size: 46px;
+  fill: currentColor;
+}
+
+.kind-choice.chosen .kind-icon {
+  fill: var(--ls-accent);
+}
+
+/* ---------- Bigger, rounder fields everywhere in the editor ---------- */
+
+.new-shell .field-input,
+.new-shell .facts-entry input,
+.new-shell .facts-entry select,
+.new-shell textarea {
+  min-block-size: 52px;
+  font-size: 1.08rem;
+  border-radius: 14px;
+}
+
+.new-shell .field-label,
+.new-shell .fact-head label {
+  font-size: 1.02rem;
+  font-weight: 800;
+}
+
+/* ---------- "More details (optional)" ---------- */
+
+.more {
+  margin-block: 1.4rem 0.4rem;
+  border: 1px solid var(--ls-line);
+  border-radius: var(--ls-r-card);
+  background: var(--ls-surface);
+}
+
+.more-summary {
+  display: grid;
+  gap: 0.15rem;
+  padding: 1rem 1.2rem;
+  min-block-size: 52px;
+  cursor: pointer;
+  list-style: none;
+  border-radius: var(--ls-r-card);
+  transition: background var(--ls-dur-1) var(--ls-ease-expo);
+}
+
+.more-summary::-webkit-details-marker {
+  display: none;
+}
+
+.more-summary:hover {
+  background: rgba(18, 19, 16, 0.03);
+}
+
+.more-summary:active {
+  background: rgba(18, 19, 16, 0.06);
+}
+
+.more-title {
+  font-weight: 800;
+  font-size: 1.08rem;
+}
+
+.more-title::after {
+  content: ' +';
+  color: var(--ls-ink-2);
+}
+
+.more[open] .more-title::after {
+  content: ' −';
+}
+
+.more-hint {
+  font-size: 0.92rem;
+  color: var(--ls-ink-2);
+}
+
+.more-body {
+  padding: 0.4rem 1.2rem 1.2rem;
+}
+
+/* ---------- Ready: the preview first, then the text and the design ---------- */
+
+.ready-preview {
+  margin-block-end: 1.2rem;
+}
+
+.ready-head {
+  margin: 1.4rem 0 0.4rem;
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.ready-design {
+  margin: 0;
+  font-size: 1.08rem;
+}
+
+/* ---------- Publish: what is still missing, each with a way back ---------- */
+
+.missing {
+  margin-block-end: 1.2rem;
+  padding: 1rem 1.2rem;
+  border-radius: var(--ls-r-card);
+  background: rgba(176, 106, 46, 0.08);
+  border: 1px solid rgba(176, 106, 46, 0.3);
+}
+
+.missing-title {
+  margin: 0 0 0.5rem;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.missing ul {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.missing li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.missing-fix {
+  flex: none;
+  min-block-size: 48px;
+  padding: 0.4rem 1.1rem;
+  font: inherit;
+  font-weight: 800;
+  color: var(--ls-ink);
+  background: var(--ls-surface);
+  border: 1px solid var(--ls-line);
+  border-radius: var(--ls-r-pill);
+  cursor: pointer;
+  transition: transform var(--ls-dur-1) var(--ls-ease-expo);
+}
+
+.missing-fix:hover {
+  border-color: var(--ls-ink-2);
+}
+
+.missing-fix:active {
+  transform: scale(0.96);
+}
+
+/* ---------- The bottom buttons: the site's pills ---------- */
+
+.new-shell .nav {
+  background: linear-gradient(to top, var(--ls-ground) 72%, transparent);
+}
+
+.new-shell .nav .nav-next,
+.new-shell .nav .nav-back {
+  min-block-size: 56px;
+  font-family: var(--ls-font-body);
+  font-size: 1.1rem;
+  font-weight: 800;
+  border-radius: var(--ls-r-pill);
+}
+
+.new-shell .nav .nav-next {
+  flex: 1;
+  color: var(--ls-ground);
+  background: var(--ls-ink);
+  border: 1px solid var(--ls-ink);
+  box-shadow: var(--ls-shadow);
+}
+
+.new-shell .nav .nav-next:hover {
+  background: #2a2b26;
+}
+
+.new-shell .nav .nav-back {
+  flex: 0 0 30%;
+  color: var(--ls-ink);
+  background: var(--ls-surface);
+  border: 1px solid var(--ls-line);
+  box-shadow: none;
+}
+
+.new-shell .nav .nav-back:hover {
+  border-color: var(--ls-ink-2);
+}
+
+.new-shell .nav :is(.nav-next, .nav-back):active {
+  transform: scale(0.97);
+}
+
+/* The big action on the publish screen is the site's primary pill too. */
+.new-shell .publish-button {
+  min-block-size: 60px;
+  font-family: var(--ls-font-body);
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--ls-ground);
+  background: var(--ls-ink);
+  border-radius: var(--ls-r-pill);
+}
+
+/* Two pills side by side never wider than the screen: padding inside the
+   width, and allowed to shrink (the Back pill overran the edge at 390px). */
+.new-shell .nav :is(.nav-next, .nav-back) {
+  box-sizing: border-box;
+  min-inline-size: 0;
+}
+
+/* The first thing on the photos screen: one big button with a camera. */
+.new-shell .picker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-block-size: 56px;
+  margin-block: 0.4rem 1rem;
+  font-family: var(--ls-font-body);
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--ls-ink);
+  background: var(--ls-surface);
+  border: 1px solid var(--ls-line);
+  border-radius: var(--ls-r-pill);
+}
+
+.new-shell .picker:hover {
+  border-color: var(--ls-ink-2);
+}
+
+.new-shell .picker-big {
+  flex-direction: column;
+  min-block-size: 150px;
+  font-size: 1.25rem;
+  color: var(--ls-ground);
+  background: var(--ls-ink);
+  border-color: var(--ls-ink);
+  border-radius: var(--ls-r-card);
+}
+
+.new-shell .picker-big:hover {
+  background: #2a2b26;
+}
+
+.picker-icon {
+  inline-size: 44px;
+  block-size: 44px;
+  fill: currentColor;
+}
+
+/* The gate is the same as ever; when it is shut, the button says so by
+   looking shut, and the list above it says why. */
+.new-shell .publish-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.new-shell .missing-fix {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+/* Nothing to tap smaller than a finger (48px), anywhere in the four
+   screens. The "none" toggle and the skip link look like links and stay
+   that way; their hit area grows, not their type. The photo strip keeps
+   its own compact tools (reordering is also by drag). */
+.new-shell :is(.fact-absent, .audience-skip) {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 48px;
+  padding-inline: 0.5rem;
+}
+
+.new-shell .editor .screen button:not(.strip button),
+.new-shell .editor .screen summary {
+  min-block-size: 48px;
 }

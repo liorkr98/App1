@@ -189,15 +189,46 @@ export function PhotosStep({
         {' '}
         <a href="/guide/photos/">{t('editor.photosGuide')}</a>
       </p>
-      <ul className="photo-rules">
-        <li>{t('guide.before1')}</li>
-        <li>{t('guide.before2')}</li>
-        <li>{t('guide.before3')}</li>
-        <li>{t('guide.before4')}</li>
-      </ul>
+      {/*
+        The one big button first (11 Oct 2026): an agent who is not
+        technical should see what to press before anything to read. On a
+        phone it opens the camera or the gallery, the phone's own choice.
+      */}
+      <label className={photos.length === 0 ? 'picker picker-big' : 'picker'}>
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          disabled={photos.length >= MAX_IMAGES}
+          onChange={(event) => {
+            add(event.target.files);
+            // Cleared so picking the same file twice still fires a change.
+            event.target.value = '';
+          }}
+        />
+        {photos.length === 0 ? (
+          <svg viewBox="0 0 24 24" aria-hidden="true" className="picker-icon">
+            <path d="M9 4l-1.5 2H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V8a2 2 0 00-2-2h-3.5L15 4H9zm3 4.5a4.5 4.5 0 110 9 4.5 4.5 0 010-9zm0 2a2.5 2.5 0 100 5 2.5 2.5 0 000-5z" />
+          </svg>
+        ) : null}
+        <span>{photos.length === 0 ? t('editor.flow.addPhotosBig') : t('editor.addPhotos')}</span>
+      </label>
+
+      {!signedIn ? (
+        <p className="note">
+          <a href="/enter/">{t('editor.signInToUpload')}</a>
+        </p>
+      ) : null}
+
+      {/* The shooting advice, folded: worth having, not worth reading
+          before the first photo is in. */}
       <details className="photo-rules-more">
-        <summary className="rules-toggle">{t('listing.readMore')}</summary>
+        <summary className="rules-toggle">{t('editor.flow.photoTips')}</summary>
         <ul>
+          <li>{t('guide.before1')}</li>
+          <li>{t('guide.before2')}</li>
+          <li>{t('guide.before3')}</li>
+          <li>{t('guide.before4')}</li>
           <li>{t('guide.shoot1')}</li>
           <li>{t('guide.shoot2')}</li>
           <li>{t('guide.shoot3')}</li>
@@ -377,26 +408,6 @@ export function PhotosStep({
         </ul>
       ) : null}
 
-      {!signedIn ? (
-        <p className="note">
-          <a href="/enter/">{t('editor.signInToUpload')}</a>
-        </p>
-      ) : null}
-
-      <label className="picker">
-        <input
-          type="file"
-          accept="image/*"
-          multiple
-          disabled={photos.length >= MAX_IMAGES}
-          onChange={(event) => {
-            add(event.target.files);
-            // Cleared so picking the same file twice still fires a change.
-            event.target.value = '';
-          }}
-        />
-        <span>{t('editor.addPhotos')}</span>
-      </label>
 
       <p className="note">
         <Message path="editor.photoCount" values={{ count: photos.length, max: MAX_IMAGES }} />
