@@ -371,9 +371,10 @@ html[data-template='dossier'] :is(.facts, .enrich) {
     }
   }
 
+  /* The clipped photo drops in visible (stage.css, stage-fade). */
   @keyframes ds-drop {
     from {
-      opacity: 0;
+      opacity: 0.35;
       transform: translateY(-30px) rotate(-6deg);
     }
   }

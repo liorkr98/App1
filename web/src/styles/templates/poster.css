@@ -254,9 +254,10 @@ html[data-template='poster'] .gallery img {
     }
   }
 
+  /* Rises from visible, not from nothing (stage.css, stage-fade). */
   @keyframes po-rise {
     from {
-      opacity: 0;
+      opacity: 0.35;
       transform: translateY(24%);
     }
   }
