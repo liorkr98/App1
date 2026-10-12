@@ -8,6 +8,12 @@ loaded. Run this only when you want one demo file.
 The page starts every still at scale 1. The pans here begin already zoomed,
 which is the offline twin of the original tool — do not copy that into the
 site. --music is accepted and is never called by the product.
+
+Calmer since 12 Oct 2026, with the same numbers as
+src/features/listings/ken-burns.ts: 4.8s a still, a 1.2s fade, 4% zoom, a
+pan of about 2.5%. Each photograph is shown WHOLE, on a blurred, darkened
+copy of itself that fills the frame, instead of cropped to fill it: a wide
+photo in a vertical frame used to lose more than half its width.
 """
 
 from __future__ import annotations
@@ -18,8 +24,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-STILL = 3.2
-FADE = 0.8
+STILL = 4.8
+FADE = 1.2
+ZOOM = 0.04
+PAN_ZOOM = 1.05
 FPS = 30
 FRAMES = round(STILL * FPS)
 MOTIONS = ("in", "out", "pan_right", "pan_left")
@@ -29,17 +37,18 @@ EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 def zoom(motion: str, size: str) -> str:
     n = FRAMES
     if motion == "in":
-        z = f"min(1.12\\,1+0.12*on/{n})"
+        z = f"min({1 + ZOOM}\\,1+{ZOOM}*on/{n})"
         x = "iw/2-(iw/zoom/2)"
     elif motion == "out":
-        z = f"max(1\\,1.12-0.12*on/{n})"
+        z = f"max(1\\,{1 + ZOOM}-{ZOOM}*on/{n})"
         x = "iw/2-(iw/zoom/2)"
     elif motion == "pan_right":
-        z = "1.12"
-        x = f"(iw-iw/zoom)*on/{n}"
+        # Half the overhang, centred: about 2.5% of the width at 1.05.
+        z = f"{PAN_ZOOM}"
+        x = f"(iw-iw/zoom)*(0.25+0.5*on/{n})"
     else:
-        z = "1.12"
-        x = f"(iw-iw/zoom)*(1-on/{n})"
+        z = f"{PAN_ZOOM}"
+        x = f"(iw-iw/zoom)*(0.75-0.5*on/{n})"
     y = "ih/2-(ih/zoom/2)"
     return f"zoompan=z='{z}':x='{x}':y='{y}':d={n}:s={size}:fps={FPS}"
 
@@ -68,11 +77,20 @@ def main() -> int:
     size = "1920x1080" if wide else "1080x1920"
     big = (1920 * 3, 1080 * 3) if wide else (1080 * 3, 1920 * 3)
     filters: list[str] = []
+    small = (big[0] // 12, big[1] // 12)
     for index, _image in enumerate(images):
         motion = MOTIONS[index % len(MOTIONS)]
+        # The whole photograph over a blurred, darkened copy of itself. The
+        # blur runs on a small copy and is scaled up: cheap, and softer.
+        filters.append(f"[{index}:v]split=2[b{index}][f{index}]")
         filters.append(
-            f"[{index}:v]scale={big[0]}:{big[1]}:force_original_aspect_ratio=increase,"
-            f"crop={big[0]}:{big[1]},{zoom(motion, size)},format=yuv420p[v{index}]"
+            f"[b{index}]scale={small[0]}:{small[1]}:force_original_aspect_ratio=increase,"
+            f"crop={small[0]}:{small[1]},boxblur=12:2,eq=brightness=-0.18,"
+            f"scale={big[0]}:{big[1]}[bb{index}]"
+        )
+        filters.append(f"[f{index}]scale={big[0]}:{big[1]}:force_original_aspect_ratio=decrease[ff{index}]")
+        filters.append(
+            f"[bb{index}][ff{index}]overlay=(W-w)/2:(H-h)/2,{zoom(motion, size)},format=yuv420p[v{index}]"
         )
 
     if len(images) == 1:
@@ -88,8 +106,10 @@ def main() -> int:
             previous = target
 
     command = ["ffmpeg", "-y"]
+    # One frame per photograph: zoompan makes `d` frames from each input
+    # frame, so a looped input (as this script had) multiplied the film.
     for image in images:
-        command += ["-loop", "1", "-t", str(STILL), "-i", str(image)]
+        command += ["-i", str(image)]
     if args.music:
         command += ["-i", str(args.music)]
     command += ["-filter_complex", ";".join(filters), "-map", "[out]"]

@@ -74,12 +74,13 @@
     100% { opacity: 0; }
   }
 
+  /* 1 + FILM_ZOOM (ken-burns.ts). Calmer since 12 Oct: it was 1.12. */
   @keyframes film-in {
-    to { scale: 1.12; }
+    to { scale: 1.04; }
   }
 
   @keyframes film-out {
-    from { scale: 1.12; }
+    from { scale: 1.04; }
     to { scale: 1; }
   }
 }

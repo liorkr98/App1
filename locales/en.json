@@ -549,7 +549,10 @@
       "missing": "",
       "unavailable": "",
       "label": "",
-      "loading": ""
+      "loading": "",
+      "open": "",
+      "close": "",
+      "designs": ""
     },
     "magic": {
       "title": "",
