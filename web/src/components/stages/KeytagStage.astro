@@ -17,30 +17,23 @@ interface Props {
 }
 
 /**
- * Road (Onyx, cars; round three, 12 Oct 2026). The car side-on across the
- * whole width under a road line, the price and the spec beneath, all still.
- * The one movement is further down: the gallery is one long strip, and as
- * the page scrolls the strip drives past sideways, like watching the car go
- * by from the kerb (road.css). Without scroll timelines, or with motion
- * off, the strip is swiped with a finger instead.
+ * Key tag (Paper; round three, picked by the owner 12 Oct 2026). The
+ * photograph full width, and hanging over its lower edge the agent's key
+ * tag: a red tag with a ring hole, the place, the title and the price. The
+ * numbers follow on the paper below.
+ *
+ * ONE MOVEMENT: the tag sways a little about its hole, slowly, like a key on
+ * a ring (keytag.css). It starts at rest; reduced motion keeps it still.
  */
 const { listing, cells, perUnit } = Astro.props;
 const cover = listing.media.cover;
 const lines = titleLines(listing);
 const place = stagePlace(listing);
 ---
-<section class="stage stage-road">
-  <div class="rd-head">
-    {place && <p class="stage-place"><Prose text={place} /></p>}
-    <h1 class="stage-title ls-display">
-      {lines.map((line) => (
-        <span class="rd-line"><Prose text={line} /></span>
-      ))}
-    </h1>
-  </div>
+<section class="stage stage-keytag">
   <button
     type="button"
-    class="rd-car"
+    class="kt-photo"
     data-lightbox={largest(cover, HERO_WIDTHS)}
     data-alt={cover.alt ?? ''}
     aria-label={t('listing.openPhoto')}
@@ -57,10 +50,16 @@ const place = stagePlace(listing);
       decoding="async"
     />
   </button>
-  <span class="rd-lane" aria-hidden="true"></span>
-  <div class="rd-band">
+  <div class="kt-tag">
+    <span class="kt-hole" aria-hidden="true"></span>
+    {place && <p class="stage-place"><Prose text={place} /></p>}
+    <h1 class="stage-title">
+      {lines.map((line) => (
+        <span class="kt-line"><Prose text={line} /></span>
+      ))}
+    </h1>
     <PriceBar {...priceProps(listing, perUnit)} />
   </div>
-  <Numerals cells={cells} class="rd-spec" />
+  <Numerals cells={cells} class="kt-nums" />
   <HighlightChips highlights={listing.highlights} facts={listing.facts} />
 </section>

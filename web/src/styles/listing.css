@@ -405,7 +405,7 @@ p + p{margin-top:.9rem}
 .erow .who b{font-weight:600;display:block}
 .erow .who em{font-style:normal;color:var(--enrich-muted,#9C9D93);font-size:.83rem}
 /* The templates that draw this section on paper. */
-html:is([data-template='blueprint'],[data-template='atelier'],[data-template='heliograph'],[data-template='walk'],[data-template='poster'],[data-template='zine'],[data-template='breath'],[data-template='chapters']) .enrich{
+html:is([data-template='blueprint'],[data-template='atelier'],[data-template='heliograph'],[data-template='walk'],[data-template='poster'],[data-template='zine'],[data-template='prints'],[data-template='keytag'],[data-template='streetsign']) .enrich{
   --enrich-ink:var(--ink);
   --enrich-muted:var(--muted);
   --enrich-rule:var(--stone);

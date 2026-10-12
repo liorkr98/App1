@@ -82,7 +82,7 @@ describe('template manifest', () => {
   });
 
   it('lets every other template draw either category', () => {
-    const oneCategory = new Set(['showroom', 'dossier', 'heliograph', 'walk', 'chapters', 'road']);
+    const oneCategory = new Set(['showroom', 'dossier', 'heliograph', 'walk', 'streetsign', 'dashboard']);
     for (const id of TEMPLATE_IDS) {
       if (oneCategory.has(id)) continue;
       assert.equal(templateFor(id, 'property'), id);
@@ -107,10 +107,10 @@ describe('the catalogue the picker offers', () => {
   it('offers homes thirteen and cars thirteen, never the other category\'s', () => {
     assert.equal(pickerTemplates('property').length, 13);
     assert.ok(!pickerTemplates('property').includes('showroom'));
-    assert.ok(!pickerTemplates('property').includes('road'));
+    assert.ok(!pickerTemplates('property').includes('dashboard'));
     assert.equal(pickerTemplates('vehicle').length, 13);
     assert.ok(!pickerTemplates('vehicle').includes('heliograph'));
-    assert.ok(!pickerTemplates('vehicle').includes('chapters'));
+    assert.ok(!pickerTemplates('vehicle').includes('streetsign'));
   });
 
   it('keeps an old listing\'s own template on offer, first', () => {

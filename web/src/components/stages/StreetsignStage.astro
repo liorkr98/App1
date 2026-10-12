@@ -1,0 +1,81 @@
+---
+import type { Listing } from '@/types/listing';
+import { plateName } from '@/features/listings/stage-signs';
+import { HERO_WIDTHS, largest, srcset } from '../../lib/images';
+import type { FactCell } from '../../lib/facts';
+import { t } from '../../lib/i18n';
+import type { PerUnitPrice } from '../../lib/price';
+import { coverStyle, priceProps, titleLines } from '../../lib/stage';
+import HighlightChips from '../HighlightChips.astro';
+import PriceBar from '../PriceBar.astro';
+import Prose from '../Prose.astro';
+import Numerals from './Numerals.astro';
+
+interface Props {
+  listing: Listing;
+  cells: FactCell[];
+  perUnit?: PerUnitPrice | undefined;
+}
+
+/**
+ * Street sign (Paper, homes; round three, picked by the owner 12 Oct 2026).
+ * The photograph full width, and across its foot the blue-and-white street
+ * plate: "רחוב דיזנגוף", the city beneath it. Then the title, the price and
+ * the numbers on paper.
+ *
+ * THE STREET, NEVER THE BUILDING (CLAUDE.md §7): the plate shows
+ * location.street, which publicStreet already stripped of any house number
+ * where the row became a listing. A seller who hid the street gets the city
+ * on the plate.
+ *
+ * ONE MOVEMENT: the plate settles into place as the page opens — it starts
+ * visible, a touch high and tilted (streetsign.css). Reduced motion: still.
+ */
+const { listing, cells, perUnit } = Astro.props;
+const cover = listing.media.cover;
+const lines = titleLines(listing);
+const city = listing.location?.city ?? '';
+const street = listing.location?.street;
+const plate = plateName(street, city, t('listing.plateStreet'));
+---
+<section class="stage stage-streetsign">
+  <div class="ss-photo-wrap">
+    <button
+      type="button"
+      class="ss-photo"
+      data-lightbox={largest(cover, HERO_WIDTHS)}
+      data-alt={cover.alt ?? ''}
+      aria-label={t('listing.openPhoto')}
+    >
+      <img
+        src={largest(cover, HERO_WIDTHS)}
+        srcset={srcset(cover, HERO_WIDTHS) || undefined}
+        sizes="100vw"
+        width={cover.width}
+        height={cover.height}
+        alt={cover.alt ?? ''}
+        style={coverStyle(listing)}
+        fetchpriority="high"
+        decoding="async"
+      />
+    </button>
+    {plate && (
+      <div class="ss-plate">
+        <div class="ss-plate-in">
+          <b><Prose text={plate} /></b>
+          {street && city && <small><Prose text={city} /></small>}
+        </div>
+      </div>
+    )}
+  </div>
+  <div class="ss-copy">
+    <h1 class="stage-title">
+      {lines.map((line) => (
+        <span class="ss-line"><Prose text={line} /></span>
+      ))}
+    </h1>
+    <PriceBar {...priceProps(listing, perUnit)} />
+  </div>
+  <Numerals cells={cells} class="ss-nums" />
+  <HighlightChips highlights={listing.highlights} facts={listing.facts} />
+</section>

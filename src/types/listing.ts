@@ -725,10 +725,10 @@ export const TEMPLATE_IDS = [
   'dossier',
   'ticket',
   // Round three (12 Oct 2026): one motion each, nothing stacked.
-  'breath',
-  'chapters',
-  'depth',
-  'road',
+  'prints',
+  'keytag',
+  'streetsign',
+  'dashboard',
 ] as const;
 
 export type TemplateId = (typeof TEMPLATE_IDS)[number];

@@ -1,0 +1,202 @@
+/*
+  Key tag — the agent's key tag hanging over the photograph (round three,
+  picked by the owner, 12 Oct 2026). The photograph full width; over its
+  lower edge a red tag with a ring hole holding the place, the title and the
+  price; the numbers on the paper below.
+
+  ONE MOVEMENT: the tag sways a little about its hole, slowly, the way a key
+  hangs on a ring. A clock animation, not a scroll one. It rests at its
+  turned pose; reduced motion keeps it there.
+
+  The tag's red carries white text at 5.9:1. Living Surfaces, Paper.
+*/
+
+html[data-template='keytag'] {
+  --plaster: #efeae0;
+  --ink: #121310; /* = --ls-ink */
+  --stone: #ddd6c8;
+  --stone-warm: #f4f0e8;
+  --muted: #5e5f57; /* = --ls-ink-2 */
+  --muted-warm: #57584f;
+  --absent: #5e5f57;
+  --heroWant: 60svh;
+}
+
+html[data-template='keytag'] body {
+  font-family: var(--ls-font-body);
+}
+
+html[data-template='keytag'] section.stage-keytag {
+  display: grid;
+  gap: 1.3rem;
+  padding: 0 0 1.4rem;
+}
+
+html[data-template='keytag'] .kt-photo {
+  display: block;
+  inline-size: 100%;
+  block-size: 58svh;
+  min-block-size: 20rem;
+  overflow: clip;
+}
+
+html[data-template='keytag'] .kt-photo img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ---------- The tag ---------- */
+
+html[data-template='keytag'] .kt-tag {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 0.5rem;
+  inline-size: min(20rem, 80%);
+  box-sizing: border-box;
+  margin-block-start: -10rem;
+  margin-inline: var(--gut) auto;
+  padding: 2.4rem 1.3rem 1.3rem;
+  color: #ffffff;
+  background: #b5381f;
+  border-radius: 18px;
+  border-end-end-radius: 64px;
+  box-shadow: 0 26px 40px -20px rgba(40, 12, 4, 0.6);
+  rotate: 3deg;
+  /* The hole, top corner on the reading side: the tag hangs from it. */
+  transform-origin: calc(100% - 1.5rem) 1.5rem;
+}
+
+html[data-template='keytag'] .kt-hole {
+  position: absolute;
+  inset-block-start: 1rem;
+  inset-inline-start: 1rem;
+  inline-size: 1rem;
+  block-size: 1rem;
+  border-radius: 50%;
+  background: var(--plaster);
+  box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.45);
+}
+
+html[data-template='keytag'] .kt-tag .stage-place {
+  margin: 0;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #fde9e4;
+}
+
+html[data-template='keytag'] .kt-tag .stage-title {
+  margin: 0;
+  font-size: clamp(1.6rem, 6.5vw, 2.3rem);
+  font-weight: 800;
+  line-height: 1.15;
+  color: #ffffff;
+  text-wrap: balance;
+}
+
+html[data-template='keytag'] .kt-line {
+  display: block;
+}
+
+html[data-template='keytag'] .kt-tag .price-bar {
+  padding: 0;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: baseline;
+  gap: 0.3rem 1.1rem;
+  border: 0;
+  background: none;
+}
+
+html[data-template='keytag'] .kt-tag .price-note {
+  text-align: start;
+}
+
+html[data-template='keytag'] .kt-tag .price-bar {
+  padding-block-start: 0.6rem;
+  border-block-start: 1px dashed rgba(255, 255, 255, 0.6);
+}
+
+html[data-template='keytag'] .kt-tag :is(.price, .price-note, .price-note *, .per-unit) {
+  color: #ffffff;
+}
+
+html[data-template='keytag'] .kt-tag .price {
+  font-size: clamp(1.7rem, 5.5vw, 2.3rem);
+  font-weight: 800;
+}
+
+html[data-template='keytag'] .kt-nums,
+html[data-template='keytag'] .stage-keytag .highlights {
+  margin-inline: var(--gut);
+}
+
+html[data-template='keytag'] .stage-keytag .highlights {
+  padding: 0;
+}
+
+@media (min-width: 960px) {
+  html[data-template='keytag'] .kt-photo {
+    block-size: 70svh;
+  }
+
+  html[data-template='keytag'] .kt-tag {
+    margin-block-start: -14rem;
+    margin-inline-start: max(var(--gut), calc((100% - 1240px) / 2 + 2rem));
+  }
+}
+
+/* The neighbourhood on paper: no dark slab (listing.css lists this
+   template among the paper ones, which switches its ink to --ink). */
+html[data-template='keytag'] .enrich {
+  background: transparent;
+  border-block: 1px solid var(--stone);
+  border-radius: 0;
+  margin-inline: var(--gut);
+}
+
+@media (min-width: 960px) {
+  html[data-template='keytag'] .listing-flow > :not(.stage, .compact-bar) {
+    align-self: center;
+    inline-size: min(100%, 60rem);
+    max-width: none;
+    box-sizing: border-box;
+  }
+
+  html[data-template='keytag'] :is(.enrich, .seller, .facts, .monthly-cost) {
+    margin-inline: 0;
+  }
+}
+
+/* ---------- Stillness everywhere else ----------
+   The shared reveals (listing.css) run only with motion allowed and scroll
+   timelines supported, so they are switched off under the same two
+   conditions (verify-motion-fallbacks keeps .reveal rules inside them). */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    html[data-template='keytag'] :is(.reveal, .clip-reveal) {
+      animation: none;
+      clip-path: none;
+    }
+  }
+}
+
+/* The shared entrance fade on the price, numbers and chips (stage.css). */
+html[data-template='keytag'] .stage :is(.numerals > div, .price-bar, .highlights) {
+  animation: none;
+}
+
+/* ---------- The one movement: the tag sways ---------- */
+
+@media (prefers-reduced-motion: no-preference) {
+  html[data-template='keytag'] .kt-tag {
+    animation: kt-sway 6.5s ease-in-out infinite alternate;
+  }
+
+  @keyframes kt-sway {
+    from { rotate: 3deg; }
+    to { rotate: -1.2deg; }
+  }
+}

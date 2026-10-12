@@ -1,0 +1,104 @@
+---
+import type { Listing } from '@/types/listing';
+import { GAUGE_FULL_KM, gaugeFraction, odometerDigits } from '@/features/listings/stage-signs';
+import { HERO_WIDTHS, largest, srcset } from '../../lib/images';
+import type { FactCell } from '../../lib/facts';
+import { t } from '../../lib/i18n';
+import type { PerUnitPrice } from '../../lib/price';
+import { coverStyle, priceProps, stagePlace, titleLines } from '../../lib/stage';
+import HighlightChips from '../HighlightChips.astro';
+import PriceBar from '../PriceBar.astro';
+import Prose from '../Prose.astro';
+import Numerals from './Numerals.astro';
+
+interface Props {
+  listing: Listing;
+  cells: FactCell[];
+  perUnit?: PerUnitPrice | undefined;
+}
+
+/**
+ * Dashboard (Onyx, cars; round three, picked by the owner 12 Oct 2026). The
+ * car across the width, then its dashboard: a speedometer-style gauge for
+ * the kilometres, an odometer with the real number on its wheels, the price
+ * on a tile, and the other key numbers.
+ *
+ * ONE MOVEMENT, asked for "with motion": as the dashboard comes into view,
+ * the needle sweeps up from zero, the arc fills behind it and the odometer
+ * wheels roll to the real kilometres (dashboard.css, scroll-driven, no
+ * script). The final positions are the resting state, so reduced motion or
+ * an older browser shows the finished dashboard.
+ *
+ * The gauge is drawing, not data: the number a buyer reads is in <bdi>,
+ * and the needle is only where that number sits on a 0–300,000 km dial.
+ * Without a mileage there is no gauge and no odometer — never a needle at
+ * zero, which would read as "new".
+ */
+const { listing, cells, perUnit } = Astro.props;
+const cover = listing.media.cover;
+const lines = titleLines(listing);
+const place = stagePlace(listing);
+const mileageFact = listing.facts.find((fact) => fact.key === 'mileage' && fact.present !== false);
+const km = typeof mileageFact?.value === 'number' ? mileageFact.value : undefined;
+const fraction = gaugeFraction(km, GAUGE_FULL_KM);
+const wheels = odometerDigits(km);
+const kmText = km === undefined ? undefined : km.toLocaleString('en-US');
+const otherCells = cells.filter((cell) => cell.key !== 'mileage');
+const DIGITS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+---
+<section class="stage stage-dashboard">
+  <div class="db-head">
+    {place && <p class="stage-place"><Prose text={place} /></p>}
+    <h1 class="stage-title ls-display">
+      {lines.map((line) => (
+        <span class="db-line"><Prose text={line} /></span>
+      ))}
+    </h1>
+  </div>
+  <button
+    type="button"
+    class="db-car"
+    data-lightbox={largest(cover, HERO_WIDTHS)}
+    data-alt={cover.alt ?? ''}
+    aria-label={t('listing.openPhoto')}
+  >
+    <img
+      src={largest(cover, HERO_WIDTHS)}
+      srcset={srcset(cover, HERO_WIDTHS) || undefined}
+      sizes="100vw"
+      width={cover.width}
+      height={cover.height}
+      alt={cover.alt ?? ''}
+      style={coverStyle(listing)}
+      fetchpriority="high"
+      decoding="async"
+    />
+  </button>
+  <div class="db-dash">
+    {km !== undefined && (
+      <div class="db-gauge" style={`--f:${fraction.toFixed(4)}`}>
+        <svg viewBox="0 0 120 70" aria-hidden="true">
+          <path class="db-track" d="M10 64 A50 50 0 0 1 110 64" pathLength="100" />
+          <path class="db-arc" d="M10 64 A50 50 0 0 1 110 64" pathLength="100" />
+          <line class="db-needle" x1="60" y1="64" x2="60" y2="22" />
+          <circle cx="60" cy="64" r="4" />
+        </svg>
+        <div class="db-odo">
+          <bdi class="db-wheels" aria-hidden="true">
+            {wheels.map((digit) => (
+              <span class="db-wheel" style={`--d:${digit}`}>
+                <span class="db-strip">{DIGITS.map((n) => <span>{n}</span>)}</span>
+              </span>
+            ))}
+          </bdi>
+          <span class="db-km"><bdi>{kmText}</bdi> {t('listing.dashKm')}</span>
+        </div>
+      </div>
+    )}
+    <div class="db-price">
+      <PriceBar {...priceProps(listing, perUnit)} />
+    </div>
+    <Numerals cells={otherCells.slice(0, 3)} class="db-spec" />
+  </div>
+  <HighlightChips highlights={listing.highlights} facts={listing.facts} />
+</section>

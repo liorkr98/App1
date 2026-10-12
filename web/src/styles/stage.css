@@ -428,7 +428,7 @@ html:is([data-ls], [data-template='gallery'], [data-template='showcase']) footer
     /* Sections below the first screen rise as they arrive. Starting from a
        visible floor, not from nothing: a reader who lands mid-page sees
        text, never a blank. */
-    html:is([data-ls], [data-template='gallery'], [data-template='showcase']):not([data-template='breath'], [data-template='chapters'], [data-template='depth'], [data-template='road'])
+    html:is([data-ls], [data-template='gallery'], [data-template='showcase']):not([data-template='prints'], [data-template='keytag'], [data-template='streetsign'], [data-template='dashboard'])
       .listing-flow
       > :is(section, .facts, .monthly-cost):not(.stage) {
       animation: stage-rise linear both;

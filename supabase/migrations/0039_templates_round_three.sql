@@ -1,8 +1,8 @@
--- Twenty-five templates. Round three (12 Oct 2026) adds four, each with ONE
--- signature motion and nothing else on the page moving: breath (the cover
--- breathes), chapters (the rooms open one by one as the page scrolls; homes),
--- depth (parallax layers) and road (the photographs drive past sideways;
--- cars). TEMPLATE_IDS in src/types/listing.ts is the source of truth; this
+-- Twenty-five templates. Round three (12 Oct 2026) adds four, picked by the
+-- owner from fourteen sketches, each with ONE signature motion: prints (three
+-- photographs as prints on a table, parallax), keytag (a key tag over the
+-- photograph that sways), streetsign (the street plate over the photograph,
+-- homes) and dashboard (gauges and an odometer that roll up, cars). TEMPLATE_IDS in src/types/listing.ts is the source of truth; this
 -- check must name the same set (src/features/templates/manifest.test.ts
 -- reads it).
 --
@@ -38,8 +38,8 @@ alter table public.listings
     'zine',
     'dossier',
     'ticket',
-    'breath',
-    'chapters',
-    'depth',
-    'road'
+    'prints',
+    'keytag',
+    'streetsign',
+    'dashboard'
   ));

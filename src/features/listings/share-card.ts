@@ -45,10 +45,10 @@ const FAMILIES: Record<TemplateId, CardFamily> = {
   zine: 'zine',
   dossier: 'dossier',
   ticket: 'ticket',
-  breath: 'paper',
-  chapters: 'paper',
-  depth: 'night',
-  road: 'night',
+  prints: 'paper',
+  keytag: 'paper',
+  streetsign: 'paper',
+  dashboard: 'night',
 };
 
 export function cardFamily(template: TemplateId): CardFamily {

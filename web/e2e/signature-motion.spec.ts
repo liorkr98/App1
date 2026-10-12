@@ -3,7 +3,8 @@ import { expect, test, type Page } from '@playwright/test';
 import { BASE, PHONE } from './measure';
 
 /**
- * Round three (12 Oct 2026): four templates, ONE movement each.
+ * Round three (12 Oct 2026): four templates the owner picked from fourteen
+ * sketches — Prints, Key tag, Street sign, Dashboard — ONE movement each.
  *
  * The owner asked for breathing, motion and parallax, "not all together —
  * something professional". So each of these pages runs its own signature
@@ -19,10 +20,10 @@ import { BASE, PHONE } from './measure';
 const FURNITURE = ['compact-enter', 'fill'];
 
 const DESIGNS = [
-  { id: 'breath', slug: 'A7K2M', signature: ['br-breathe'] },
-  { id: 'chapters', slug: 'A7K2M', signature: ['ch-open', 'ch-caption'] },
-  { id: 'depth', slug: 'A7K2M', signature: ['dp-fall', 'dp-rise', 'dp-window'] },
-  { id: 'road', slug: 'V3M9Q', signature: ['rd-drive'] },
+  { id: 'prints', slug: 'A7K2M', signature: ['pr-float-1', 'pr-float-2', 'pr-float-3'] },
+  { id: 'keytag', slug: 'A7K2M', signature: ['kt-sway'] },
+  { id: 'streetsign', slug: 'A7K2M', signature: ['ss-settle'] },
+  { id: 'dashboard', slug: 'V3M9Q', signature: ['db-sweep', 'db-fill', 'db-roll'] },
 ] as const;
 
 const running = (page: Page) =>
@@ -57,58 +58,53 @@ test.describe('one movement per design', () => {
     });
   }
 
-  test('breath: the photograph starts as framed and breathes by 4% at most', async ({ page }) => {
-    await page.goto(`${BASE}/template-check/A7K2M-breath/`, { waitUntil: 'load' });
-    const keyframes = await page.locator('.br-img').evaluate((el) =>
-      el.getAnimations().flatMap((animation) => (animation.effect as KeyframeEffect).getKeyframes().map((frame) => frame.scale)),
+  test('prints: each print drifts at its own depth', async ({ page }) => {
+    await page.goto(`${BASE}/template-check/A7K2M-prints/`, { waitUntil: 'load' });
+    const at = () =>
+      page.locator('.pr-print').evaluateAll((els) => els.map((el) => getComputedStyle(el).translate));
+    const rest = await at();
+    await page.evaluate(() => window.scrollTo(0, 400));
+    await expect.poll(async () => (await at()).join('|')).not.toBe(rest.join('|'));
+    const moved = await at();
+    expect(new Set(moved).size, 'three prints, three different depths').toBe(moved.length);
+  });
+
+  test('keytag: the tag sways about its hole, a few degrees at most', async ({ page }) => {
+    await page.goto(`${BASE}/template-check/A7K2M-keytag/`, { waitUntil: 'load' });
+    const turns = await page.locator('.kt-tag').evaluate((el) =>
+      el.getAnimations().flatMap((animation) =>
+        (animation.effect as KeyframeEffect).getKeyframes().map((frame) => parseFloat(String(frame.rotate))),
+      ),
     );
-    expect(keyframes[0]).toBe('1');
-    expect(Math.max(...keyframes.map(Number))).toBeLessThanOrEqual(1.04);
+    expect(turns.length).toBeGreaterThan(1);
+    for (const turn of turns) expect(Math.abs(turn)).toBeLessThanOrEqual(4);
   });
 
-  test('depth: the photograph falls behind as the page scrolls', async ({ page }) => {
-    await page.goto(`${BASE}/template-check/A7K2M-depth/`, { waitUntil: 'load' });
-    const rest = await translateOf(page, '.dp-img');
-    expect(rest).toMatch(/^(none|0px( 0(px|%))?)$/);
-    await page.evaluate(() => window.scrollTo(0, 300));
-    await expect.poll(() => translateOf(page, '.dp-img')).not.toBe(rest);
+  test('streetsign: the plate shows the street, never a house number, and settles', async ({ page }) => {
+    await page.goto(`${BASE}/template-check/A7K2M-streetsign/`, { waitUntil: 'load' });
+    const plate = page.locator('.ss-plate b');
+    await expect(plate).toBeVisible();
+    expect(await plate.textContent()).not.toMatch(/\d/);
+    await expect
+      .poll(() => page.locator('.ss-plate').evaluate((el) => getComputedStyle(el).rotate))
+      .toMatch(/^(none|0deg)$/);
   });
 
-  test('chapters: a chapter opens as it reaches the screen', async ({ page }) => {
-    await page.goto(`${BASE}/template-check/A7K2M-chapters/`, { waitUntil: 'load' });
-    const figure = page.locator('#listing-gallery .gallery-open img').nth(1);
-    // Open is inset(0 …): every offset before "round" is zero, however the
-    // browser writes it ("inset(0px 0px 0px 0% round 2px)").
-    const open = () =>
-      figure.evaluate((el) => {
-        const inset = /inset\(([^)]*?)(?: round [^)]*)?\)/.exec(getComputedStyle(el).clipPath)?.[1] ?? '';
-        return inset.split(/\s+/).every((part) => parseFloat(part) === 0);
-      });
-    // Just entering at the bottom of the screen: partly covered.
-    await figure.evaluate((el) => {
+  test('dashboard: the needle sweeps up from zero as the dash arrives', async ({ page }) => {
+    await page.goto(`${BASE}/template-check/V3M9Q-dashboard/`, { waitUntil: 'load' });
+    const needle = page.locator('.db-needle');
+    const angle = () => needle.evaluate((el) => parseFloat(getComputedStyle(el).rotate));
+    await page.locator('.db-dash').evaluate((el) => {
       const top = el.getBoundingClientRect().top + window.scrollY;
-      window.scrollTo(0, top - window.innerHeight + 40);
+      window.scrollTo(0, Math.max(0, top - window.innerHeight * 0.95));
     });
-    await expect.poll(open).toBe(false);
-    // Well inside the screen: open.
-    await figure.evaluate((el) => el.scrollIntoView({ block: 'center' }));
-    await expect.poll(open).toBe(true);
-  });
-
-  test('road: the strip drives sideways as the page scrolls past it', async ({ page }) => {
-    await page.goto(`${BASE}/template-check/V3M9Q-road/`, { waitUntil: 'load' });
-    const strip = '#listing-gallery.gallery, #listing-gallery .gallery';
-    // Just arrived (its foot at the foot of the screen), then nearly gone
-    // (its head at the head): two points well inside its driving range.
-    await page.locator(strip).first().evaluate((el) => el.scrollIntoView({ block: 'end' }));
     await page.waitForTimeout(200);
-    const early = await translateOf(page, strip);
-    await page.locator(strip).first().evaluate((el) => el.scrollIntoView({ block: 'start' }));
-    await expect.poll(() => translateOf(page, strip)).not.toBe(early);
-    expect(
-      await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth),
-      'the strip never makes the page scroll sideways',
-    ).toBeLessThanOrEqual(0);
+    const early = await angle();
+    await page.locator('.db-dash').evaluate((el) => el.scrollIntoView({ block: 'center' }));
+    await expect.poll(angle).toBeGreaterThan(early);
+    // The real number is text, isolated, and the wheels are only drawing.
+    await expect(page.locator('.db-km bdi')).toHaveText(/^[\d,]+$/);
+    await expect(page.locator('.db-wheels')).toHaveAttribute('aria-hidden', 'true');
   });
 });
 
@@ -124,10 +120,9 @@ test.describe('reduced motion: all four stand still', () => {
     });
   }
 
-  test('road is a strip a finger swipes instead', async ({ page }) => {
-    await page.goto(`${BASE}/template-check/V3M9Q-road/`, { waitUntil: 'load' });
-    const strip = page.locator('#listing-gallery.gallery, #listing-gallery .gallery').first();
-    expect(await strip.evaluate((el) => getComputedStyle(el).overflowX)).toBe('auto');
-    expect(await strip.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(true);
+  test('dashboard shows the true reading without motion', async ({ page }) => {
+    await page.goto(`${BASE}/template-check/V3M9Q-dashboard/`, { waitUntil: 'load' });
+    const angle = await page.locator('.db-needle').evaluate((el) => parseFloat(getComputedStyle(el).rotate));
+    expect(angle).toBeGreaterThan(-90);
   });
 });

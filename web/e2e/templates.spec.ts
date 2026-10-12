@@ -33,10 +33,10 @@ const SIGNATURE: Record<string, string> = {
   ticket: '.tk-qr',
   showroom: '.sr-platform',
   dossier: '.ds-folder',
-  breath: '.br-frame',
-  chapters: '.ch-title',
-  depth: '.dp-card',
-  road: '.rd-lane',
+  prints: '.pr-table',
+  keytag: '.kt-tag',
+  streetsign: '.ss-plate',
+  dashboard: '.db-dash',
 };
 
 const LISTINGS = [
