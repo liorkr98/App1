@@ -292,15 +292,18 @@ read them from the Worker at request time. A key that lives only in the
 build list is invisible on the site (`no_key`, and phone upload
 `not_configured`).
 
-`scripts/bind-worker-secrets.mjs` runs at the start of `wrangler deploy` and
-copies those two names from the build environment onto the latest Worker
-version with `wrangler versions secret bulk`. The deploy that is already
-running then uploads the new code and keeps those secrets. `wrangler secret
-bulk` is not used: it tries to deploy the secret edit and fails with
-"the latest version of your Worker isn't currently deployed" as soon as a
-preview `versions upload` is ahead of production. The runtime place for
-them, if you set them by hand, is Settings → Variables & Secrets, then
-Deploy.
+**Put them on the Worker, by hand, once:** besivov → Settings → Variables
+and Secrets → Add → Type *Secret*, then Deploy. They survive every later
+deploy. Then delete them from the Build list.
+
+From 11 to 12 Oct 2026 a build step (`scripts/bind-worker-secrets.mjs`)
+copied them from the build list onto the Worker on every deploy. It was
+removed: it put the database master key into every build, preview branches
+included, and it re-wrote the build copy over the Worker copy each time — so
+a key pasted wrong in the build list (measured: Supabase answered
+`Invalid API key`, `bad_length`, to every phone upload) could not be
+corrected on the Worker. `/admin` now has a line for each key and says
+which one is refused.
 
 ### Why not just delete the Expo remnant
 

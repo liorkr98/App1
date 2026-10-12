@@ -1224,8 +1224,13 @@ textarea {
   cursor: pointer;
 }
 
-.nav button:hover:not(:disabled) {
-  background: var(--olive-lift);
+/* Hover only where there is a pointer that hovers. A phone keeps :hover on
+   the last button tapped, and a hover colour stuck on "next" after a tap is
+   what turned it pale under white text (12 Oct). */
+@media (hover: hover) {
+  .nav button:hover:not(:disabled) {
+    background: var(--olive-lift);
+  }
 }
 
 .nav button:active:not(:disabled) {
@@ -1234,14 +1239,17 @@ textarea {
 
 /* The back button is an outline, so its hover has to move a different
    property than the filled one's. */
-.nav button:first-child:hover:not(:disabled) {
-  background: var(--stone-warm);
-  border-color: var(--muted);
+@media (hover: hover) {
+  .nav .nav-back:hover:not(:disabled) {
+    background: var(--stone-warm);
+    border-color: var(--muted);
+  }
 }
 
 /* Back is secondary: an outline, so the forward action is the only filled
-   thing on screen and the eye has one place to go. */
-.nav button:first-child {
+   thing on screen and the eye has one place to go. By class, never
+   :first-child: screen 1 has no Back, so "next" is the first child there. */
+.nav .nav-back {
   flex: 0 0 33%;
   color: var(--ink);
   background: none;
@@ -2743,8 +2751,10 @@ textarea {
   box-shadow: var(--ls-shadow);
 }
 
-.new-shell .nav .nav-next:hover {
-  background: #2a2b26;
+@media (hover: hover) {
+  .new-shell .nav .nav-next:hover {
+    background: #2a2b26;
+  }
 }
 
 .new-shell .nav .nav-back {
@@ -2755,8 +2765,10 @@ textarea {
   box-shadow: none;
 }
 
-.new-shell .nav .nav-back:hover {
-  border-color: var(--ls-ink-2);
+@media (hover: hover) {
+  .new-shell .nav .nav-back:hover {
+    border-color: var(--ls-ink-2);
+  }
 }
 
 .new-shell .nav :is(.nav-next, .nav-back):active {

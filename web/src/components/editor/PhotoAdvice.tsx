@@ -86,8 +86,8 @@ export function PhotoAdvice({ listingId, photos, status = 'idle', refreshKey = 0
 
   return (
     <div className="photo-advice">
-      {status === 'looking' ? <p className="field-hint">{t('editor.review.looking')}</p> : null}
-      {status === 'no_key' ? <p className="field-hint">{t('editor.review.noKey')}</p> : null}
+      {status === 'looking' ? <p className="field-hint">{t('editor.photoReview.looking')}</p> : null}
+      {status === 'no_key' ? <p className="field-hint">{t('editor.photoReview.noKey')}</p> : null}
       {photos.map((photo) => {
         const row = photo.publicUrl ? rows.find((item) => photo.publicUrl?.includes(item.photo_path)) : undefined;
         const review = row
@@ -104,17 +104,17 @@ export function PhotoAdvice({ listingId, photos, status = 'idle', refreshKey = 0
         return (
           <p key={photo.id} className="field-hint">
             {review.issues.map((issue: ReviewIssue) => (
-              <span key={issue} className="photo-advice-chip">{t(`editor.review.issues.${issue}`)}</span>
+              <span key={issue} className="photo-advice-chip">{t(`editor.photoReview.issues.${issue}`)}</span>
             ))}
-            {review.tip ? <span>{t(`editor.review.tips.${review.tip as ReviewTip}`)}</span> : null}
+            {review.tip ? <span>{t(`editor.photoReview.tips.${review.tip as ReviewTip}`)}</span> : null}
             {cover ? (
               <button type="button" className="quiet" onClick={() => onCover(photo.id)}>
-                {t('editor.review.cover')}
+                {t('editor.photoReview.cover')}
               </button>
             ) : null}
             {review.issues.includes('sideways') ? (
               <button type="button" className="quiet" onClick={() => onRotate(photo.id)}>
-                {t('editor.review.rotate')}
+                {t('editor.photoReview.rotate')}
               </button>
             ) : null}
           </p>

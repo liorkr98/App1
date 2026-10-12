@@ -4,6 +4,7 @@ import { describe, it } from 'node:test';
 
 import {
   checkWebp,
+  cleanSecret,
   hashPortalToken,
   isDimension,
   isPortalToken,
@@ -93,5 +94,20 @@ describe('isDimension', () => {
     assert.equal(isDimension(0), false);
     assert.equal(isDimension(4001), false);
     assert.equal(isDimension(12.5), false);
+  });
+});
+
+describe('cleanSecret', () => {
+  it('drops what a paste adds around a key', () => {
+    assert.equal(cleanSecret('  sb_secret_abc\n'), 'sb_secret_abc');
+    assert.equal(cleanSecret('"sb_secret_abc"'), 'sb_secret_abc');
+    assert.equal(cleanSecret("'sb_secret_abc' "), 'sb_secret_abc');
+  });
+
+  it('leaves a key alone, and gives nothing for nothing', () => {
+    assert.equal(cleanSecret('sb_secret_abc'), 'sb_secret_abc');
+    assert.equal(cleanSecret('   '), undefined);
+    assert.equal(cleanSecret(undefined), undefined);
+    assert.equal(cleanSecret('"'), '"');
   });
 });

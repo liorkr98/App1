@@ -1,6 +1,8 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { env } from 'cloudflare:workers';
 
+import { cleanSecret } from '@/features/listings/phone-portal';
+
 import { supabaseUrl } from './supabase';
 
 /**
@@ -19,7 +21,8 @@ import { supabaseUrl } from './supabase';
  * route then answers 503 and the editor says the phone upload is not set up.
  */
 export function supabaseService(): SupabaseClient | undefined {
-  const key = env.SUPABASE_SERVICE_ROLE_KEY;
+  // As pasted into the dashboard, less any whitespace or quotes the paste added.
+  const key = cleanSecret(env.SUPABASE_SERVICE_ROLE_KEY);
   if (!key || !supabaseUrl) return undefined;
   return createClient(supabaseUrl, key, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },

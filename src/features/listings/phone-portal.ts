@@ -43,6 +43,22 @@ export function phoneReachableOrigin(origin: string): string | undefined {
   return url.origin;
 }
 
+/**
+ * A secret as a person pasted it into a dashboard, without what the paste
+ * added: surrounding whitespace, a line break, or quotes. Undefined when
+ * nothing is left.
+ *
+ * Measured 12 Oct 2026: the live service key reached Supabase as
+ * `sb_secret_…` with the gateway's verdict "bad_length", and every phone
+ * upload failed on it. Trimming fixes the pasted-newline case; a key that is
+ * genuinely cut short still fails, and /api/status says so by name.
+ */
+export function cleanSecret(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const cleaned = value.trim().replace(/^(["'])(.*)\1$/s, '$2').trim();
+  return cleaned === '' ? undefined : cleaned;
+}
+
 /** SHA-256 as lowercase hex — what 0036 stores, computed the same way. */
 export async function hashPortalToken(token: string): Promise<string> {
   const digest = await globalThis.crypto.subtle.digest('SHA-256', new TextEncoder().encode(token));

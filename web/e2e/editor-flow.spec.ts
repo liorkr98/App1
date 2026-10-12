@@ -101,3 +101,53 @@ test('four screens, one big button, nothing greyed out', async ({ browser }) => 
   await expect(page.locator('.flow-title')).not.toHaveText('פרסום');
   await context.close();
 });
+
+/**
+ * WCAG contrast of the element's text against what is actually behind it: a
+ * see-through background is laid over its ancestors' (the 12 Oct bug was a
+ * 5%-opaque fill, which reads as "dark" if the alpha is ignored).
+ */
+async function buttonContrast(page: Page, selector: string): Promise<number> {
+  return page.locator(selector).evaluate((el) => {
+    const rgba = (value: string) => {
+      const parts = (value.match(/[\d.]+/g) ?? []).map(Number);
+      return { c: parts.slice(0, 3), a: parts.length > 3 ? parts[3]! : 1 };
+    };
+    const layers: { c: number[]; a: number }[] = [];
+    for (let node: Element | null = el; node; node = node.parentElement) {
+      const layer = rgba(getComputedStyle(node).backgroundColor);
+      if (layer.a > 0) layers.push(layer);
+      if (layer.a >= 1) break;
+    }
+    let back = [255, 255, 255];
+    for (const layer of layers.reverse()) back = back.map((v, i) => layer.c[i]! * layer.a + v * (1 - layer.a));
+    const lum = (rgb: number[]) => {
+      const [R, G, B] = rgb.map((v) => {
+        const c = v / 255;
+        return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+      });
+      return 0.2126 * R! + 0.7152 * G! + 0.0722 * B!;
+    };
+    const a = lum(rgba(getComputedStyle(el).color).c);
+    const b = lum(back);
+    return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+  });
+}
+
+test('"next" stays dark under a finger on the first screen', async ({ browser }) => {
+  // 12 Oct: on screen 1 there is no Back button, so "next" was the nav's
+  // first child, and the Back button's old hover rule (written as
+  // :first-child) painted it pale under its white text once tapped.
+  const context = await browser.newContext({ viewport: PHONE, locale: 'he-IL', reducedMotion: 'reduce' });
+  const page = await context.newPage();
+  await page.route(/supabase\.co/, (route) => route.abort());
+  await page.goto(`${BASE}/new/?fresh=1`, { waitUntil: 'load' });
+  await expect(page.locator('.flow-title')).toHaveText('התמונות');
+  await expect(page.locator('.nav-back')).toHaveCount(0);
+
+  expect(await buttonContrast(page, '.nav-next'), 'at rest').toBeGreaterThanOrEqual(4.5);
+  await page.locator('.nav-next').hover();
+  await page.waitForTimeout(400); // past the background transition
+  expect(await buttonContrast(page, '.nav-next'), 'hovered (a phone keeps this after a tap)').toBeGreaterThanOrEqual(4.5);
+  await context.close();
+});
