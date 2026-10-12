@@ -1,74 +1,43 @@
 import type { Entitlement } from '../listings/editor.js';
 
 /**
- * How a database read becomes an Entitlement.
+ * How the database's publish decision becomes the editor's Entitlement.
  *
  * ============================ HUMAN REVIEW ============================
- * CLAUDE.md §8. This is the single function that turns "is this person
- * allowed to publish" into the value the editor consumes. It does not
- * talk to the network; the caller does, and reports whether that talk
- * failed. Splitting it this way is what makes the fail-closed rule
- * testable without a database:
+ * CLAUDE.md §8. The decision itself is `publish_decision()` in Postgres
+ * (migration 0040), read through `my_publish_decision`; the same function
+ * the publish trigger runs, so the editor and the gate cannot disagree
+ * about the rule, only about the moment. This maps its answer and nothing
+ * else, and fails closed:
  *
- *   read failed     → 'unknown'  (never 'paid', never 'free')
- *   live grant      → 'paid'
- *   no grant, 0 published (count succeeded) → 'free'
- *   no grant, already published → 'unpaid'
- *   published-count failed → 'unknown'
+ *   read failed, no row, malformed row   → 'unknown'
+ *   allowed, no credit (a paid plan)     → 'paid'
+ *   allowed, with our credit             → 'free'  (free slot or a one-time page)
+ *   not allowed                          → 'unpaid' (the paywall)
  *
  * There is no default, no timeout-as-paid, and no "assume true in
- * development". A missing argument is a type error, not a grant.
+ * development". The editor's canPublish is UX; the trigger is the law.
  * ======================================================================
- *
- * A grant with remaining 0, a window that has not started, or a window
- * that has ended, is not live. Admin comps and (later) PSP rows share
- * this shape so a failed webhook cannot invent a paid state.
- * ======================================================================
- *
- * The source is `listing_grants` (migration 0016). `beta_publishers` is
- * kept as a historical table; new reads do not use it.
  */
 
-export interface GrantRow {
-  remaining: number;
-  effective_from: string;
-  effective_to: string | null;
+export interface DecisionRow {
+  allowed: boolean;
+  reason: string | null;
+  credit: boolean;
 }
 
-/**
- * @deprecated Use entitlementFromGrants. Kept so existing tests and any
- * leftover caller that still reads beta_publishers fail closed the same way.
- */
-export function entitlementFromAllowlist(
-  row: { user_id: string } | null,
-  readFailed: boolean,
-): Entitlement {
-  if (readFailed) return 'unknown';
-  return row ? 'paid' : 'unpaid';
+export function entitlementFromDecision(row: unknown, readFailed: boolean): Entitlement {
+  if (readFailed || !row || typeof row !== 'object') return 'unknown';
+  const { allowed, credit } = row as Partial<DecisionRow>;
+  if (typeof allowed !== 'boolean' || typeof credit !== 'boolean') return 'unknown';
+  if (!allowed) return 'unpaid';
+  return credit ? 'free' : 'paid';
 }
 
-export function entitlementFromGrants(
-  rows: readonly GrantRow[] | null,
-  readFailed: boolean,
-  now: Date = new Date(),
-  publishedCount: number | null = 0,
-): Entitlement {
-  if (readFailed) return 'unknown';
-  if (publishedCount === null) return 'unknown';
+/** The refusal the trigger raises (PT402, HTTP 402) and what the editor does with it. */
+export type PublishRefusal = 'free_limit' | 'publish_unknown';
 
-  const ts = now.getTime();
-  const live = (rows ?? []).some((row) => {
-    if (!Number.isFinite(row.remaining) || row.remaining <= 0) return false;
-    const from = Date.parse(row.effective_from);
-    if (!Number.isFinite(from) || from > ts) return false;
-    if (row.effective_to) {
-      const to = Date.parse(row.effective_to);
-      if (!Number.isFinite(to) || to <= ts) return false;
-    }
-    return true;
-  });
-
-  if (live) return 'paid';
-  if (publishedCount === 0) return 'free';
-  return 'unpaid';
+export function publishRefusal(error: { code?: string | undefined; message?: string | undefined } | null): PublishRefusal | null {
+  if (!error || error.code !== 'PT402') return null;
+  return error.message === 'free_limit' ? 'free_limit' : 'publish_unknown';
 }
