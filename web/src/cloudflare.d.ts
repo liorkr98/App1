@@ -60,5 +60,12 @@ declare module 'cloudflare:workers' {
      * and everything else works. Never in a PUBLIC_ variable (CLAUDE.md §9).
      */
     SUPABASE_SERVICE_ROLE_KEY?: string;
+
+    /**
+     * The data.gov.il resource id of the Justice Ministry broker register,
+     * for /api/licence-check. A plain variable, not a secret. Unset means
+     * every licence check answers "unavailable" (fail closed, CLAUDE.md §8).
+     */
+    BROKER_REGISTER_RESOURCE_ID?: string;
   };
 }

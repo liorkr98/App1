@@ -439,28 +439,55 @@ summary:
 network failure. The payments provider is undecided — build behind an
 interface with one adapter and say what the interface needs.
 
-**Until a PSP is signed, entitlement is `listing_grants` (migration 0016).** A
-live row with `remaining > 0` inside its window is paid. Admins are
-`site_admins` (uuid only — never commit an email). Granting is an RPC with a
-required note. A Postgres `BEFORE UPDATE` trigger is the server-side publish
-gate: `draft→published` consumes one remaining listing or raises. The editor's
-`canPublish` is UX. Admin comps are dated quotas (`source = admin_comp`) and
-must not be wiped by a later failed webhook — there is no DELETE; close with
-`effective_to`. Seed with `docs/ADMIN-SEED.sql` against a uuid from the
-dashboard.
+**Plans, prices and limits are `docs/PRICING.md`** (decided 12 Oct 2026, the
+single source of truth). Prices live in `config/pricing.json`, seeded into the
+`plans` table by migration 0040; no component carries a price literal, and
+`scripts/verify-no-price-literals.mjs` fails the build on one.
 
-Every PR that reads grant state and decides publish must flag CLAUDE.md §8 in
-the summary.
+**The publish gate is the Postgres trigger (migration 0040).** At the moment a
+listing becomes published or sold it reads the owner's CURRENT entitlement,
+`public.publish_decision()`:
+
+| Situation | Publish | Our credit (נבנה עם עמוד מכירה) |
+|---|---|---|
+| live subscription (active, cancelled but inside the paid period, or past due inside the 7-day grace) whose category fits | yes | off when the plan has branding |
+| live admin comp in `listing_grants` (honoured until its `effective_to`, no longer decremented) | yes | off |
+| a one-time purchase for this listing, or an unused one for its category | yes; expires first publish + 90 or 60 days, then 410 | on |
+| free: fewer than 2 pages published or sold | yes | on |
+| anything else, including an error | **no**: `PT402`, which the API returns as HTTP 402 and the editor turns into the paywall | |
+
+Drafts and previews are never gated. Cancellation, or 7 days past due, runs
+`downgrade_account()`: the credit comes back, the 2 most recent pages stay up
+and the rest become `unpublished` (never deleted); a new payment restores them.
+Launch cohorts are seats in `cohort_counters`, consumed in the payment
+transaction, never returned. Payment state comes only from
+`apply_payment_event()`, idempotent on `psp_txn_ref`, called by the webhook
+through the provider adapter. Until a PSP is signed the adapter is `disabled`
+and refuses everything; plans are granted by hand with `admin_grant_plan()`
+(required note). Admins are `site_admins` (uuid only — never commit an email).
+
+Every PR that reads plan or grant state and decides publish must flag
+CLAUDE.md §8 in the summary.
 
 ### The product rules
 
-**The first published listing is free, and it carries נבנה עם עמוד מכירה in the footer.** That mark is the viral loop: a listing page is forwarded to 30–80 people who are by definition interested in buying something. Small, elegant, clickable.
+**Free is 2 pages, forever, with נבנה עם עמוד מכירה in the footer.** That
+mark is the viral loop: a listing page is forwarded to 30–80 people who are by
+definition interested in buying something. Small, elegant, clickable. A page
+marked sold still counts; archiving one frees its slot.
 
-**A live grant (purchase or admin) publishes further listings and takes the mark off** — including listings already published. Buying one listing is enough. A second listing without a grant does not publish.
+**Agents and dealers subscribe; private sellers buy one page.** The launch
+price is a cohort (first 200 agents, first 100 dealers), locked for 12 months
+from the first payment, with notice 30 days before it ends. A seat is never
+returned and never faked: the counter shows `cohort_counters` as it is.
 
-**Metering is LISTINGS, not images.** Cap images per listing at 25. The user thinks in listings; our cost is in images; the cap is what bridges the two.
+**Agent and office plans need a broker licence that checked out** against the
+Justice Ministry register at signup. A check that failed or could not run is
+"not verified": fail closed for those plans, free and private stay open.
 
-**No free trial on subscription tiers.** A private seller would take the trial, publish their one listing and churn — cannibalising the single-listing purchase that is the correct product for them. The one free listing with the mark is not a subscription trial.
+**No free trial on subscription tiers.** A private seller would take the trial,
+publish their one listing and churn — cannibalising the single-listing purchase
+that is the correct product for them. The two free pages are not a trial.
 
 **Fail closed still.** Unknown or errored entitlement means not paid and not free. Never grant on network failure. The editor's `canPublish` is UX. The Postgres trigger is the law.
 

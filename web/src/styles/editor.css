@@ -1613,6 +1613,76 @@ textarea {
   font-weight: 600;
 }
 
+/* PRICING.md (12 Oct 2026): the plans offered once the free pages are used. */
+.paywall h3 {
+  font-family: 'Frank Ruhl Libre', serif;
+  font-weight: 700;
+  font-size: 1.2rem;
+  line-height: 1.4;
+  margin: 0 0 0.3rem;
+}
+
+.paywall-plans {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0.9rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.paywall-plans label {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.15rem 0.6rem;
+  align-items: baseline;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--stone);
+  border-radius: 8px;
+  background: var(--plaster);
+  cursor: pointer;
+}
+
+.paywall-plan:active {
+  background: var(--stone-warm);
+}
+
+.paywall-plans label.is-selected {
+  border-color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+
+.paywall-plans input {
+  grid-row: span 3;
+  align-self: center;
+}
+
+.paywall-name {
+  font-weight: 700;
+}
+
+.paywall-flag {
+  margin-inline-start: 0.45rem;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--plaster);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.paywall-price bdi {
+  font-family: 'Frank Ruhl Libre', serif;
+  font-weight: 700;
+  font-size: 1.25rem;
+  margin-inline-end: 0.2rem;
+}
+
+.paywall-note {
+  color: var(--muted);
+  font-size: 0.88rem;
+  grid-column: 2;
+}
+
 .publish-button {
   inline-size: 100%;
   min-block-size: 48px;

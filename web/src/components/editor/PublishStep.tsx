@@ -6,6 +6,7 @@ import type { AreaClientStatus } from '../../lib/area-request';
 import { t } from '../../lib/i18n';
 import { ADDONS } from '../../lib/tiers';
 import { AreaLine } from './AreaLine';
+import { Paywall } from './Paywall';
 
 interface Props {
   state: EditorState;
@@ -61,10 +62,10 @@ interface Props {
  * and there must never be one.
  * ======================================================================
  *
- * WHAT AN AGENT WILL ACTUALLY SEE TODAY depends on `listing_grants` plus
- * how many listings they already published. The first one is free, with
- * נבנה עם עמוד מכירה. Unpaid (second listing, no grant) and unknown both block,
- * with different copy. The database trigger is the real publish gate.
+ * WHAT AN AGENT WILL ACTUALLY SEE depends on `publish_decision()` (migration
+ * 0040): a live plan, a one-time purchase, or one of the two free pages
+ * (with נבנה עם עמוד מכירה). Unpaid opens the paywall; unknown waits. The
+ * database trigger is the real publish gate.
  */
 export function PublishStep({
   state,
@@ -156,18 +157,13 @@ export function PublishStep({
         <p className="field-hint">{t('editor.publish.freeHint')}</p>
       ) : null}
 
-      {payment && (
+      {payment?.code === 'paymentRequired' ? <Paywall category={state.category} /> : null}
+      {payment?.code === 'paymentUnverified' ? (
         <div className="paywall">
-          <p>{t(`editor.blockers.${payment.code}`)}</p>
-          <p className="field-hint">
-            {t(
-              payment.code === 'paymentUnverified'
-                ? 'editor.publish.payWait'
-                : 'editor.publish.payBeta',
-            )}
-          </p>
+          <p>{t('editor.blockers.paymentUnverified')}</p>
+          <p className="field-hint">{t('editor.publish.payWait')}</p>
         </div>
-      )}
+      ) : null}
 
       <label className="declare">
         <input

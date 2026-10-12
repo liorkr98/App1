@@ -99,10 +99,10 @@ export async function saveListing(
  * CLAUDE.md §8: the paywall may be built here and ENTITLEMENT MAY NOT BE
  * DECIDED here. This function does not read, infer or grant entitlement. It
  * flips `status` and stamps `published_at`. The editor's `canPublish` is UX.
- * The real gate is the Postgres trigger (migrations 0016 + 0022): a first
- * listing publishes free with the עמוד מכירה mark; a live grant publishes without
- * the mark and decrements remaining; anything else raises. This function
- * does not grant on a failed read.
+ * The real gate is the Postgres trigger (migration 0040, publish_decision):
+ * a live plan, a one-time purchase or a free slot publishes; anything else
+ * raises PT402, which comes back here as `code` so the editor can open the
+ * paywall. This function does not grant on a failed read.
  * ======================================================================
  */
 export async function publishListing(
@@ -110,7 +110,7 @@ export async function publishListing(
   state: EditorState,
   photos: readonly EditorPhoto[] = [],
   extras: MediaExtras = {},
-): Promise<{ ok: true; slug: string } | { error: string }> {
+): Promise<{ ok: true; slug: string } | { error: string; code?: string }> {
   // ============================ HUMAN REVIEW ============================
   // This function does not read entitlement. The editor's `canPublish` is
   // what called it, and that already required 'paid' or 'free'. A second
@@ -174,7 +174,9 @@ export async function publishListing(
     .select('slug')
     .single();
 
-  if (error || !data) return { error: error?.message ?? 'publish_failed' };
+  if (error || !data) {
+    return error?.code ? { error: error.message, code: error.code } : { error: error?.message ?? 'publish_failed' };
+  }
   return { ok: true, slug: data.slug as string };
 }
 

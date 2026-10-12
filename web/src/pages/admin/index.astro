@@ -1,4 +1,5 @@
 ---
+import { PRICING } from '@/features/billing/pricing-config';
 import BrandMark from '../../components/BrandMark.astro';
 import { t } from '../../lib/i18n';
 import '../../styles/tokens.css';
@@ -14,6 +15,9 @@ import '../../styles/tokens.css';
  * → forbidden copy, no tables.
  * ======================================================================
  */
+
+/** The plans an admin may grant by hand: subscriptions, from the one price list. */
+const SUBSCRIPTION_PLANS = PRICING.plans.filter((plan) => plan.kind === 'subscription').map((plan) => plan.key);
 ---
 
 <!DOCTYPE html>
@@ -309,6 +313,27 @@ import '../../styles/tokens.css';
 
             <button type="button" id="grant">{t('admin.grant')}</button>
             <p class="say" id="result" hidden></p>
+
+            {/*
+              docs/PRICING.md: until a PSP is signed, a plan by hand — the
+              person found above, a subscription plan, an end date and a
+              required note (admin_grant_plan, migration 0040). It does not
+              take a launch seat. CLAUDE.md §8: this grants access.
+            */}
+            <h3>{t('billing.admin.title')}</h3>
+            <p>{t('billing.admin.hint')}</p>
+            <label for="plan">{t('billing.admin.plan')}</label>
+            <select id="plan" name="plan">
+              {SUBSCRIPTION_PLANS.map((key) => (
+                <option value={key}>{t(`billing.plans.${key}`)} ({key})</option>
+              ))}
+            </select>
+            <label for="plan-until">{t('billing.admin.until')}</label>
+            <input id="plan-until" name="plan-until" type="date" dir="ltr" required />
+            <label for="plan-note">{t('billing.admin.note')}</label>
+            <textarea id="plan-note" name="plan-note" rows="2" required minlength="3"></textarea>
+            <button type="button" id="grant-plan">{t('billing.admin.submit')}</button>
+            <p class="say" id="plan-result" hidden></p>
           </form>
         </section>
       </div>
@@ -648,6 +673,26 @@ import '../../styles/tokens.css';
           });
           $('result').textContent = error ? t('admin.failed') : t('admin.granted');
           $('result').hidden = false;
+        })();
+      });
+
+      $('grant-plan').addEventListener('click', () => {
+        void (async () => {
+          const say = $('plan-result');
+          say.hidden = false;
+          if (!targetId) {
+            say.textContent = t('admin.notFound');
+            return;
+          }
+          const until = ($('plan-until') as HTMLInputElement).value;
+          const { error } = await supabase().rpc('admin_grant_plan', {
+            p_user_id: targetId,
+            p_plan: ($('plan') as HTMLSelectElement).value,
+            // The end of the chosen day, Israel time.
+            p_until: until ? `${until}T23:59:59+03:00` : null,
+            p_note: ($('plan-note') as HTMLTextAreaElement).value.trim(),
+          });
+          say.textContent = error ? t('billing.admin.failed', { reason: error.message }) : t('billing.admin.done');
         })();
       });
 

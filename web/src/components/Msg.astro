@@ -1,0 +1,22 @@
+---
+import { formatValue, parts } from '../lib/i18n';
+
+/**
+ * One Hebrew message with every value in its own <bdi> (CLAUDE.md §4.2), the
+ * Astro twin of editor/Message.tsx. A number interpolated into a sentence
+ * without it is the bug the bdi gate exists for.
+ */
+interface Props {
+  path: string;
+  values?: Record<string, string | number>;
+}
+
+const { path, values = {} } = Astro.props;
+---
+{parts(path).map((part) =>
+  'text' in part ? (
+    part.text
+  ) : (
+    <bdi>{values[part.slot] === undefined ? `{${part.slot}}` : formatValue(values[part.slot]!)}</bdi>
+  ),
+)}

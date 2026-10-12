@@ -1248,3 +1248,27 @@ h1 {
   border-radius: 10px;
   background: var(--stone-warm);
 }
+
+/* Billing notices (migration 0040): the lock ending, a downgrade. */
+.billing-notices {
+  display: grid;
+  gap: 0.75rem;
+  margin-block-end: 1.5rem;
+}
+
+.billing-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  background: var(--card);
+  border-inline-start: 4px solid var(--ls-ink, currentColor);
+  border-radius: var(--radius);
+  padding: 1rem 1.2rem;
+}
+
+.billing-notice p {
+  margin: 0;
+  line-height: 1.6;
+}

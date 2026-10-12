@@ -1,5 +1,5 @@
 import type { Entitlement } from '@/features/listings/editor';
-import { entitlementFromGrants, type GrantRow } from '@/features/billing/entitlement';
+import { entitlementFromDecision } from '@/features/billing/entitlement';
 
 import { supabase, supabaseConfigured } from './supabase';
 
@@ -7,56 +7,32 @@ import { supabase, supabaseConfigured } from './supabase';
  * The editor's entitlement read.
  *
  * ============================ HUMAN REVIEW ============================
- * CLAUDE.md §8. This is the one place the web app decides whether a signed-in
- * agent may publish. It does not invent a 'paid' on timeout, on a missing
- * table, or on a thrown error.
- *
- * Source: `listing_grants` (migration 0016) plus a count of this user's
- * published/sold listings (migration 0022). A live grant is 'paid'. No
- * grant and zero published is 'free' (watermark on). Count or grant read
- * failed: 'unknown'. The trigger is the server-side gate.
+ * CLAUDE.md §8. The web app does not decide whether a signed-in person may
+ * publish: it asks the database the same question the publish trigger asks
+ * (`my_publish_decision`, migration 0040), for this listing and category —
+ * a dealer plan covers cars, not flats, and a one-time purchase covers its
+ * own category. It does not invent a 'paid' on timeout, on a missing
+ * function, or on a thrown error: every failure is 'unknown', and the
+ * trigger is the gate regardless.
  * ======================================================================
  */
-export async function loadEntitlement(): Promise<Entitlement> {
-  if (!supabaseConfigured) return 'unknown';
+export async function loadEntitlement(
+  listingId: string | null,
+  category: 'property' | 'vehicle' | undefined,
+): Promise<Entitlement> {
+  if (!supabaseConfigured || !category) return 'unknown';
 
   try {
     const client = supabase();
     const { data: session } = await client.auth.getSession();
     if (!session.session) return 'unpaid';
 
-    const { data, error } = await client
-      .from('listing_grants')
-      .select('remaining, effective_from, effective_to');
-
-    if (error) return entitlementFromGrants(null, true, new Date(), null);
-
-    const rows: GrantRow[] = (data ?? []).flatMap((row) => {
-      if (!row || typeof row !== 'object') return [];
-      const remaining = Number((row as { remaining?: unknown }).remaining);
-      const effective_from = (row as { effective_from?: unknown }).effective_from;
-      const effective_to = (row as { effective_to?: unknown }).effective_to;
-      if (!Number.isFinite(remaining) || typeof effective_from !== 'string') return [];
-      return [
-        {
-          remaining,
-          effective_from,
-          effective_to: typeof effective_to === 'string' ? effective_to : null,
-        },
-      ];
+    const { data, error } = await client.rpc('my_publish_decision', {
+      p_listing: listingId,
+      p_category: category,
     });
-
-    const { count, error: countError } = await client
-      .from('listings')
-      .select('id', { count: 'exact', head: true })
-      .eq('owner_id', session.session.user.id)
-      .in('status', ['published', 'sold']);
-
-    if (countError || count === null) {
-      return entitlementFromGrants(rows, false, new Date(), null);
-    }
-
-    return entitlementFromGrants(rows, false, new Date(), count);
+    const row: unknown = Array.isArray(data) ? data[0] : data;
+    return entitlementFromDecision(row, Boolean(error));
   } catch {
     return 'unknown';
   }

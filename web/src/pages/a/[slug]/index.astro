@@ -1,8 +1,9 @@
 ---
+import ListingEnded from '../../../components/ListingEnded.astro';
 import ListingPage from '../../../components/ListingPage.astro';
 import NotFound from '../../../components/NotFound.astro';
 import { recordListingEvent } from '../../../lib/listing-events';
-import { publishedListing } from '../../../lib/listing-from-row';
+import { publishedListing, purchaseExpired } from '../../../lib/listing-from-row';
 
 /**
  * RENDERED PER REQUEST, not at build time.
@@ -43,16 +44,25 @@ if (!listing) {
 }
 
 /*
+ * A one-time page past its days: 410 Gone, so search engines drop it fast,
+ * and nothing of the listing is served (docs/PRICING.md §2).
+ */
+const ended = listing ? await purchaseExpired(listing.id) : false;
+if (ended) {
+  Astro.response.status = 410;
+}
+
+/*
  * Noindex said twice: the page's <meta> for search engines, and this header
  * for the fetchers that read headers and never parse the HTML (some AI
  * assistants' among them). Only a seller who opted in is indexable (§7).
  */
-if (!listing || listing.indexable !== true) {
+if (!listing || listing.indexable !== true || ended) {
   Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
 }
 
-if (listing) {
+if (listing && !ended) {
   await recordListingEvent(slug, 'view', Astro.request.headers.get('user-agent'));
 }
 ---
-{listing ? <ListingPage listing={listing} /> : <NotFound />}
+{ended ? <ListingEnded /> : listing ? <ListingPage listing={listing} /> : <NotFound />}

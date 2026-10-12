@@ -30,6 +30,8 @@ import { DEFAULT_ACCENT, isAccentId } from '@/features/agents/accents';
 
 import { t } from '../../lib/i18n';
 import { loadEntitlement } from '../../lib/entitlement';
+import { recordBillingEvent } from '../../lib/billing-events';
+import { publishRefusal } from '@/features/billing/entitlement';
 import { createDraft, uploadOriginal } from '../../lib/listing-draft';
 import { coarseOrigin } from '@/features/sun/anchor';
 import { areaKey, areaSettled, requestArea, type AreaClientStatus } from '../../lib/area-request';
@@ -339,12 +341,6 @@ export default function Editor() {
         if (live) setState((current) => ({ ...current, sellerReady: false }));
       });
 
-    // HUMAN REVIEW: entitlement is READ, never inferred. A failed read stays
-    // 'unknown' and publishing stays blocked (CLAUDE.md §8).
-    void loadEntitlement().then((entitlement) => {
-      if (live) setState((current) => ({ ...current, entitlement }));
-    });
-
     // The guard is for the sign-out that lands mid-request: without it a
     // resolved read from the previous session sets sellerReady true after the
     // effect that should have cleared it has already run.
@@ -352,6 +348,26 @@ export default function Editor() {
       live = false;
     };
   }, [signedIn]);
+
+  /**
+   * Whether this listing may publish, asked of the database for THIS listing
+   * and category (migration 0040): a dealer plan covers cars, not flats.
+   * Re-asked when the category changes and when the publish screen opens, so
+   * a plan granted while the editor was open is seen.
+   *
+   * HUMAN REVIEW: entitlement is READ, never inferred. A failed read stays
+   * 'unknown' and publishing stays blocked (CLAUDE.md §8).
+   */
+  useEffect(() => {
+    if (!supabaseConfigured || !signedIn) return;
+    let live = true;
+    void loadEntitlement(listingId.current, state.category).then((entitlement) => {
+      if (live) setState((current) => ({ ...current, entitlement }));
+    });
+    return () => {
+      live = false;
+    };
+  }, [signedIn, state.category, screen === 'publish']);
 
   /**
    * Uploads anything newly picked, one at a time.
@@ -1387,11 +1403,25 @@ export default function Editor() {
       } else {
         setPublishing(false);
         void recordEditorEvent('publish', 'publish_fail', id);
-        setFailure(
-          result.error === 'no_photos'
-            ? t('editor.publish.noPhotos')
-            : t('editor.publish.failed'),
-        );
+        /*
+         * HUMAN REVIEW (CLAUDE.md §8). The trigger refused: PT402. The
+         * editor did not decide this and does not argue with it; it shows
+         * the paywall (free_limit) or the honest "could not check" message.
+         */
+        const refusal = publishRefusal('code' in result ? { code: result.code, message: result.error } : null);
+        if (refusal === 'free_limit') {
+          void recordBillingEvent('free_limit_hit', null);
+          setState((current) => ({ ...current, entitlement: 'unpaid' }));
+          setFailure(undefined);
+        } else {
+          setFailure(
+            refusal === 'publish_unknown'
+              ? t('billing.paywall.unknown')
+              : result.error === 'no_photos'
+                ? t('editor.publish.noPhotos')
+                : t('editor.publish.failed'),
+          );
+        }
       }
     })();
   };

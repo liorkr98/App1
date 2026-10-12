@@ -1,0 +1,85 @@
+# PRICING.md — Launch pricing and entitlements
+
+Status: **decided (launch)**. Owner: Lior. Last updated: 2026-10-12.
+This file is the single source of truth for plans, prices and limits.
+Code reads prices from config/DB — **never hardcode a price in a component.**
+
+---
+
+## 1. Plans
+
+| Plan key | Who | Price | Billing | Pages | Branding |
+|---|---|---|---|---|---|
+| `free` | Anyone | ₪0 | — | **2 active** published pages | Our credit "נבנה ב…" shown; no agent branding |
+| `agent_launch` | Licensed broker, first 200 paying | **₪29/mo + מע״מ** | Monthly, cancel anytime | Unlimited | Agent branding, credit removed |
+| `agent` | Licensed broker | ₪49/mo + מע״מ | Monthly; annual = 10× monthly | Unlimited | Agent branding, credit removed |
+| `office` | Brokerage office, up to 10 seats | ₪149/mo + מע״מ | Monthly; annual = 10× monthly | Unlimited, shared | Office + agent branding |
+| `dealer_launch` | Car dealer, first 100 paying | **₪29/mo + מע״מ** | Monthly | Unlimited vehicle pages | Dealer branding |
+| `dealer` | Car dealer | ₪49/mo + מע״מ | Monthly; annual = 10× monthly | Unlimited vehicle pages | Dealer branding |
+| `private_sale` | Private apartment seller | **₪19 incl. VAT** | One-time | 1 page, live 90 days | Our credit shown |
+| `private_rent` | Private landlord | **₪9.90 incl. VAT** | One-time | 1 page, live 60 days | Our credit shown |
+| `private_car` | Private car seller | **₪9.90 incl. VAT** | One-time | 1 page, live 60 days | Our credit shown |
+
+### Launch-price rules
+- `agent_launch` and `dealer_launch` are **cohorts**, not coupons. A seat is consumed when the first payment succeeds.
+- Seat caps: 200 agents, 100 dealers. Count only successful first payments. Store the cap in config.
+- Launch price is **locked for 12 months** from the first payment (`price_locked_until`). After that the subscription moves to the regular plan. Send notice **30 days before** the change, by email and in the dashboard.
+- If a launch subscriber cancels, the seat is **not** returned to the pool.
+- When a cap is reached, the pricing page shows the regular price automatically. No deploy needed.
+
+## 2. Entitlement rules (server-side, fail closed)
+- **All limits are enforced on the server** (publish endpoint and RLS), never only in the UI.
+- The publish check reads the account's **current** entitlement at request time. Unknown plan, expired, or payment-failed means **deny publish** with a clear Hebrew message.
+- Free tier: publishing a 3rd active page is blocked, and the paywall opens with `agent_launch` preselected while seats remain.
+- Drafts and previews are unlimited on every plan. Only **publish** is gated.
+- Private one-time pages: when `expires_at` passes, the page returns HTTP 410 with a "המודעה הסתיימה" page set to noindex. Extension = new purchase.
+
+## 3. Cancellation and failed payments
+- Cancel anytime from the dashboard, effective at period end. No phone call needed.
+- After cancellation or 7 days of failed payment, the account becomes `free`. **Existing pages stay live**, but agent/dealer branding is replaced with our credit, and only the 2 most recent stay published. The rest go to `unpublished`, not deleted.
+- Re-subscribing restores branding and republishes. A launch-cohort member who returns within 12 months gets the launch price back.
+
+## 4. VAT and price display
+- B2B plans (`agent*`, `office`, `dealer*`) are displayed as **"₪29 לחודש + מע״מ"**.
+- Private plans are displayed **including VAT** (consumer law), e.g. **"₪19 כולל מע״מ"**.
+- Store all amounts in **agorot (integers)**, with `vat_inclusive: boolean` per price. VAT rate comes from config (currently 18%), never inline.
+- Invoice/receipt is issued by the payment provider. The business entity is Lior's חברה בע״מ.
+
+## 5. Data model (suggested)
+```sql
+plans (key text pk, kind text check (kind in ('subscription','one_time')),
+       amount_agorot int, vat_inclusive bool, interval text null,
+       page_limit int null, page_ttl_days int null, branding bool, cohort_cap int null, active bool)
+subscriptions (id uuid pk, account_id uuid, plan_key text, status text,
+       started_at timestamptz, current_period_end timestamptz,
+       price_locked_until timestamptz null, launch_cohort bool default false,
+       psp_customer_ref text, psp_token_ref text)   -- token ref only, never card data
+purchases (id uuid pk, account_id uuid, plan_key text, listing_id uuid,
+       amount_agorot int, paid_at timestamptz, expires_at timestamptz, psp_txn_ref text)
+cohort_counters (cohort text pk, used int, cap int)  -- increment in the same transaction as payment confirmation
+```
+- The PSP is behind the existing payment adapter (Israeli provider; **never Stripe**). Webhooks are the source of truth for payment state. Make them idempotent on `psp_txn_ref`.
+
+## 6. Pricing page copy (Hebrew)
+- Headline: **"דף נכס שמוכר — ₪29 לחודש, בלי הגבלה"**
+- Sub: "2 דפים חינם לתמיד. מחיר השקה ל-200 המתווכים הראשונים, נעול ל-12 חודשים."
+- Remaining-seats counter: show only real numbers from `cohort_counters`. **Never fake scarcity.**
+- Private: "מוכרים לבד? דף אחד ב-₪19 כולל מע״מ."
+
+## 7. Analytics events (required for pricing decisions)
+`paywall_shown`, `plan_selected`, `checkout_started`, `payment_succeeded`, `payment_failed`, `subscription_cancelled`, `cohort_seat_consumed`, `free_limit_hit`.
+Each event carries `plan_key`, `account_kind` (agent/office/dealer/private) and `source` (email/referral/page_credit/organic/paid).
+
+## 8. Why these numbers (context, not instructions)
+- Reference prices: Dira IL ₪60/mo for a solo agent (CRM + property link). MyPropertyPages $39.99/mo for unlimited pages. ₪29 makes us the cheapest paid option in Israel.
+- Forecast (base scenario, `forecast-listing-pages.xlsx`), with conversion **unchanged**: year-2 revenue is about ₪73k at these prices vs about ₪185k at ₪79/₪99. **The low price pays off only if conversion and referrals roughly double.** Measure `free_limit_hit → payment_succeeded` in the first 60 days. If conversion has not risen meaningfully, the regular price takes effect after the cohort fills, as planned.
+
+## 9. Acceptance tests
+- [ ] Free account cannot publish a 3rd page (API returns 402/403; UI shows paywall).
+- [ ] 201st agent payment gets `agent`, not `agent_launch`; counter is race-safe under concurrent payments.
+- [ ] `price_locked_until` transition moves the plan and sends the 30-day notice.
+- [ ] Cancel → pages stay live with our credit; only 2 remain published.
+- [ ] Private page returns 410 after `expires_at`.
+- [ ] B2B prices render "+ מע״מ" and private prices render "כולל מע״מ"; all numbers in `<bdi>`.
+- [ ] Webhook replay does not double-charge or double-count a cohort seat.
+- [ ] No price literal exists in `src/` outside the config/DB loader (grep check in CI).

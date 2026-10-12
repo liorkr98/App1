@@ -315,7 +315,7 @@ const shareHref = whatsappShareUrl(
         The ODbL line is a LICENCE CONDITION, not a courtesy (§10). */}
     <footer>
       {listing.hyadMark !== false && (
-        <Fragment>{t('common.builtByPrefix')}<a href="/">{t('common.brand')}</a></Fragment>
+        <Fragment>{t('common.builtByPrefix')}<a href="/?src=credit">{t('common.brand')}</a></Fragment>
       )}
       {attributions.map((attribution) => (
         <Fragment><br /><span class="attribution"><Prose text={attribution} /></span></Fragment>
