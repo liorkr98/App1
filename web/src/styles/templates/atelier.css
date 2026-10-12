@@ -183,3 +183,34 @@ html[data-template='atelier'] .gallery img {
     animation: stage-fade 0.9s var(--ease-out) 0.45s both;
   }
 }
+
+/* ==========================================================================
+   THE PAGE BODY in this design's own idiom (12 Oct 2026). Below the first
+   screen every design used to be the same page recoloured; the owner asked
+   for each to be its own. Structure and rules stay shared (absent vs
+   unanswered, מאומת only with a source, <bdi>, the street only): only the
+   look of the headings, facts, description, gallery and seller card change.
+   No new motion here.
+   ========================================================================== */
+
+html[data-template='atelier'] .section-label { text-align: center; font-family: 'Frank Ruhl Libre', serif; }
+html[data-template='atelier'] section:not(.enrich) > h2 { display: flex; align-items: center; gap: 1rem; font-weight: 700; text-align: center; }
+html[data-template='atelier'] section:not(.enrich) > h2::before, html[data-template='atelier'] section:not(.enrich) > h2::after { content: ''; flex: 1; block-size: 1px; background: var(--ink); }
+html[data-template='atelier'] .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 2rem; margin-inline: var(--gut); background: none; border: 0; }
+html[data-template='atelier'] .fact { background: none; padding: 0.9rem 0; border-block-end: 1px solid var(--stone); }
+html[data-template='atelier'] .fact .fact-val { font-size: 2.2rem; font-weight: 700; }
+html[data-template='atelier'] .fact .fact-lbl { font-family: 'Frank Ruhl Libre', serif; font-size: 0.95rem; }
+html[data-template='atelier'] .fact.off { background: none; }
+html[data-template='atelier'] .gallery figcaption { font-family: 'Frank Ruhl Libre', serif; font-size: 0.95rem; color: var(--ink); }
+html[data-template='atelier'] .seller { margin: 0 var(--gut); text-align: center; background: none; border-block: 1px solid var(--ink); }
+html[data-template='atelier'] .seller-row { justify-content: center; }
+html[data-template='atelier'] .seller-name { font-weight: 700; font-size: 1.5rem; }
+html[data-template='atelier'] .seller-actions { justify-content: center; }
+
+/* The neighbourhood, in the same idiom: the largest block below the first
+   screen, so it cannot stay the one part every design shares. */
+html[data-template='atelier'] .enrich .egroup-head { justify-content: center; border-block-end: 0; }
+html[data-template='atelier'] .enrich .egroup-head h3 { display: flex; align-items: center; gap: 0.8rem; font-weight: 700; }
+html[data-template='atelier'] .enrich .egroup-head h3::before, html[data-template='atelier'] .enrich .egroup-head h3::after { content: ''; inline-size: 2rem; border-block-start: 1px solid var(--ink); }
+html[data-template='atelier'] .enrich .egroup-head .count { margin-inline-start: 0; }
+html[data-template='atelier'] .enrich .erow + .erow { border-block-start: 0; }

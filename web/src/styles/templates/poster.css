@@ -262,3 +262,31 @@ html[data-template='poster'] .gallery img {
     }
   }
 }
+
+/* ==========================================================================
+   THE PAGE BODY in this design's own idiom (12 Oct 2026). Below the first
+   screen every design used to be the same page recoloured; the owner asked
+   for each to be its own. Structure and rules stay shared (absent vs
+   unanswered, מאומת only with a source, <bdi>, the street only): only the
+   look of the headings, facts, description, gallery and seller card change.
+   No new motion here.
+   ========================================================================== */
+
+html[data-template='poster'] .listing-flow { counter-reset: po-sec; }
+html[data-template='poster'] .section-label { display: none; }
+html[data-template='poster'] section:not(.enrich) > h2 { counter-increment: po-sec; font-family: var(--ls-font-display); font-weight: 900; font-size: clamp(2rem, 7vw, 3rem); line-height: 1; padding-block-start: 0.6rem; border-block-start: 6px solid var(--ink); }
+html[data-template='poster'] section:not(.enrich) > h2::before { content: counter(po-sec, decimal-leading-zero); unicode-bidi: isolate; display: block; font-size: 0.9rem; font-weight: 700; margin-block-end: 0.3rem; }
+html[data-template='poster'] .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; margin-inline: var(--gut); background: none; border: 0; border-block-start: 6px solid var(--ink); }
+html[data-template='poster'] .fact { background: none; padding: 0.8rem 0; border-block-end: 1px solid var(--ink); }
+html[data-template='poster'] .fact .fact-val { font-family: var(--ls-font-display); font-weight: 900; font-size: clamp(2.4rem, 10vw, 3.6rem); line-height: 0.95; }
+html[data-template='poster'] .fact.off { background: none; }
+html[data-template='poster'] .gallery img, html[data-template='poster'] .gallery figure:first-child img { aspect-ratio: 1; border-radius: 0; }
+html[data-template='poster'] .seller { margin: 0 var(--gut); background: none; border-block-start: 6px solid var(--ink); }
+html[data-template='poster'] .seller-name { font-family: var(--ls-font-display); font-weight: 900; font-size: 2rem; }
+
+/* The neighbourhood, in the same idiom: the largest block below the first
+   screen, so it cannot stay the one part every design shares. */
+html[data-template='poster'] .enrich .egroup-head { padding: 0.3rem 0.7rem; background: var(--ink); color: var(--plaster); border-block-end: 0; }
+html[data-template='poster'] .enrich .egroup-head h3 { font-family: var(--ls-font-display); font-weight: 900; }
+html[data-template='poster'] .enrich .egroup-head .count { color: var(--plaster); }
+html[data-template='poster'] .enrich .erow .mins { font-family: var(--ls-font-display); font-weight: 900; font-size: 1.9rem; color: var(--ink); }

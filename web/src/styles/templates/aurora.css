@@ -470,3 +470,27 @@ html[data-template='aurora'] .gallery img {
     }
   }
 }
+
+/* ==========================================================================
+   THE PAGE BODY in this design's own idiom (12 Oct 2026). Below the first
+   screen every design used to be the same page recoloured; the owner asked
+   for each to be its own. Structure and rules stay shared (absent vs
+   unanswered, מאומת only with a source, <bdi>, the street only): only the
+   look of the headings, facts, description, gallery and seller card change.
+   No new motion here.
+   ========================================================================== */
+
+html[data-template='aurora'] .section-label { color: var(--ink); font-weight: 700; }
+html[data-template='aurora'] section:not(.enrich) > h2 { font-family: var(--ls-font-display); font-weight: 800; font-size: clamp(1.9rem, 6vw, 2.8rem); line-height: 1.08; }
+html[data-template='aurora'] section:not(.enrich) > h2::before { content: ''; display: block; inline-size: 2.4rem; block-size: 3px; margin-block-end: 0.8rem; background: var(--olive); border-radius: 2px; }
+html[data-template='aurora'] .facts { gap: 0.6rem; padding-inline: var(--gut); background: none; border: 0; }
+html[data-template='aurora'] .fact { background: #141512; border: 1px solid #23251f; border-block-start: 3px solid var(--olive); border-radius: 6px; }
+html[data-template='aurora'] .fact.off { background: #10110e; border-block-start-color: #2a2c22; }
+html[data-template='aurora'] .gallery img { border-radius: 6px; }
+html[data-template='aurora'] .seller { margin: 0 var(--gut); background: #141512; border: 1px solid #23251f; border-inline-start: 3px solid var(--olive); border-radius: 6px; }
+
+/* The neighbourhood, in the same idiom: the largest block below the first
+   screen, so it cannot stay the one part every design shares. */
+html[data-template='aurora'] .enrich .egroup { padding: 1rem 1.1rem; background: #141512; border: 1px solid #23251f; border-block-start: 3px solid var(--olive); border-radius: 6px; }
+html[data-template='aurora'] .enrich .egroup-head { border-block-end: 0; }
+html[data-template='aurora'] .enrich .egroup-head h3 { font-family: var(--ls-font-display); font-weight: 800; }

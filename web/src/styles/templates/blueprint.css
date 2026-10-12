@@ -407,3 +407,30 @@ html[data-template='blueprint'] .facts {
     }
   }
 }
+
+/* ==========================================================================
+   THE PAGE BODY in this design's own idiom (12 Oct 2026). Below the first
+   screen every design used to be the same page recoloured; the owner asked
+   for each to be its own. Structure and rules stay shared (absent vs
+   unanswered, מאומת only with a source, <bdi>, the street only): only the
+   look of the headings, facts, description, gallery and seller card change.
+   No new motion here.
+   ========================================================================== */
+
+html[data-template='blueprint'] .section-label { font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace; font-size: 0.78rem; color: var(--bp-ink); }
+html[data-template='blueprint'] section:not(.enrich) > h2 { color: var(--bp-ink); padding-block-end: 0.45rem; border-block-end: 3px double var(--bp-ink); }
+html[data-template='blueprint'] .facts { margin-inline: var(--gut); gap: 0; background: none; border: 2px solid var(--bp-ink); }
+html[data-template='blueprint'] .fact { background: #ffffff; border: 1px solid rgba(31, 79, 160, 0.35); }
+html[data-template='blueprint'] .fact .fact-val { color: var(--bp-ink); font-family: var(--ls-font-display); font-weight: 700; }
+html[data-template='blueprint'] .fact .fact-lbl { font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace; font-size: 0.72rem; }
+html[data-template='blueprint'] .fact.off { background: var(--stone-warm); }
+html[data-template='blueprint'] .fact.off .fact-val { color: var(--absent); }
+html[data-template='blueprint'] .gallery img { border: 1px solid var(--bp-ink); padding: 4px; background: #ffffff; border-radius: 0; }
+html[data-template='blueprint'] .seller { margin: 0 var(--gut); background: #ffffff; border: 2px solid var(--bp-ink); }
+html[data-template='blueprint'] .seller-name { color: var(--bp-ink); }
+
+/* The neighbourhood, in the same idiom: the largest block below the first
+   screen, so it cannot stay the one part every design shares. */
+html[data-template='blueprint'] .enrich .egroup { padding: 0.9rem 1rem; border: 1px solid var(--bp-ink); background-image: linear-gradient(var(--bp-line) 1px, transparent 1px), linear-gradient(90deg, var(--bp-line) 1px, transparent 1px); background-size: 16px 16px; }
+html[data-template='blueprint'] .enrich .egroup-head { border-block-end: 3px double var(--bp-ink); }
+html[data-template='blueprint'] .enrich .egroup-head h3 { color: var(--bp-ink); font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace; font-size: 0.95rem; }

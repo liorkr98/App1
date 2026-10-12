@@ -309,3 +309,28 @@ html[data-template='showroom'] .cta-dock {
     }
   }
 }
+
+/* ==========================================================================
+   THE PAGE BODY in this design's own idiom (12 Oct 2026). Below the first
+   screen every design used to be the same page recoloured; the owner asked
+   for each to be its own. Structure and rules stay shared (absent vs
+   unanswered, מאומת only with a source, <bdi>, the street only): only the
+   look of the headings, facts, description, gallery and seller card change.
+   No new motion here.
+   ========================================================================== */
+
+html[data-template='showroom'] .section-label { color: var(--ink); font-weight: 800; }
+html[data-template='showroom'] section:not(.enrich) > h2 { font-family: var(--ls-font-display); font-weight: 800; padding-block-end: 0.5rem; border-block-end: 1px solid #3a3e44; }
+html[data-template='showroom'] .facts { grid-template-columns: minmax(0, 1fr); gap: 0; margin-inline: var(--gut); background: none; border: 0; }
+html[data-template='showroom'] .fact { display: flex; align-items: baseline; justify-content: space-between; padding: 0.75rem 0.9rem; background: transparent; border-block-end: 1px solid #272a2e; }
+html[data-template='showroom'] .fact:nth-child(odd) { background: #15171a; }
+html[data-template='showroom'] .fact .fact-val { order: 2; font-family: var(--ls-font-display); font-weight: 800; font-size: 1.6rem; }
+html[data-template='showroom'] .fact .fact-lbl { order: 1; margin: 0; }
+html[data-template='showroom'] .gallery img { border-radius: 2px; }
+html[data-template='showroom'] .seller { margin: 0 var(--gut); background: #15171a; border-inline-start: 4px solid var(--olive); }
+
+/* The neighbourhood, in the same idiom: the largest block below the first
+   screen, so it cannot stay the one part every design shares. */
+html[data-template='showroom'] .enrich .egroup-head { border-block-end: 1px solid var(--ink); }
+html[data-template='showroom'] .enrich .egroup-head h3 { font-family: var(--ls-font-display); font-weight: 800; letter-spacing: 0; }
+html[data-template='showroom'] .enrich .erow .mins { padding: 0.35rem 0.5rem; border: 1px solid var(--stone); border-radius: 4px; font-size: 1.05rem; text-align: center; }

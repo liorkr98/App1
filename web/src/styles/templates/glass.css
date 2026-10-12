@@ -232,3 +232,27 @@ html[data-template='glass'] .gallery img {
     animation-delay: 160ms;
   }
 }
+
+/* ==========================================================================
+   THE PAGE BODY in this design's own idiom (12 Oct 2026). Below the first
+   screen every design used to be the same page recoloured; the owner asked
+   for each to be its own. Structure and rules stay shared (absent vs
+   unanswered, מאומת only with a source, <bdi>, the street only): only the
+   look of the headings, facts, description, gallery and seller card change.
+   No new motion here.
+   ========================================================================== */
+
+html[data-template='glass'] .section-label { display: inline-block; padding: 0.2rem 0.75rem; color: var(--ink); background: rgba(242, 240, 234, 0.1); border: 1px solid rgba(242, 240, 234, 0.2); border-radius: 999px; }
+html[data-template='glass'] section:not(.enrich) > h2 { font-family: var(--ls-font-display); font-weight: 700; }
+html[data-template='glass'] .facts { gap: 0.7rem; padding-inline: var(--gut); background: none; border: 0; }
+html[data-template='glass'] .fact { background: rgba(242, 240, 234, 0.06); border: 1px solid rgba(242, 240, 234, 0.14); border-radius: 22px; backdrop-filter: blur(14px); }
+html[data-template='glass'] .fact.off { background: transparent; border-style: dashed; }
+html[data-template='glass'] .gallery img { border-radius: 22px; }
+html[data-template='glass'] .seller { margin: 0 var(--gut); background: rgba(242, 240, 234, 0.06); border: 1px solid rgba(242, 240, 234, 0.16); border-radius: 26px; }
+
+/* The neighbourhood, in the same idiom: the largest block below the first
+   screen, so it cannot stay the one part every design shares. */
+html[data-template='glass'] .enrich .egroup { padding: 1rem 1.1rem; background: #141613; border: 1px solid rgba(242, 240, 234, 0.14); border-radius: 22px; }
+html[data-template='glass'] .enrich .egroup-head { border-block-end: 0; }
+html[data-template='glass'] .enrich .erow .mins { display: grid; place-items: center; block-size: 2.8rem; flex-basis: 3.4rem; background: #1e201c; border-radius: 14px; font-size: 1.1rem; text-align: center; }
+html[data-template='glass'] .enrich .erow { align-items: center; }

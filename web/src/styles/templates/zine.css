@@ -329,3 +329,29 @@ html[data-template='zine'] .enrich {
     }
   }
 }
+
+/* ==========================================================================
+   THE PAGE BODY in this design's own idiom (12 Oct 2026). Below the first
+   screen every design used to be the same page recoloured; the owner asked
+   for each to be its own. Structure and rules stay shared (absent vs
+   unanswered, מאומת only with a source, <bdi>, the street only): only the
+   look of the headings, facts, description, gallery and seller card change.
+   No new motion here.
+   ========================================================================== */
+
+html[data-template='zine'] section:not(.enrich) > h2 { display: inline-block; padding: 0.15rem 0.7rem; border: 3px solid var(--zn-pink, #ff48b0); rotate: -1.5deg; font-family: var(--ls-font-display); font-weight: 900; }
+html[data-template='zine'] .facts { gap: 0.8rem; padding: 0.6rem var(--gut); background: none; border: 0; }
+html[data-template='zine'] .fact { background: #ffffff; border: 3px solid var(--zn-blue, #0078bf); border-radius: 14px; rotate: -1deg; }
+html[data-template='zine'] .fact:nth-child(even) { border-color: var(--zn-pink, #ff48b0); rotate: 1.2deg; }
+html[data-template='zine'] .fact.off { background: var(--stone-warm); border-color: var(--stone); }
+html[data-template='zine'] .gallery img { filter: grayscale(1) contrast(1.15); mix-blend-mode: multiply; border-radius: 0; }
+html[data-template='zine'] .gallery figure { background: var(--zn-blue, #0078bf); }
+html[data-template='zine'] .gallery figure:nth-child(even) { background: var(--zn-pink, #ff48b0); }
+html[data-template='zine'] .seller { margin: 0 var(--gut); background: #ffffff; border: 3px dashed var(--zn-pink, #ff48b0); }
+
+/* The neighbourhood, in the same idiom: the largest block below the first
+   screen, so it cannot stay the one part every design shares. */
+html[data-template='zine'] .enrich .egroup { padding: 0.9rem 1rem; background: #ffffff; border: 3px solid var(--zn-blue, #0078bf); border-radius: 14px; rotate: -0.8deg; }
+html[data-template='zine'] .enrich .egroup:nth-of-type(even) { border-color: var(--zn-pink, #ff48b0); rotate: 0.8deg; }
+html[data-template='zine'] .enrich .egroup-head { border-block-end: 0; }
+html[data-template='zine'] .enrich .egroup-head h3 { font-family: var(--ls-font-display); font-weight: 900; }

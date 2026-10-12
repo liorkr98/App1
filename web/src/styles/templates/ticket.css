@@ -296,3 +296,32 @@ html[data-template='ticket'] .stage-ticket .highlights {
     }
   }
 }
+
+/* ==========================================================================
+   THE PAGE BODY in this design's own idiom (12 Oct 2026). Below the first
+   screen every design used to be the same page recoloured; the owner asked
+   for each to be its own. Structure and rules stay shared (absent vs
+   unanswered, מאומת only with a source, <bdi>, the street only): only the
+   look of the headings, facts, description, gallery and seller card change.
+   No new motion here.
+   ========================================================================== */
+
+html[data-template='ticket'] .section-label { font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace; }
+html[data-template='ticket'] section:not(.enrich) > h2 { font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace; font-weight: 700; font-size: 1.35rem; padding-block-end: 0.5rem; border-block-end: 2px dashed var(--ink); }
+html[data-template='ticket'] .facts { gap: 0; margin-inline: var(--gut); background: var(--stone-warm); border: 0; border-radius: 12px; }
+html[data-template='ticket'] .fact { background: none; border-inline-end: 2px dashed var(--stone); }
+html[data-template='ticket'] .fact .fact-val { font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace; font-weight: 700; font-size: 1.5rem; }
+html[data-template='ticket'] .fact.off { background: none; }
+html[data-template='ticket'] .gallery { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+html[data-template='ticket'] .gallery img, html[data-template='ticket'] .gallery figure:first-child img { aspect-ratio: 1; border-radius: 4px; }
+html[data-template='ticket'] .gallery figure:first-child { grid-column: auto; }
+html[data-template='ticket'] .seller { margin: 0 var(--gut); background: var(--stone-warm); border-radius: 12px; border-inline-start: 2px dashed var(--ink); }
+
+/* The neighbourhood, in the same idiom: the largest block below the first
+   screen, so it cannot stay the one part every design shares. */
+html[data-template='ticket'] .enrich .egroup { padding: 0.9rem 1rem; background: var(--tk-paper); border: 1px dashed var(--ink); font-family: var(--tk-type); }
+html[data-template='ticket'] .enrich .egroup-head { border-block-end: 1px dashed var(--ink); }
+html[data-template='ticket'] .enrich .egroup-head h3, html[data-template='ticket'] .enrich .erow .mins { font-family: var(--tk-type); }
+html[data-template='ticket'] .enrich .erow + .erow { border-block-start-style: dashed; }
+html[data-template='ticket'] .enrich { background: transparent; --enrich-ink: var(--ink); --enrich-muted: var(--muted); --enrich-rule: var(--stone); --enrich-figure: var(--ink); }
+html[data-template='ticket'] .enrich .egroup { color: var(--ink); }

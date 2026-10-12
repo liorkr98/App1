@@ -214,3 +214,30 @@ html[data-template='streetsign'] .stage :is(.numerals > div, .price-bar, .highli
     }
   }
 }
+
+/* ==========================================================================
+   THE PAGE BODY in this design's own idiom (12 Oct 2026). Below the first
+   screen every design used to be the same page recoloured; the owner asked
+   for each to be its own. Structure and rules stay shared (absent vs
+   unanswered, מאומת only with a source, <bdi>, the street only): only the
+   look of the headings, facts, description, gallery and seller card change.
+   No new motion here.
+   ========================================================================== */
+
+html[data-template='streetsign'] section:not(.enrich) > h2 { display: inline-block; padding: 0.3rem 0.9rem; color: #ffffff; background: #1f4e9c; border-radius: 8px; outline: 2px solid #ffffff; outline-offset: -6px; font-weight: 800; font-size: 1.45rem; }
+html[data-template='streetsign'] .facts { gap: 0.6rem; padding: 0.4rem var(--gut); background: none; border: 0; }
+html[data-template='streetsign'] .fact { text-align: center; background: #ffffff; border: 2px solid #1f4e9c; border-radius: 8px; }
+html[data-template='streetsign'] .fact .fact-val { color: #1f4e9c; font-weight: 800; }
+html[data-template='streetsign'] .fact.off { background: var(--stone-warm); border-color: var(--stone); }
+html[data-template='streetsign'] .fact.off .fact-val { color: var(--absent); }
+html[data-template='streetsign'] .gallery figcaption { display: inline-block; margin-block-start: 0.4rem; padding: 0.1rem 0.6rem; color: #ffffff; background: #1f4e9c; border-radius: 4px; }
+html[data-template='streetsign'] .seller { margin: 0 var(--gut); color: #ffffff; background: #1f4e9c; border-radius: 12px; outline: 2px solid #ffffff; outline-offset: -8px; }
+html[data-template='streetsign'] .seller :is(.seller-name, .seller-role, .section-label) { color: #ffffff; }
+html[data-template='streetsign'] .seller .verified { color: #ffffff; border-color: #ffffff; }
+
+/* The neighbourhood, in the same idiom: the largest block below the first
+   screen, so it cannot stay the one part every design shares. */
+html[data-template='streetsign'] .enrich .egroup-head { padding: 0.35rem 0.8rem; background: #1f4e9c; color: #ffffff; border: 3px double rgba(255, 255, 255, 0.85); border-radius: 6px; }
+html[data-template='streetsign'] .enrich .egroup-head h3 { font-weight: 700; }
+html[data-template='streetsign'] .enrich .egroup-head .count { color: #ffffff; }
+html[data-template='streetsign'] .enrich .erow + .erow { border-block-start-style: dashed; }

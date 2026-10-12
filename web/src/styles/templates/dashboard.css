@@ -302,3 +302,30 @@ html[data-template='dashboard'] .stage :is(.numerals > div, .price-bar, .highlig
     }
   }
 }
+
+/* ==========================================================================
+   THE PAGE BODY in this design's own idiom (12 Oct 2026). Below the first
+   screen every design used to be the same page recoloured; the owner asked
+   for each to be its own. Structure and rules stay shared (absent vs
+   unanswered, מאומת only with a source, <bdi>, the street only): only the
+   look of the headings, facts, description, gallery and seller card change.
+   No new motion here.
+   ========================================================================== */
+
+html[data-template='dashboard'] .section-label { color: #f2c230; font-weight: 700; }
+html[data-template='dashboard'] section:not(.enrich) > h2 { font-family: var(--ls-font-display); font-weight: 800; font-variant-numeric: tabular-nums; }
+html[data-template='dashboard'] section:not(.enrich) > h2::before { content: ''; display: inline-block; inline-size: 0.55em; block-size: 0.55em; margin-inline-end: 0.5rem; border-radius: 50%; background: #3ddc84; box-shadow: 0 0 10px rgba(61, 220, 132, 0.7); vertical-align: middle; }
+html[data-template='dashboard'] .facts { gap: 0.6rem; padding-inline: var(--gut); background: none; border: 0; }
+html[data-template='dashboard'] .fact { background: #16181b; border: 1px solid #2a2d31; border-radius: 16px; }
+html[data-template='dashboard'] .fact .fact-val { color: #f2c230; font-family: var(--ls-font-display); font-weight: 800; font-variant-numeric: tabular-nums; }
+html[data-template='dashboard'] .fact.off { background: #121417; }
+html[data-template='dashboard'] .fact.off .fact-val { color: var(--absent); }
+html[data-template='dashboard'] .gallery img { border-radius: 14px; outline: 1px solid #2a2d31; }
+html[data-template='dashboard'] .seller { margin: 0 var(--gut); background: #16181b; border: 1px solid #2a2d31; border-radius: 18px; }
+
+/* The neighbourhood, in the same idiom: the largest block below the first
+   screen, so it cannot stay the one part every design shares. */
+html[data-template='dashboard'] .enrich .egroup { padding: 1rem 1.1rem; background: #121417; border: 1px solid #2a2d31; border-radius: 16px; }
+html[data-template='dashboard'] .enrich .egroup-head { border-block-end: 0; }
+html[data-template='dashboard'] .enrich .egroup-head h3::before { content: ''; display: inline-block; inline-size: 0.5rem; block-size: 0.5rem; margin-inline-end: 0.5rem; border-radius: 50%; background: #3ddc84; box-shadow: 0 0 8px #3ddc84; vertical-align: middle; }
+html[data-template='dashboard'] .enrich .erow .mins { color: #f2c230; font-family: var(--ls-font-display); font-weight: 800; }

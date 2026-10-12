@@ -385,3 +385,30 @@ html[data-template='walk'] .enrich {
     }
   }
 }
+
+/* ==========================================================================
+   THE PAGE BODY in this design's own idiom (12 Oct 2026). Below the first
+   screen every design used to be the same page recoloured; the owner asked
+   for each to be its own. Structure and rules stay shared (absent vs
+   unanswered, מאומת only with a source, <bdi>, the street only): only the
+   look of the headings, facts, description, gallery and seller card change.
+   No new motion here.
+   ========================================================================== */
+
+html[data-template='walk'] section:not(.enrich) > h2 { position: relative; padding-inline-start: 2.1rem; }
+html[data-template='walk'] section:not(.enrich) > h2::before { content: ''; position: absolute; inset-inline-start: 0; inset-block-start: 0.32em; inline-size: 1.1rem; block-size: 1.1rem; border-radius: 50%; background: var(--plaster); border: 4px solid var(--ink); box-sizing: border-box; }
+html[data-template='walk'] .facts { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.4rem var(--gut); background: none; border: 0; }
+html[data-template='walk'] .fact { display: flex; align-items: baseline; gap: 0.45rem; padding: 0.45rem 0.95rem; background: #ffffff; border: 2px solid var(--ink); border-radius: 999px; }
+html[data-template='walk'] .fact .fact-val { font-size: 1.25rem; font-weight: 700; }
+html[data-template='walk'] .fact .fact-lbl { margin: 0; }
+html[data-template='walk'] .fact.off { background: var(--stone-warm); border-color: var(--stone); border-style: dashed; }
+html[data-template='walk'] .gallery { border-inline-start: 3px dashed var(--ink); margin-inline-start: var(--gut); padding-inline-start: 1rem; }
+html[data-template='walk'] .seller { margin: 0 var(--gut); background: #ffffff; border: 2px dashed var(--ink); border-radius: 18px; }
+
+/* The neighbourhood, in the same idiom: the largest block below the first
+   screen, so it cannot stay the one part every design shares. */
+html[data-template='walk'] .enrich .egroup { padding-inline-start: 1.1rem; border-inline-start: 2px dotted var(--wk-ink); }
+html[data-template='walk'] .enrich .egroup-head { border-block-end: 0; }
+html[data-template='walk'] .enrich .erow { position: relative; }
+html[data-template='walk'] .enrich .erow::before { content: ''; position: absolute; inset-inline-start: calc(-1.1rem - 6px); inset-block-start: 1.05rem; inline-size: 10px; block-size: 10px; border-radius: 50%; background: var(--plaster); border: 2px solid var(--wk-ink); }
+html[data-template='walk'] .enrich .erow + .erow { border-block-start: 0; }

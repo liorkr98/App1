@@ -383,3 +383,26 @@ html[data-template='heliograph'].hl-night {
 html[data-template='heliograph'].hl-night .enrich {
   background: var(--stone-warm);
 }
+
+/* ==========================================================================
+   THE PAGE BODY in this design's own idiom (12 Oct 2026). Below the first
+   screen every design used to be the same page recoloured; the owner asked
+   for each to be its own. Structure and rules stay shared (absent vs
+   unanswered, מאומת only with a source, <bdi>, the street only): only the
+   look of the headings, facts, description, gallery and seller card change.
+   No new motion here.
+   ========================================================================== */
+
+html[data-template='heliograph'] section:not(.enrich) > h2 { display: flex; align-items: center; gap: 0.7rem; }
+html[data-template='heliograph'] section:not(.enrich) > h2::before { content: ''; flex: none; inline-size: 0.9em; block-size: 0.9em; border-radius: 50%; background: radial-gradient(circle at 40% 40%, #ffd27a, var(--hl-sun, #e0892b)); box-shadow: 0 0 18px rgba(224, 137, 43, 0.55); }
+html[data-template='heliograph'] .facts { gap: 0.6rem; padding-inline: var(--gut); background: none; border: 0; }
+html[data-template='heliograph'] .fact { background: #fbf3e3; border-radius: 12px; border-block-end: 3px solid var(--hl-sun, #e0892b); }
+html[data-template='heliograph'] .fact.off { background: var(--stone-warm); border-block-end-color: var(--stone); }
+html[data-template='heliograph'] .gallery img { border-radius: 12px; box-shadow: 0 14px 30px -18px rgba(150, 80, 10, 0.5); }
+html[data-template='heliograph'] .seller { margin: 0 var(--gut); background: #fbf3e3; border-radius: 16px; border-block-start: 4px solid var(--hl-sun, #e0892b); }
+
+/* The neighbourhood, in the same idiom: the largest block below the first
+   screen, so it cannot stay the one part every design shares. */
+html[data-template='heliograph'] .enrich .egroup { padding: 1rem 1.1rem; background: var(--stone-warm); border-radius: 14px; }
+html[data-template='heliograph'] .enrich .egroup-head { border-block-end: 0; }
+html[data-template='heliograph'] .enrich .egroup-head h3::before { content: ''; display: inline-block; inline-size: 0.6rem; block-size: 0.6rem; margin-inline-end: 0.5rem; border-radius: 50%; background: var(--hl-sun); vertical-align: middle; }
