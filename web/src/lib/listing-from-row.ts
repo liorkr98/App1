@@ -83,3 +83,30 @@ export async function indexableListings(): Promise<{ slug: string; publishedAt?:
     return [];
   }
 }
+
+/**
+ * Whether a one-time page has run out (docs/PRICING.md §2: HTTP 410,
+ * "המודעה הסתיימה", noindex). Only a page published on a purchase expires:
+ * `expires_at` on any other row is the old, unenforced 12-month stamp.
+ *
+ * Read on its own, and false on any error, so listing pages keep rendering
+ * if this deploys before migration 0040 adds `purchase_id`. Expiry is a
+ * courtesy to the buyer; the gate that matters (publishing) is the trigger.
+ */
+export async function purchaseExpired(listingId: string, now: Date = new Date()): Promise<boolean> {
+  if (!supabaseConfigured) return false;
+  try {
+    const { data, error } = await supabasePublic()
+      .from('listings')
+      .select('purchase_id, expires_at')
+      .eq('id', listingId)
+      .maybeSingle();
+    if (error || !data) return false;
+    const row = data as { purchase_id: string | null; expires_at: string | null };
+    if (!row.purchase_id || !row.expires_at) return false;
+    const ends = Date.parse(row.expires_at);
+    return Number.isFinite(ends) && ends <= now.getTime();
+  } catch {
+    return false;
+  }
+}

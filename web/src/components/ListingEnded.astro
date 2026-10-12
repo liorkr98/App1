@@ -1,0 +1,16 @@
+---
+import Plain from '../layouts/Plain.astro';
+import { t } from '../lib/i18n';
+
+/**
+ * A one-time page whose days ran out (docs/PRICING.md §2): the route answers
+ * HTTP 410 with this, noindex, and no listing content — the buyer learns the
+ * ad ended, and nothing about the home is served past the paid period.
+ */
+---
+
+<Plain title={t('billing.expired.title')} robots="noindex">
+  <h1>{t('billing.expired.title')}</h1>
+  <p>{t('billing.expired.body')}</p>
+  <p><a href="/?src=credit">{t('billing.expired.cta')}</a></p>
+</Plain>

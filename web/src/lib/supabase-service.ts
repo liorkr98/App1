@@ -14,7 +14,9 @@ import { supabaseUrl } from './supabase';
  *
  *   npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
  *
- * One caller, /api/phone-upload, and only AFTER it has matched a portal
+ * Three callers, each only after its own check: /api/payments/webhook
+ * after the provider adapter verified the event, /api/licence-check after
+ * the broker register answered, and /api/phone-upload after it has matched a portal
  * token to an open portal: a phone that is not signed in has no session for
  * RLS to read, so the token check is the authorisation and this client does
  * the write the token allows. Undefined when the secret is not set — the

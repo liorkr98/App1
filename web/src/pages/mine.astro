@@ -65,6 +65,13 @@ import '../styles/dash.css';
     </div>
 
     {/*
+      Billing notices (migration 0040): the 30 days before a launch price
+      ends, and a downgrade to the free plan. Filled by the script below
+      from billing_notices; nothing shows when there are none.
+    */}
+    <div class="billing-notices" id="billing-notices" role="status" hidden></div>
+
+    {/*
       FIRST-RUN ONBOARDING. Shown only while the profile is genuinely
       untouched (isProfileEmpty), not while it is merely incomplete: nagging
       somebody who has already been to the page is how a banner gets
@@ -1318,4 +1325,69 @@ import '../styles/dash.css';
       // state they can act on instead of a page that never resolves.
       void load().catch(() => show('failed'));
     </script>
+  <script>
+    import { planByKey, priceParts } from '@/features/billing/price';
+    import { PRICING } from '@/features/billing/pricing-config';
+    import { formatValue, parts, t } from '../lib/i18n';
+    import { supabase, supabaseConfigured } from '../lib/supabase';
+
+    /** A notice, each value in <bdi> (CLAUDE.md §4.2). */
+    function line(path: string, values: Record<string, string | number>): HTMLParagraphElement {
+      const p = document.createElement('p');
+      for (const part of parts(path)) {
+        if ('text' in part) p.append(part.text);
+        else {
+          const bdi = document.createElement('bdi');
+          bdi.textContent = formatValue(values[part.slot] ?? '');
+          p.append(bdi);
+        }
+      }
+      return p;
+    }
+
+    async function showNotices() {
+      if (!supabaseConfigured) return;
+      const box = document.getElementById('billing-notices');
+      if (!box) return;
+      const { data, error } = await supabase()
+        .from('billing_notices')
+        .select('id, kind, due_at')
+        .is('read_at', null)
+        .order('created_at', { ascending: false })
+        .limit(3);
+      if (error || !Array.isArray(data) || data.length === 0) return;
+      // The price the lock moves to is the regular plan of the plan held now.
+      const { data: subs } = await supabase()
+        .from('subscriptions')
+        .select('plan_key')
+        .order('current_period_end', { ascending: false })
+        .limit(1);
+      const held = (Array.isArray(subs) ? subs[0]?.plan_key : undefined) as string | undefined;
+      const regularKey = held === 'dealer_launch' ? 'dealer' : 'agent';
+      for (const notice of data as { id: string; kind: string; due_at: string | null }[]) {
+        const card = document.createElement('div');
+        card.className = 'billing-notice';
+        if (notice.kind === 'price_lock_ending' && notice.due_at) {
+          const date = new Intl.DateTimeFormat('he-IL', { dateStyle: 'long', timeZone: 'Asia/Jerusalem' }).format(new Date(notice.due_at));
+          card.append(line('billing.notices.price_lock_ending', { date, price: priceParts(planByKey(regularKey)).amount }));
+        } else if (notice.kind === 'downgraded') {
+          card.append(line('billing.notices.downgraded', { pages: PRICING.freePageLimit }));
+        } else continue;
+        const done = document.createElement('button');
+        done.type = 'button';
+        done.className = 'quiet';
+        done.textContent = t('billing.notices.dismiss');
+        done.addEventListener('click', () => {
+          card.remove();
+          if (!box.querySelector('.billing-notice')) box.hidden = true;
+          void supabase().rpc('mark_billing_notice_read', { p_id: notice.id });
+        });
+        card.append(done);
+        box.append(card);
+      }
+      box.hidden = !box.querySelector('.billing-notice');
+    }
+
+    void showNotices();
+  </script>
 </Site>

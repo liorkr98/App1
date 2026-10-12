@@ -65,12 +65,25 @@
   font-weight: 700;
 }
 
+/* On the dark cards the flag is the light green: #2f5340 on near-black is 2:1. */
+.pr-tier:not(.is-featured) .pr-flag {
+  color: #86b79a;
+}
+
 .pr-sum {
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+/* The number is the headline of the card; its terms (לחודש + מע״מ) sit beside it. */
+.pr-sum bdi {
   font-family: var(--ls-font-display);
   font-weight: 800;
   font-size: clamp(2.4rem, 6vw, 3.2rem);
   font-variation-settings: 'wdth' 80;
   line-height: 1.05;
+  margin-inline-end: 0.3rem;
 }
 
 .pr-note {
@@ -207,5 +220,48 @@
     to {
       transform: translateY(6%) scale(1.08);
     }
+  }
+}
+
+/* PRICING.md (12 Oct 2026): the true seat count, private pages, the regular price after the lock. */
+.pr-seats {
+  margin-block-start: 0.8rem;
+  font-weight: 700;
+  color: var(--ls-ink);
+}
+
+.pr-after {
+  font-size: 0.86rem;
+}
+
+.pr-private {
+  position: relative;
+  margin-block-start: 2.4rem;
+}
+
+.pr-private-list {
+  display: grid;
+  gap: 0.8rem;
+  margin: 1.2rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pr-private-list li {
+  display: grid;
+  gap: 0.2rem;
+  padding: 1rem 1.2rem;
+  border-radius: 16px;
+  background: var(--ls-glass);
+  border: 1px solid var(--ls-glass-edge);
+}
+
+.pr-private-list .pr-sum bdi {
+  font-size: 1.8rem;
+}
+
+@media (min-width: 760px) {
+  .pr-private-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }

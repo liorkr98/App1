@@ -60,6 +60,12 @@ describe('the price list has one source (docs/PRICING.md)', () => {
     );
   });
 
+  it('a launch plan is named after its cohort (the homepage toggle relies on it)', () => {
+    for (const plan of PRICING.plans) {
+      if (plan.cohort) assert.equal(plan.key, plan.cohort);
+    }
+  });
+
   it('matches the decisions in PRICING.md §1', () => {
     assert.equal(planByKey('agent_launch').regularPlan, 'agent');
     assert.equal(planByKey('dealer_launch').regularPlan, 'dealer');

@@ -466,3 +466,15 @@
   color: var(--ls-ink);
   border-color: var(--ls-line);
 }
+
+/* The licence number and its register check, side by side (PRICING.md, 12 Oct 2026). */
+.licence-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.licence-row input {
+  flex: 1;
+  min-inline-size: 0;
+}

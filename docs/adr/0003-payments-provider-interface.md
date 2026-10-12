@@ -3,18 +3,16 @@
 Status: **open decision.** Nothing implemented, no provider chosen.
 Date: September 2026
 
-**Current grant, until a PSP is signed:** rows in `listing_grants`
-(migration 0016) plus one free first listing with the היעד mark (migration
-0022). A live grant is a dated listing quota (`remaining > 0`, inside
-`effective_from`/`effective_to`) with `source` (`admin_comp` today, `psp:…`
-later) and a required note. The editor reads it through
-`entitlementFromGrants` and `loadEntitlement`. Fail closed: a failed read is
-unknown. A live grant is paid (mark off). No grant and zero published/sold
-listings is the one free listing (mark on). A second listing without a grant
-is unpaid. `beta_publishers` (0013) is kept as history; new reads do not use
-it. Replacing this with a payment check is a product change that needs the
-same human review (CLAUDE.md §8). Seed operators with `docs/ADMIN-SEED.sql`
-— never commit an email address.
+**Current entitlement, until a PSP is signed** (12 Oct 2026, migration 0040,
+docs/PRICING.md): `publish_decision()` reads the account's plan at publish
+time — a live subscription (admin-granted with `admin_grant_plan` until a
+PSP exists), a live admin comp in `listing_grants`, a one-time purchase, or
+one of 2 free pages. Anything else raises PT402. Payment state arrives only
+through `apply_payment_event()`, idempotent on the transaction id, called by
+`/api/payments/webhook` after the adapter verified the event. The adapter in
+force is `unsetProvider` (`src/features/billing/provider.ts`), which
+verifies nothing, so the webhook answers 503. Fail closed throughout
+(CLAUDE.md §8). docs/PRICING-OPS.md has the operations side.
 
 This exists to be taken to a vendor. Israeli PSP contracts run a year with an
 exit penalty, so the list is written to be checked against a sales engineer's

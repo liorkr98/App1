@@ -1,51 +1,120 @@
 ---
-import { ils } from '../lib/format';
+import { PRICING, type Plan } from '@/features/billing/pricing-config';
+import { planByKey } from '@/features/billing/price';
+import Msg from '../components/Msg.astro';
 import { t } from '../lib/i18n';
-import { ADDONS, PRICE_TIERS } from '../lib/tiers';
+import { amount, cohortCap, noteValues, offerLd, termsPath } from '../lib/plan-copy';
+import { ADDONS } from '../lib/tiers';
 import Site from '../layouts/Site.astro';
 import '../styles/pricing.css';
 
 /**
- * The price list (P5, Onyx). Glass cards over a slow aurora.
+ * The price list (docs/PRICING.md, 12 Oct 2026). Every number comes from
+ * src/features/billing/pricing-config.ts — the page holds no price literal,
+ * and scripts/verify-no-price-literals.mjs fails the build if one appears.
  *
- * DISPLAY ONLY — CLAUDE.md §8. The numbers come from lib/tiers.ts, the same
- * list the homepage strip reads. Checkout is a disabled control until an
- * Israeli PSP is signed (ADR 0003): "עדיין לא פתוח", not a fake pay button.
- * Nothing on this page reads or decides entitlement.
+ * DISPLAY ONLY — CLAUDE.md §8. Nothing here reads or decides entitlement;
+ * checkout is a disabled control until an Israeli PSP is signed.
  *
- * Add-ons are listed with בקרוב and no price: their vendors and prices are
- * still the owner's decision, and a number published here is a promise.
- * The FAQ states the product rules as they are — no subscription trial, the
- * mark comes off every page with one purchase, AI images are always
- * labelled with the original beside them.
+ * THE LAUNCH PRICE IS SHOWN ONLY WHILE A SEAT DEMONSTRABLY REMAINS
+ * (PRICING §6, "never fake scarcity"). The page is static, so it renders the
+ * regular price, and the script below reads the real `cohort_counters` and
+ * switches a card to the launch price, with the true count, only when a seat
+ * is left. A full cohort, or a count that could not be read, keeps the
+ * regular price. No deploy is needed when a cohort fills.
  */
+
+const origin = Astro.site ?? new URL(Astro.url.origin);
+const url = new URL('/pricing/', origin).href;
+
+const free = planByKey('free');
+const agent = planByKey('agent');
+const agentLaunch = planByKey('agent_launch');
+const office = planByKey('office');
+const dealer = planByKey('dealer');
+const dealerLaunch = planByKey('dealer_launch');
+const privates = [planByKey('private_sale'), planByKey('private_rent'), planByKey('private_car')];
+
+/** A subscription card: regular by default, the launch variant hidden until a seat is proven. */
+const launchCards: { regular: Plan; launch: Plan | null; featured: boolean }[] = [
+  { regular: agent, launch: agentLaunch, featured: true },
+  { regular: office, launch: null, featured: false },
+  { regular: dealer, launch: dealerLaunch, featured: false },
+];
+
+const ld = [
+  {
+    '@type': 'Product',
+    name: t('common.brand'),
+    description: t('pricing.lead'),
+    url,
+    brand: { '@id': new URL('/#organization', origin).href },
+    offers: PRICING.plans.map((plan) => offerLd(plan, url, t(`billing.plans.${plan.key}`))),
+  },
+];
 ---
 
-<Site title={`${t('pricing.title')} · ${t('common.brand')}`} description={t('pricing.lead')}>
+<Site title={`${t('pricing.title')} · ${t('common.brand')}`} description={t('pricing.lead')} ld={ld}>
   <section class="pr-hero">
     <div class="pr-aurora" aria-hidden="true"></div>
     <div class="site-shell pr-head">
       <p class="site-eyebrow">{t('pricing.eyebrow')}</p>
-      <h1 class="site-h2 pr-title">{t('pricing.headline')}</h1>
-      <p class="site-sub">{t('pricing.freeLine')}</p>
+      <h1 class="site-h2 pr-title">
+        <span data-offer="agent_launch" data-path="pricing.headline" data-launch={amount(agentLaunch)}>
+          <Msg path="pricing.headline" values={{ price: amount(agent) }} />
+        </span>
+      </h1>
+      <p class="site-sub">
+        <Msg path="pricing.sub" values={{ free: PRICING.freePageLimit, seats: cohortCap('agent_launch'), months: PRICING.lockMonths }} />
+      </p>
+      <p class="pr-seats" data-seats="agent_launch" hidden></p>
     </div>
 
     <ul class="site-shell pr-tiers">
-      {PRICE_TIERS.map((tier, i) => (
-        <li class:list={['pr-tier ls-fade', tier.featured && 'is-featured']} style={`--i:${i}`}>
-          {tier.featured && <p class="pr-flag">{t('pricing.agentFlag')}</p>}
-          {!tier.featured && <p class="pr-name">{t(`pricing.${tier.id}`)}</p>}
-          <p class="pr-sum">{tier.price === 0 ? t('pricing.freePrice') : <bdi>{ils(tier.price)}</bdi>}</p>
-          <p class="pr-note">{t(`pricing.${tier.id}Note`)}</p>
-          {tier.price === 0 ? (
-            <a class="site-btn site-btn-primary pr-go" href="/new/?fresh=1">{t('pricing.start')}</a>
-          ) : (
-            <button type="button" class="site-btn pr-go" disabled>{t('pricing.disabled')}</button>
+      <li class="pr-tier ls-fade" style="--i:0">
+        <p class="pr-name">{t(`billing.plans.${free.key}`)}</p>
+        <p class="pr-sum">{t('billing.terms.free')}</p>
+        <p class="pr-note"><Msg path={`billing.notes.${free.key}`} values={noteValues(free)} /></p>
+        <a class="site-btn site-btn-primary pr-go" href="/new/?fresh=1">{t('pricing.start')}</a>
+      </li>
+      {launchCards.map(({ regular, launch, featured }, i) => (
+        <li class:list={['pr-tier ls-fade', featured && 'is-featured']} style={`--i:${i + 1}`} data-card={launch?.key}>
+          <p class="pr-name">{t(`billing.plans.${regular.key}`)}</p>
+          <div data-variant="regular">
+            <p class="pr-sum"><Msg path={termsPath(regular)} values={{ price: amount(regular) }} /></p>
+            <p class="pr-note"><Msg path={`billing.notes.${regular.key}`} values={noteValues(regular)} /></p>
+          </div>
+          {launch && (
+            <div data-variant="launch" hidden>
+              <p class="pr-flag">{t('billing.launchFlag')}</p>
+              <p class="pr-sum"><Msg path={termsPath(launch)} values={{ price: amount(launch) }} /></p>
+              <p class="pr-note"><Msg path={`billing.notes.${launch.key}`} values={noteValues(launch)} /></p>
+              <p class="pr-note pr-after"><Msg path="billing.regularAfter" values={{ months: PRICING.lockMonths, price: amount(regular) }} /></p>
+            </div>
           )}
+          <button type="button" class="site-btn pr-go" disabled>{t('pricing.disabled')}</button>
         </li>
       ))}
     </ul>
-    <p class="site-shell site-note pr-off">{t('pricing.checkoutOff')}</p>
+
+    <div class="site-shell pr-private">
+      <h2 class="site-h3">{t('pricing.privateTitle')}</h2>
+      <p class="site-sub"><Msg path="pricing.privateLine" values={{ price: amount(privates[0]!) }} /></p>
+      <ul class="pr-private-list">
+        {privates.map((plan) => (
+          <li>
+            <b>{t(`billing.plans.${plan.key}`)}</b>
+            <span class="pr-sum"><Msg path={termsPath(plan)} values={{ price: amount(plan) }} /></span>
+            <span class="pr-note"><Msg path={`billing.notes.${plan.key}`} values={noteValues(plan)} /></span>
+          </li>
+        ))}
+      </ul>
+    </div>
+
+    <p class="site-shell site-note pr-off"><Msg path="pricing.vatNote" values={{ vat: PRICING.vatPercent }} /></p>
+    <p class="site-shell site-note pr-off">
+      {t('pricing.checkoutOff')} <a href="/contact/">{t('pricing.contact')}</a>
+    </p>
   </section>
 
   <section class="site-sect ls-sect">
@@ -77,8 +146,20 @@ import '../styles/pricing.css';
         <p>{t('pricing.faqTrialA')}</p>
       </details>
       <details>
+        <summary>{t('pricing.faqCancel')}</summary>
+        <p><Msg path="pricing.faqCancelA" values={{ free: PRICING.freePageLimit }} /></p>
+      </details>
+      <details>
+        <summary>{t('pricing.faqExpire')}</summary>
+        <p><Msg path="pricing.faqExpireA" values={{ sale: planByKey('private_sale').pageTtlDays ?? 0, rent: planByKey('private_rent').pageTtlDays ?? 0 }} /></p>
+      </details>
+      <details>
         <summary>{t('pricing.faqListing')}</summary>
         <p>{t('pricing.faqListingA')} <bdi>25</bdi> {t('pricing.faqListingB')}</p>
+      </details>
+      <details>
+        <summary>{t('pricing.faqLicence')}</summary>
+        <p>{t('pricing.faqLicenceA')}</p>
       </details>
       <details>
         <summary>{t('pricing.faqAi')}</summary>
@@ -91,3 +172,12 @@ import '../styles/pricing.css';
     </div>
   </section>
 </Site>
+
+<script>
+  import { recordBillingEvent } from '../lib/billing-events';
+  import { showLaunchOffers } from '../lib/launch-offer';
+  import { showLaunchText } from '../lib/launch-text';
+
+  void recordBillingEvent('paywall_shown', null);
+  void showLaunchOffers().then((counts) => showLaunchText(counts));
+</script>

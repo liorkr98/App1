@@ -90,7 +90,7 @@ export function shareContent(listing: Listing): Content {
 /** Every face the drawings use, loaded before the first measurement. */
 export async function loadShareFonts(timeoutMs = 4000): Promise<void> {
   if (!('fonts' in document)) return;
-  const sample = 'אבגדה ₪0123456789';
+  const sample = 'אבגדה ₪0123456789'; // price-literal-ok: a font sample, every glyph the card draws
   const faces = [
     `800 72px ${DISPLAY}`,
     `700 40px ${DISPLAY}`,

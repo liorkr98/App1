@@ -1,56 +1,48 @@
 ---
-import { ils } from '../lib/format';
+import { planByKey } from '@/features/billing/price';
+import { amount, noteValues, termsPath } from '../lib/plan-copy';
 import { t } from '../lib/i18n';
-import { PRICE_TIERS } from '../lib/tiers';
+import Msg from './Msg.astro';
 
-interface Props {
-  /** Home strip: no checkout controls, each card points at /pricing. */
-  compact?: boolean;
-}
-
-const { compact = false } = Astro.props;
-
-const tiers = PRICE_TIERS;
+/**
+ * The homepage price strip. Every number comes from
+ * src/features/billing/pricing-config.ts, like /pricing; launch prices
+ * appear only once a real seat count proves one remains (lib/launch-offer).
+ * Each card points at /pricing. DISPLAY ONLY (CLAUDE.md §8).
+ */
+const cards = [
+  { regular: planByKey('free'), launch: null },
+  { regular: planByKey('agent'), launch: planByKey('agent_launch') },
+  { regular: planByKey('dealer'), launch: planByKey('dealer_launch') },
+  { regular: planByKey('private_sale'), launch: null },
+];
 ---
 
-{/*
-  Three cards, not a run-on line. The agent tier is the one the product is
-  for, so it is a dark panel with a text flag — not a second colour, and not
-  the same outlined box repeated three times.
-
-  Checkout is disabled until an Israeli PSP is wired (ADR 0003). The control
-  stays visible and honest: "עדיין לא פתוח", not a fake pay button.
-*/}
-<ul class:list={['price-tiers', compact && 'is-compact']}>
-  {
-    tiers.map((tier) => {
-      const inner = (
-        <>
-          {tier.featured ? <p class="price-tier-flag">{t('pricing.agentFlag')}</p> : null}
-          {tier.featured ? null : <p class="price-tier-name">{t(`pricing.${tier.id}`)}</p>}
-          <p class="price-tier-sum">
-            {tier.price === 0 ? t('pricing.freePrice') : <bdi>{ils(tier.price)}</bdi>}
-          </p>
-          <p class="price-tier-note">{t(`pricing.${tier.id}Note`)}</p>
-          {compact ? null : (
-            <button type="button" disabled>
-              {t('pricing.disabled')}
-            </button>
-          )}
-        </>
-      );
-
-      return compact ? (
-        <li class:list={['price-tier', tier.featured && 'is-featured']}>
-          <a href="/pricing/">{inner}</a>
-        </li>
-      ) : (
-        <li class:list={['price-tier', tier.featured && 'is-featured']}>{inner}</li>
-      );
-    })
-  }
+<ul class="price-tiers is-compact">
+  {cards.map(({ regular, launch }) => (
+    <li class:list={['price-tier', regular.key === 'agent' && 'is-featured']} data-card={launch?.key}>
+      <a href="/pricing/">
+        <p class="price-tier-name">{t(`billing.plans.${regular.key}`)}</p>
+        <div data-variant="regular">
+          <p class="price-tier-sum"><Msg path={termsPath(regular)} values={{ price: amount(regular) }} /></p>
+          <p class="price-tier-note"><Msg path={`billing.notes.${regular.key}`} values={noteValues(regular)} /></p>
+        </div>
+        {launch && (
+          <div data-variant="launch" hidden>
+            <p class="price-tier-flag">{t('billing.launchFlag')}</p>
+            <p class="price-tier-sum"><Msg path={termsPath(launch)} values={{ price: amount(launch) }} /></p>
+            <p class="price-tier-note"><Msg path={`billing.notes.${launch.key}`} values={noteValues(launch)} /></p>
+          </div>
+        )}
+      </a>
+    </li>
+  ))}
 </ul>
 
+<script>
+  import { showLaunchOffers } from '../lib/launch-offer';
+  void showLaunchOffers();
+</script>
 <style>
   .price-tiers {
     list-style: none;
@@ -107,12 +99,19 @@ const tiers = PRICE_TIERS;
   }
 
   .price-tier-sum {
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.5;
+    margin: 0.15rem 0 0.1rem;
+  }
+
+  /* The number is the card's headline; לחודש + מע״מ sits beside it. */
+  .price-tier-sum :global(bdi) {
     font-family: 'Frank Ruhl Libre', serif;
     font-size: clamp(2rem, 4vw, 2.55rem);
     font-weight: 700;
     line-height: 1.05;
-    letter-spacing: -0.015em;
-    margin: 0.15rem 0 0.1rem;
+    margin-inline-end: 0.25rem;
   }
 
   .price-tier-note {

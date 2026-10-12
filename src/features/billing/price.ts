@@ -1,4 +1,7 @@
 import { PRICING, type Plan, type PlanKey } from './pricing-config.js';
+import { seatsLeft, type CohortCount } from './seats.js';
+
+export type { CohortCount };
 
 /**
  * How a plan's price is SAID (docs/PRICING.md §4). Display only.
@@ -47,12 +50,6 @@ export function withVat(agorot: number, vatPercent: number = PRICING.vatPercent)
   return Math.round((agorot * (100 + vatPercent)) / 100);
 }
 
-export interface CohortCount {
-  cohort: string;
-  used: number;
-  cap: number;
-}
-
 /**
  * Which plan the pricing page offers for an audience, given the REAL seat
  * counts (PRICING §6: never fake scarcity). A full cohort, or counts we could
@@ -62,10 +59,7 @@ export interface CohortCount {
 export function offeredPlan(launch: PlanKey, counts: readonly CohortCount[] | null): { plan: Plan; seatsLeft: number | null } {
   const plan = planByKey(launch);
   if (!plan.cohort || !plan.regularPlan) return { plan, seatsLeft: null };
-  const count = counts?.find((row) => row.cohort === plan.cohort);
-  if (!count || !Number.isInteger(count.used) || !Number.isInteger(count.cap)) {
-    return { plan: planByKey(plan.regularPlan), seatsLeft: null };
-  }
-  const left = count.cap - count.used;
+  const left = seatsLeft(counts, plan.cohort);
+  if (left === null) return { plan: planByKey(plan.regularPlan), seatsLeft: null };
   return left > 0 ? { plan, seatsLeft: left } : { plan: planByKey(plan.regularPlan), seatsLeft: 0 };
 }

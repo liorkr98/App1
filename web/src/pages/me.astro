@@ -150,10 +150,28 @@ const sampleTitle = sample.title.split('\n');
               <p class="hint">{t('agent.roleHint')}</p>
             </div>
 
+            <div class="field" id="f-kind">
+              {/* docs/PRICING.md (12 Oct 2026): which plans are offered. Grants nothing. */}
+              <span class="label">{t('billing.kind.title')}</span>
+              <div class="swatches pills">
+                {['agent', 'office', 'dealer', 'private'].map((kind) => (
+                  <Fragment>
+                    <input type="radio" name="accountKind" id={`kind-${kind}`} value={kind} />
+                    <label for={`kind-${kind}`}>{t(`billing.kind.${kind}`)}</label>
+                  </Fragment>
+                ))}
+              </div>
+              <p class="hint">{t('billing.kind.hint')}</p>
+            </div>
+
             <div class="field" id="f-licence">
               <label for="licence">{t('agent.licence')}</label>
-              <input id="licence" name="licence" type="text" inputmode="numeric" dir="ltr" />
-              <p class="hint">{t('agent.licenceHint')}</p>
+              <div class="licence-row">
+                <input id="licence" name="licence" type="text" inputmode="numeric" dir="ltr" />
+                <button type="button" class="quiet" id="licence-check">{t('billing.kind.check')}</button>
+              </div>
+              <p class="hint">{t('agent.licenceHint')} {t('billing.kind.licenceHint')}</p>
+              <p class="hint" id="licence-said" role="status" aria-live="polite"></p>
             </div>
           </section>
 
@@ -244,6 +262,7 @@ const sampleTitle = sample.title.split('\n');
       import { profileBlockers, type ProfileBlockerCode } from '@/features/agents/profile';
       import { t } from '../lib/i18n';
       import { removeAgencyLogo, uploadAgencyLogo } from '../lib/agency-logo';
+      import { checkLicence, isAccountKind, loadAccount, saveAccountKind } from '../lib/account';
       import { loadProfile, saveProfile } from '../lib/profile';
       import { revealIfSiteAdmin } from '../lib/site-admin';
       import { supabaseConfigured } from '../lib/supabase';
@@ -488,7 +507,47 @@ const sampleTitle = sample.title.split('\n');
         if (saved) saved.checked = true;
 
         paint();
+        void showAccount();
       };
+
+      /*
+       * Account kind and licence (migration 0040). The kind saves on its own,
+       * as soon as it is picked: it decides which plans are offered and
+       * grants nothing. The licence is VERIFIED only by /api/licence-check
+       * against the broker register; this page cannot set that.
+       */
+      const licenceSaid = $('licence-said');
+      const licenceButton = $<HTMLButtonElement>('licence-check');
+
+      async function showAccount() {
+        const account = await loadAccount();
+        if (!account) return;
+        if (account.kind) {
+          const input = document.getElementById(`kind-${account.kind}`) as HTMLInputElement | null;
+          if (input) input.checked = true;
+        }
+        if (account.licenceVerified) licenceSaid.textContent = t('billing.kind.verified');
+        else if (account.kind === 'agent' || account.kind === 'office') licenceSaid.textContent = t('billing.kind.unverified');
+      }
+
+      for (const input of document.querySelectorAll<HTMLInputElement>('input[name="accountKind"]')) {
+        input.addEventListener('change', () => {
+          if (isAccountKind(input.value)) void saveAccountKind(input.value);
+        });
+      }
+
+      licenceButton.addEventListener('click', async () => {
+        if (!licence.value.trim()) return;
+        licenceButton.disabled = true;
+        licenceSaid.textContent = t('billing.kind.checking');
+        // Save first: the check marks the number stored on the profile.
+        await saveProfile(read());
+        const verdict = await checkLicence(licence.value);
+        licenceButton.disabled = false;
+        licenceSaid.textContent = t(
+          verdict === 'verified' ? 'billing.kind.verified' : verdict === 'not_found' ? 'billing.kind.notFound' : 'billing.kind.checkFailed',
+        );
+      });
 
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
