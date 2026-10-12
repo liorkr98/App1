@@ -16,6 +16,10 @@ import '../styles/pricing.css';
  * DISPLAY ONLY — CLAUDE.md §8. Nothing here reads or decides entitlement;
  * checkout is a disabled control until an Israeli PSP is signed.
  *
+ * NO LAYOUT SHIFT WHEN IT SWITCHES: both variants share one grid cell and
+ * trade visibility, and the seat line keeps its height while empty (the
+ * speed test measured 0.26 when they did not).
+ *
  * THE LAUNCH PRICE IS SHOWN ONLY WHILE A SEAT DEMONSTRABLY REMAINS
  * (PRICING §6, "never fake scarcity"). The page is static, so it renders the
  * regular price, and the script below reads the real `cohort_counters` and
@@ -55,6 +59,13 @@ const ld = [
 ---
 
 <Site title={`${t('pricing.title')} · ${t('common.brand')}`} description={t('pricing.lead')} ld={ld}>
+  {/*
+    The headline and the line under it carry numbers, and digits live in the
+    faces' Latin files, not their Hebrew ones. Without these the text set in
+    the fallback first, wrapped differently, then jumped (a 0.25 layout shift).
+  */}
+  <link slot="head" rel="preload" href="/fonts/noto-sans-hebrew-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link slot="head" rel="preload" href="/fonts/heebo-latin.woff2" as="font" type="font/woff2" crossorigin />
   <section class="pr-hero">
     <div class="pr-aurora" aria-hidden="true"></div>
     <div class="site-shell pr-head">
@@ -67,7 +78,7 @@ const ld = [
       <p class="site-sub">
         <Msg path="pricing.sub" values={{ free: PRICING.freePageLimit, seats: cohortCap('agent_launch'), months: PRICING.lockMonths }} />
       </p>
-      <p class="pr-seats" data-seats="agent_launch" hidden></p>
+      <p class="pr-seats is-off" data-seats="agent_launch"></p>
     </div>
 
     <ul class="site-shell pr-tiers">
@@ -80,18 +91,20 @@ const ld = [
       {launchCards.map(({ regular, launch, featured }, i) => (
         <li class:list={['pr-tier ls-fade', featured && 'is-featured']} style={`--i:${i + 1}`} data-card={launch?.key}>
           <p class="pr-name">{t(`billing.plans.${regular.key}`)}</p>
+          <div class="pr-variants">
           <div data-variant="regular">
             <p class="pr-sum"><Msg path={termsPath(regular)} values={{ price: amount(regular) }} /></p>
             <p class="pr-note"><Msg path={`billing.notes.${regular.key}`} values={noteValues(regular)} /></p>
           </div>
           {launch && (
-            <div data-variant="launch" hidden>
+            <div data-variant="launch" class="is-off">
               <p class="pr-flag">{t('billing.launchFlag')}</p>
               <p class="pr-sum"><Msg path={termsPath(launch)} values={{ price: amount(launch) }} /></p>
               <p class="pr-note"><Msg path={`billing.notes.${launch.key}`} values={noteValues(launch)} /></p>
               <p class="pr-note pr-after"><Msg path="billing.regularAfter" values={{ months: PRICING.lockMonths, price: amount(regular) }} /></p>
             </div>
           )}
+          </div>
           <button type="button" class="site-btn pr-go" disabled>{t('pricing.disabled')}</button>
         </li>
       ))}

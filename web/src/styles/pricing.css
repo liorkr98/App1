@@ -6,9 +6,17 @@
   padding-block: clamp(2rem, 6vw, 4rem) clamp(3rem, 8vw, 5rem);
 }
 
+/*
+ * A fixed size, not a share of the hero. Sized by percentages it grew with
+ * the hero (2,300px once the private plans joined it), and any height change
+ * while the page loaded moved the whole layer: a 0.29 layout shift on a
+ * background nobody can see move.
+ */
 .pr-aurora {
   position: absolute;
-  inset: -30% -10% 20%;
+  inset-block-start: -20vh;
+  inset-inline: -10%;
+  block-size: 110vh;
   background: radial-gradient(60% 50% at 70% 30%, rgba(134, 183, 154, 0.22), transparent 70%),
     radial-gradient(40% 40% at 20% 20%, rgba(233, 216, 166, 0.14), transparent 70%);
   filter: blur(40px);
@@ -224,7 +232,26 @@
 }
 
 /* PRICING.md (12 Oct 2026): the true seat count, private pages, the regular price after the lock. */
+/*
+ * The regular and launch prices share one cell and trade visibility, and the
+ * seat line keeps its height while empty: the swap happens after the real
+ * count arrives and must not move the page (the speed test measured 0.26).
+ */
+.pr-variants {
+  display: grid;
+}
+
+.pr-variants > * {
+  grid-area: 1 / 1;
+}
+
+.pr-variants > .is-off,
+.pr-seats.is-off {
+  visibility: hidden;
+}
+
 .pr-seats {
+  min-block-size: 1.6em;
   margin-block-start: 0.8rem;
   font-weight: 700;
   color: var(--ls-ink);

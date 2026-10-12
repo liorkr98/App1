@@ -33,8 +33,9 @@ export async function showLaunchOffers(root: ParentNode = document): Promise<Coh
     const regular = card.querySelector<HTMLElement>('[data-variant="regular"]');
     const launch = card.querySelector<HTMLElement>('[data-variant="launch"]');
     if (regular && launch) {
-      regular.hidden = true;
-      launch.hidden = false;
+      // Visibility, not display: both stay in their shared cell (no layout shift).
+      regular.classList.add('is-off');
+      launch.classList.remove('is-off');
     }
   }
   return counts;

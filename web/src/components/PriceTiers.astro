@@ -23,17 +23,19 @@ const cards = [
     <li class:list={['price-tier', regular.key === 'agent' && 'is-featured']} data-card={launch?.key}>
       <a href="/pricing/">
         <p class="price-tier-name">{t(`billing.plans.${regular.key}`)}</p>
+        <div class="price-tier-variants">
         <div data-variant="regular">
           <p class="price-tier-sum"><Msg path={termsPath(regular)} values={{ price: amount(regular) }} /></p>
           <p class="price-tier-note"><Msg path={`billing.notes.${regular.key}`} values={noteValues(regular)} /></p>
         </div>
         {launch && (
-          <div data-variant="launch" hidden>
+          <div data-variant="launch" class="is-off">
             <p class="price-tier-flag">{t('billing.launchFlag')}</p>
             <p class="price-tier-sum"><Msg path={termsPath(launch)} values={{ price: amount(launch) }} /></p>
             <p class="price-tier-note"><Msg path={`billing.notes.${launch.key}`} values={noteValues(launch)} /></p>
           </div>
         )}
+        </div>
       </a>
     </li>
   ))}
@@ -96,6 +98,19 @@ const cards = [
     font-size: 0.95rem;
     font-weight: 600;
     margin: 0;
+  }
+
+  /* Both prices in one cell, trading visibility: no layout shift (pricing.css). */
+  .price-tier-variants {
+    display: grid;
+  }
+
+  .price-tier-variants > :global(*) {
+    grid-area: 1 / 1;
+  }
+
+  .price-tier-variants > :global(.is-off) {
+    visibility: hidden;
   }
 
   .price-tier-sum {

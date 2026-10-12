@@ -40,6 +40,6 @@ export function showLaunchText(counts: CohortCount[] | null, root: ParentNode = 
         ? messageNodes('pricing.seatsLeft', { remaining: seatsLeft, cap: count.cap })
         : messageNodes('pricing.seatsGone', { cap: count.cap }),
     );
-    line.hidden = false;
+    line.classList.remove('is-off');
   }
 }
