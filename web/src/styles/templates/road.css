@@ -1,0 +1,226 @@
+/*
+  Road — the car going by (round three, 12 Oct 2026; cars only). A still
+  first screen: the car side-on across the width over a road line, the
+  price, the spec.
+
+  ONE MOVEMENT: the gallery is one long strip, and as the page scrolls past
+  it the strip drives sideways — the photographs pass like the car does,
+  seen from the kerb. Scroll-driven, no script. The strip's own width sets
+  the distance (translate by its width less the screen's), so any number of
+  photographs drives exactly to its last one. Nothing else moves: the shared
+  section rise and photo reveals are switched off below.
+
+  Without scroll timelines, or with motion off, the strip is a row a finger
+  swipes, snapping photograph by photograph.
+
+  Living Surfaces, Onyx (TEMPLATE_MANIFEST). 1.x tokens pinned to the Onyx
+  hexes the contrast gates measure.
+*/
+
+html[data-template='road'] {
+  --olive: var(--accent-lift, #7e9a62);
+  --plaster: #0b0c0b;
+  --ink: #f2f0ea; /* = --ls-ink */
+  --ink-deep: #070805;
+  --stone: #2a2c22;
+  --stone-warm: #161713; /* = --ls-surface */
+  --muted: #a7a89c; /* = --ls-ink-2 */
+  --muted-warm: #a7a89c;
+  --absent: #a7a89c;
+  --heroWant: 60svh;
+}
+
+html[data-template='road'] body {
+  font-family: var(--ls-font-body);
+}
+
+html[data-template='road'] .agent-bar {
+  background: var(--ink-deep);
+}
+
+/* The strip is wider than the screen on purpose; the page never is. */
+html[data-template='road'] .listing-flow {
+  overflow-x: clip;
+}
+
+/* ---------- The first screen, still ---------- */
+
+html[data-template='road'] section.stage-road {
+  display: grid;
+  gap: 1.2rem;
+  padding: 1.8rem 0 1.6rem;
+}
+
+html[data-template='road'] .rd-head {
+  display: grid;
+  gap: 0.5rem;
+  padding-inline: var(--gut);
+}
+
+html[data-template='road'] .rd-head .stage-place {
+  margin: 0;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+html[data-template='road'] .rd-head .stage-title {
+  margin: 0;
+  font-size: clamp(2.3rem, 9vw, 5.2rem);
+  line-height: 1.02;
+  text-wrap: balance;
+}
+
+html[data-template='road'] .rd-line {
+  display: block;
+}
+
+html[data-template='road'] .rd-car {
+  display: block;
+  inline-size: 100%;
+  aspect-ratio: 16 / 9;
+  max-block-size: 62svh;
+  overflow: clip;
+}
+
+html[data-template='road'] .rd-car img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* The road marking under the car: a dashed centre line. */
+html[data-template='road'] .rd-lane {
+  display: block;
+  block-size: 4px;
+  margin-inline: var(--gut);
+  background: repeating-linear-gradient(
+    90deg,
+    var(--ink) 0 2.2rem,
+    transparent 2.2rem 3.6rem
+  );
+  opacity: 0.55;
+}
+
+html[data-template='road'] .rd-band {
+  padding-inline: var(--gut);
+}
+
+html[data-template='road'] .rd-band .price-bar {
+  padding: 0;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: baseline;
+  gap: 0.3rem 1.1rem;
+  border: 0;
+  background: none;
+}
+
+html[data-template='road'] .rd-band .price {
+  font-size: clamp(2rem, 6vw, 3rem);
+}
+
+html[data-template='road'] .rd-band .price-note {
+  text-align: start;
+}
+
+html[data-template='road'] .rd-spec {
+  margin: 0 var(--gut);
+  padding-block-start: 1rem;
+  border-block-start: 1px solid var(--stone);
+}
+
+html[data-template='road'] .stage-road .highlights {
+  padding: 0 var(--gut);
+}
+
+/* ---------- The strip ---------- */
+
+html[data-template='road'] .gallery {
+  display: flex;
+  gap: 0.8rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+html[data-template='road'] .gallery > :is(figure, .film-tile, .film) {
+  flex: 0 0 min(78vw, 34rem);
+  scroll-snap-align: start;
+}
+
+html[data-template='road'] .gallery .gallery-open img {
+  aspect-ratio: 4 / 3;
+  border-radius: 6px;
+}
+
+@media (min-width: 960px) {
+  html[data-template='road'] .listing-flow > :not(.stage, .compact-bar, #listing-gallery) {
+    align-self: center;
+    inline-size: min(100%, 60rem);
+    max-width: none;
+    box-sizing: border-box;
+  }
+
+  html[data-template='road'] :is(.enrich, .seller, .facts, .monthly-cost) {
+    margin-inline: 0;
+  }
+}
+
+/* The WhatsApp button on the dark ground: light on ink, as on Glass. The
+   accent green under white text measured 2.3–2.7:1 (contrast.spec). */
+html[data-template='road'] .cta {
+  background: var(--ink);
+  color: var(--plaster);
+}
+
+html[data-template='road'] .cta-dock {
+  background: linear-gradient(to top, var(--plaster) 70%, rgba(10, 11, 10, 0));
+}
+
+/* ---------- Stillness everywhere else ---------- */
+
+/* The shared reveals (listing.css) run only with motion allowed and scroll
+   timelines supported, so they are switched off under the same two
+   conditions (verify-motion-fallbacks keeps .reveal rules inside them). */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    html[data-template='road'] :is(.reveal, .clip-reveal) {
+      animation: none;
+      clip-path: none;
+    }
+  }
+}
+
+/* The shared entrance fade on the price, numbers and chips (stage.css). */
+html[data-template='road'] .stage :is(.numerals > div, .price-bar, .highlights) {
+  animation: none;
+}
+
+/* ---------- The one movement: the strip drives past ---------- */
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    /* As wide as its photographs, and no longer a scroller: the page's
+       scroll moves it. In Hebrew the strip starts at the right and runs
+       off to the left, so it drives to the right by exactly its overflow. */
+    html[data-template='road'] .gallery {
+      inline-size: max-content;
+      overflow-x: visible;
+      scroll-snap-type: none;
+      animation: rd-drive linear both;
+      animation-timeline: view();
+      animation-range: cover 12% cover 88%;
+    }
+
+    @keyframes rd-drive {
+      from {
+        translate: 0 0;
+      }
+      to {
+        translate: max(0px, calc(100% - 100vw)) 0;
+      }
+    }
+  }
+}

@@ -107,6 +107,7 @@
     "version": ""
   },
   "listing": {
+    "chaptersContents": "",
     "create": "",
     "whatsappCta": "",
     "whatsappShort": "",
@@ -444,6 +445,14 @@
       "dossierNote": "",
       "ticket": "",
       "ticketNote": "",
+      "breath": "",
+      "breathNote": "",
+      "chapters": "",
+      "chaptersNote": "",
+      "depth": "",
+      "depthNote": "",
+      "road": "",
+      "roadNote": "",
       "needsAspect": "",
       "walkNeeds": "",
       "blueprintNeeds": ""

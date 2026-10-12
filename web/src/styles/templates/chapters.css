@@ -1,0 +1,288 @@
+/*
+  Chapters — the flat as a book (round three, 12 Oct 2026; homes only).
+  A still title page — title, photograph, price, numbers and, when the
+  seller named rooms, a contents line — and then the gallery set as the
+  chapters: one photograph to a page, numbered 01, 02, … with its room.
+
+  ONE MOVEMENT: each chapter opens as it reaches the screen — the photograph
+  uncovered by a soft wipe from the reading side (the right, in Hebrew) and
+  its caption sliding in beside it. Scroll-driven, no script. Nothing else
+  moves: the shared section rise and photo reveals are switched off below.
+
+  The wipe starts from a visible floor (a third of the photograph already
+  showing), never from nothing, so a reader who lands mid-page sees the
+  photographs. Reduced motion, or no scroll timelines: the chapters are
+  simply open.
+
+  Living Surfaces, Paper (TEMPLATE_MANIFEST). 1.x tokens pinned for the
+  contrast gates.
+*/
+
+html[data-template='chapters'] {
+  --plaster: #f5f2ea;
+  --ink: #121310; /* = --ls-ink */
+  --stone: #ddd6c8;
+  --stone-warm: #ebe5d9;
+  --muted: #5e5f57; /* = --ls-ink-2 */
+  --muted-warm: #57584f;
+  --absent: #5e5f57;
+  --heroWant: 56svh;
+}
+
+html[data-template='chapters'] body {
+  font-family: var(--ls-font-body);
+}
+
+/* ---------- The title page ---------- */
+
+html[data-template='chapters'] section.stage-chapters {
+  display: grid;
+  gap: 1.4rem;
+  padding: 2.2rem var(--gut) 1.4rem;
+}
+
+html[data-template='chapters'] .ch-title {
+  display: grid;
+  gap: 0.6rem;
+  padding-block-end: 1.2rem;
+  border-block-end: 2px solid var(--ink);
+}
+
+html[data-template='chapters'] .ch-title .stage-place {
+  margin: 0;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+html[data-template='chapters'] .ch-title .stage-title {
+  margin: 0;
+  font-family: 'Frank Ruhl Libre', serif;
+  font-weight: 700;
+  font-size: clamp(2.4rem, 8.5vw, 5rem);
+  line-height: 1.08;
+  text-wrap: balance;
+}
+
+html[data-template='chapters'] .ch-line {
+  display: block;
+}
+
+html[data-template='chapters'] .ch-photo {
+  display: block;
+  inline-size: 100%;
+  aspect-ratio: 4 / 3;
+  max-block-size: 62svh;
+  overflow: clip;
+  border-radius: 2px;
+}
+
+html[data-template='chapters'] .ch-photo img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+html[data-template='chapters'] .ch-facts {
+  display: grid;
+  gap: 1rem;
+}
+
+html[data-template='chapters'] .ch-facts .price-bar {
+  padding: 0;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: baseline;
+  gap: 0.3rem 1.1rem;
+  border: 0;
+}
+
+html[data-template='chapters'] .ch-facts .price {
+  font-family: 'Frank Ruhl Libre', serif;
+  font-size: clamp(1.9rem, 5.5vw, 2.7rem);
+}
+
+html[data-template='chapters'] .ch-facts .price-note {
+  text-align: start;
+}
+
+html[data-template='chapters'] .ch-contents {
+  margin: 0;
+  font-family: 'Frank Ruhl Libre', serif;
+  font-size: 1.08rem;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+html[data-template='chapters'] .ch-contents b {
+  color: var(--ink);
+}
+
+html[data-template='chapters'] .stage-chapters .highlights {
+  padding: 0;
+}
+
+/* ---------- The chapters: the gallery, one photograph to a page ---------- */
+
+html[data-template='chapters'] #listing-gallery {
+  counter-reset: chapter;
+}
+
+html[data-template='chapters'] .gallery {
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(2.6rem, 9vw, 5rem);
+  padding-block: 1rem 3rem;
+}
+
+html[data-template='chapters'] .gallery-room > h2 {
+  margin: 0 var(--gut) 1rem;
+  font-family: 'Frank Ruhl Libre', serif;
+  font-size: clamp(1.7rem, 6vw, 2.6rem);
+}
+
+/* The film tile is not a chapter: no number, no wipe (film.css owns it). */
+html[data-template='chapters'] .gallery figure:not(.film-tile) {
+  display: grid;
+  gap: 0.7rem;
+  counter-increment: chapter;
+}
+
+html[data-template='chapters'] .gallery .gallery-open img {
+  aspect-ratio: 4 / 3;
+  border-radius: 2px;
+}
+
+/* The chapter number: generated, isolated from the Hebrew around it like
+   any number in <bdi> (CLAUDE.md §4.2), and never on its own line. */
+html[data-template='chapters'] .gallery figure:not(.film-tile)::before {
+  content: counter(chapter, decimal-leading-zero);
+  unicode-bidi: isolate;
+  justify-self: start;
+  font-family: 'Frank Ruhl Libre', serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--olive);
+  padding-block-end: 0.35rem;
+  border-block-end: 2px solid currentColor;
+}
+
+html[data-template='chapters'] .gallery figcaption {
+  margin: 0;
+  font-family: 'Frank Ruhl Libre', serif;
+  font-size: 1.2rem;
+  color: var(--ink);
+}
+
+html[data-template='chapters'] .enrich {
+  background: transparent;
+  border-block: 2px solid var(--ink);
+  border-radius: 0;
+  margin-inline: var(--gut);
+}
+
+@media (min-width: 960px) {
+  html[data-template='chapters'] section.stage-chapters {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+    column-gap: 3.5rem;
+    align-items: end;
+    padding-block-start: 3.5rem;
+  }
+
+  html[data-template='chapters'] .ch-title,
+  html[data-template='chapters'] .ch-contents,
+  html[data-template='chapters'] .stage-chapters .highlights {
+    grid-column: 1 / -1;
+  }
+
+  html[data-template='chapters'] .ch-photo {
+    grid-row: 2;
+    grid-column: 2;
+    aspect-ratio: 16 / 10;
+  }
+
+  html[data-template='chapters'] .ch-facts {
+    grid-row: 2;
+    grid-column: 1;
+  }
+
+  html[data-template='chapters'] .gallery {
+    inline-size: min(100%, 64rem);
+    margin-inline: auto;
+  }
+
+  html[data-template='chapters'] .gallery .gallery-open img {
+    aspect-ratio: 16 / 10;
+  }
+
+  html[data-template='chapters'] .listing-flow > :not(.stage, .compact-bar, #listing-gallery) {
+    align-self: center;
+    inline-size: min(100%, 60rem);
+    max-width: none;
+    box-sizing: border-box;
+  }
+
+  html[data-template='chapters'] :is(.enrich, .seller, .facts, .monthly-cost) {
+    margin-inline: 0;
+  }
+}
+
+/* ---------- Stillness everywhere else ---------- */
+
+/* The shared reveals (listing.css) run only with motion allowed and scroll
+   timelines supported, so they are switched off under the same two
+   conditions (verify-motion-fallbacks keeps .reveal rules inside them). */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    html[data-template='chapters'] :is(.reveal, .clip-reveal) {
+      animation: none;
+      clip-path: none;
+    }
+  }
+}
+
+/* The shared entrance fade on the price, numbers and chips (stage.css). */
+html[data-template='chapters'] .stage :is(.numerals > div, .price-bar, .highlights) {
+  animation: none;
+}
+
+/* ---------- The one movement: each chapter opens as it arrives ---------- */
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    html[data-template='chapters'] .gallery figure:not(.film-tile) .gallery-open img {
+      animation: ch-open linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 38%;
+    }
+
+    html[data-template='chapters'] .gallery figcaption {
+      animation: ch-caption linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 30%;
+    }
+
+    /* From the reading side: in Hebrew the inline start is the right, so
+       the photograph is uncovered right to left — the way the page reads.
+       A third of it already shows at the start. */
+    @keyframes ch-open {
+      from {
+        clip-path: inset(0 0 0 66% round 2px);
+      }
+      to {
+        clip-path: inset(0 round 2px);
+      }
+    }
+
+    @keyframes ch-caption {
+      from {
+        opacity: 0.4;
+        translate: -1.6rem 0;
+      }
+      to {
+        opacity: 1;
+        translate: 0 0;
+      }
+    }
+  }
+}

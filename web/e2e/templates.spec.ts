@@ -33,6 +33,10 @@ const SIGNATURE: Record<string, string> = {
   ticket: '.tk-qr',
   showroom: '.sr-platform',
   dossier: '.ds-folder',
+  breath: '.br-frame',
+  chapters: '.ch-title',
+  depth: '.dp-card',
+  road: '.rd-lane',
 };
 
 const LISTINGS = [
@@ -145,4 +149,16 @@ test.describe('first-screen text stays on the phone and apart', () => {
       expect(problems, `${id} on ${slug}`).toEqual([]);
     });
   }
+});
+
+test('gallery tiles keep their shape, whatever size the photograph is', async ({ page }) => {
+  // 12 Oct 2026: the img height ATTRIBUTE beat the CSS aspect-ratio, so a
+  // 1200x800 photograph made a tile 336px wide and 800px tall on a phone.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${BASE}/template-check/R4LSH-aurora/`, { waitUntil: 'load' });
+  const ratios = await page
+    .locator('#listing-gallery .gallery-open img')
+    .evaluateAll((els) => els.map((el) => el.getBoundingClientRect().height / el.getBoundingClientRect().width));
+  expect(ratios.length).toBeGreaterThan(1);
+  for (const ratio of ratios) expect(ratio).toBeLessThanOrEqual(0.76);
 });

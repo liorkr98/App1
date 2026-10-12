@@ -46,9 +46,9 @@ describe('template manifest', () => {
     for (const id of TEMPLATE_IDS) assert.equal(resolveTemplateId(id), id);
   });
 
-  it('matches the set the latest template migration (0033) allows', () => {
+  it('matches the set the latest template migration (0039) allows', () => {
     const sql = readFileSync(
-      new URL('../../../supabase/migrations/0033_templates_round_two.sql', import.meta.url),
+      new URL('../../../supabase/migrations/0039_templates_round_three.sql', import.meta.url),
       'utf8',
     );
     const check = sql.slice(sql.indexOf('check (template in ('), sql.indexOf('));'));
@@ -82,7 +82,7 @@ describe('template manifest', () => {
   });
 
   it('lets every other template draw either category', () => {
-    const oneCategory = new Set(['showroom', 'dossier', 'heliograph', 'walk']);
+    const oneCategory = new Set(['showroom', 'dossier', 'heliograph', 'walk', 'chapters', 'road']);
     for (const id of TEMPLATE_IDS) {
       if (oneCategory.has(id)) continue;
       assert.equal(templateFor(id, 'property'), id);
@@ -99,16 +99,18 @@ describe('template manifest', () => {
 });
 
 describe('the catalogue the picker offers', () => {
-  it('is the twelve chosen templates, each drawn by its own stage', () => {
-    assert.equal(CATALOGUE.length, 12);
+  it('is the sixteen chosen templates, each drawn by its own stage', () => {
+    assert.equal(CATALOGUE.length, 16);
     for (const id of CATALOGUE) assert.ok(TEMPLATE_MANIFEST[id].composed, id);
   });
 
-  it('offers homes ten and cars ten, never the other category\'s', () => {
-    assert.equal(pickerTemplates('property').length, 10);
+  it('offers homes thirteen and cars thirteen, never the other category\'s', () => {
+    assert.equal(pickerTemplates('property').length, 13);
     assert.ok(!pickerTemplates('property').includes('showroom'));
-    assert.equal(pickerTemplates('vehicle').length, 10);
+    assert.ok(!pickerTemplates('property').includes('road'));
+    assert.equal(pickerTemplates('vehicle').length, 13);
     assert.ok(!pickerTemplates('vehicle').includes('heliograph'));
+    assert.ok(!pickerTemplates('vehicle').includes('chapters'));
   });
 
   it('keeps an old listing\'s own template on offer, first', () => {

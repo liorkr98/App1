@@ -1,0 +1,66 @@
+---
+import type { Listing } from '@/types/listing';
+import { HERO_WIDTHS, largest, srcset } from '../../lib/images';
+import type { FactCell } from '../../lib/facts';
+import { t } from '../../lib/i18n';
+import type { PerUnitPrice } from '../../lib/price';
+import { coverStyle, priceProps, stagePlace, titleLines } from '../../lib/stage';
+import HighlightChips from '../HighlightChips.astro';
+import PriceBar from '../PriceBar.astro';
+import Prose from '../Prose.astro';
+import Numerals from './Numerals.astro';
+
+interface Props {
+  listing: Listing;
+  cells: FactCell[];
+  perUnit?: PerUnitPrice | undefined;
+}
+
+/**
+ * Depth (Onyx; round three, 12 Oct 2026). Two layers: the photograph full
+ * bleed at the back, and a card with the title, price and numbers lying
+ * over its lower edge. One movement, parallax: as the page scrolls, the
+ * photograph falls behind slower than the page while the card keeps pace,
+ * and further down each gallery photograph shifts a little inside its own
+ * frame (depth.css). Nothing else moves.
+ */
+const { listing, cells, perUnit } = Astro.props;
+const cover = listing.media.cover;
+const lines = titleLines(listing);
+const place = stagePlace(listing);
+---
+<section class="stage stage-depth">
+  <div class="dp-back">
+    <button
+      type="button"
+      class="dp-photo"
+      data-lightbox={largest(cover, HERO_WIDTHS)}
+      data-alt={cover.alt ?? ''}
+      aria-label={t('listing.openPhoto')}
+    >
+      <img
+        class="dp-img"
+        src={largest(cover, HERO_WIDTHS)}
+        srcset={srcset(cover, HERO_WIDTHS) || undefined}
+        sizes="100vw"
+        width={cover.width}
+        height={cover.height}
+        alt={cover.alt ?? ''}
+        style={coverStyle(listing)}
+        fetchpriority="high"
+        decoding="async"
+      />
+    </button>
+  </div>
+  <div class="dp-card">
+    {place && <p class="stage-place"><Prose text={place} /></p>}
+    <h1 class="stage-title ls-display">
+      {lines.map((line) => (
+        <span class="dp-line"><Prose text={line} /></span>
+      ))}
+    </h1>
+    <PriceBar {...priceProps(listing, perUnit)} />
+    <Numerals cells={cells} class="dp-nums" />
+  </div>
+  <HighlightChips highlights={listing.highlights} facts={listing.facts} />
+</section>

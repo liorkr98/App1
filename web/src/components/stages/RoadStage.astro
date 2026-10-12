@@ -1,0 +1,66 @@
+---
+import type { Listing } from '@/types/listing';
+import { HERO_WIDTHS, largest, srcset } from '../../lib/images';
+import type { FactCell } from '../../lib/facts';
+import { t } from '../../lib/i18n';
+import type { PerUnitPrice } from '../../lib/price';
+import { coverStyle, priceProps, stagePlace, titleLines } from '../../lib/stage';
+import HighlightChips from '../HighlightChips.astro';
+import PriceBar from '../PriceBar.astro';
+import Prose from '../Prose.astro';
+import Numerals from './Numerals.astro';
+
+interface Props {
+  listing: Listing;
+  cells: FactCell[];
+  perUnit?: PerUnitPrice | undefined;
+}
+
+/**
+ * Road (Onyx, cars; round three, 12 Oct 2026). The car side-on across the
+ * whole width under a road line, the price and the spec beneath, all still.
+ * The one movement is further down: the gallery is one long strip, and as
+ * the page scrolls the strip drives past sideways, like watching the car go
+ * by from the kerb (road.css). Without scroll timelines, or with motion
+ * off, the strip is swiped with a finger instead.
+ */
+const { listing, cells, perUnit } = Astro.props;
+const cover = listing.media.cover;
+const lines = titleLines(listing);
+const place = stagePlace(listing);
+---
+<section class="stage stage-road">
+  <div class="rd-head">
+    {place && <p class="stage-place"><Prose text={place} /></p>}
+    <h1 class="stage-title ls-display">
+      {lines.map((line) => (
+        <span class="rd-line"><Prose text={line} /></span>
+      ))}
+    </h1>
+  </div>
+  <button
+    type="button"
+    class="rd-car"
+    data-lightbox={largest(cover, HERO_WIDTHS)}
+    data-alt={cover.alt ?? ''}
+    aria-label={t('listing.openPhoto')}
+  >
+    <img
+      src={largest(cover, HERO_WIDTHS)}
+      srcset={srcset(cover, HERO_WIDTHS) || undefined}
+      sizes="100vw"
+      width={cover.width}
+      height={cover.height}
+      alt={cover.alt ?? ''}
+      style={coverStyle(listing)}
+      fetchpriority="high"
+      decoding="async"
+    />
+  </button>
+  <span class="rd-lane" aria-hidden="true"></span>
+  <div class="rd-band">
+    <PriceBar {...priceProps(listing, perUnit)} />
+  </div>
+  <Numerals cells={cells} class="rd-spec" />
+  <HighlightChips highlights={listing.highlights} facts={listing.facts} />
+</section>

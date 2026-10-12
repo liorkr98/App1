@@ -33,7 +33,11 @@ export type ComposedLayout =
   | 'poster'
   | 'zine'
   | 'dossier'
-  | 'ticket';
+  | 'ticket'
+  | 'breath'
+  | 'chapters'
+  | 'depth'
+  | 'road';
 
 export interface TemplateSpec {
   ls?: 'paper' | 'onyx';
@@ -65,6 +69,12 @@ export const TEMPLATE_MANIFEST: Record<TemplateId, TemplateSpec> = {
   zine: { ls: 'paper', composed: 'zine', keyCells: 4 },
   dossier: { ls: 'paper', composed: 'dossier', keyCells: 4, categories: ['vehicle'] },
   ticket: { ls: 'paper', composed: 'ticket', keyCells: 4 },
+  // Round three: each has ONE signature motion and nothing else moves
+  // (the owner: "breathing, motion, parallax — not all together").
+  breath: { ls: 'paper', composed: 'breath', keyCells: 3 },
+  chapters: { ls: 'paper', composed: 'chapters', keyCells: 4, categories: ['property'] },
+  depth: { ls: 'onyx', composed: 'depth', keyCells: 4 },
+  road: { ls: 'onyx', composed: 'road', keyCells: 4, categories: ['vehicle'] },
 };
 
 /**
@@ -124,7 +134,8 @@ export function templatesFor(category: ListingCategory): TemplateId[] {
 
 /**
  * THE CATALOGUE: the twelve templates chosen in the prototype rounds (plan
- * §12b), in the order the picker shows them. Homes lead with Aurora and the
+ * §12b) and the four of round three (12 Oct 2026: Breath, Chapters, Depth,
+ * Road — one motion each), in the order the picker shows them. Homes lead with Aurora and the
  * two built on data only this listing has (its sun, its walk); cars get
  * Showroom and Dossier.
  *
@@ -136,6 +147,9 @@ export function templatesFor(category: ListingCategory): TemplateId[] {
  */
 export const CATALOGUE: readonly TemplateId[] = [
   'aurora',
+  'breath',
+  'chapters',
+  'depth',
   'heliograph',
   'walk',
   'blueprint',
@@ -146,6 +160,7 @@ export const CATALOGUE: readonly TemplateId[] = [
   'zine',
   'ticket',
   'showroom',
+  'road',
   'dossier',
 ];
 

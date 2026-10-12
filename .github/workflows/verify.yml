@@ -315,6 +315,11 @@ jobs:
         working-directory: web
         run: npx playwright test phone-upload
 
+      - name: One movement per design (round three)
+        if: ${{ !cancelled() }}
+        working-directory: web
+        run: npx playwright test signature-motion
+
       - name: Screenshots (reported, not blocking, for now)
         if: ${{ !cancelled() }}
         continue-on-error: true

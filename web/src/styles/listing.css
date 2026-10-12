@@ -405,7 +405,7 @@ p + p{margin-top:.9rem}
 .erow .who b{font-weight:600;display:block}
 .erow .who em{font-style:normal;color:var(--enrich-muted,#9C9D93);font-size:.83rem}
 /* The templates that draw this section on paper. */
-html:is([data-template='blueprint'],[data-template='atelier'],[data-template='heliograph'],[data-template='walk'],[data-template='poster'],[data-template='zine']) .enrich{
+html:is([data-template='blueprint'],[data-template='atelier'],[data-template='heliograph'],[data-template='walk'],[data-template='poster'],[data-template='zine'],[data-template='breath'],[data-template='chapters']) .enrich{
   --enrich-ink:var(--ink);
   --enrich-muted:var(--muted);
   --enrich-rule:var(--stone);
@@ -989,6 +989,10 @@ footer a{
   text-align:inherit;
 }
 .gallery-open img{width:100%}
+/* The tile's shape comes from aspect-ratio (4:3, the first 16:10). Without
+   this the height ATTRIBUTE won: a 1200x800 photograph became a tile 336px
+   wide and 800px tall, a portrait one 1400px (measured 12 Oct 2026). */
+.gallery .gallery-open img{height:auto}
 .lightbox{
   inset:0;
   width:100%;
