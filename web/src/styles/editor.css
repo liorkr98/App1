@@ -1984,7 +1984,7 @@ body:has(.live-preview.is-full) .nav {
   }
 }
 
-/* ---------- "הבחירה של היעד" (suggest.ts) ---------- */
+/* ---------- "הבחירה שלנו" (suggest.ts) ---------- */
 
 .magic-pick {
   display: flex;

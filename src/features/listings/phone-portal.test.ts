@@ -46,8 +46,8 @@ describe('portal token', () => {
 describe('phoneReachableOrigin', () => {
   it('keeps the public Worker and the custom domain', () => {
     assert.equal(phoneReachableOrigin('https://besivov.liorkr98.workers.dev'), 'https://besivov.liorkr98.workers.dev');
-    assert.equal(phoneReachableOrigin('https://hasivuv.com/new/'), 'https://hasivuv.com');
-    assert.equal(phoneReachableOrigin('https://www.hasivuv.com'), 'https://www.hasivuv.com');
+    assert.equal(phoneReachableOrigin('https://amudsell.com/new/'), 'https://amudsell.com');
+    assert.equal(phoneReachableOrigin('https://www.amudsell.com'), 'https://www.amudsell.com');
   });
 
   it('refuses a machine the phone cannot see', () => {

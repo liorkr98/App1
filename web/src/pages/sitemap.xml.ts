@@ -16,7 +16,7 @@ import { indexableListings } from '../lib/listing-from-row';
 export const prerender = false;
 
 export const GET: APIRoute = async ({ site }) => {
-  const origin = site ?? new URL('https://hasivuv.com');
+  const origin = site ?? new URL('https://amudsell.com');
   const listed = await indexableListings();
 
   const urls = [

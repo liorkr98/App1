@@ -55,7 +55,7 @@ export const OVERPASS_ENDPOINTS = [
 ];
 
 /** Overpass asks for identification, and being identifiable is fair. */
-const USER_AGENT = 'hasivuv.com listing pages (contact: https://hasivuv.com/contact/)';
+const USER_AGENT = 'amudsell.com listing pages (contact: https://amudsell.com/contact/)';
 
 /**
  * 600 metres from the street, which is a neighbourhood rather than a doorstep.

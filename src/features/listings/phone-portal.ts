@@ -15,19 +15,19 @@ export function isPortalToken(value: unknown): value is string {
  * Hosts a phone on a cellular network can open.
  *
  * The QR used to copy whatever host the editor was opened on. A laptop on
- * localhost, or hasivuv.com before it has DNS, is a code the phone cannot
+ * localhost, or a custom domain before it has DNS, is a code the phone cannot
  * reach — the browser says there is no server. The public Worker is the
  * host that answers today; the custom domain joins this list the day it
  * resolves (docs/DEPLOY.md).
  */
 const PHONE_REACHABLE_HOSTS = new Set([
   'besivov.liorkr98.workers.dev',
-  'hasivuv.com',
-  'www.hasivuv.com',
+  'amudsell.com',
+  'www.amudsell.com',
 ]);
 
 /** Where the editor tells the agent to go when this host is not one of those. */
-export const PHONE_PUBLIC_EDITOR = 'https://besivov.liorkr98.workers.dev/new/';
+export const PHONE_PUBLIC_EDITOR = 'https://amudsell.com/new/';
 
 /** The origin a phone can open, or undefined when the QR would point at a private machine. */
 export function phoneReachableOrigin(origin: string): string | undefined {

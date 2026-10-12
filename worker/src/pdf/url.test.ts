@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 
 import { isListingPage, listingPdfUrl, SLUG_PATTERN } from './url.js';
 
-const PAGE = 'https://hasivuv.com';
+const PAGE = 'https://amudsell.com';
 const SLUG = 'A7K2M';
 
 describe('SLUG_PATTERN', () => {
@@ -27,13 +27,13 @@ describe('SLUG_PATTERN', () => {
 
 describe('listingPdfUrl', () => {
   it('builds /a/{slug}/ on PAGE_BASE_URL when no override is sent', () => {
-    assert.equal(listingPdfUrl({ slug: SLUG, pageBaseUrl: PAGE }), 'https://hasivuv.com/a/A7K2M/');
+    assert.equal(listingPdfUrl({ slug: SLUG, pageBaseUrl: PAGE }), 'https://amudsell.com/a/A7K2M/');
   });
 
   it('strips a trailing slash on PAGE_BASE_URL rather than doubling the path', () => {
     assert.equal(
-      listingPdfUrl({ slug: SLUG, pageBaseUrl: 'https://hasivuv.com/' }),
-      'https://hasivuv.com/a/A7K2M/',
+      listingPdfUrl({ slug: SLUG, pageBaseUrl: 'https://amudsell.com/' }),
+      'https://amudsell.com/a/A7K2M/',
     );
   });
 
@@ -42,9 +42,9 @@ describe('listingPdfUrl', () => {
       listingPdfUrl({
         slug: SLUG,
         pageBaseUrl: PAGE,
-        baseUrl: 'https://hasivuv.com/redirect',
+        baseUrl: 'https://amudsell.com/redirect',
       }),
-      'https://hasivuv.com/a/A7K2M/',
+      'https://amudsell.com/a/A7K2M/',
     );
   });
 
@@ -64,7 +64,7 @@ describe('listingPdfUrl', () => {
       listingPdfUrl({
         slug: SLUG,
         pageBaseUrl: PAGE,
-        baseUrl: 'https://hasivuv.com.evil.example',
+        baseUrl: 'https://amudsell.com.evil.example',
       }),
       undefined,
     );
@@ -72,7 +72,7 @@ describe('listingPdfUrl', () => {
       listingPdfUrl({
         slug: SLUG,
         pageBaseUrl: PAGE,
-        baseUrl: 'https://hasivuv.com@evil.example',
+        baseUrl: 'https://amudsell.com@evil.example',
       }),
       undefined,
     );
@@ -98,9 +98,9 @@ describe('listingPdfUrl', () => {
 
 describe('listing pages', () => {
   it('opens the flyer, story and card pages on the same origin', () => {
-    assert.equal(listingPdfUrl({ slug: SLUG, pageBaseUrl: PAGE, page: 'flyer' }), 'https://hasivuv.com/a/A7K2M/flyer/');
-    assert.equal(listingPdfUrl({ slug: SLUG, pageBaseUrl: PAGE, page: 'story' }), 'https://hasivuv.com/a/A7K2M/story/');
-    assert.equal(listingPdfUrl({ slug: SLUG, pageBaseUrl: PAGE, page: 'card' }), 'https://hasivuv.com/a/A7K2M/card/');
+    assert.equal(listingPdfUrl({ slug: SLUG, pageBaseUrl: PAGE, page: 'flyer' }), 'https://amudsell.com/a/A7K2M/flyer/');
+    assert.equal(listingPdfUrl({ slug: SLUG, pageBaseUrl: PAGE, page: 'story' }), 'https://amudsell.com/a/A7K2M/story/');
+    assert.equal(listingPdfUrl({ slug: SLUG, pageBaseUrl: PAGE, page: 'card' }), 'https://amudsell.com/a/A7K2M/card/');
   });
 
   it('accepts only the known pages from a payload', () => {

@@ -2,7 +2,7 @@ import type { ListingCategory } from '../listings/schemas/index.js';
 import { TEMPLATE_IDS, type TemplateId } from '../../types/listing.js';
 
 /**
- * What each template is, in one table (היעד 2.0, plan §5).
+ * What each template is, in one table (עמוד מכירה 2.0, plan §5).
  *
  *   ls          the Living Surfaces mode. A template with one gets data-ls on
  *               <html>: the --ls-* tokens, the self-hosted display face and

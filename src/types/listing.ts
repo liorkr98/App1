@@ -828,7 +828,7 @@ export interface Listing {
   indexable: boolean;
 
   /**
-   * When true, the public footer carries נבנה בהיעד. Free first listing: true.
+   * When true, the public footer carries נבנה עם עמוד מכירה. Free first listing: true.
    * A paid grant turns it false. Absent means true, so older pages keep the mark.
    */
   hyadMark?: boolean;

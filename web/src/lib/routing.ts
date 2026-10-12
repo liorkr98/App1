@@ -50,7 +50,7 @@ function osrmTableUrl(base: string, origin: WalkPoint, points: readonly WalkPoin
 const VALHALLA_URL = 'https://valhalla1.openstreetmap.de/sources_to_targets';
 
 /** Identifiable, because using somebody's service anonymously is not fair use. */
-const USER_AGENT = 'hasivuv.com listing pages (contact: https://hasivuv.com/contact/)';
+const USER_AGENT = 'amudsell.com listing pages (contact: https://amudsell.com/contact/)';
 
 /** A router that cannot answer in this long is not going to. */
 const TIMEOUT_MS = 12_000;

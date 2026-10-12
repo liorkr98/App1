@@ -127,6 +127,14 @@ jobs:
       - name: Verify the absent-contrast rule actually fires
         run: bash scripts/verify-absent-contrast-fires.sh
 
+      # HSTS, framing, referrer and the CSP on every static page, from the
+      # same list the Worker's middleware applies (docs/DEPLOY.md).
+      - name: Verify the security headers
+        run: node scripts/verify-security-headers.mjs
+
+      - name: Verify the security-headers check actually fires
+        run: bash scripts/verify-security-headers-fires.sh
+
       # CLAUDE.md §4.2. A missing <bdi> is invisible in review AND usually on
       # the page: a bare number reads correctly until the words around it
       # change, then silently reorders. Runs on built HTML so it sees what is

@@ -60,6 +60,7 @@
     "binding": "ASSETS"
   }
 
-  // Do NOT add custom_domain here until hasivuv.com DNS is attached.
-  // A routes.custom_domain that does not resolve fails the deploy.
+  // amudsell.com is attached in the dashboard (Domains & Routes), not here:
+  // a routes.custom_domain for a zone this account does not hold fails the
+  // deploy. docs/DEPLOY.md has the steps, HTTPS settings included.
 }

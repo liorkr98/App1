@@ -62,7 +62,7 @@ machines. `--ha=false` is required on the first deploy; the default two
 machines per group would be standbys with no HTTP failover.
 
 `PAGE_BASE_URL` is the origin the pdf group opens in Chrome. Until
-`hasivuv.com` resolves, that is the Workers.dev URL, not a placeholder.
+`amudsell.com` resolves, that is the Workers.dev URL, not a placeholder.
 
 The two groups claim **disjoint** job types. Chrome is the only thing here that
 routinely runs out of memory, and when it does it takes its machine with it.
@@ -133,7 +133,7 @@ Set on the Fly app. None of it is in the repo.
 
 `PAGE_BASE_URL` is deliberately unset in `fly.toml`. Set it as a Fly secret
 to the live listings origin (`https://besivov.liorkr98.workers.dev` until
-`hasivuv.com` is attached). A wrong value quietly renders 404 pages into PDFs.
+`amudsell.com` is attached). A wrong value quietly renders 404 pages into PDFs.
 
 ## Failure taxonomy
 

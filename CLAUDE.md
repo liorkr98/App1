@@ -46,7 +46,7 @@ it. That is what is being sold.
 > it belongs to the speed promise, not the trust one. It is sold as "type the
 > plate, the rest fills itself", never as "verified against the register".
 
-**Product:** היעד. **Domain:** hasivuv.com.
+**Product:** עמוד מכירה (renamed from היעד on 12 Oct 2026; English: AmudSell). **Domain:** amudsell.com.
 
 **The primary audience is Israeli estate agents, not private sellers.** The
 Justice Ministry's public register lists 22,995 licensed brokers with contact
@@ -446,7 +446,7 @@ the summary.
 
 ### The product rules
 
-**The first published listing is free, and it carries נבנה בהיעד in the footer.** That mark is the viral loop: a listing page is forwarded to 30–80 people who are by definition interested in buying something. Small, elegant, clickable.
+**The first published listing is free, and it carries נבנה עם עמוד מכירה in the footer.** That mark is the viral loop: a listing page is forwarded to 30–80 people who are by definition interested in buying something. Small, elegant, clickable.
 
 **A live grant (purchase or admin) publishes further listings and takes the mark off** — including listings already published. Buying one listing is enough. A second listing without a grant does not publish.
 
