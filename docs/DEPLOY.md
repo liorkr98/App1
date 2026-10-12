@@ -9,25 +9,62 @@ root is the config — do not let the dashboard auto-detect Expo.
 
 ---
 
-## Custom domain — not attached from this change
+## amudsell.com — the domain, and HTTPS (12 Oct 2026)
 
-`hasivuv.com` still has to be added in the Cloudflare dashboard (Workers →
-besivov → Custom domains) and the DNS at the registrar has to point at
-Cloudflare. This environment cannot attach that. Until it is:
+The product is **עמוד מכירה** and its canonical host is **https://amudsell.com**.
+The build bakes that host into every canonical link, `og:image`, sitemap and
+share message (`web/astro.config.mjs`), so **attach the domain before a build
+from this branch deploys**, or every preview card points at a host that does
+not answer.
 
-- leave `SITE_URL` unset, or set it to `https://besivov.liorkr98.workers.dev`
-- **do not** add `custom_domain` in `wrangler.jsonc` — a domain that does not
-  resolve fails the deploy
+### 1. Attach it to the Worker (once)
+1. The domain's nameservers point at Cloudflare (registrar → nameservers →
+   the two Cloudflare gives you when you add the site).
+2. **Workers & Pages → besivov → Settings → Domains & Routes → Add → Custom
+   domain:** `amudsell.com`, then again for `www.amudsell.com`. Cloudflare
+   creates the DNS records and issues the certificate itself.
+3. **Settings → Build → Variables:** delete `SITE_URL` if it still names the
+   workers.dev host (the fallback is now amudsell.com), or set it to
+   `https://amudsell.com`. Retry the deployment.
+4. Supabase → **Authentication → URL Configuration:** Site URL
+   `https://amudsell.com`, and add `https://amudsell.com/enter/` to the
+   redirect URLs, or sign-in links land on the old host.
 
-The day it is attached:
+### 2. HTTPS settings (zone amudsell.com → SSL/TLS)
+| Setting | Value | Why |
+|---|---|---|
+| Encryption mode | **Full (strict)** | Cloudflare to the Worker is verified end to end |
+| Edge Certificates → Always Use HTTPS | **On** | every http:// request gets a 301 to https:// |
+| Edge Certificates → Minimum TLS Version | **1.2** | 1.0/1.1 are broken and no supported phone needs them |
+| Edge Certificates → TLS 1.3 | **On** | |
+| Edge Certificates → Automatic HTTPS Rewrites | **On** | |
+| Edge Certificates → HSTS | leave **off** here | the site sends its own (below); two sources disagree sooner or later |
 
-```
-SITE_URL = https://hasivuv.com
-```
+### 3. One host, not three (Rules → Redirect Rules)
+- **www → apex:** a Redirect Rule, "Redirect from WWW to root" template,
+  301, keep the query string.
+- **workers.dev → amudsell.com:** once the domain answers, either turn off
+  the workers.dev route (Settings → Domains & Routes) or keep it for
+  testing. Every page already names amudsell.com as its canonical, so search
+  engines index that host either way. The phone-upload QR accepts both.
 
-in **Settings → Build → Variables**, then retry the deployment. Absolute
-`og:image` URLs bake this host in. A 301 from workers.dev to the custom
-domain is a dashboard setting, not a repo file.
+### What the repo does by itself
+Every response carries the same security headers, from one list
+(`web/src/lib/security-headers.json`): `_headers` for the static pages
+(`web/integrations/security-headers.mjs`), the middleware for what the
+Worker renders (`web/src/middleware.ts`). `scripts/verify-security-headers.mjs`
+checks the built file in CI, with its fires proof.
+
+- **HSTS** for a year with `includeSubDomains`. **No `preload`:** that submits
+  the domain to the browsers' built-in list, and leaving it takes months. Add
+  it, and submit at hstspreload.org, only once you are sure every subdomain
+  you will ever use speaks https.
+- `X-Content-Type-Options`, `X-Frame-Options: SAMEORIGIN`, a referrer policy
+  that never hands another site a full listing URL, no camera, microphone or
+  location for anyone, `Cross-Origin-Opener-Policy`.
+- A CSP limited to what cannot break a page: framing, `<base>`, plugins,
+  form targets, and `upgrade-insecure-requests`. A script policy needs every
+  inline script hashed first; it is a follow-up, not a guess.
 
 ---
 
@@ -82,7 +119,7 @@ deployment afterwards.
 
 Set it to the origin the site is served from:
 
-    SITE_URL = https://hasivuv.com
+    SITE_URL = https://amudsell.com
 
 Until the custom domain is attached the workers.dev origin is correct, and it
 is also the built-in fallback — so a build with no variables set produces
@@ -135,8 +172,8 @@ assumes someone taps.
 - **A real photograph as the cover.** The two demo listings (`/a/A7K2M`,
   `/a/V3M9Q`) use CC0/public-domain WebP files in `web/public/sample/` — see
   `docs/SAMPLE-IMAGES.md`. They are no longer placehold.co rectangles.
-- **A real host.** Until `hasivuv.com` resolves, send
-  `https://besivov.liorkr98.workers.dev/a/A7K2M/`. WhatsApp needs a public
+- **A real host.** Send `https://amudsell.com/a/A7K2M/` (the workers.dev
+  host until the domain is attached). WhatsApp needs a public
   HTTPS URL; localhost tests nothing.
 - **Three phones.** Send it to yourself and two other people, and look at
   the card **on their phones**. This change does not perform that test —
@@ -292,15 +329,18 @@ read them from the Worker at request time. A key that lives only in the
 build list is invisible on the site (`no_key`, and phone upload
 `not_configured`).
 
-`scripts/bind-worker-secrets.mjs` runs at the start of `wrangler deploy` and
-copies those two names from the build environment onto the latest Worker
-version with `wrangler versions secret bulk`. The deploy that is already
-running then uploads the new code and keeps those secrets. `wrangler secret
-bulk` is not used: it tries to deploy the secret edit and fails with
-"the latest version of your Worker isn't currently deployed" as soon as a
-preview `versions upload` is ahead of production. The runtime place for
-them, if you set them by hand, is Settings → Variables & Secrets, then
-Deploy.
+**Put them on the Worker, by hand, once:** besivov → Settings → Variables
+and Secrets → Add → Type *Secret*, then Deploy. They survive every later
+deploy. Then delete them from the Build list.
+
+From 11 to 12 Oct 2026 a build step (`scripts/bind-worker-secrets.mjs`)
+copied them from the build list onto the Worker on every deploy. It was
+removed: it put the database master key into every build, preview branches
+included, and it re-wrote the build copy over the Worker copy each time — so
+a key pasted wrong in the build list (measured: Supabase answered
+`Invalid API key`, `bad_length`, to every phone upload) could not be
+corrected on the Worker. `/admin` now has a line for each key and says
+which one is refused.
 
 ### Why not just delete the Expo remnant
 
@@ -332,7 +372,7 @@ The pipeline is not part of this deploy. It runs on Fly (`docs/PIPELINE.md`),
 and it needs one value from here:
 
 ```
-PAGE_BASE_URL   the origin the listing pages are served from, e.g. https://hasivuv.com
+PAGE_BASE_URL   the origin the listing pages are served from, e.g. https://amudsell.com
 ```
 
 Set it on the Fly app once the domain is fixed. Until it is set, the pdf

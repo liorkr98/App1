@@ -31,6 +31,10 @@ const SHEETS = import.meta.glob<string>(
     '../styles/templates/zine.css',
     '../styles/templates/dossier.css',
     '../styles/templates/ticket.css',
+    '../styles/templates/prints.css',
+    '../styles/templates/keytag.css',
+    '../styles/templates/streetsign.css',
+    '../styles/templates/dashboard.css',
   ],
   {
     query: '?url',
@@ -53,6 +57,10 @@ export const SPLIT_TEMPLATES: readonly TemplateId[] = [
   'zine',
   'dossier',
   'ticket',
+  'prints',
+  'keytag',
+  'streetsign',
+  'dashboard',
 ];
 
 export function templateStylesheet(template: TemplateId): string | undefined {

@@ -49,13 +49,17 @@ async function openPortal(client: SupabaseClient, request: Request): Promise<Fou
   const token = request.headers.get('x-portal-token') ?? '';
   if (!isPortalToken(token)) return { error: json({ error: 'unknown' }, 404) };
 
-  const { data, error } = await client
+  const { data, error, status } = await client
     .from('photo_portals')
     .select('id, listing_id, expires_at, closed_at')
     .eq('token_hash', await hashPortalToken(token))
     .maybeSingle();
   if (error) {
-    console.warn('phone_upload lookup_failed');
+    // A reason code, never the token. 401 is the server's own key refused
+    // (12 Oct: "Invalid API key", bad_length): not the phone's fault, and not
+    // something a retry fixes, so the phone is told it is not set up.
+    console.warn(`phone_upload lookup_failed http_${status} ${error.code ?? ''}`.trim());
+    if (status === 401 || status === 403) return { error: json({ error: 'not_configured' }, 503) };
     return { error: json({ error: 'unavailable' }, 502) };
   }
   const portal = data as Portal | null;

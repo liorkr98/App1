@@ -304,3 +304,31 @@ html[data-template='monolith'] .gallery img {
     }
   }
 }
+
+/* ==========================================================================
+   THE PAGE BODY in this design's own idiom (12 Oct 2026). Below the first
+   screen every design used to be the same page recoloured; the owner asked
+   for each to be its own. Structure and rules stay shared (absent vs
+   unanswered, מאומת only with a source, <bdi>, the street only): only the
+   look of the headings, facts, description, gallery and seller card change.
+   No new motion here.
+   ========================================================================== */
+
+html[data-template='monolith'] .section-label { display: none; }
+html[data-template='monolith'] section:not(.enrich) > h2 { font-family: var(--ls-font-display); font-weight: 900; font-size: clamp(2.6rem, 10vw, 4.6rem); line-height: 0.98; letter-spacing: -0.02em; }
+html[data-template='monolith'] .facts { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; background: none; border: 0; }
+html[data-template='monolith'] .fact { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding: 1rem var(--gut); background: var(--plaster); border-block-end: 1px solid #262620; }
+html[data-template='monolith'] .fact .fact-val { order: 2; font-family: var(--ls-font-display); font-weight: 900; font-size: clamp(2.2rem, 9vw, 3.4rem); }
+html[data-template='monolith'] .fact .fact-lbl { order: 1; margin: 0; font-size: 0.95rem; }
+html[data-template='monolith'] .fact.off { background: var(--plaster); }
+html[data-template='monolith'] .gallery { grid-template-columns: minmax(0, 1fr); gap: 3px; padding-inline: 0; }
+html[data-template='monolith'] .gallery img, html[data-template='monolith'] .gallery figure:first-child img { border-radius: 0; aspect-ratio: 16 / 11; }
+html[data-template='monolith'] .gallery figcaption { padding-inline: var(--gut); }
+html[data-template='monolith'] .seller { background: var(--plaster); border-block-start: 6px solid var(--ink); }
+html[data-template='monolith'] .seller-name { font-family: var(--ls-font-display); font-weight: 900; font-size: 1.8rem; }
+
+/* The neighbourhood, in the same idiom: the largest block below the first
+   screen, so it cannot stay the one part every design shares. */
+html[data-template='monolith'] .enrich .egroup-head { border-block-end: 4px solid var(--ink); }
+html[data-template='monolith'] .enrich .egroup-head h3 { font-family: var(--ls-font-display); font-weight: 900; font-size: 1.7rem; }
+html[data-template='monolith'] .enrich .erow .mins { font-family: var(--ls-font-display); font-weight: 900; font-size: 2.2rem; flex-basis: 4.4rem; color: var(--ink); }

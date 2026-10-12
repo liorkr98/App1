@@ -146,6 +146,10 @@ describe('absent and muted tokens meet WCAG AA body', () => {
       ['zine', TEMPLATE_CSS('zine')],
       ['dossier', TEMPLATE_CSS('dossier')],
       ['ticket', TEMPLATE_CSS('ticket')],
+      ['prints', TEMPLATE_CSS('prints')],
+      ['keytag', TEMPLATE_CSS('keytag')],
+      ['streetsign', TEMPLATE_CSS('streetsign')],
+      ['dashboard', TEMPLATE_CSS('dashboard')],
     ] as const) {
       const scope = `html\\[data-template='${name}'\\]`;
       for (const token of ['--plaster', '--stone-warm'] as const) {

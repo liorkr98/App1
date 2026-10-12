@@ -18,7 +18,7 @@ import { blankFacts, reconcileFacts } from '@/features/listings/fact-entry';
 import { photoCoverage } from '@/features/listings/photo-coverage';
 import { isPhotoRoom, type PhotoRoom } from '@/features/listings/photo-rooms';
 import { LISTING_CATEGORIES, schemaFor } from '@/features/listings/schemas';
-import { NEW_LISTING_TEMPLATE } from '@/features/templates/manifest';
+import { CATALOGUE, NEW_LISTING_TEMPLATE, pickerTemplates } from '@/features/templates/manifest';
 import { suggestTemplate } from '@/features/templates/suggest';
 import { cleanPlanRooms, cleanVideo, type ListingVideo } from '@/features/listings/rich-media';
 import type { MediaExtras } from '../../lib/listing-row';
@@ -1620,6 +1620,13 @@ export default function Editor() {
                 extras={extras}
                 sun={previewSun}
                 areaPlaces={previewPlaces}
+                designs={pickerTemplates(state.category ?? 'property', state.template).filter((id) =>
+                  CATALOGUE.includes(id),
+                )}
+                onDesign={(template) => {
+                  templateChosen.current = true;
+                  setState((current) => ({ ...current, template }));
+                }}
               />
             </div>
             <FilmFile photos={photos} listingId={savedRow?.id} onVideo={acceptVideo} />

@@ -16,7 +16,7 @@
     "yes": "",
     "no": "",
     "continue": "",
-    "brand": "",
+    "brand": "AmudSell",
     "builtByPrefix": ""
   },
   "errors": {
@@ -107,6 +107,9 @@
     "version": ""
   },
   "listing": {
+    "odometer": "",
+    "dashKm": "",
+    "plateStreet": "",
     "create": "",
     "whatsappCta": "",
     "whatsappShort": "",
@@ -444,6 +447,14 @@
       "dossierNote": "",
       "ticket": "",
       "ticketNote": "",
+      "prints": "",
+      "printsNote": "",
+      "keytag": "",
+      "keytagNote": "",
+      "streetsign": "",
+      "streetsignNote": "",
+      "dashboard": "",
+      "dashboardNote": "",
       "needsAspect": "",
       "walkNeeds": "",
       "blueprintNeeds": ""
@@ -549,7 +560,10 @@
       "missing": "",
       "unavailable": "",
       "label": "",
-      "loading": ""
+      "loading": "",
+      "open": "",
+      "close": "",
+      "designs": ""
     },
     "magic": {
       "title": "",
@@ -645,7 +659,7 @@
       "hevc": "",
       "ready": ""
     },
-    "review": {
+    "photoReview": {
       "waiting": "",
       "looking": "",
       "noKey": "",
@@ -718,6 +732,13 @@
       "photoTips": "",
       "completeProfile": ""
     }
+  },
+  "seo": {
+    "summary": "AmudSell (עמוד מכירה) builds a professional Hebrew sales page for an apartment or a car: upload photos, fill in a few fields, and get one link to send on WhatsApp. Built for Israeli estate agents, car dealers and private sellers.",
+    "audience": "",
+    "llmsPages": "",
+    "llmsPrivacy": "",
+    "home": ""
   },
   "home": {
     "tagline": "",

@@ -32,7 +32,7 @@ interface Props {
 const { listing, photos, cells, perUnit, waHref, sold } = Astro.props;
 const lines = titleLines(listing);
 const place = stagePlace(listing);
-const pageUrl = new URL(`/a/${listing.slug}/`, Astro.site ?? 'https://hasivuv.com').href;
+const pageUrl = new URL(`/a/${listing.slug}/`, Astro.site ?? 'https://amudsell.com').href;
 const shortUrl = pageUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
 const stops = photos.slice(0, 5);
 ---

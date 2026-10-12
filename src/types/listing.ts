@@ -724,6 +724,11 @@ export const TEMPLATE_IDS = [
   'zine',
   'dossier',
   'ticket',
+  // Round three (12 Oct 2026): one motion each, nothing stacked.
+  'prints',
+  'keytag',
+  'streetsign',
+  'dashboard',
 ] as const;
 
 export type TemplateId = (typeof TEMPLATE_IDS)[number];
@@ -823,7 +828,7 @@ export interface Listing {
   indexable: boolean;
 
   /**
-   * When true, the public footer carries נבנה בהיעד. Free first listing: true.
+   * When true, the public footer carries נבנה עם עמוד מכירה. Free first listing: true.
    * A paid grant turns it false. Absent means true, so older pages keep the mark.
    */
   hyadMark?: boolean;

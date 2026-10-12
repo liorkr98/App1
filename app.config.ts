@@ -23,9 +23,9 @@ const identity = {
   easProjectId: '259e2af8-8519-4257-a321-e377944580b1',
 
   /** Compliance surfaces. All three are App Review requirements (§7). */
-  privacyPolicyUrl: 'https://hasivuv.com/legal/privacy',
-  termsOfServiceUrl: 'https://hasivuv.com/legal/terms',
-  supportEmail: 'support@hasivuv.com',
+  privacyPolicyUrl: 'https://amudsell.com/legal/privacy',
+  termsOfServiceUrl: 'https://amudsell.com/legal/terms',
+  supportEmail: 'support@amudsell.com',
 
   /** RevenueCat entitlement. One per app (§6). */
   entitlementId: 'pro',

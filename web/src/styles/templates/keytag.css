@@ -1,0 +1,230 @@
+/*
+  Key tag — the agent's key tag hanging over the photograph (round three,
+  picked by the owner, 12 Oct 2026). The photograph full width; over its
+  lower edge a red tag with a ring hole holding the place, the title and the
+  price; the numbers on the paper below.
+
+  ONE MOVEMENT: the tag sways a little about its hole, slowly, the way a key
+  hangs on a ring. A clock animation, not a scroll one. It rests at its
+  turned pose; reduced motion keeps it there.
+
+  The tag's red carries white text at 5.9:1. Living Surfaces, Paper.
+*/
+
+html[data-template='keytag'] {
+  --plaster: #efeae0;
+  --ink: #121310; /* = --ls-ink */
+  --stone: #ddd6c8;
+  --stone-warm: #f4f0e8;
+  --muted: #5e5f57; /* = --ls-ink-2 */
+  --muted-warm: #57584f;
+  --absent: #5e5f57;
+  --heroWant: 60svh;
+}
+
+html[data-template='keytag'] body {
+  font-family: var(--ls-font-body);
+}
+
+html[data-template='keytag'] section.stage-keytag {
+  display: grid;
+  gap: 1.3rem;
+  padding: 0 0 1.4rem;
+}
+
+html[data-template='keytag'] .kt-photo {
+  display: block;
+  inline-size: 100%;
+  block-size: 58svh;
+  min-block-size: 20rem;
+  overflow: clip;
+}
+
+html[data-template='keytag'] .kt-photo img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ---------- The tag ---------- */
+
+html[data-template='keytag'] .kt-tag {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 0.5rem;
+  inline-size: min(20rem, 80%);
+  box-sizing: border-box;
+  margin-block-start: -10rem;
+  margin-inline: var(--gut) auto;
+  padding: 2.4rem 1.3rem 1.3rem;
+  color: #ffffff;
+  background: #b5381f;
+  border-radius: 18px;
+  border-end-end-radius: 64px;
+  box-shadow: 0 26px 40px -20px rgba(40, 12, 4, 0.6);
+  rotate: 3deg;
+  /* The hole, top corner on the reading side: the tag hangs from it. */
+  transform-origin: calc(100% - 1.5rem) 1.5rem;
+}
+
+html[data-template='keytag'] .kt-hole {
+  position: absolute;
+  inset-block-start: 1rem;
+  inset-inline-start: 1rem;
+  inline-size: 1rem;
+  block-size: 1rem;
+  border-radius: 50%;
+  background: var(--plaster);
+  box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.45);
+}
+
+html[data-template='keytag'] .kt-tag .stage-place {
+  margin: 0;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #fde9e4;
+}
+
+html[data-template='keytag'] .kt-tag .stage-title {
+  margin: 0;
+  font-size: clamp(1.6rem, 6.5vw, 2.3rem);
+  font-weight: 800;
+  line-height: 1.15;
+  color: #ffffff;
+  text-wrap: balance;
+}
+
+html[data-template='keytag'] .kt-line {
+  display: block;
+}
+
+html[data-template='keytag'] .kt-tag .price-bar {
+  padding: 0;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: baseline;
+  gap: 0.3rem 1.1rem;
+  border: 0;
+  background: none;
+}
+
+html[data-template='keytag'] .kt-tag .price-note {
+  text-align: start;
+}
+
+html[data-template='keytag'] .kt-tag .price-bar {
+  padding-block-start: 0.6rem;
+  border-block-start: 1px dashed rgba(255, 255, 255, 0.6);
+}
+
+html[data-template='keytag'] .kt-tag :is(.price, .price-note, .price-note *, .per-unit) {
+  color: #ffffff;
+}
+
+html[data-template='keytag'] .kt-tag .price {
+  font-size: clamp(1.7rem, 5.5vw, 2.3rem);
+  font-weight: 800;
+}
+
+html[data-template='keytag'] .kt-nums,
+html[data-template='keytag'] .stage-keytag .highlights {
+  margin-inline: var(--gut);
+}
+
+html[data-template='keytag'] .stage-keytag .highlights {
+  padding: 0;
+}
+
+@media (min-width: 960px) {
+  html[data-template='keytag'] .kt-photo {
+    block-size: 70svh;
+  }
+
+  html[data-template='keytag'] .kt-tag {
+    margin-block-start: -14rem;
+    margin-inline-start: max(var(--gut), calc((100% - 1240px) / 2 + 2rem));
+  }
+}
+
+/* The neighbourhood on paper: no dark slab (listing.css lists this
+   template among the paper ones, which switches its ink to --ink). */
+html[data-template='keytag'] .enrich {
+  background: transparent;
+  border-block: 1px solid var(--stone);
+  border-radius: 0;
+  margin-inline: var(--gut);
+}
+
+@media (min-width: 960px) {
+  html[data-template='keytag'] .listing-flow > :not(.stage, .compact-bar) {
+    align-self: center;
+    inline-size: min(100%, 60rem);
+    max-width: none;
+    box-sizing: border-box;
+  }
+
+  html[data-template='keytag'] :is(.enrich, .seller, .facts, .monthly-cost) {
+    margin-inline: 0;
+  }
+}
+
+/* ---------- Stillness everywhere else ----------
+   The shared reveals (listing.css) run only with motion allowed and scroll
+   timelines supported, so they are switched off under the same two
+   conditions (verify-motion-fallbacks keeps .reveal rules inside them). */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    html[data-template='keytag'] :is(.reveal, .clip-reveal) {
+      animation: none;
+      clip-path: none;
+    }
+  }
+}
+
+/* The shared entrance fade on the price, numbers and chips (stage.css). */
+html[data-template='keytag'] .stage :is(.numerals > div, .price-bar, .highlights) {
+  animation: none;
+}
+
+/* ---------- The one movement: the tag sways ---------- */
+
+@media (prefers-reduced-motion: no-preference) {
+  html[data-template='keytag'] .kt-tag {
+    animation: kt-sway 6.5s ease-in-out infinite alternate;
+  }
+
+  @keyframes kt-sway {
+    from { rotate: 3deg; }
+    to { rotate: -1.2deg; }
+  }
+}
+
+/* ==========================================================================
+   THE PAGE BODY in this design's own idiom (12 Oct 2026). Below the first
+   screen every design used to be the same page recoloured; the owner asked
+   for each to be its own. Structure and rules stay shared (absent vs
+   unanswered, מאומת only with a source, <bdi>, the street only): only the
+   look of the headings, facts, description, gallery and seller card change.
+   No new motion here.
+   ========================================================================== */
+
+html[data-template='keytag'] section:not(.enrich) > h2 { display: flex; align-items: center; gap: 0.6rem; font-weight: 800; }
+html[data-template='keytag'] section:not(.enrich) > h2::before { content: ''; flex: none; inline-size: 1.5rem; block-size: 0.9rem; background: radial-gradient(circle at 25% 50%, var(--plaster) 0.18rem, #b5381f 0.2rem); border-radius: 4px; border-end-end-radius: 0.6rem; border-start-end-radius: 0.6rem; }
+html[data-template='keytag'] .facts { gap: 0.6rem; padding: 0.4rem var(--gut); background: none; border: 0; }
+html[data-template='keytag'] .fact { position: relative; padding-inline-start: 1.6rem; background: #ffffff; border: 1px solid var(--stone); border-radius: 6px; border-end-end-radius: 22px; }
+html[data-template='keytag'] .fact::before { content: ''; position: absolute; inset-block-start: 0.7rem; inset-inline-start: 0.55rem; inline-size: 0.5rem; block-size: 0.5rem; border-radius: 50%; border: 2px solid #b5381f; }
+html[data-template='keytag'] .fact.off { background: var(--stone-warm); }
+html[data-template='keytag'] .gallery img { border-radius: 10px; border-block-start: 4px solid #b5381f; }
+html[data-template='keytag'] .seller { margin: 0 var(--gut); color: #ffffff; background: #b5381f; border-radius: 18px; border-end-end-radius: 48px; }
+html[data-template='keytag'] .seller :is(.seller-name, .seller-role, .section-label) { color: #ffffff; }
+html[data-template='keytag'] .seller .verified { color: #ffffff; border-color: #ffffff; }
+
+/* The neighbourhood, in the same idiom: the largest block below the first
+   screen, so it cannot stay the one part every design shares. */
+html[data-template='keytag'] .enrich .egroup-head { border-block-end: 0; }
+html[data-template='keytag'] .enrich .egroup-head h3 { padding: 0.2rem 0.9rem; background: #b5381f; color: #ffffff; border-radius: 4px 4px 4px 16px; font-weight: 700; }
+html[data-template='keytag'] .enrich .erow .mins { display: grid; place-items: center; flex-basis: 3.2rem; block-size: 3.2rem; border: 2px solid var(--ink); border-radius: 50%; color: var(--ink); font-size: 1.15rem; text-align: center; }
+html[data-template='keytag'] .enrich .erow .mins small { margin-top: 0; }
+html[data-template='keytag'] .enrich .erow { align-items: center; }

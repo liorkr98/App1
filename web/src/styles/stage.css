@@ -3,6 +3,11 @@
   blueprint, monolith, atelier, glass and showroom (TEMPLATE_MANIFEST.composed) — and the parts they share: the big
   numerals, the agent card, the wide desktop page.
 
+  WHICH PAGES. Every Living Surfaces template (data-ls on <html>) composes
+  its first screen, and so do gallery and showcase: that is the selector
+  below, rather than a list of ids that grew with every round. The section
+  rise skips the round-three designs, which carry one movement each.
+
   WHY WIDE. Every other template keeps the 620px column the page was drawn
   at, which on a laptop is a phone floating in an empty screen. Agents open
   these links at a desk too, in front of a client, and the references they
@@ -15,24 +20,24 @@
   page, never a hidden one.
 */
 
-html:is([data-template='gallery'], [data-template='showcase'], [data-template='aurora'], [data-template='blueprint'], [data-template='monolith'], [data-template='atelier'], [data-template='glass'], [data-template='showroom'], [data-template='heliograph'], [data-template='walk'], [data-template='poster'], [data-template='zine'], [data-template='dossier'], [data-template='ticket']) body {
+html:is([data-ls], [data-template='gallery'], [data-template='showcase']) body {
   max-width: none;
 }
 
-html:is([data-template='gallery'], [data-template='showcase'], [data-template='aurora'], [data-template='blueprint'], [data-template='monolith'], [data-template='atelier'], [data-template='glass'], [data-template='showroom'], [data-template='heliograph'], [data-template='walk'], [data-template='poster'], [data-template='zine'], [data-template='dossier'], [data-template='ticket']) .agent-bar {
+html:is([data-ls], [data-template='gallery'], [data-template='showcase']) .agent-bar {
   padding-inline: max(var(--gut), calc((100% - 1240px) / 2));
 }
 
-html:is([data-template='gallery'], [data-template='showcase'], [data-template='aurora'], [data-template='blueprint'], [data-template='monolith'], [data-template='atelier'], [data-template='glass'], [data-template='showroom'], [data-template='heliograph'], [data-template='walk'], [data-template='poster'], [data-template='zine'], [data-template='dossier'], [data-template='ticket']) .listing-flow {
+html:is([data-ls], [data-template='gallery'], [data-template='showcase']) .listing-flow {
   max-inline-size: 1240px;
   margin-inline: auto;
 }
 
-html:is([data-template='gallery'], [data-template='showcase'], [data-template='aurora'], [data-template='blueprint'], [data-template='monolith'], [data-template='atelier'], [data-template='glass'], [data-template='showroom'], [data-template='heliograph'], [data-template='walk'], [data-template='poster'], [data-template='zine'], [data-template='dossier'], [data-template='ticket']) .compact-bar {
+html:is([data-ls], [data-template='gallery'], [data-template='showcase']) .compact-bar {
   max-inline-size: 1240px;
 }
 
-html:is([data-template='gallery'], [data-template='showcase'], [data-template='aurora'], [data-template='blueprint'], [data-template='monolith'], [data-template='atelier'], [data-template='glass'], [data-template='showroom'], [data-template='heliograph'], [data-template='walk'], [data-template='poster'], [data-template='zine'], [data-template='dossier'], [data-template='ticket']) footer {
+html:is([data-ls], [data-template='gallery'], [data-template='showcase']) footer {
   max-inline-size: 1240px;
   margin-inline: auto;
 }
@@ -142,18 +147,18 @@ html:is([data-template='gallery'], [data-template='showcase'], [data-template='a
    references lay out amenities. Heading, lead and sources keep the full row. */
 
 @media (min-width: 960px) {
-  html:is([data-template='gallery'], [data-template='showcase'], [data-template='aurora'], [data-template='blueprint'], [data-template='monolith'], [data-template='atelier'], [data-template='glass'], [data-template='showroom'], [data-template='heliograph'], [data-template='walk'], [data-template='poster'], [data-template='zine'], [data-template='dossier'], [data-template='ticket']) .enrich {
+  html:is([data-ls], [data-template='gallery'], [data-template='showcase']) .enrich {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
     column-gap: 2.6rem;
     align-items: start;
   }
 
-  html:is([data-template='gallery'], [data-template='showcase'], [data-template='aurora'], [data-template='blueprint'], [data-template='monolith'], [data-template='atelier'], [data-template='glass'], [data-template='showroom'], [data-template='heliograph'], [data-template='walk'], [data-template='poster'], [data-template='zine'], [data-template='dossier'], [data-template='ticket']) .enrich > :not(.egroup) {
+  html:is([data-ls], [data-template='gallery'], [data-template='showcase']) .enrich > :not(.egroup) {
     grid-column: 1 / -1;
   }
 
-  html:is([data-template='gallery'], [data-template='showcase'], [data-template='aurora'], [data-template='blueprint'], [data-template='monolith'], [data-template='atelier'], [data-template='glass'], [data-template='showroom'], [data-template='heliograph'], [data-template='walk'], [data-template='poster'], [data-template='zine'], [data-template='dossier'], [data-template='ticket']) .enrich .egroup {
+  html:is([data-ls], [data-template='gallery'], [data-template='showcase']) .enrich .egroup {
     margin-block-end: 2.1rem;
   }
 }
@@ -423,7 +428,7 @@ html:is([data-template='gallery'], [data-template='showcase'], [data-template='a
     /* Sections below the first screen rise as they arrive. Starting from a
        visible floor, not from nothing: a reader who lands mid-page sees
        text, never a blank. */
-    html:is([data-template='gallery'], [data-template='showcase'], [data-template='aurora'], [data-template='blueprint'], [data-template='monolith'], [data-template='atelier'], [data-template='glass'], [data-template='showroom'], [data-template='heliograph'], [data-template='walk'], [data-template='poster'], [data-template='zine'], [data-template='dossier'], [data-template='ticket'])
+    html:is([data-ls], [data-template='gallery'], [data-template='showcase']):not([data-template='prints'], [data-template='keytag'], [data-template='streetsign'], [data-template='dashboard'])
       .listing-flow
       > :is(section, .facts, .monthly-cost):not(.stage) {
       animation: stage-rise linear both;
@@ -439,7 +444,7 @@ html:is([data-template='gallery'], [data-template='showcase'], [data-template='a
     }
 
     /* The compact bar watches the stage as it watches the hero elsewhere. */
-    html:is([data-template='gallery'], [data-template='showcase'], [data-template='aurora'], [data-template='blueprint'], [data-template='monolith'], [data-template='atelier'], [data-template='glass'], [data-template='showroom'], [data-template='heliograph'], [data-template='walk'], [data-template='poster'], [data-template='zine'], [data-template='dossier'], [data-template='ticket']) .stage {
+    html:is([data-ls], [data-template='gallery'], [data-template='showcase']) .stage {
       view-timeline-name: --listing-hero;
       view-timeline-axis: block;
     }

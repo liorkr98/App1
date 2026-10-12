@@ -1,15 +1,28 @@
 ---
 import BrandMark from '../components/BrandMark.astro';
 import { t } from '../lib/i18n';
+import { ldGraph, organizationLd, websiteLd } from '../lib/seo';
 import '../styles/tokens.css';
+import '../styles/fonts.css';
 
 interface Props {
   title: string;
   robots?: string;
+  description?: string;
 }
 
-const { title, robots = 'index,follow' } = Astro.props;
-const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const { title, robots = 'index,follow', description } = Astro.props;
+const origin = Astro.site ?? new URL(Astro.url.origin);
+const canonical = new URL(Astro.url.pathname, origin).href;
+const fullTitle = `${title} · ${t('common.brand')}`;
+const summary = description ?? t('seo.summary');
+const crumbs = {
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: t('common.brand'), item: new URL('/', origin).href },
+    { '@type': 'ListItem', position: 2, name: title, item: canonical },
+  ],
+};
 ---
 
 <!DOCTYPE html>
@@ -18,16 +31,24 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#FBFAF7" />
-    <title>{title} · {t('common.brand')}</title>
+    <title>{fullTitle}</title>
+    <meta name="description" content={summary} />
     <meta name="robots" content={robots} />
     <link rel="canonical" href={canonical} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Assistant:wght@400;600;700&display=swap"
-      rel="stylesheet"
-    />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="he_IL" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content={t('common.brand')} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={summary} />
+    <meta property="og:image" content={new URL('/og-home.webp', origin).href} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    {robots.startsWith('index') && (
+      <script is:inline type="application/ld+json" set:html={ldGraph([organizationLd(origin), websiteLd(origin), crumbs])} />
+    )}
     <style is:global>
       html {
         background: var(--plaster);
@@ -113,6 +134,10 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
     <slot />
     </main>
     <footer>
+      <a href="/pricing/">{t('pricing.title')}</a>
+      {' · '}
+      <a href="/guide/photos/">{t('guide.photosTitle')}</a>
+      {' · '}
       <a href="/about/">{t('legal.about')}</a>
       {' · '}
       <a href="/contact/">{t('legal.contact')}</a>

@@ -100,7 +100,7 @@ export async function saveListing(
  * DECIDED here. This function does not read, infer or grant entitlement. It
  * flips `status` and stamps `published_at`. The editor's `canPublish` is UX.
  * The real gate is the Postgres trigger (migrations 0016 + 0022): a first
- * listing publishes free with the היעד mark; a live grant publishes without
+ * listing publishes free with the עמוד מכירה mark; a live grant publishes without
  * the mark and decrements remaining; anything else raises. This function
  * does not grant on a failed read.
  * ======================================================================

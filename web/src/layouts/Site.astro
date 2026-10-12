@@ -1,6 +1,7 @@
 ---
 import BrandMark from '../components/BrandMark.astro';
 import { t } from '../lib/i18n';
+import { ldGraph, organizationLd, websiteLd } from '../lib/seo';
 import '../styles/tokens.css';
 import '../styles/fonts.css';
 import '../styles/system/tokens.css';
@@ -34,10 +35,24 @@ interface Props {
   og?: { image: string; title: string; description: string } | undefined;
   /** Show the sign-in / my-listings link in the header. */
   account?: boolean;
+  /** Structured data for this page, added to the Organization and WebSite every page carries. */
+  ld?: object[];
 }
 
-const { title, description, robots = 'index,follow', ls = 'onyx', og, account = true } = Astro.props;
-const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const { title, description, robots = 'index,follow', ls = 'onyx', og, account = true, ld = [] } = Astro.props;
+const origin = Astro.site ?? new URL(Astro.url.origin);
+const canonical = new URL(Astro.url.pathname, origin).href;
+/*
+ * Every page gets a preview card (SEO plan §4.4): a link pasted into
+ * WhatsApp, LinkedIn or an AI chat is read through it. Pages that name
+ * their own keep it; the rest show the homepage card with their own title.
+ */
+const card = og ?? {
+  image: new URL('/og-home.webp', origin).href,
+  title,
+  description: description ?? t('seo.summary'),
+};
+const indexable = robots.startsWith('index');
 const themeColor = ls === 'onyx' ? '#0b0c0a' : '#f6f4ef';
 ---
 
@@ -48,23 +63,22 @@ const themeColor = ls === 'onyx' ? '#0b0c0a' : '#f6f4ef';
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content={themeColor} />
     <title>{title}</title>
-    {description && <meta name="description" content={description} />}
+    <meta name="description" content={description ?? t('seo.summary')} />
     <meta name="robots" content={robots} />
     <link rel="canonical" href={canonical} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    {og && (
-      <>
-        <meta property="og:type" content="website" />
-        <meta property="og:locale" content="he_IL" />
-        <meta property="og:url" content={canonical} />
-        <meta property="og:site_name" content={t('common.brand')} />
-        <meta property="og:title" content={og.title} />
-        <meta property="og:description" content={og.description} />
-        <meta property="og:image" content={og.image} />
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
-        <meta name="twitter:card" content="summary_large_image" />
-      </>
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="he_IL" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content={t('common.brand')} />
+    <meta property="og:title" content={card.title} />
+    <meta property="og:description" content={card.description} />
+    <meta property="og:image" content={card.image} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    {indexable && (
+      <script is:inline type="application/ld+json" set:html={ldGraph([organizationLd(origin), websiteLd(origin), ...ld])} />
     )}
     <link rel="preload" href="/fonts/noto-sans-hebrew-hebrew.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/heebo-hebrew.woff2" as="font" type="font/woff2" crossorigin />

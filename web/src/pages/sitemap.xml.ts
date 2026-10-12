@@ -1,9 +1,10 @@
 import type { APIRoute } from 'astro';
 
 import { indexableListings } from '../lib/listing-from-row';
+import { PUBLIC_PAGES } from '../lib/seo';
 
 /**
- * Sitemap — indexable listings only, plus the homepage.
+ * Sitemap — the public site pages, plus listings whose seller opted in.
  *
  * Written by hand rather than with @astrojs/sitemap because the filter is the
  * entire point: a sitemap that lists every page would hand Google the pages
@@ -16,11 +17,11 @@ import { indexableListings } from '../lib/listing-from-row';
 export const prerender = false;
 
 export const GET: APIRoute = async ({ site }) => {
-  const origin = site ?? new URL('https://hasivuv.com');
+  const origin = site ?? new URL('https://amudsell.com');
   const listed = await indexableListings();
 
   const urls = [
-    `  <url>\n    <loc>${new URL('/', origin).href}</loc>\n  </url>`,
+    ...PUBLIC_PAGES.map((page) => `  <url>\n    <loc>${new URL(page.path, origin).href}</loc>\n  </url>`),
     ...listed.map((listing) => {
       const location = new URL(`/a/${listing.slug}/`, origin).href;
       const lastmod = listing.publishedAt

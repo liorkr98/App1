@@ -127,6 +127,22 @@ jobs:
       - name: Verify the absent-contrast rule actually fires
         run: bash scripts/verify-absent-contrast-fires.sh
 
+      # HSTS, framing, referrer and the CSP on every static page, from the
+      # same list the Worker's middleware applies (docs/DEPLOY.md).
+      - name: Verify the security headers
+        run: node scripts/verify-security-headers.mjs
+
+      - name: Verify the security-headers check actually fires
+        run: bash scripts/verify-security-headers-fires.sh
+
+      # JSON-LD parses, never carries coordinates (§7), and every indexable
+      # site page names the same Organization (SEO plan §4.2).
+      - name: Verify the structured data
+        run: node scripts/verify-structured-data.mjs
+
+      - name: Verify the structured-data check actually fires
+        run: bash scripts/verify-structured-data-fires.sh
+
       # CLAUDE.md §4.2. A missing <bdi> is invisible in review AND usually on
       # the page: a bare number reads correctly until the words around it
       # change, then silently reorders. Runs on built HTML so it sees what is
@@ -314,6 +330,11 @@ jobs:
         if: ${{ !cancelled() }}
         working-directory: web
         run: npx playwright test phone-upload
+
+      - name: One movement per design (round three)
+        if: ${{ !cancelled() }}
+        working-directory: web
+        run: npx playwright test signature-motion
 
       - name: Screenshots (reported, not blocking, for now)
         if: ${{ !cancelled() }}

@@ -40,15 +40,13 @@
   // this command on deploy / versions upload. Skip when the dashboard (or
   // a local astro build) already produced the Worker.
   //
-  // bind-worker-secrets runs first. The dashboard list "Variables and
-  // secrets" under Build is the build environment only. DEEPSEEK_API_KEY
-  // and SUPABASE_SERVICE_ROLE_KEY have to be Worker secrets or the request
-  // never sees them. The script copies them onto the latest version with
-  // `wrangler versions secret bulk` (not `secret bulk`, which fails once
-  // a preview upload is ahead of production). This deploy then inherits
-  // them. The script does nothing on a laptop.
+  // Runtime secrets (DEEPSEEK_API_KEY, SUPABASE_SERVICE_ROLE_KEY) live on the
+  // Worker only: dashboard → besivov → Settings → Variables and Secrets. A
+  // build step that copied them from the build environment was removed on
+  // 12 Oct 2026: it put the database master key in every build, previews
+  // included, and re-wrote a bad paste over a corrected one on each deploy.
   "build": {
-    "command": "node scripts/bind-worker-secrets.mjs && (test -f web/dist/server/entry.mjs || npm run build)"
+    "command": "test -f web/dist/server/entry.mjs || npm run build"
   },
 
   "observability": {
@@ -62,6 +60,7 @@
     "binding": "ASSETS"
   }
 
-  // Do NOT add custom_domain here until hasivuv.com DNS is attached.
-  // A routes.custom_domain that does not resolve fails the deploy.
+  // amudsell.com is attached in the dashboard (Domains & Routes), not here:
+  // a routes.custom_domain for a zone this account does not hold fails the
+  // deploy. docs/DEPLOY.md has the steps, HTTPS settings included.
 }

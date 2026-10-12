@@ -14,9 +14,10 @@ import '../styles/home.css';
 import '../styles/film.css';
 import Film from '../components/Film.astro';
 import { filmDuration } from '@/features/listings/ken-burns';
+import { softwareLd } from '../lib/seo';
 
 /**
- * The homepage (היעד 2.0, plan §7.1). Onyx: the product demo is the page.
+ * The homepage (עמוד מכירה 2.0, plan §7.1). Onyx: the product demo is the page.
  *
  * REWRITTEN for P5 from the approved prototype. The September version sold
  * "a few professional options" with miniature re-drawings of the 1.x
@@ -84,6 +85,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
   title={title}
   description={t('home.subTagline')}
   og={{ image: ogImage, title: t('common.brand'), description: t('home.subTagline') }}
+  ld={[softwareLd(Astro.site ?? new URL(Astro.url.origin))]}
 >
   <section class="hm-hero ls-grain" id="hero">
     <div class="hm-aurora" aria-hidden="true"></div>
@@ -269,7 +271,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
               <div>
                 <b><Prose text={cardTitle} /></b>
                 <small><Prose text={cardFacts} /></small>
-                <small dir="ltr">hasivuv.com</small>
+                <small dir="ltr">amudsell.com</small>
               </div>
             </div>
             <p>{t('home.waReply')}</p>

@@ -46,7 +46,7 @@ it. That is what is being sold.
 > it belongs to the speed promise, not the trust one. It is sold as "type the
 > plate, the rest fills itself", never as "verified against the register".
 
-**Product:** היעד. **Domain:** hasivuv.com.
+**Product:** עמוד מכירה (renamed from היעד on 12 Oct 2026; English: AmudSell). **Domain:** amudsell.com.
 
 **The primary audience is Israeli estate agents, not private sellers.** The
 Justice Ministry's public register lists 22,995 licensed brokers with contact
@@ -404,6 +404,14 @@ them.**
 `false`. A private seller rarely wants their home address permanently
 searchable; an agent wants the organic traffic. **Do not decide for them.**
 
+Said twice (12 Oct 2026): the `<meta>`, and an `X-Robots-Tag` header for the
+fetchers that never parse HTML. Model-TRAINING crawlers are refused `/a/`
+in robots.txt even for opted-in listings — opting into search is not
+opting a client's home into a training set (`web/src/lib/seo.ts`). The
+site's own pages carry one Organization with one description,
+`seo.summary`; `scripts/verify-structured-data.mjs` refuses a page that
+says otherwise, and any coordinates in structured data.
+
 ### Template divergences
 
 Exactly **four** divergences are permitted between the property and vehicle
@@ -446,7 +454,7 @@ the summary.
 
 ### The product rules
 
-**The first published listing is free, and it carries נבנה בהיעד in the footer.** That mark is the viral loop: a listing page is forwarded to 30–80 people who are by definition interested in buying something. Small, elegant, clickable.
+**The first published listing is free, and it carries נבנה עם עמוד מכירה in the footer.** That mark is the viral loop: a listing page is forwarded to 30–80 people who are by definition interested in buying something. Small, elegant, clickable.
 
 **A live grant (purchase or admin) publishes further listings and takes the mark off** — including listings already published. Buying one listing is enough. A second listing without a grant does not publish.
 
@@ -471,6 +479,10 @@ the summary.
   top-level `uuid` boxes to `free`.** If a location marker remains in a live
   box, the upload is refused.
 - Never log PII. Scrub before send.
+- **Security headers on every response, from one list**
+  (`web/src/lib/security-headers.json`): `_headers` for static pages, the
+  middleware for what the Worker renders. HSTS without `preload` — that is
+  the owner's call (docs/DEPLOY.md). Change the list, not one side of it.
 - Job payloads carry client-supplied paths and the worker reads them with the
   service role — always validate that a path is inside the listing it claims.
 - **Upload from your phone** (10 Oct 2026, migration 0036). The editor's QR

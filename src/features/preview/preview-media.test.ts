@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 
 import { allowedPreviewUrl } from './preview-media.js';
 
-const ORIGIN = 'https://hasivuv.com';
+const ORIGIN = 'https://amudsell.com';
 const STORAGE = 'https://abc.supabase.co';
 
 describe('allowedPreviewUrl', () => {

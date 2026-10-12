@@ -2,6 +2,7 @@ import react from '@astrojs/react';
 import cloudflare from '@astrojs/cloudflare';
 import { defineConfig } from 'astro/config';
 
+import securityHeaders from './integrations/security-headers.mjs';
 import vendorMapLibre from './integrations/vendor-maplibre.mjs';
 
 /**
@@ -41,14 +42,14 @@ export default defineConfig({
   // never the right answer: it silently produces share messages and preview
   // cards pointing at a domain nobody owns, and everything still builds green.
   //
-  // SITE_URL still overrides it, and must be set to the custom domain the day
-  // hasivuv.com is attached. Until then the workers.dev origin is correct, so
-  // a build with no variables set produces working links instead of broken
-  // ones. See docs/DEPLOY.md.
-  site:
-    process.env.SITE_URL ??
-    process.env.CF_PAGES_URL ??
-    'https://besivov.liorkr98.workers.dev',
+  // 12 Oct 2026: the product is עמוד מכירה and its domain is amudsell.com.
+  // That is the canonical host every card, canonical link and sitemap names,
+  // so it is the fallback. It must be attached to the Worker (Workers →
+  // besivov → Domains & Routes) BEFORE a build with this fallback deploys,
+  // or every preview card points at a host that does not answer — the
+  // example.com failure above, with a real name. SITE_URL still overrides
+  // it (a preview build, say). See docs/DEPLOY.md.
+  site: process.env.SITE_URL ?? process.env.CF_PAGES_URL ?? 'https://amudsell.com',
 
   /*
    * STATIC EVERYWHERE EXCEPT THE LISTING PAGE.
@@ -99,7 +100,7 @@ export default defineConfig({
   // vendorMapLibre serves the listing map's library as published, from a
   // versioned path, loaded only when the map section nears the screen
   // (integrations/vendor-maplibre.mjs).
-  integrations: [react(), vendorMapLibre()],
+  integrations: [react(), vendorMapLibre(), securityHeaders()],
 
   // Share the Listing type and category schemas with the mobile app without
   // making the repo an npm workspace. Turning the root into a workspace root

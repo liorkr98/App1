@@ -2,7 +2,7 @@ import type { ListingCategory } from '../listings/schemas/index.js';
 import { TEMPLATE_IDS, type TemplateId } from '../../types/listing.js';
 
 /**
- * What each template is, in one table (היעד 2.0, plan §5).
+ * What each template is, in one table (עמוד מכירה 2.0, plan §5).
  *
  *   ls          the Living Surfaces mode. A template with one gets data-ls on
  *               <html>: the --ls-* tokens, the self-hosted display face and
@@ -33,7 +33,11 @@ export type ComposedLayout =
   | 'poster'
   | 'zine'
   | 'dossier'
-  | 'ticket';
+  | 'ticket'
+  | 'prints'
+  | 'keytag'
+  | 'streetsign'
+  | 'dashboard';
 
 export interface TemplateSpec {
   ls?: 'paper' | 'onyx';
@@ -65,6 +69,12 @@ export const TEMPLATE_MANIFEST: Record<TemplateId, TemplateSpec> = {
   zine: { ls: 'paper', composed: 'zine', keyCells: 4 },
   dossier: { ls: 'paper', composed: 'dossier', keyCells: 4, categories: ['vehicle'] },
   ticket: { ls: 'paper', composed: 'ticket', keyCells: 4 },
+  // Round three (12 Oct 2026), picked by the owner from 14 sketches: each
+  // a first screen of its own shape, with ONE signature motion.
+  prints: { ls: 'paper', composed: 'prints', keyCells: 3 },
+  keytag: { ls: 'paper', composed: 'keytag', keyCells: 4 },
+  streetsign: { ls: 'paper', composed: 'streetsign', keyCells: 4, categories: ['property'] },
+  dashboard: { ls: 'onyx', composed: 'dashboard', keyCells: 4, categories: ['vehicle'] },
 };
 
 /**
@@ -124,7 +134,8 @@ export function templatesFor(category: ListingCategory): TemplateId[] {
 
 /**
  * THE CATALOGUE: the twelve templates chosen in the prototype rounds (plan
- * §12b), in the order the picker shows them. Homes lead with Aurora and the
+ * §12b) and the four of round three (12 Oct 2026: Prints, Key tag, Street
+ * sign, Dashboard — one motion each), in the order the picker shows them. Homes lead with Aurora and the
  * two built on data only this listing has (its sun, its walk); cars get
  * Showroom and Dossier.
  *
@@ -136,6 +147,9 @@ export function templatesFor(category: ListingCategory): TemplateId[] {
  */
 export const CATALOGUE: readonly TemplateId[] = [
   'aurora',
+  'prints',
+  'keytag',
+  'streetsign',
   'heliograph',
   'walk',
   'blueprint',
@@ -146,6 +160,7 @@ export const CATALOGUE: readonly TemplateId[] = [
   'zine',
   'ticket',
   'showroom',
+  'dashboard',
   'dossier',
 ];
 

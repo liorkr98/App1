@@ -1,0 +1,331 @@
+/*
+  Dashboard — the car and its instruments (round three, picked by the
+  owner, 12 Oct 2026, "make it better with motion"; cars). The car across
+  the width; then a dashboard: a gauge for the kilometres with an odometer
+  on real wheels, the price on a light tile, and the other key numbers.
+
+  ONE MOVEMENT: as the dashboard comes into view the needle sweeps up from
+  zero, the arc fills behind it and the odometer wheels roll to the real
+  number. Scroll-driven (view timeline), no script. The finished positions
+  ARE the resting state, so reduced motion, no scroll timelines, or a
+  reader who lands mid-page all see the true reading.
+
+  The number a buyer reads is the <bdi> under the wheels; the wheels are
+  drawing (aria-hidden). Living Surfaces, Onyx.
+*/
+
+html[data-template='dashboard'] {
+  --olive: var(--accent-lift, #7e9a62);
+  --plaster: #0e0f11;
+  --ink: #f2f0ea; /* = --ls-ink */
+  --ink-deep: #07080a;
+  --stone: #2a2d31;
+  --stone-warm: #161713; /* = --ls-surface */
+  --muted: #a7a89c; /* = --ls-ink-2 */
+  --muted-warm: #a7a89c;
+  --absent: #a7a89c;
+  --heroWant: 56svh;
+}
+
+html[data-template='dashboard'] body {
+  font-family: var(--ls-font-body);
+}
+
+html[data-template='dashboard'] .agent-bar {
+  background: var(--ink-deep);
+}
+
+html[data-template='dashboard'] section.stage-dashboard {
+  display: grid;
+  gap: 1rem;
+  padding: 1.6rem 0 1.4rem;
+}
+
+html[data-template='dashboard'] .db-head {
+  display: grid;
+  gap: 0.4rem;
+  padding-inline: var(--gut);
+}
+
+html[data-template='dashboard'] .db-head .stage-place {
+  margin: 0;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+html[data-template='dashboard'] .db-head .stage-title {
+  margin: 0;
+  font-size: clamp(2.1rem, 8vw, 4.2rem);
+  line-height: 1.05;
+  text-wrap: balance;
+}
+
+html[data-template='dashboard'] .db-line {
+  display: block;
+}
+
+html[data-template='dashboard'] .db-car {
+  display: block;
+  inline-size: 100%;
+  aspect-ratio: 16 / 9;
+  max-block-size: 56svh;
+  overflow: clip;
+}
+
+html[data-template='dashboard'] .db-car img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ---------- The dashboard ---------- */
+
+html[data-template='dashboard'] .db-dash {
+  display: grid;
+  gap: 0.8rem;
+  padding: 0.4rem var(--gut) 0;
+}
+
+html[data-template='dashboard'] .db-gauge {
+  display: grid;
+  justify-items: center;
+  gap: 0.4rem;
+  padding: 1rem 1rem 1.1rem;
+  background: #16181b;
+  border: 1px solid #2a2d31;
+  border-radius: 20px;
+}
+
+html[data-template='dashboard'] .db-gauge svg {
+  inline-size: min(15rem, 72%);
+  overflow: visible;
+}
+
+html[data-template='dashboard'] .db-track,
+html[data-template='dashboard'] .db-arc {
+  fill: none;
+  stroke-width: 8;
+  stroke-linecap: round;
+}
+
+html[data-template='dashboard'] .db-track {
+  stroke: #2a2d31;
+}
+
+html[data-template='dashboard'] .db-arc {
+  stroke: #f2c230;
+  stroke-dasharray: 100;
+  stroke-dashoffset: calc(100 - var(--f) * 100);
+}
+
+html[data-template='dashboard'] .db-needle {
+  stroke: #f2f0ea;
+  stroke-width: 3;
+  stroke-linecap: round;
+  transform-box: view-box;
+  transform-origin: 60px 64px;
+  rotate: calc(var(--f) * 180deg - 90deg);
+}
+
+html[data-template='dashboard'] .db-gauge circle {
+  fill: #f2f0ea;
+}
+
+html[data-template='dashboard'] .db-odo {
+  display: grid;
+  justify-items: center;
+  gap: 0.3rem;
+}
+
+html[data-template='dashboard'] .db-wheels {
+  display: inline-flex;
+  direction: ltr;
+  gap: 3px;
+  padding: 5px;
+  background: #000000;
+  border-radius: 8px;
+  font: 700 1.7rem/1.2 var(--ls-font-display, sans-serif);
+  font-variant-numeric: tabular-nums;
+  color: #f2f0ea;
+}
+
+html[data-template='dashboard'] .db-wheel {
+  display: block;
+  inline-size: 0.82em;
+  block-size: 1.2em;
+  overflow: clip;
+  text-align: center;
+  background: linear-gradient(#1c1e21, #2b2e33 50%, #1c1e21);
+  border-radius: 3px;
+}
+
+html[data-template='dashboard'] .db-strip {
+  display: flex;
+  flex-direction: column;
+  translate: 0 calc(var(--d) * -1.2em);
+}
+
+html[data-template='dashboard'] .db-strip > span {
+  block-size: 1.2em;
+}
+
+html[data-template='dashboard'] .db-km {
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+
+html[data-template='dashboard'] .db-price {
+  padding: 0.9rem 1.1rem;
+  background: #f2f0ea;
+  border-radius: 16px;
+}
+
+html[data-template='dashboard'] .db-price .price-bar {
+  padding: 0;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: baseline;
+  gap: 0.3rem 1.1rem;
+  border: 0;
+  background: none;
+}
+
+html[data-template='dashboard'] .db-price .price-note {
+  text-align: start;
+}
+
+html[data-template='dashboard'] .db-price :is(.price, .price-note, .price-note *, .per-unit) {
+  color: #0e0f11;
+}
+
+html[data-template='dashboard'] .db-price .price {
+  font-size: clamp(1.9rem, 6vw, 2.6rem);
+  font-weight: 800;
+}
+
+html[data-template='dashboard'] .db-spec {
+  margin: 0;
+}
+
+html[data-template='dashboard'] .stage-dashboard .highlights {
+  padding: 0 var(--gut);
+}
+
+/* The WhatsApp button on the dark ground: light on ink, as on Glass. */
+html[data-template='dashboard'] .cta {
+  background: var(--ink);
+  color: var(--plaster);
+}
+
+html[data-template='dashboard'] .cta-dock {
+  background: linear-gradient(to top, var(--plaster) 70%, rgba(14, 15, 17, 0));
+}
+
+@media (min-width: 960px) {
+  html[data-template='dashboard'] .db-dash {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  html[data-template='dashboard'] .db-gauge {
+    grid-row: span 2;
+  }
+}
+
+@media (min-width: 960px) {
+  html[data-template='dashboard'] .listing-flow > :not(.stage, .compact-bar) {
+    align-self: center;
+    inline-size: min(100%, 60rem);
+    max-width: none;
+    box-sizing: border-box;
+  }
+
+  html[data-template='dashboard'] :is(.enrich, .seller, .facts, .monthly-cost) {
+    margin-inline: 0;
+  }
+}
+
+/* ---------- Stillness everywhere else ----------
+   The shared reveals (listing.css) run only with motion allowed and scroll
+   timelines supported, so they are switched off under the same two
+   conditions (verify-motion-fallbacks keeps .reveal rules inside them). */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    html[data-template='dashboard'] :is(.reveal, .clip-reveal) {
+      animation: none;
+      clip-path: none;
+    }
+  }
+}
+
+/* The shared entrance fade on the price, numbers and chips (stage.css). */
+html[data-template='dashboard'] .stage :is(.numerals > div, .price-bar, .highlights) {
+  animation: none;
+}
+
+/* ---------- The one movement: the instruments come alive ---------- */
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    html[data-template='dashboard'] :is(.db-needle, .db-arc, .db-strip) {
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      animation-timeline: view();
+      animation-range: entry 10% cover 45%;
+    }
+
+    html[data-template='dashboard'] .db-needle {
+      animation-name: db-sweep;
+    }
+
+    html[data-template='dashboard'] .db-arc {
+      animation-name: db-fill;
+    }
+
+    html[data-template='dashboard'] .db-strip {
+      animation-name: db-roll;
+    }
+
+    /* From zero; the "to" is each element's own resting value. */
+    @keyframes db-sweep {
+      from { rotate: -90deg; }
+    }
+
+    @keyframes db-fill {
+      from { stroke-dashoffset: 100; }
+    }
+
+    @keyframes db-roll {
+      from { translate: 0 0; }
+    }
+  }
+}
+
+/* ==========================================================================
+   THE PAGE BODY in this design's own idiom (12 Oct 2026). Below the first
+   screen every design used to be the same page recoloured; the owner asked
+   for each to be its own. Structure and rules stay shared (absent vs
+   unanswered, מאומת only with a source, <bdi>, the street only): only the
+   look of the headings, facts, description, gallery and seller card change.
+   No new motion here.
+   ========================================================================== */
+
+html[data-template='dashboard'] .section-label { color: #f2c230; font-weight: 700; }
+html[data-template='dashboard'] section:not(.enrich) > h2 { font-family: var(--ls-font-display); font-weight: 800; font-variant-numeric: tabular-nums; }
+html[data-template='dashboard'] section:not(.enrich) > h2::before { content: ''; display: inline-block; inline-size: 0.55em; block-size: 0.55em; margin-inline-end: 0.5rem; border-radius: 50%; background: #3ddc84; box-shadow: 0 0 10px rgba(61, 220, 132, 0.7); vertical-align: middle; }
+html[data-template='dashboard'] .facts { gap: 0.6rem; padding-inline: var(--gut); background: none; border: 0; }
+html[data-template='dashboard'] .fact { background: #16181b; border: 1px solid #2a2d31; border-radius: 16px; }
+html[data-template='dashboard'] .fact .fact-val { color: #f2c230; font-family: var(--ls-font-display); font-weight: 800; font-variant-numeric: tabular-nums; }
+html[data-template='dashboard'] .fact.off { background: #121417; }
+html[data-template='dashboard'] .fact.off .fact-val { color: var(--absent); }
+html[data-template='dashboard'] .gallery img { border-radius: 14px; outline: 1px solid #2a2d31; }
+html[data-template='dashboard'] .seller { margin: 0 var(--gut); background: #16181b; border: 1px solid #2a2d31; border-radius: 18px; }
+
+/* The neighbourhood, in the same idiom: the largest block below the first
+   screen, so it cannot stay the one part every design shares. */
+html[data-template='dashboard'] .enrich .egroup { padding: 1rem 1.1rem; background: #121417; border: 1px solid #2a2d31; border-radius: 16px; }
+html[data-template='dashboard'] .enrich .egroup-head { border-block-end: 0; }
+html[data-template='dashboard'] .enrich .egroup-head h3::before { content: ''; display: inline-block; inline-size: 0.5rem; block-size: 0.5rem; margin-inline-end: 0.5rem; border-radius: 50%; background: #3ddc84; box-shadow: 0 0 8px #3ddc84; vertical-align: middle; }
+html[data-template='dashboard'] .enrich .erow .mins { color: #f2c230; font-family: var(--ls-font-display); font-weight: 800; }

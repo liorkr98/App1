@@ -1,0 +1,73 @@
+---
+import type { Image, Listing } from '@/types/listing';
+import { GALLERY_WIDTHS, HERO_WIDTHS, largest, srcset } from '../../lib/images';
+import type { FactCell } from '../../lib/facts';
+import { t } from '../../lib/i18n';
+import type { PerUnitPrice } from '../../lib/price';
+import { coverStyle, priceProps, stagePlace, titleLines } from '../../lib/stage';
+import HighlightChips from '../HighlightChips.astro';
+import PriceBar from '../PriceBar.astro';
+import Prose from '../Prose.astro';
+import Numerals from './Numerals.astro';
+
+interface Props {
+  listing: Listing;
+  /** Cover first, then the gallery. Up to three become prints. */
+  photos: Image[];
+  cells: FactCell[];
+  perUnit?: PerUnitPrice | undefined;
+}
+
+/**
+ * Prints (Paper; round three, picked by the owner 12 Oct 2026). Up to three
+ * photographs laid on a stone table as white-bordered prints, each with its
+ * room written on the margin, and a typed label with the place, the title,
+ * the price and three numbers.
+ *
+ * ONE MOVEMENT, parallax: each print sits at its own depth and moves at its
+ * own pace as the page scrolls (prints.css). The cover is the first print,
+ * visible on the first frame.
+ */
+const { listing, photos, cells, perUnit } = Astro.props;
+const lines = titleLines(listing);
+const place = stagePlace(listing);
+const prints = photos.slice(0, 3);
+const roomOf = (image: Image) => (image.room ? t(`editor.rooms.${image.room}`) : image.caption);
+---
+<section class="stage stage-prints">
+  <div class="pr-table" data-prints={prints.length}>
+    {prints.map((image, index) => (
+      <button
+        type="button"
+        class={`pr-print pr-print-${index + 1}`}
+        data-lightbox={largest(image, HERO_WIDTHS)}
+        data-alt={image.alt ?? ''}
+        aria-label={t('listing.openPhoto')}
+      >
+        <img
+          src={largest(image, index === 0 ? HERO_WIDTHS : GALLERY_WIDTHS)}
+          srcset={srcset(image, index === 0 ? HERO_WIDTHS : GALLERY_WIDTHS) || undefined}
+          sizes={index === 0 ? '(min-width: 960px) 40vw, 75vw' : '(min-width: 960px) 20vw, 45vw'}
+          width={image.width}
+          height={image.height}
+          alt={image.alt ?? ''}
+          style={index === 0 ? coverStyle(listing) : undefined}
+          fetchpriority={index === 0 ? 'high' : undefined}
+          decoding="async"
+        />
+        {roomOf(image) && <span class="pr-note">{roomOf(image)}</span>}
+      </button>
+    ))}
+  </div>
+  <div class="pr-label">
+    {place && <p class="stage-place"><Prose text={place} /></p>}
+    <h1 class="stage-title">
+      {lines.map((line) => (
+        <span class="pr-line"><Prose text={line} /></span>
+      ))}
+    </h1>
+    <PriceBar {...priceProps(listing, perUnit)} />
+    <Numerals cells={cells} class="pr-nums" />
+  </div>
+  <HighlightChips highlights={listing.highlights} facts={listing.facts} />
+</section>

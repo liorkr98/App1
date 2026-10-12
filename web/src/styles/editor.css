@@ -1224,8 +1224,13 @@ textarea {
   cursor: pointer;
 }
 
-.nav button:hover:not(:disabled) {
-  background: var(--olive-lift);
+/* Hover only where there is a pointer that hovers. A phone keeps :hover on
+   the last button tapped, and a hover colour stuck on "next" after a tap is
+   what turned it pale under white text (12 Oct). */
+@media (hover: hover) {
+  .nav button:hover:not(:disabled) {
+    background: var(--olive-lift);
+  }
 }
 
 .nav button:active:not(:disabled) {
@@ -1234,14 +1239,17 @@ textarea {
 
 /* The back button is an outline, so its hover has to move a different
    property than the filled one's. */
-.nav button:first-child:hover:not(:disabled) {
-  background: var(--stone-warm);
-  border-color: var(--muted);
+@media (hover: hover) {
+  .nav .nav-back:hover:not(:disabled) {
+    background: var(--stone-warm);
+    border-color: var(--muted);
+  }
 }
 
 /* Back is secondary: an outline, so the forward action is the only filled
-   thing on screen and the eye has one place to go. */
-.nav button:first-child {
+   thing on screen and the eye has one place to go. By class, never
+   :first-child: screen 1 has no Back, so "next" is the first child there. */
+.nav .nav-back {
   flex: 0 0 33%;
   color: var(--ink);
   background: none;
@@ -1757,6 +1765,130 @@ textarea {
   }
 }
 
+/* On a phone (LivePreview.tsx, 12 Oct): a still of the first screen that a
+   finger cannot catch, a big button to open it, and the page full screen. */
+.live-preview.is-phone:not(.is-full) .live-phone {
+  cursor: pointer;
+}
+
+.live-preview.is-phone:not(.is-full) .live-frame {
+  pointer-events: none;
+}
+
+/* The still is a tap target too: it dims a touch under the finger. */
+.live-preview.is-phone:not(.is-full) .live-phone:active {
+  opacity: 0.85;
+}
+
+.live-open {
+  min-block-size: 56px;
+  padding: 0.6rem 1.2rem;
+  font: inherit;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--ls-ground, #f6f4ef);
+  background: var(--ls-ink, #121310);
+  border: 1px solid var(--ls-ink, #121310);
+  border-radius: var(--ls-r-pill, 999px);
+  cursor: pointer;
+}
+
+.live-preview.is-full {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-inline-size: none;
+  margin: 0;
+  background: #0b0c0a;
+}
+
+/* The screen's entrance animation leaves a transform on its section, and a
+   transformed ancestor turns position:fixed into "fixed to that section":
+   the preview stopped short of the bottom and the nav showed through. While
+   it is open, the section drops the finished animation and the nav hides. */
+.step:has(.live-preview.is-full) {
+  animation: none;
+  transform: none;
+}
+
+body:has(.live-preview.is-full) .nav {
+  display: none;
+}
+
+.live-preview.is-full .live-phone {
+  flex: 1;
+  min-block-size: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.live-bar {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.7rem 1rem calc(0.7rem + env(safe-area-inset-bottom));
+  color: #f2f0ea;
+  background: #121310;
+  border-block-start: 1px solid rgba(242, 240, 234, 0.14);
+}
+
+.live-designs {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.live-designs li {
+  flex: none;
+}
+
+.live-design {
+  min-block-size: 48px;
+  padding: 0.4rem 1rem;
+  font: inherit;
+  font-weight: 700;
+  color: #f2f0ea;
+  background: transparent;
+  border: 1px solid rgba(242, 240, 234, 0.3);
+  border-radius: 999px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.live-design[aria-pressed='true'] {
+  color: #121310;
+  background: #f2f0ea;
+  border-color: #f2f0ea;
+}
+
+.live-bar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.live-close {
+  min-block-size: 48px;
+  min-inline-size: 7rem;
+  padding: 0.4rem 1.2rem;
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #121310;
+  background: #f2f0ea;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
 .peek-close {
   display: inline-flex;
   align-items: center;
@@ -1852,7 +1984,7 @@ textarea {
   }
 }
 
-/* ---------- "הבחירה של היעד" (suggest.ts) ---------- */
+/* ---------- "הבחירה שלנו" (suggest.ts) ---------- */
 
 .magic-pick {
   display: flex;
@@ -2119,7 +2251,10 @@ textarea {
 .palette-cover:active:not(:disabled),
 .magic-pick:active:not(:disabled),
 .nav-back:active:not(:disabled),
-.nav-next:active:not(:disabled) {
+.nav-next:active:not(:disabled),
+.live-open:active,
+.live-design:active,
+.live-close:active {
   background-image: linear-gradient(
     color-mix(in srgb, currentColor 14%, transparent),
     color-mix(in srgb, currentColor 14%, transparent)
@@ -2743,8 +2878,10 @@ textarea {
   box-shadow: var(--ls-shadow);
 }
 
-.new-shell .nav .nav-next:hover {
-  background: #2a2b26;
+@media (hover: hover) {
+  .new-shell .nav .nav-next:hover {
+    background: #2a2b26;
+  }
 }
 
 .new-shell .nav .nav-back {
@@ -2755,8 +2892,10 @@ textarea {
   box-shadow: none;
 }
 
-.new-shell .nav .nav-back:hover {
-  border-color: var(--ls-ink-2);
+@media (hover: hover) {
+  .new-shell .nav .nav-back:hover {
+    border-color: var(--ls-ink-2);
+  }
 }
 
 .new-shell .nav :is(.nav-next, .nav-back):active {

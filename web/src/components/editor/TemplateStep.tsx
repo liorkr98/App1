@@ -17,7 +17,7 @@ interface Props {
   onAccent: (accent: AccentId) => void;
   /** The seller's own photos, so the picker is the page not a grey slab. */
   photos?: readonly string[];
-  /** "הבחירה של היעד" (features/templates/suggest), with its one-line why. */
+  /** "הבחירה שלנו" (features/templates/suggest), with its one-line why. */
   suggestion?: { id: TemplateId; reason: SuggestReason } | undefined;
   /** The current accent was chosen from the cover photo (cover-accent.ts). */
   accentFromCover?: boolean;

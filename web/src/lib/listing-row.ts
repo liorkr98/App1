@@ -163,7 +163,7 @@ export function savedPhotos(
  * still be drawn; nothing about a preview is stored, and its links are inert.
  *
  * CLAUDE.md §8 — FLAGGED FOR REVIEW, display only: `hyad_mark` follows the
- * editor's entitlement read so the preview shows the נבנה בהיעד mark the
+ * editor's entitlement read so the preview shows the נבנה עם עמוד מכירה mark the
  * publish would. It decides nothing: the publish trigger stamps the real
  * mark, and an unknown or failed read shows the mark (fail closed).
  */

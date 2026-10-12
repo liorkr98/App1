@@ -133,7 +133,7 @@ export function normalisePhone(raw: string | null | undefined): string | undefin
  * being told about another is how a form on a phone gets abandoned.
  *
  * THE AGENCY NAME IS NOT REQUIRED. A private seller has none, and PRD §1 keeps
- * them a supported case — the page shows נבנה בהיעד where an agency would
+ * them a supported case — the page shows נבנה עם עמוד מכירה where an agency would
  * go. Requiring it would make the product agent-only rather than agent-first.
  */
 export function profileBlockers(profile: AgentProfile): ProfileBlockerCode[] {
@@ -231,7 +231,7 @@ export function toSeller(
     phone,
     role,
     // Omitted rather than set to an empty string: `Seller.agencyName` being
-    // absent is what makes the agent bar show נבנה בהיעד, and '' is truthy
+    // absent is what makes the agent bar show נבנה עם עמוד מכירה, and '' is truthy
     // enough in enough places to produce an agency bar with no agency in it.
     ...(agencyName ? { agencyName } : {}),
     ...(licenceNumber ? { licenceNumber } : {}),

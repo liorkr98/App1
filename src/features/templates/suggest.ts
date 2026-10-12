@@ -3,7 +3,7 @@ import type { Fact, TemplateId } from '../../types/listing.js';
 import { templateFits } from './manifest.js';
 
 /**
- * "הבחירה של היעד" — which template to suggest, and why, in one line.
+ * "הבחירה שלנו" — which template to suggest, and why, in one line.
  *
  * Only from what the editor already knows about THIS listing; nothing is
  * looked up and nothing is guessed from the photographs. Each template in

@@ -3,6 +3,7 @@ import {
   FILM_FPS,
   FILM_MAX,
   FILM_STILL_SEC,
+  filmContain,
   filmDuration,
   filmFrames,
   filmPose,
@@ -14,6 +15,10 @@ import {
  *
  * The listing page never imports this. If the browser cannot record, the
  * caller keeps the on-page film and uploads nothing.
+ *
+ * Each photograph is drawn WHOLE (filmContain) over a blurred, darkened copy
+ * of itself that fills the vertical frame — the look of a property reel —
+ * and moves only as far as ken-burns.ts allows (12 Oct: calmer).
  */
 
 export interface RecordedFilm {
@@ -40,21 +45,57 @@ function loadImage(url: string): Promise<HTMLImageElement> {
   });
 }
 
-function drawCover(ctx: CanvasRenderingContext2D, image: HTMLImageElement, pose: FilmPose): void {
+/**
+ * The backdrop: the photograph filling the frame, blurred and darkened. The
+ * blur is a tiny copy scaled back up, which every browser draws (canvas
+ * `filter` is not on every iPhone), and it is made once per photograph.
+ */
+function backdrop(image: HTMLImageElement): HTMLCanvasElement {
+  const small = document.createElement('canvas');
+  small.width = Math.round(WIDTH / 24);
+  small.height = Math.round(HEIGHT / 24);
+  const tiny = small.getContext('2d');
+  const full = document.createElement('canvas');
+  full.width = WIDTH;
+  full.height = HEIGHT;
+  const big = full.getContext('2d');
+  if (!tiny || !big) return full;
+  const ratio = image.naturalWidth / image.naturalHeight;
+  const frame = small.width / small.height;
+  const dw = ratio > frame ? small.height * ratio : small.width;
+  const dh = ratio > frame ? small.height : small.width / ratio;
+  tiny.imageSmoothingQuality = 'high';
+  tiny.drawImage(image, (small.width - dw) / 2, (small.height - dh) / 2, dw, dh);
+  big.imageSmoothingEnabled = true;
+  big.imageSmoothingQuality = 'high';
+  big.drawImage(small, 0, 0, WIDTH, HEIGHT);
+  big.fillStyle = 'rgba(0, 0, 0, 0.28)';
+  big.fillRect(0, 0, WIDTH, HEIGHT);
+  return full;
+}
+
+function drawStill(
+  ctx: CanvasRenderingContext2D,
+  image: HTMLImageElement,
+  behind: HTMLCanvasElement,
+  pose: FilmPose,
+): void {
+  ctx.drawImage(behind, 0, 0);
   ctx.save();
   ctx.translate(WIDTH / 2 + pose.shift * WIDTH, HEIGHT / 2);
   ctx.scale(pose.scale, pose.scale);
-  const ratio = image.naturalWidth / image.naturalHeight;
-  const frame = WIDTH / HEIGHT;
-  const dw = ratio > frame ? HEIGHT * ratio : WIDTH;
-  const dh = ratio > frame ? HEIGHT : WIDTH / ratio;
-  ctx.drawImage(image, -dw / 2, -dh / 2, dw, dh);
+  const { width, height } = filmContain(
+    { width: image.naturalWidth, height: image.naturalHeight },
+    { width: WIDTH, height: HEIGHT },
+  );
+  ctx.drawImage(image, -width / 2, -height / 2, width, height);
   ctx.restore();
 }
 
 function paint(
   ctx: CanvasRenderingContext2D,
   images: HTMLImageElement[],
+  behind: HTMLCanvasElement[],
   time: number,
 ): void {
   const frames = filmFrames(images.length);
@@ -63,14 +104,15 @@ function paint(
     const local = time - frame.start;
     if (local < 0 || local > FILM_STILL_SEC) continue;
     const image = images[frame.index];
-    if (!image) continue;
+    const back = behind[frame.index];
+    if (!image || !back) continue;
     let alpha = 1;
     if (frame.index > 0 && local < FILM_FADE_SEC) alpha = local / FILM_FADE_SEC;
     const tail = FILM_STILL_SEC - local;
     if (frame.index < frames.length - 1 && tail < FILM_FADE_SEC) alpha = Math.min(alpha, tail / FILM_FADE_SEC);
     ctx.save();
     ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
-    drawCover(ctx, image, filmPose(frame.motion, local / FILM_STILL_SEC));
+    drawStill(ctx, image, back, filmPose(frame.motion, local / FILM_STILL_SEC));
     ctx.restore();
   }
 }
@@ -104,8 +146,10 @@ export async function recordFilm(urls: readonly string[]): Promise<RecordedFilm 
   const ctx = canvas.getContext('2d');
   if (!ctx) return undefined;
 
+  let behind: HTMLCanvasElement[];
   try {
-    paint(ctx, images, 0);
+    behind = images.map(backdrop);
+    paint(ctx, images, behind, 0);
   } catch {
     return undefined;
   }
@@ -129,7 +173,7 @@ export async function recordFilm(urls: readonly string[]): Promise<RecordedFilm 
   const total = filmDuration(images.length);
   const step = 1 / FILM_FPS;
   for (let time = 0; time <= total; time += step) {
-    paint(ctx, images, Math.min(time, total));
+    paint(ctx, images, behind, Math.min(time, total));
     await new Promise((resolve) => setTimeout(resolve, 1000 / FILM_FPS));
   }
   recorder.stop();

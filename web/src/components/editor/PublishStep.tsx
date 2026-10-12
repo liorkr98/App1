@@ -63,7 +63,7 @@ interface Props {
  *
  * WHAT AN AGENT WILL ACTUALLY SEE TODAY depends on `listing_grants` plus
  * how many listings they already published. The first one is free, with
- * נבנה בהיעד. Unpaid (second listing, no grant) and unknown both block,
+ * נבנה עם עמוד מכירה. Unpaid (second listing, no grant) and unknown both block,
  * with different copy. The database trigger is the real publish gate.
  */
 export function PublishStep({

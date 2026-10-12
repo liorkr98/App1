@@ -379,3 +379,33 @@ html[data-template='dossier'] :is(.facts, .enrich) {
     }
   }
 }
+
+/* ==========================================================================
+   THE PAGE BODY in this design's own idiom (12 Oct 2026). Below the first
+   screen every design used to be the same page recoloured; the owner asked
+   for each to be its own. Structure and rules stay shared (absent vs
+   unanswered, מאומת only with a source, <bdi>, the street only): only the
+   look of the headings, facts, description, gallery and seller card change.
+   No new motion here.
+   ========================================================================== */
+
+html[data-template='dossier'] .section-label { font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace; }
+html[data-template='dossier'] section:not(.enrich) > h2 { display: inline-block; margin-block-end: 0; padding: 0.35rem 1.1rem 0.25rem; background: var(--stone-warm); border: 1px solid var(--stone); border-block-end: 0; border-start-start-radius: 10px; border-start-end-radius: 10px; font-family: var(--ls-font-display); font-weight: 800; font-size: 1.3rem; }
+html[data-template='dossier'] section:not(.enrich) > h2 + * { padding: 1rem; background: var(--stone-warm); border: 1px solid var(--stone); }
+html[data-template='dossier'] .facts { grid-template-columns: minmax(0, 1fr); gap: 0; margin-inline: var(--gut); padding: 0.4rem 1rem; background: var(--stone-warm); border: 1px solid var(--stone); }
+html[data-template='dossier'] .fact { display: flex; align-items: baseline; gap: 0.6rem; padding: 0.55rem 0; background: none; border-block-end: 1px dotted var(--muted); }
+html[data-template='dossier'] .fact .fact-lbl { order: 1; margin: 0; font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace; }
+html[data-template='dossier'] .fact .fact-val { order: 2; margin-inline-start: auto; font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace; font-size: 1.15rem; font-weight: 700; }
+html[data-template='dossier'] .fact.off { background: none; }
+html[data-template='dossier'] .gallery img { background: #ffffff; padding: 6px; border: 1px solid var(--stone); border-radius: 0; }
+html[data-template='dossier'] .seller { margin: 0 var(--gut); background: var(--stone-warm); border: 1px solid var(--stone); }
+html[data-template='dossier'] .seller .section-label { font-weight: 700; color: var(--ink); }
+
+/* The neighbourhood, in the same idiom: the largest block below the first
+   screen, so it cannot stay the one part every design shares. */
+html[data-template='dossier'] .enrich .egroup { padding: 0.9rem 1rem; background: var(--ds-sheet); border: 1px solid var(--stone); }
+html[data-template='dossier'] .enrich .egroup-head { margin-block-start: -0.9rem; margin-inline: -1rem auto; padding: 0.3rem 1rem; inline-size: fit-content; background: var(--ds-manila); border-block-end: 0; border-radius: 0 0 8px 8px; }
+html[data-template='dossier'] .enrich .egroup-head h3, html[data-template='dossier'] .enrich .erow .mins { font-family: var(--ds-type); }
+html[data-template='dossier'] .enrich .erow + .erow { border-block-start-style: dotted; }
+html[data-template='dossier'] .enrich { background: transparent; --enrich-ink: var(--ink); --enrich-muted: var(--muted); --enrich-rule: var(--stone); --enrich-figure: var(--ink); }
+html[data-template='dossier'] .enrich .egroup { color: var(--ink); }

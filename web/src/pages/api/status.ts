@@ -1,9 +1,10 @@
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 
-import { DEEPSEEK_URL } from '../../lib/deepseek';
+import { DEEPSEEK_URL, DEEPSEEK_VISION_MODEL } from '../../lib/deepseek';
 import { OVERPASS_ENDPOINTS } from '../../lib/overpass';
 import { supabaseAsUser, supabaseConfigured } from '../../lib/supabase';
+import { supabaseService } from '../../lib/supabase-service';
 
 /**
  * GET /api/status — is everything the product leans on connected? Admin only.
@@ -17,6 +18,11 @@ import { supabaseAsUser, supabaseConfigured } from '../../lib/supabase';
  *   overpass   how many of the OpenStreetMap instances answer a tiny query
  *   routing    the walking-time router (self-hosted OSRM if set, else Valhalla)
  *   database   the newest migration the code relies on (0035) is applied
+ *   phone      the service key is set AND Supabase accepts it (upload from
+ *              your phone). Added 12 Oct 2026, after a key pasted at the
+ *              wrong length failed every phone upload with no sign anywhere
+ *   photos     the photo check's model answers a request with a picture in
+ *              it — not the same as `ai`, which only proves the text model
  *
  * The caller's own token and `is_site_admin` decide access, as on /admin.
  * Nothing here reads or changes a listing or a grant (CLAUDE.md §8).
@@ -26,7 +32,7 @@ export const prerender = false;
 const TIMEOUT_MS = 8_000;
 
 interface Check {
-  key: 'ai' | 'overpass' | 'routing' | 'database';
+  key: 'ai' | 'overpass' | 'routing' | 'database' | 'phone' | 'photos';
   ok: boolean;
   detail: string;
 }
@@ -55,6 +61,51 @@ async function checkAi(): Promise<Check> {
     return { key: 'ai', ok: response.ok, detail: response.ok ? 'ok' : `http_${response.status}` };
   } catch (error) {
     return { key: 'ai', ok: false, detail: failure(error) };
+  }
+}
+
+/** A 1×1 PNG: the smallest picture that proves the model takes pictures. */
+const DOT_PNG =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+
+async function checkPhotos(): Promise<Check> {
+  const apiKey = env.DEEPSEEK_API_KEY;
+  if (!apiKey) return { key: 'photos', ok: false, detail: 'no_key' };
+  try {
+    const response = await fetch(DEEPSEEK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model: DEEPSEEK_VISION_MODEL,
+        max_tokens: 1,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: 'ok' },
+              { type: 'image_url', image_url: { url: DOT_PNG, detail: 'low' } },
+            ],
+          },
+        ],
+      }),
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+    return { key: 'photos', ok: response.ok, detail: response.ok ? 'ok' : `http_${response.status}` };
+  } catch (error) {
+    return { key: 'photos', ok: false, detail: failure(error) };
+  }
+}
+
+async function checkPhone(): Promise<Check> {
+  const client = supabaseService();
+  if (!client) return { key: 'phone', ok: false, detail: 'no_service_key' };
+  try {
+    const { error, status } = await client.from('photo_portals').select('id').limit(1);
+    if (!error) return { key: 'phone', ok: true, detail: 'ok' };
+    if (status === 401 || status === 403) return { key: 'phone', ok: false, detail: 'bad_service_key' };
+    return { key: 'phone', ok: false, detail: error.code === '42P01' ? 'missing_0036' : `http_${status}` };
+  } catch (error) {
+    return { key: 'phone', ok: false, detail: failure(error) };
   }
 }
 
@@ -106,6 +157,13 @@ export const GET: APIRoute = async ({ request }) => {
     return { key: 'database', ok: !error, detail: error ? 'missing_0035' : 'ok_0035' };
   };
 
-  const checks = await Promise.all([checkAi(), checkOverpass(), checkRouting(), database()]);
+  const checks = await Promise.all([
+    checkAi(),
+    checkPhotos(),
+    checkPhone(),
+    checkOverpass(),
+    checkRouting(),
+    database(),
+  ]);
   return json({ checks }, 200);
 };

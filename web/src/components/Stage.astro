@@ -20,6 +20,10 @@ import PosterStage from './stages/PosterStage.astro';
 import TicketStage from './stages/TicketStage.astro';
 import WalkStage from './stages/WalkStage.astro';
 import ZineStage from './stages/ZineStage.astro';
+import PrintsStage from './stages/PrintsStage.astro';
+import KeytagStage from './stages/KeytagStage.astro';
+import StreetsignStage from './stages/StreetsignStage.astro';
+import DashboardStage from './stages/DashboardStage.astro';
 
 interface Props {
   listing: Listing;
@@ -56,7 +60,7 @@ const { listing, layout, photos, cells, perUnit, waHref, sold } = Astro.props;
  *   showcase  headline, a rounded photograph and a card beside it carrying
  *             the numbers, the price and the agent
  *   monolith, atelier, glass, showroom, heliograph, walk, poster, zine,
- *   dossier, ticket
+ *   dossier, ticket, prints, keytag, streetsign, dashboard
  *             one component each in ./stages/ — see their headers.
  *
  * Everything below the first screen is the shared flow — facts, provenance,
@@ -467,3 +471,7 @@ const priceProps = {
 {layout === 'zine' && <ZineStage listing={listing} photos={photos} cells={cells} perUnit={perUnit} />}
 {layout === 'dossier' && <DossierStage listing={listing} cells={cells} perUnit={perUnit} />}
 {layout === 'ticket' && <TicketStage listing={listing} photos={photos} cells={cells} perUnit={perUnit} waHref={waHref} sold={sold} />}
+{layout === 'prints' && <PrintsStage listing={listing} photos={photos} cells={cells} perUnit={perUnit} />}
+{layout === 'keytag' && <KeytagStage listing={listing} cells={cells} perUnit={perUnit} />}
+{layout === 'streetsign' && <StreetsignStage listing={listing} cells={cells} perUnit={perUnit} />}
+{layout === 'dashboard' && <DashboardStage listing={listing} cells={cells} perUnit={perUnit} />}

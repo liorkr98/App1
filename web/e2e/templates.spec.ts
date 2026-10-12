@@ -33,6 +33,10 @@ const SIGNATURE: Record<string, string> = {
   ticket: '.tk-qr',
   showroom: '.sr-platform',
   dossier: '.ds-folder',
+  prints: '.pr-table',
+  keytag: '.kt-tag',
+  streetsign: '.ss-plate',
+  dashboard: '.db-dash',
 };
 
 const LISTINGS = [
@@ -145,4 +149,77 @@ test.describe('first-screen text stays on the phone and apart', () => {
       expect(problems, `${id} on ${slug}`).toEqual([]);
     });
   }
+});
+
+test('gallery tiles keep their shape, whatever size the photograph is', async ({ page }) => {
+  // 12 Oct 2026: the img height ATTRIBUTE beat the CSS aspect-ratio, so a
+  // 1200x800 photograph made a tile 336px wide and 800px tall on a phone.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${BASE}/template-check/R4LSH-aurora/`, { waitUntil: 'load' });
+  const ratios = await page
+    .locator('#listing-gallery .gallery-open img')
+    .evaluateAll((els) => els.map((el) => el.getBoundingClientRect().height / el.getBoundingClientRect().width));
+  expect(ratios.length).toBeGreaterThan(1);
+  for (const ratio of ratios) expect(ratio).toBeLessThanOrEqual(0.76);
+});
+
+/**
+ * Below the first screen, every design is its own page (12 Oct 2026).
+ *
+ * The owner looked at the designs side by side and said they looked the
+ * same, and below the cover they were: one heading, one facts grid, one
+ * seller card, recoloured. Each design's stylesheet now restyles the shared
+ * sections in its own idiom, and this keeps it that way: the section heading
+ * and the facts grid, read as computed style, must differ for every pair.
+ * One demo listing per category (a car-only design on a flat falls back to
+ * another design), so a difference is the design's, not the data's.
+ */
+const bodyFingerprint = () => {
+  const pick = (el: Element | null, props: string[]) => {
+    if (!el) return 'none';
+    const style = getComputedStyle(el);
+    return props.map((prop) => style.getPropertyValue(prop)).join('|');
+  };
+  const h2 = document.querySelector('main section:not(.enrich) > h2');
+  return [
+    pick(h2, ['font-family', 'font-size', 'font-weight', 'color', 'text-align', 'border-block-end-style', 'background-color', 'padding-inline-start']),
+    pick(document.querySelector('.facts'), ['display', 'grid-template-columns', 'row-gap', 'background-color', 'border-block-start-style']),
+    pick(document.querySelector('.fact'), ['background-color', 'border-top-style', 'border-top-width', 'border-radius', 'font-family']),
+  ];
+};
+
+test('no two designs share a page body', async ({ browser }) => {
+  test.setTimeout(120_000);
+  const context = await browser.newContext({ viewport: PHONE, locale: 'he-IL', reducedMotion: 'reduce' });
+  const tab = await context.newPage();
+  const seen = new Map<string, string>();
+  const clashes: string[] = [];
+  for (const id of CATALOGUE) {
+    const slug = templateFits(id, 'property') ? 'A7K2M' : 'V3M9Q';
+    await tab.goto(`${BASE}/template-check/${slug}-${id}/`, { waitUntil: 'load' });
+    const [heading, grid, cell] = await tab.evaluate(bodyFingerprint);
+    expect(heading, `${id}: no section heading below the first screen`).not.toBe('none');
+    expect(grid, `${id}: no facts grid`).not.toBe('none');
+    const key = `${heading}#${grid}#${cell}`;
+    const twin = seen.get(key);
+    if (twin) clashes.push(`${id} has the same page body as ${twin}`);
+    seen.set(key, id);
+  }
+  await context.close();
+  expect(clashes).toEqual([]);
+});
+
+test('the page-body check fires when two designs share a body', async ({ browser }) => {
+  // Strip both pages back to the shared listing.css body and the check must
+  // see them as one: two plain pages with no design sheet are identical.
+  const context = await browser.newContext({ viewport: PHONE, locale: 'he-IL', reducedMotion: 'reduce' });
+  const tab = await context.newPage();
+  const prints: string[][] = [];
+  for (const id of ['aurora', 'monolith']) {
+    await tab.goto(`${BASE}/template-check/A7K2M-${id}/`, { waitUntil: 'load' });
+    await tab.evaluate(() => document.documentElement.setAttribute('data-template', 'none'));
+    prints.push(await tab.evaluate(bodyFingerprint));
+  }
+  await context.close();
+  expect(prints[0]).toEqual(prints[1]);
 });

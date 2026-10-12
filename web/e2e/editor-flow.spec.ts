@@ -101,3 +101,124 @@ test('four screens, one big button, nothing greyed out', async ({ browser }) => 
   await expect(page.locator('.flow-title')).not.toHaveText('פרסום');
   await context.close();
 });
+
+/**
+ * WCAG contrast of the element's text against what is actually behind it: a
+ * see-through background is laid over its ancestors' (the 12 Oct bug was a
+ * 5%-opaque fill, which reads as "dark" if the alpha is ignored).
+ */
+async function buttonContrast(page: Page, selector: string): Promise<number> {
+  return page.locator(selector).evaluate((el) => {
+    const rgba = (value: string) => {
+      const parts = (value.match(/[\d.]+/g) ?? []).map(Number);
+      return { c: parts.slice(0, 3), a: parts.length > 3 ? parts[3]! : 1 };
+    };
+    const layers: { c: number[]; a: number }[] = [];
+    for (let node: Element | null = el; node; node = node.parentElement) {
+      const layer = rgba(getComputedStyle(node).backgroundColor);
+      if (layer.a > 0) layers.push(layer);
+      if (layer.a >= 1) break;
+    }
+    let back = [255, 255, 255];
+    for (const layer of layers.reverse()) back = back.map((v, i) => layer.c[i]! * layer.a + v * (1 - layer.a));
+    const lum = (rgb: number[]) => {
+      const [R, G, B] = rgb.map((v) => {
+        const c = v / 255;
+        return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+      });
+      return 0.2126 * R! + 0.7152 * G! + 0.0722 * B!;
+    };
+    const a = lum(rgba(getComputedStyle(el).color).c);
+    const b = lum(back);
+    return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+  });
+}
+
+test('"next" stays dark under a finger on the first screen', async ({ browser }) => {
+  // 12 Oct: on screen 1 there is no Back button, so "next" was the nav's
+  // first child, and the Back button's old hover rule (written as
+  // :first-child) painted it pale under its white text once tapped.
+  const context = await browser.newContext({ viewport: PHONE, locale: 'he-IL', reducedMotion: 'reduce' });
+  const page = await context.newPage();
+  await page.route(/supabase\.co/, (route) => route.abort());
+  await page.goto(`${BASE}/new/?fresh=1`, { waitUntil: 'load' });
+  await expect(page.locator('.flow-title')).toHaveText('התמונות');
+  await expect(page.locator('.nav-back')).toHaveCount(0);
+
+  expect(await buttonContrast(page, '.nav-next'), 'at rest').toBeGreaterThanOrEqual(4.5);
+  await page.locator('.nav-next').hover();
+  await page.waitForTimeout(400); // past the background transition
+  expect(await buttonContrast(page, '.nav-next'), 'hovered (a phone keeps this after a tap)').toBeGreaterThanOrEqual(4.5);
+  await context.close();
+});
+
+test('the preview on a phone: a still, then the real page full screen', async ({ browser }) => {
+  // 12 Oct: a 330px phone inside the agent's phone was too small to judge
+  // and caught the finger. Now a still that cannot be scrolled, one big
+  // button, the page full screen with the designs underneath, and two ways
+  // out: the close button and the phone's own Back.
+  const context = await browser.newContext({ viewport: PHONE, locale: 'he-IL', reducedMotion: 'reduce' });
+  const page = await context.newPage();
+  await page.route(/supabase\.co/, (route) => route.abort());
+  await page.route('**/preview/', async (route) => {
+    const draft = new URLSearchParams(route.request().postData() ?? '').get('draft') ?? '';
+    const template = /"template":"(\w+)"/.exec(draft)?.[1] ?? 'none';
+    await route.fulfill({
+      contentType: 'text/html; charset=utf-8',
+      body: `<!doctype html><html lang="he" dir="rtl"><body data-template="${template}" style="margin:0"><div style="height:3000px">${template}</div></body></html>`,
+    });
+  });
+  await page.goto(`${BASE}/new/?fresh=1`, { waitUntil: 'load' });
+  await page.getByRole('button', { name: 'דירה' }).click();
+  await page.locator('.picker input[type=file]').setInputFiles({
+    name: 'salon.jpg',
+    mimeType: 'image/jpeg',
+    buffer: await photo(page),
+  });
+  await expect(page.locator('.strip li')).toHaveCount(1);
+  await page.locator('.nav-next').click();
+  await page.locator('#d-city').fill('חולון');
+  await page.locator('.nav-next').click();
+  await expect(page.locator('.flow-title')).toHaveText('המודעה מוכנה');
+
+  // The still: present, and a finger on it does not reach the page inside.
+  const preview = page.locator('.ready-preview .live-preview');
+  await expect(preview).toHaveClass(/is-phone/);
+  await expect(preview).not.toHaveClass(/is-full/);
+  await expect(preview.locator('.live-frame.is-front')).toHaveCSS('pointer-events', 'none');
+  const front = () => preview.locator('.live-frame.is-front');
+  const shownTemplate = () =>
+    front().evaluate((frame) => (frame as HTMLIFrameElement).contentDocument?.body?.dataset.template ?? '');
+  await expect.poll(shownTemplate).not.toBe('');
+  const first = await shownTemplate();
+
+  // Full screen: the page at the phone's own width, the designs underneath.
+  await preview.locator('.live-open').click();
+  await expect(preview).toHaveClass(/is-full/);
+  const box = await preview.locator('.live-phone').boundingBox();
+  expect(box?.width).toBe(PHONE.width);
+  expect(Number(await front().getAttribute('width'))).toBeGreaterThanOrEqual(390);
+  const chips = preview.locator('.live-design');
+  expect(await chips.count()).toBeGreaterThan(3);
+  expect(await smallTargets(page), 'tap targets in the full-screen preview').toEqual([]);
+
+  // A design tapped here is the design the page shows.
+  const other = preview.locator('.live-design[aria-pressed="false"]').first();
+  const name = await other.textContent();
+  await other.click();
+  await expect(preview.locator('.live-design[aria-pressed="true"]')).toHaveText(name ?? '');
+  await expect.poll(shownTemplate).not.toBe(first);
+
+  // The phone's Back closes it, and stays in the editor.
+  await page.goBack();
+  await expect(preview).not.toHaveClass(/is-full/);
+  await expect(page.locator('.flow-title')).toHaveText('המודעה מוכנה');
+
+  // So does the close button.
+  await preview.locator('.live-open').click();
+  await expect(preview).toHaveClass(/is-full/);
+  await preview.locator('.live-close').click();
+  await expect(preview).not.toHaveClass(/is-full/);
+  await expect(page.locator('.flow-title')).toHaveText('המודעה מוכנה');
+  await context.close();
+});
