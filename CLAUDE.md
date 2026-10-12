@@ -440,7 +440,7 @@ network failure. The payments provider is undecided — build behind an
 interface with one adapter and say what the interface needs.
 
 **Plans, prices and limits are `docs/PRICING.md`** (decided 12 Oct 2026, the
-single source of truth). Prices live in `config/pricing.json`, seeded into the
+single source of truth). Prices live in `src/features/billing/pricing-config.ts`, seeded into the
 `plans` table by migration 0040; no component carries a price literal, and
 `scripts/verify-no-price-literals.mjs` fails the build on one.
 
