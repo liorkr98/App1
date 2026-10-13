@@ -1,5 +1,15 @@
 ---
-import { FILM_FADE_SEC, FILM_STILL_SEC, filmClock, filmDuration, filmFrames } from '@/features/listings/ken-burns';
+import {
+  FILM_FADE_SEC,
+  FILM_PAN_LEAD,
+  FILM_PAN_TRAVEL,
+  FILM_PAN_ZOOM,
+  FILM_STILL_SEC,
+  FILM_ZOOM,
+  filmClock,
+  filmDuration,
+  filmFrames,
+} from '@/features/listings/ken-burns';
 import type { Image } from '@/types/listing';
 import type { ListingVideo } from '@/features/listings/rich-media';
 import { GALLERY_WIDTHS, largest } from '../lib/images';
@@ -28,13 +38,28 @@ const stillStyle = (motion: string, index: number) => {
   return `--i:${index}${index === 0 ? ';--show:film-show-first' : ''}${move ? `;--move:${move}` : ''}`;
 };
 
+/*
+ * Every number the keyframes use comes from ken-burns.ts, the module the
+ * story file and the editor preview read too (13 Oct 2026). The pans used
+ * to be written here as 1.08 and 6% — past the room the zoom leaves, so
+ * the photograph underneath showed at the end of each pan.
+ */
+const pct = (fraction: number) => `${+(fraction * 100).toFixed(3)}%`;
+const fade = pct(FILM_FADE_SEC / FILM_STILL_SEC);
+const hold = pct(1 - FILM_FADE_SEC / FILM_STILL_SEC);
+const lead = pct(FILM_PAN_LEAD);
+const film = `--s:${FILM_STILL_SEC}s;--d:${FILM_FADE_SEC}s;--fz:${1 + FILM_ZOOM};--pz:${1 + FILM_PAN_ZOOM}`;
+
 const motions = new Set(frames.map((frame) => frame.motion));
 const extra = [
+  frames.length > 0
+    ? `@keyframes film-show{0%{opacity:0}${fade},${hold}{opacity:1}to{opacity:0}}@keyframes film-show-first{0%,${hold}{opacity:1}to{opacity:0}}`
+    : '',
   motions.has('panRight')
-    ? '@keyframes film-pan-right{0%{translate:0;scale:1}20%{translate:0;scale:1.08}to{translate:6%;scale:1.08}}'
+    ? `@keyframes film-pan-right{0%{translate:0;scale:1}${lead}{translate:0;scale:var(--pz)}to{translate:${pct(FILM_PAN_TRAVEL)};scale:var(--pz)}}`
     : '',
   motions.has('panLeft')
-    ? '@keyframes film-pan-left{0%{translate:0;scale:1}20%{translate:0;scale:1.08}to{translate:-6%;scale:1.08}}'
+    ? `@keyframes film-pan-left{0%{translate:0;scale:1}${lead}{translate:0;scale:var(--pz)}to{translate:${pct(-FILM_PAN_TRAVEL)};scale:var(--pz)}}`
     : '',
   video
     ? '.film-tile video{display:block;inline-size:100%;max-block-size:70svh;object-fit:contain;background:#1c1917}'
@@ -46,7 +71,7 @@ const extraCss = extra.length > 0 ? `<style>${extra.join('')}</style>` : '';
 {extraCss ? <Fragment set:html={extraCss} /> : null}
 
 {hero && frames.length > 0 && (
-  <div class="film hm-film" style={`--s:${FILM_STILL_SEC}s;--d:${FILM_FADE_SEC}s`}>
+  <div class="film hm-film" style={film}>
     {frames.map((frame) => {
       const image = images[frame.index];
       return image ? (
@@ -76,7 +101,7 @@ const extraCss = extra.length > 0 ? `<style>${extra.join('')}</style>` : '';
         src={video.url}
       />
     ) : (
-      <div class="film" style={`--s:${FILM_STILL_SEC}s;--d:${FILM_FADE_SEC}s`}>
+      <div class="film" style={film}>
         <input class="visually-hidden" type="checkbox" id="listing-film" />
         {frames.map((frame) => {
           const image = images[frame.index];

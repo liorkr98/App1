@@ -32,6 +32,12 @@ export function fitsKey(example: Pick<TemplateExample, 'forHomes' | 'forCars'>):
   return example.forHomes ? 'templates.forHomes' : 'templates.forCars';
 }
 
-export const templatePath = (id: TemplateId) => `/templates/${id}/`;
+const offered = (id: TemplateId) => CATALOGUE.includes(id);
+
+/** A design's page; the gallery for an id the catalogue no longer offers. */
+export const templatePath = (id: TemplateId) => (offered(id) ? `/templates/${id}/` : '/templates/');
 export const demoPath = (id: TemplateId) => `/templates/${id}/demo/`;
-export const buildPath = (id: TemplateId) => `/new/?fresh=1&template=${id}`;
+export const buildPath = (id: TemplateId) => (offered(id) ? `/new/?fresh=1&template=${id}` : '/new/?fresh=1');
+
+/** Where an example page's contact buttons point: the demo bar's note. */
+export const DEMO_NOTE = '#demo-note';

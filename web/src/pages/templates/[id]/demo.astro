@@ -21,6 +21,6 @@ export function getStaticPaths() {
 
 const { id, listing } = Astro.props;
 ---
-<ListingPage listing={listing} robots="noindex,nofollow">
+<ListingPage listing={listing} robots="noindex,nofollow" demo>
   <DemoBar slot="top" template={id} />
 </ListingPage>

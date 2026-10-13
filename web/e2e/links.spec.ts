@@ -54,6 +54,12 @@ for (const id of CATALOGUE) {
     await expect(page.locator('.demo-bar')).toBeVisible();
     await expect(page.locator('.demo-bar-go')).toHaveAttribute('href', `/new/?fresh=1&template=${id}`);
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
+    // An example page calls no one: the fixtures' numbers may be real people's.
+    await expect(page.locator('a[href^="tel:"]')).toHaveCount(0);
+    // The counted WhatsApp route, or a chat with a number. "Share this page"
+    // (wa.me/?text=…) names no one and stays.
+    await expect(page.locator('a[href*="/wa?"], a[href$="/wa"], a[href^="https://wa.me/"]:not([href^="https://wa.me/?"])')).toHaveCount(0);
+    await expect(page.locator('#demo-note')).toHaveCount(1);
   });
 }
 

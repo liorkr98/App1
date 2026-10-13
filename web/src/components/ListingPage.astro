@@ -32,6 +32,7 @@ import {
 } from '@/features/listings/control-surface';
 import { templateFor, templateSpec } from '@/features/templates/manifest';
 import { toCells } from '../lib/facts';
+import { DEMO_NOTE } from '../lib/template-pages';
 import SectionLabel from './SectionLabel.astro';
 
 interface Props {
@@ -43,6 +44,14 @@ interface Props {
   robots?: string;
   /** Editor phone: first screen and map legend stay clear of the fixed bars. */
   preview?: boolean;
+  /**
+   * An example page (/templates/{id}/demo/, a fixture at /a/{slug}). Every
+   * contact button keeps its look and calls no one: WhatsApp points at the
+   * demo bar's note and the phone number is dropped, so no call link is
+   * drawn. The fixtures carry well-formed Israeli numbers that may belong to
+   * real people (13 Oct 2026).
+   */
+  demo?: boolean;
 }
 
 /**
@@ -58,7 +67,8 @@ interface Props {
  * only category lookup on the page, which is what keeps a fifth divergence
  * from appearing by accident.
  */
-const { listing: given, robots, preview = false } = Astro.props;
+const { listing: shown, robots, preview = false, demo = false } = Astro.props;
+const given: Listing = demo ? { ...shown, seller: { ...shown.seller, phone: '' } } : shown;
 // A template drawn for the other category (Showroom on a flat) is drawn as
 // its fallback instead — here, once, so BaseListing's data-template and every
 // Stage below agree on what the page actually is.
@@ -108,7 +118,7 @@ const waMessage = whatsappPrefill(
   listing.category,
   listing.location ? publicPlace(listing.location) : undefined,
 );
-const waHref = `/a/${listing.slug}/wa?text=${encodeURIComponent(waMessage)}`;
+const waHref = demo ? DEMO_NOTE : `/a/${listing.slug}/wa?text=${encodeURIComponent(waMessage)}`;
 const homeLabel = listing.category === 'property' ? t('listing.section.home') : t('listing.section.vehicle');
 
 const shareCells = toCells(listing.category, listing.facts, listing.audience);
@@ -273,7 +283,7 @@ const shareHref = whatsappShareUrl(
 
   <Gallery
     images={galleryImages}
-    film={[listing.media.cover, ...galleryImages]}
+    film={[listing.media.cover, ...listing.media.gallery]}
     video={listing.media.video}
   />
 
@@ -305,6 +315,7 @@ const shareHref = whatsappShareUrl(
     {/* A sold listing is a record, not a live offer. The WhatsApp dock would
         invite a message about something that is gone. */}
       <CtaDock
+        href={demo ? DEMO_NOTE : undefined}
         phone={listing.seller.phone}
         message={waMessage}
         slug={listing.slug}

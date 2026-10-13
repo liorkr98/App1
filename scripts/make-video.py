@@ -9,11 +9,16 @@ The page starts every still at scale 1. The pans here begin already zoomed,
 which is the offline twin of the original tool — do not copy that into the
 site. --music is accepted and is never called by the product.
 
-Calmer since 12 Oct 2026, with the same numbers as
-src/features/listings/ken-burns.ts: 4.8s a still, a 1.2s fade, 4% zoom, a
-pan of about 2.5%. Each photograph is shown WHOLE, on a blurred, darkened
-copy of itself that fills the frame, instead of cropped to fill it: a wide
-photo in a vertical frame used to lose more than half its width.
+Calmer since 12 Oct 2026, paced like a listing reel since 13 Oct, with the
+same numbers as src/features/listings/ken-burns.ts: 3.2s a still, a 0.6s
+fade, 3% zoom, a 4% pan that travels about 2%, at most ten stills. Each
+photograph is shown WHOLE, on a blurred, darkened copy of itself that fills
+the frame.
+
+The browser's story file (web/src/lib/film-file.ts) is what agents get, and
+it does more: it fills the frame when a photograph loses at most 30%, and
+writes the place, the title, the facts, room names and a closing card. This
+script does neither; it is the plain demo file.
 """
 
 from __future__ import annotations
@@ -24,10 +29,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-STILL = 4.8
-FADE = 1.2
-ZOOM = 0.04
-PAN_ZOOM = 1.05
+STILL = 3.2
+FADE = 0.6
+ZOOM = 0.03
+PAN_ZOOM = 1.04
 FPS = 30
 FRAMES = round(STILL * FPS)
 MOTIONS = ("in", "out", "pan_right", "pan_left")
@@ -43,7 +48,7 @@ def zoom(motion: str, size: str) -> str:
         z = f"max(1\\,{1 + ZOOM}-{ZOOM}*on/{n})"
         x = "iw/2-(iw/zoom/2)"
     elif motion == "pan_right":
-        # Half the overhang, centred: about 2.5% of the width at 1.05.
+        # Half the overhang, centred: about 2% of the width at 1.04.
         z = f"{PAN_ZOOM}"
         x = f"(iw-iw/zoom)*(0.25+0.5*on/{n})"
     else:
@@ -68,7 +73,7 @@ def main() -> int:
         print(f"Not a folder: {args.folder}", file=sys.stderr)
         return 1
 
-    images = sorted(path for path in args.folder.iterdir() if path.suffix.lower() in EXTENSIONS)[:8]
+    images = sorted(path for path in args.folder.iterdir() if path.suffix.lower() in EXTENSIONS)[:10]
     if not images:
         print("No stills in that folder.", file=sys.stderr)
         return 1

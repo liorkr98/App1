@@ -11,6 +11,9 @@ import { buildPath, templatePath } from '../lib/template-pages';
  * shared link must not read the demo as a home for sale. It is in the flow,
  * not fixed, so it never sits on top of a template's first screen.
  *
+ * The page's WhatsApp and call buttons point at #demo-note here instead of
+ * a phone number (ListingPage `demo`).
+ *
  * Its colours are its own, not the template's tokens: sixteen templates
  * restyle everything they own, and this strip has to read the same on all.
  */
@@ -24,7 +27,7 @@ const name = t(`editor.templates.${template}`);
 <aside class="demo-bar" aria-label={t('templates.demo')}>
   <p class="demo-bar-what">
     <a href={templatePath(template)}>{t('templates.demo')} · {name}</a>
-    <span>{t('templates.demoNote')}</span>
+    <span id="demo-note">{t('templates.demoNote')} {t('templates.demoContact')}</span>
   </p>
   <a class="demo-bar-go" href={buildPath(template)}>{t('templates.build')}</a>
 </aside>
