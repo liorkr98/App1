@@ -12,6 +12,13 @@ done, so the next session knows.
   agent page section in /me cannot turn a page on, and /agent/... answers
   "not found"; nothing else breaks. The new view counting needs no database
   change.
+- [ ] **The data page: migration 0042.** Supabase → SQL editor → paste
+  `supabase/migrations/0042_site_analytics.sql` → Run, BEFORE merging the PR
+  that adds it. Safe to run twice. Then open `/admin/data/` signed in as
+  yourself (your account is already in `site_admins` if `/admin` opens).
+  Site visits start counting from the deploy; listing views, sign-ups,
+  pages and the editor funnel show their history at once. The "ניתוח AI"
+  button uses the `DEEPSEEK_API_KEY` the Worker already has.
 - [ ] **Billing's daily job.** Supabase → Database → Extensions → enable
   `pg_cron`, then in the SQL editor:
   `select cron.schedule('billing-daily', '17 3 * * *', 'select public.run_billing_daily()');`
@@ -50,6 +57,5 @@ done, so the next session knows.
   are signed "צוות עמוד מכירה". A person (name and role) is a one-line change
   in `src/features/guides/guides.ts`.
 - [ ] **What to build next.** Offered, not started: a square or 4:5 feed
-  version of the video; an agent profile page; views and WhatsApp taps in
-  the dashboard; a "price updated" card to re-share; pages in English,
+  version of the video; a "price updated" card to re-share; pages in English,
   Russian and Arabic; royalty-free music for the video.

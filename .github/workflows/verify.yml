@@ -372,6 +372,11 @@ jobs:
         working-directory: web
         run: npx playwright test agent-page
 
+      - name: The data page draws its numbers, and site pages count a visit once
+        if: ${{ !cancelled() }}
+        working-directory: web
+        run: npx playwright test admin-data
+
       - name: The story video is honestly labelled and as long as the film
         if: ${{ !cancelled() }}
         working-directory: web

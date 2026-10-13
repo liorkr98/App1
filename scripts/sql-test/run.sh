@@ -35,7 +35,7 @@ trap cleanup EXIT
 PSQL=("$BIN/psql" -h "$WORK" -p "$PORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -q -X)
 
 "${PSQL[@]}" -f "$HERE/bootstrap.sql"
-for migration in 0001 0002 0009 0011 0013 0016 0022 0040 0041; do
+for migration in 0001 0002 0009 0011 0013 0016 0017 0019 0022 0029 0030 0040 0041 0042; do
   file="$(ls "$ROOT"/supabase/migrations/${migration}_*.sql)"
   "${PSQL[@]}" -f "$file" >/dev/null 2>&1 || { "${PSQL[@]}" -f "$file"; exit 1; }
 done
@@ -46,5 +46,8 @@ done
 # 0041 twice too, then the agent pages.
 "${PSQL[@]}" -f "$(ls "$ROOT"/supabase/migrations/0041_*.sql)" >/dev/null
 "${PSQL[@]}" -f "$HERE/agent-pages.sql"
+# 0042 twice too, then the data page.
+"${PSQL[@]}" -f "$(ls "$ROOT"/supabase/migrations/0042_*.sql)" >/dev/null
+"${PSQL[@]}" -f "$HERE/site-analytics.sql"
 bash "$HERE/race.sh" "$BIN" "$WORK" "$PORT"
-echo "OK: billing and agent-page SQL tests passed."
+echo "OK: billing, agent-page and site-analytics SQL tests passed."

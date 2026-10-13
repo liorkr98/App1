@@ -17,7 +17,7 @@
  * fails the build when any client bundle names a key in one of these
  * namespaces, and its -fires.sh proves the check still matches.
  */
-export const SERVER_ONLY_NAMESPACES = ['templates', 'audiences', 'guides', 'agentPage'];
+export const SERVER_ONLY_NAMESPACES = ['templates', 'audiences', 'guides', 'agentPage', 'adminData'];
 
 const LOCALE = /[\\/]locales[\\/](he|en)\.json$/;
 

@@ -1,0 +1,63 @@
+---
+import AdminData from '../../layouts/AdminData.astro';
+
+/**
+ * /admin/data/ — the owner's data page (13 Oct 2026): site visits, listing
+ * pages created and published, listing views and taps, where people stop in
+ * the editor, and an AI reading of those numbers on a button.
+ *
+ * A static file like /admin/: the browser asks is_site_admin, then
+ * admin_analytics (0042), which raises 42501 for anyone else, so the page
+ * shows nothing to a non-admin even if the check here were skipped. The AI
+ * button posts the admin's token to /api/admin/insights.
+ *
+ * Reads, never grants (CLAUDE.md §8 does not apply).
+ */
+---
+
+<AdminData>
+  <script>
+    import { isRange, type AdminAnalytics, type Range } from '@/features/analytics/admin-data';
+
+    import { mountAdminData, type InsightsAnswer } from '../../lib/admin-data-view';
+    import { supabase, supabaseConfigured } from '../../lib/supabase';
+
+    const show = (id: string) => {
+      const node = document.getElementById(id);
+      if (node) node.hidden = false;
+    };
+
+    const boot = async () => {
+      if (!supabaseConfigured) return show('gate');
+      const client = supabase();
+      const { data: session } = await client.auth.getSession();
+      if (!session.session) return show('anon');
+      const { data: admin, error } = await client.rpc('is_site_admin');
+      if (error || admin !== true) return show('gate');
+      show('d-app');
+
+      const asked = new URLSearchParams(location.search).get('days');
+      mountAdminData({
+        initial: isRange(asked) ? (Number(asked) as Range) : 30,
+        load: async (days) => {
+          const { data, error: failed } = await client.rpc('admin_analytics', { p_days: days });
+          if (failed || !data) throw new Error(failed?.code ?? 'empty');
+          return data as AdminAnalytics;
+        },
+        ask: async (days) => {
+          const { data: fresh } = await client.auth.getSession();
+          const token = fresh.session?.access_token;
+          if (!token) return { error: 'unauthenticated' };
+          const response = await fetch('/api/admin/insights', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ days }),
+          });
+          return (await response.json().catch(() => ({ error: 'unavailable' }))) as InsightsAnswer;
+        },
+      });
+    };
+
+    void boot();
+  </script>
+</AdminData>
