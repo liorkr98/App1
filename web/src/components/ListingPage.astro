@@ -300,6 +300,7 @@ const shareHref = whatsappShareUrl(
     sold={sold}
   />
 
+  <Fragment slot="top"><slot name="top" /></Fragment>
   <Fragment slot="after">
     {/* A sold listing is a record, not a live offer. The WhatsApp dock would
         invite a message about something that is gone. */}

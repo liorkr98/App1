@@ -18,7 +18,12 @@ import { blankFacts, reconcileFacts } from '@/features/listings/fact-entry';
 import { photoCoverage } from '@/features/listings/photo-coverage';
 import { isPhotoRoom, type PhotoRoom } from '@/features/listings/photo-rooms';
 import { LISTING_CATEGORIES, schemaFor } from '@/features/listings/schemas';
-import { CATALOGUE, NEW_LISTING_TEMPLATE, pickerTemplates } from '@/features/templates/manifest';
+import {
+  CATALOGUE,
+  NEW_LISTING_TEMPLATE,
+  pickerTemplates,
+  templateFits,
+} from '@/features/templates/manifest';
 import { suggestTemplate } from '@/features/templates/suggest';
 import { cleanPlanRooms, cleanVideo, type ListingVideo } from '@/features/listings/rich-media';
 import type { MediaExtras } from '../../lib/listing-row';
@@ -43,6 +48,7 @@ import { recordEditorEvent } from '../../lib/editor-events';
 import { recordListingEvent } from '../../lib/listing-events';
 import { splitSse } from '@/features/listings/sse';
 import type { AgentProfile } from '@/features/agents/profile';
+import type { TemplateId } from '@/types/listing';
 import { supabase, supabaseConfigured } from '../../lib/supabase';
 import { ConsentStep } from './ConsentStep';
 import { DescriptionStep, sourceOf, type SuggestAnswer, type SuggestSource } from './DescriptionStep';
@@ -169,6 +175,8 @@ export default function Editor() {
    */
   const freshListing = useRef(true);
   const templateChosen = useRef(false);
+  /** The design a /templates/ page sent us with, until the category confirms it fits. */
+  const requestedTemplate = useRef<TemplateId | undefined>(undefined);
 
   /**
    * The photographs live HERE and not in EditorState.
@@ -988,7 +996,33 @@ export default function Editor() {
       window.history.replaceState({}, '', qs ? `/new/?${qs}` : '/new/');
     }
     if (params.get('id')) skipDraftRestore.current = true;
+    // "לבנות דף בעיצוב הזה" on /templates/{id}/ arrives with ?template={id}.
+    // Only a catalogue id is honoured; anything else is ignored, not guessed.
+    const wanted = params.get('template');
+    if (wanted !== null) {
+      params.delete('template');
+      const qs = params.toString();
+      window.history.replaceState({}, '', qs ? `/new/?${qs}` : '/new/');
+      const id = CATALOGUE.find((candidate) => candidate === wanted);
+      if (id && !params.get('id')) {
+        requestedTemplate.current = id;
+        templateChosen.current = true;
+        setState((current) => ({ ...current, template: id }));
+      }
+    }
   }, []);
+
+  // A design asked for by link that is not drawn for the category the
+  // seller then picks (Showroom, then "a flat") is let go: the automatic
+  // choice takes over rather than the page silently drawing the fallback.
+  useEffect(() => {
+    const id = requestedTemplate.current;
+    if (!id || !state.category) return;
+    requestedTemplate.current = undefined;
+    if (templateFits(id, state.category)) return;
+    templateChosen.current = false;
+    setState((current) => (current.template === id ? { ...current, template: NEW_LISTING_TEMPLATE } : current));
+  }, [state.category]);
 
   /**
    * Opens an EXISTING listing when the dashboard sent us to one.

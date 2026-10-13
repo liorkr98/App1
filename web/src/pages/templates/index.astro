@@ -1,0 +1,76 @@
+---
+import Site from '../../layouts/Site.astro';
+import { t } from '../../lib/i18n';
+import { fitsKey, templateExamples, templatePath } from '../../lib/template-pages';
+import '../../styles/templates.css';
+
+/**
+ * The template gallery (SEO plan, phase 2): every design in the catalogue,
+ * each with its first screen, its name and who it is for. Indexable — this
+ * is the page someone searching for a property-page template should find.
+ *
+ * The pictures are the homepage's screenshots of the real pages
+ * (public/home/templates/{id}.webp); scripts/verify-template-ids.mjs fails
+ * the build when one is missing.
+ */
+const origin = Astro.site ?? new URL(Astro.url.origin);
+const url = new URL('/templates/', origin).href;
+const examples = templateExamples();
+const name = (id: string) => t(`editor.templates.${id}`);
+
+const ld = [
+  {
+    '@type': 'CollectionPage',
+    '@id': `${url}#page`,
+    name: t('templates.metaTitle'),
+    description: t('templates.lead'),
+    url,
+    inLanguage: 'he-IL',
+    isPartOf: { '@id': new URL('/#website', origin).href },
+    mainEntity: {
+      '@type': 'ItemList',
+      numberOfItems: examples.length,
+      itemListElement: examples.map((example, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        url: new URL(templatePath(example.id), origin).href,
+        name: name(example.id),
+      })),
+    },
+  },
+];
+---
+
+<Site title={`${t('templates.metaTitle')} · ${t('common.brand')}`} description={t('templates.lead')} ld={ld}>
+  <section class="site-sect tp-head">
+    <div class="site-shell">
+      <p class="site-eyebrow">{t('templates.eyebrow')} · <bdi>{examples.length}</bdi></p>
+      <h1 class="site-h2">{t('templates.metaTitle')}</h1>
+      <p class="site-sub">{t('templates.lead')}</p>
+    </div>
+  </section>
+
+  <ul class="site-shell tp-grid">
+    {examples.map((example, index) => (
+      <li>
+        <a class="tp-card" href={templatePath(example.id)}>
+          <span class="tp-screen">
+            <img
+              src={`/home/templates/${example.id}.webp`}
+              alt=""
+              width="400"
+              height="866"
+              loading={index < 4 ? 'eager' : 'lazy'}
+              decoding="async"
+            />
+          </span>
+          <span class="tp-name">
+            {name(example.id)}
+            <span class="tp-fits">{t(fitsKey(example))}</span>
+          </span>
+          <span class="tp-note">{t(`editor.templates.${example.id}Note`)}</span>
+        </a>
+      </li>
+    ))}
+  </ul>
+</Site>

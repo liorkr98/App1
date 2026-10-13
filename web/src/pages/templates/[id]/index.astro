@@ -1,0 +1,116 @@
+---
+import Prose from '../../../components/Prose.astro';
+import Site from '../../../layouts/Site.astro';
+import { t } from '../../../lib/i18n';
+import {
+  buildPath,
+  demoPath,
+  fitsKey,
+  templateExamples,
+  templatePath,
+} from '../../../lib/template-pages';
+import '../../../styles/templates.css';
+
+/**
+ * One page per catalogue template (SEO plan, phase 2): what it looks like,
+ * its one movement, who it suits and when to pick it, then the two things a
+ * visitor came to do — open the live example, or build a page with it.
+ *
+ * The copy is `templates.{id}.lead` and `.fits` in locales/he.json. It
+ * describes only what the template draws today; a sentence about a motion
+ * the template does not have is a promise the demo one tap away breaks.
+ */
+export function getStaticPaths() {
+  const examples = templateExamples();
+  return examples.map((example) => ({
+    params: { id: example.id },
+    props: { example, others: examples.filter((other) => other.id !== example.id) },
+  }));
+}
+
+const { example, others } = Astro.props;
+const { id } = example;
+const origin = Astro.site ?? new URL(Astro.url.origin);
+const url = new URL(templatePath(id), origin).href;
+const name = t(`editor.templates.${id}`);
+const note = t(`editor.templates.${id}Note`);
+const lead = t(`templates.${id}.lead`);
+const fits = t(`templates.${id}.fits`);
+const image = new URL(`/home/templates/${id}.webp`, origin).href;
+const galleryUrl = new URL('/templates/', origin).href;
+
+const ld = [
+  {
+    '@type': 'CreativeWork',
+    '@id': `${url}#template`,
+    name: `${t('templates.title')}: ${name}`,
+    description: note,
+    abstract: lead,
+    url,
+    image,
+    inLanguage: 'he-IL',
+    genre: t(fitsKey(example)),
+    isPartOf: { '@id': `${galleryUrl}#page` },
+    publisher: { '@id': new URL('/#organization', origin).href },
+  },
+  {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: t('templates.home'), item: new URL('/', origin).href },
+      { '@type': 'ListItem', position: 2, name: t('templates.title'), item: galleryUrl },
+      { '@type': 'ListItem', position: 3, name, item: url },
+    ],
+  },
+];
+---
+
+<Site
+  title={`${name} · ${t('templates.title')} · ${t('common.brand')}`}
+  description={note}
+  ld={ld}
+>
+  <article class="site-sect site-shell tp-detail">
+    <nav class="tp-crumbs" aria-label={t('templates.all')}>
+      <a href="/">{t('templates.home')}</a>
+      <span aria-hidden="true">/</span>
+      <a href="/templates/">{t('templates.title')}</a>
+      <span aria-hidden="true">/</span>
+      <span aria-current="page">{name}</span>
+    </nav>
+
+    <div class="tp-detail-grid">
+      <div class="tp-detail-text">
+        <p class="site-eyebrow">{t('templates.title')} · {t(fitsKey(example))}</p>
+        <h1 class="site-h2">{name}</h1>
+        <p class="site-sub"><Prose text={note} /></p>
+
+        <div class="site-actions tp-actions">
+          <a class="site-btn site-btn-primary" href={demoPath(id)}>{t('templates.see')}</a>
+          <a class="site-btn site-btn-ghost" href={buildPath(id)}>{t('templates.build')}</a>
+        </div>
+
+        <section class="tp-copy">
+          <h2 class="tp-h3">{t('templates.lookTitle')}</h2>
+          <p><Prose text={lead} /></p>
+        </section>
+        <section class="tp-copy">
+          <h2 class="tp-h3">{t('templates.fitsTitle')}</h2>
+          <p><Prose text={fits} /></p>
+        </section>
+      </div>
+
+      <a class="tp-screen tp-detail-screen" href={demoPath(id)} aria-label={`${t('templates.see')}: ${name}`}>
+        <img src={`/home/templates/${id}.webp`} alt="" width="400" height="866" decoding="async" />
+      </a>
+    </div>
+
+    <section class="tp-more">
+      <h2 class="tp-h3"><a href="/templates/">{t('templates.all')}</a></h2>
+      <ul class="tp-chips">
+        {others.map((other) => (
+          <li><a href={templatePath(other.id)}>{t(`editor.templates.${other.id}`)}</a></li>
+        ))}
+      </ul>
+    </section>
+  </article>
+</Site>

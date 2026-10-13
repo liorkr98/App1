@@ -1269,5 +1269,87 @@
     "unavailable": "",
     "privacy": "",
     "done": ""
+  },
+  "templates": {
+    "title": "",
+    "metaTitle": "",
+    "eyebrow": "",
+    "lead": "",
+    "open": "",
+    "see": "",
+    "build": "",
+    "forHomes": "",
+    "forCars": "",
+    "forBoth": "",
+    "lookTitle": "",
+    "fitsTitle": "",
+    "all": "",
+    "home": "",
+    "demo": "",
+    "demoNote": "",
+    "aurora": {
+      "lead": "",
+      "fits": ""
+    },
+    "prints": {
+      "lead": "",
+      "fits": ""
+    },
+    "keytag": {
+      "lead": "",
+      "fits": ""
+    },
+    "streetsign": {
+      "lead": "",
+      "fits": ""
+    },
+    "heliograph": {
+      "lead": "",
+      "fits": ""
+    },
+    "walk": {
+      "lead": "",
+      "fits": ""
+    },
+    "blueprint": {
+      "lead": "",
+      "fits": ""
+    },
+    "monolith": {
+      "lead": "",
+      "fits": ""
+    },
+    "atelier": {
+      "lead": "",
+      "fits": ""
+    },
+    "glass": {
+      "lead": "",
+      "fits": ""
+    },
+    "poster": {
+      "lead": "",
+      "fits": ""
+    },
+    "zine": {
+      "lead": "",
+      "fits": ""
+    },
+    "ticket": {
+      "lead": "",
+      "fits": ""
+    },
+    "showroom": {
+      "lead": "",
+      "fits": ""
+    },
+    "dashboard": {
+      "lead": "",
+      "fits": ""
+    },
+    "dossier": {
+      "lead": "",
+      "fits": ""
+    }
   }
 }

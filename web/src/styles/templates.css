@@ -1,0 +1,172 @@
+/*
+  The public template pages: /templates/ and /templates/{id}/.
+  Onyx site tokens only, logical properties throughout. The phone frame is
+  the homepage's (.hm-device-screen), redrawn here rather than imported so
+  these pages do not carry the whole homepage sheet.
+*/
+
+.tp-head {
+  padding-block-end: 1.5rem;
+}
+
+.tp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 160px), 1fr));
+  gap: 2rem 1.2rem;
+  margin: 0 auto;
+  padding-block: 0 clamp(3.5rem, 9vw, 6.5rem);
+  list-style: none;
+}
+
+.tp-card {
+  display: grid;
+  align-content: start;
+  gap: 0.35rem;
+  color: var(--ls-ink);
+  text-decoration: none;
+}
+
+.tp-screen {
+  display: block;
+  aspect-ratio: 400 / 866;
+  max-inline-size: 100%;
+  border-radius: 26px;
+  border: 6px solid #1d1e1a;
+  overflow: hidden;
+  background: #0b0c0a;
+  box-shadow: 0 30px 50px -30px rgba(0, 0, 0, 0.9);
+}
+
+.tp-screen img {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+.tp-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.5rem;
+  margin-block-start: 0.5rem;
+  font-weight: 800;
+  font-size: 1.05rem;
+}
+
+.tp-fits {
+  padding-inline: 0.5rem;
+  border-radius: 99px;
+  border: 1px solid var(--ls-line);
+  color: var(--ls-ink-2);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.tp-note {
+  color: var(--ls-ink-2);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+/* ---------- One template ---------- */
+
+.tp-crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-block-end: 2rem;
+  color: var(--ls-ink-2);
+  font-size: 0.9rem;
+}
+
+.tp-crumbs a {
+  color: inherit;
+}
+
+.tp-detail-grid {
+  display: grid;
+  gap: 2.5rem;
+  align-items: start;
+}
+
+.tp-actions {
+  margin-block: 1.6rem 2.2rem;
+}
+
+.tp-copy {
+  max-inline-size: 60ch;
+}
+
+.tp-copy + .tp-copy {
+  margin-block-start: 1.6rem;
+}
+
+.tp-copy p {
+  margin: 0;
+  color: var(--ls-ink-2);
+  line-height: 1.75;
+}
+
+.tp-h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.tp-h3 a {
+  color: inherit;
+}
+
+.tp-detail-screen {
+  inline-size: min(100%, 300px);
+  justify-self: center;
+}
+
+.tp-more {
+  margin-block-start: clamp(3rem, 8vw, 5rem);
+  padding-block-start: 2rem;
+  border-block-start: 1px solid var(--ls-line);
+}
+
+.tp-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.8rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tp-chips a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+  padding-inline: 1rem;
+  border-radius: 99px;
+  border: 1px solid var(--ls-line);
+  color: var(--ls-ink);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.tp-chips a:hover {
+  border-color: var(--ls-ink-2);
+}
+
+@media (min-width: 860px) {
+  .tp-detail-grid {
+    grid-template-columns: minmax(0, 1fr) 300px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tp-card .tp-screen {
+    transition: transform 0.5s var(--ls-ease-expo);
+  }
+
+  .tp-card:hover .tp-screen,
+  .tp-card:focus-visible .tp-screen {
+    transform: translateY(-6px);
+  }
+}

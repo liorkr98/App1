@@ -1,3 +1,4 @@
+import { CATALOGUE } from '@/features/templates/manifest';
 import { t } from './i18n';
 
 /**
@@ -19,6 +20,8 @@ export const ALTERNATE_NAMES = ['AmudSell', 'Amud Mechira', 'עמוד-מכירה
 export const PUBLIC_PAGES: readonly { path: string; title: () => string }[] = [
   { path: '/', title: () => t('seo.home') },
   { path: '/pricing/', title: () => t('pricing.title') },
+  { path: '/templates/', title: () => t('templates.metaTitle') },
+  ...CATALOGUE.map((id) => ({ path: `/templates/${id}/`, title: () => t(`editor.templates.${id}`) })),
   { path: '/guide/photos/', title: () => t('guide.photosTitle') },
   { path: '/about/', title: () => t('legal.about') },
   { path: '/contact/', title: () => t('legal.contact') },

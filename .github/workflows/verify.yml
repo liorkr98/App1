@@ -143,6 +143,15 @@ jobs:
       - name: Verify the structured-data check actually fires
         run: bash scripts/verify-structured-data-fires.sh
 
+      # Every link on a deployed page leads to something deployed: the
+      # homepage's examples once pointed into /template-check/, which
+      # .assetsignore leaves out, and 404ed only on the live site.
+      - name: Verify public links resolve on the deployed set
+        run: node scripts/verify-public-links.mjs
+
+      - name: Verify the public-links check actually fires
+        run: bash scripts/verify-public-links-fires.sh
+
       # docs/PRICING.md §9: no price outside the price list.
       - name: Verify no price is written outside the price list
         run: node scripts/verify-no-price-literals.mjs
