@@ -1,0 +1,11 @@
+---
+import AudiencePage from '../components/AudiencePage.astro';
+
+/** For estate agents (SEO plan, phase 3). The copy is audiences.agents.* in locales/he.json. */
+---
+<AudiencePage
+  key="agents"
+  examples={['blueprint', 'walk', 'monolith']}
+  plans={['agent', 'office']}
+  audienceType="BusinessAudience"
+/>

@@ -1,0 +1,18 @@
+---
+import AudiencePage from '../components/AudiencePage.astro';
+import { planByKey } from '@/features/billing/price';
+
+/**
+ * For private sellers (SEO plan, phase 3). The copy is audiences.private.*
+ * in locales/he.json; how long a bought page stays up comes from the price
+ * list, so the answer cannot drift from what the database enforces.
+ */
+const days = (key: 'private_sale' | 'private_rent' | 'private_car') => planByKey(key).pageTtlDays ?? 0;
+---
+<AudiencePage
+  key="private"
+  examples={['aurora', 'ticket', 'keytag']}
+  plans={['private_sale', 'private_rent', 'private_car']}
+  answers={{ sale: days('private_sale'), rent: days('private_rent'), car: days('private_car') }}
+  audienceType="PeopleAudience"
+/>

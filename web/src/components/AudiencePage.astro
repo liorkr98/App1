@@ -1,0 +1,144 @@
+---
+import type { TemplateId } from '@/types/listing';
+import type { PlanKey } from '@/features/billing/pricing-config';
+import { planByKey } from '@/features/billing/price';
+import Msg from './Msg.astro';
+import Prose from './Prose.astro';
+import Site from '../layouts/Site.astro';
+import { parts, t } from '../lib/i18n';
+import { amount, noteValues, offerLd, termsPath } from '../lib/plan-copy';
+import { demoPath } from '../lib/template-pages';
+import '../styles/templates.css';
+import '../styles/audience.css';
+
+/**
+ * One product page per audience (SEO plan, phase 3): /agents/, /dealers/
+ * and /private/. Same shape, different copy, examples and plans.
+ *
+ * The copy is `audiences.{key}.*` in locales/he.json and claims only what
+ * the product does today. Prices come from the price list through the same
+ * helpers /pricing uses; this page shows the REGULAR price and leaves the
+ * launch offer to /pricing, which alone can prove a seat remains.
+ * DISPLAY ONLY — nothing here reads or decides entitlement (CLAUDE.md §8).
+ */
+interface Props {
+  key: 'agents' | 'dealers' | 'private';
+  examples: readonly TemplateId[];
+  plans: readonly PlanKey[];
+  /** Placeholder values for the questions' answers, from the price list. */
+  answers?: Record<string, string | number>;
+  /** schema.org audience type: BusinessAudience or PeopleAudience. */
+  audienceType: 'BusinessAudience' | 'PeopleAudience';
+}
+
+const { key, examples, plans: planKeys, answers = {}, audienceType } = Astro.props;
+const origin = Astro.site ?? new URL(Astro.url.origin);
+const url = new URL(Astro.url.pathname, origin).href;
+const plans = planKeys.map(planByKey);
+const free = planByKey('free');
+const k = (name: string) => `audiences.${key}.${name}`;
+const benefits = [1, 2, 3, 4].map((n) => ({ title: t(k(`b${n}t`)), body: k(`b${n}`) }));
+const questions = [1, 2, 3].map((n) => ({ q: t(k(`q${n}`)), a: k(`a${n}`) }));
+const values = { ...noteValues(free), ...answers };
+/** A message with a {slot} goes through Msg; one without through Prose, which <bdi>s Latin like "QR". */
+const hasSlot = (path: string) => parts(path).some((part) => !('text' in part));
+
+const ld = [
+  {
+    '@type': 'WebPage',
+    '@id': `${url}#page`,
+    name: t(k('metaTitle')),
+    description: t(k('lead')),
+    url,
+    inLanguage: 'he-IL',
+    isPartOf: { '@id': new URL('/#website', origin).href },
+    about: { '@id': new URL('/#organization', origin).href },
+    audience: { '@type': audienceType, audienceType: t(k('eyebrow')) },
+  },
+  {
+    '@type': 'Product',
+    name: `${t('common.brand')} · ${t(k('eyebrow'))}`,
+    description: t(k('lead')),
+    url,
+    brand: { '@id': new URL('/#organization', origin).href },
+    offers: plans.map((plan) => offerLd(plan, new URL('/pricing/', origin).href, t(`billing.plans.${plan.key}`))),
+  },
+  {
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: t('templates.home'), item: new URL('/', origin).href },
+      { '@type': 'ListItem', position: 2, name: t(k('eyebrow')), item: url },
+    ],
+  },
+];
+---
+
+<Site title={`${t(k('metaTitle'))} · ${t('common.brand')}`} description={t(k('lead'))} ld={ld}>
+  <section class="site-sect au-hero">
+    <div class="site-shell">
+      <p class="site-eyebrow">{t(k('eyebrow'))}</p>
+      <h1 class="site-h2">{t(k('title'))}</h1>
+      <p class="site-sub"><Prose text={t(k('lead'))} /></p>
+      <div class="site-actions au-actions">
+        <a class="site-btn site-btn-primary" href="/new/?fresh=1">{t('pricing.start')}</a>
+        <a class="site-btn site-btn-ghost" href="#examples">{t('audiences.examplesTitle')}</a>
+      </div>
+      <p class="site-note"><Msg path="audiences.freeLine" values={values} /></p>
+    </div>
+  </section>
+
+  <section class="site-shell au-benefits">
+    <ul>
+      {benefits.map((benefit) => (
+        <li>
+          <h2 class="tp-h3">{benefit.title}</h2>
+          <p>{hasSlot(benefit.body) ? <Msg path={benefit.body} values={values} /> : <Prose text={t(benefit.body)} />}</p>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <section class="site-sect site-shell" id="examples">
+    <h2 class="au-h2">{t('audiences.examplesTitle')}</h2>
+    <ul class="tp-grid au-examples">
+      {examples.map((id) => (
+        <li>
+          <a class="tp-card" href={demoPath(id)}>
+            <span class="tp-screen">
+              <img src={`/home/templates/${id}.webp`} alt="" width="400" height="866" loading="lazy" decoding="async" />
+            </span>
+            <span class="tp-name">{t(`editor.templates.${id}`)}</span>
+            <span class="tp-note">{t(`editor.templates.${id}Note`)}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <section class="site-shell au-plans">
+    <h2 class="au-h2">{t('audiences.planTitle')}</h2>
+    <ul>
+      {plans.map((plan) => (
+        <li>
+          <p class="au-plan-name">{t(`billing.plans.${plan.key}`)}</p>
+          <p class="au-plan-sum"><Msg path={termsPath(plan)} values={{ price: amount(plan) }} /></p>
+          <p class="au-plan-note"><Msg path={`billing.notes.${plan.key}`} values={noteValues(plan)} /></p>
+        </li>
+      ))}
+    </ul>
+    <p><a class="site-link" href="/pricing/">{t('audiences.allPrices')}</a></p>
+  </section>
+
+  <section class="site-sect site-shell au-faq">
+    <h2 class="au-h2">{t('audiences.faqTitle')}</h2>
+    <dl>
+      {questions.map((item) => (
+        <div>
+          <dt>{item.q}</dt>
+          <dd>{hasSlot(item.a) ? <Msg path={item.a} values={values} /> : <Prose text={t(item.a)} />}</dd>
+        </div>
+      ))}
+    </dl>
+    <a class="site-btn site-btn-primary" href="/new/?fresh=1">{t('pricing.start')}</a>
+  </section>
+</Site>

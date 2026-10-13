@@ -20,6 +20,9 @@ export const ALTERNATE_NAMES = ['AmudSell', 'Amud Mechira', 'עמוד-מכירה
 export const PUBLIC_PAGES: readonly { path: string; title: () => string }[] = [
   { path: '/', title: () => t('seo.home') },
   { path: '/pricing/', title: () => t('pricing.title') },
+  { path: '/agents/', title: () => t('audiences.agents.metaTitle') },
+  { path: '/dealers/', title: () => t('audiences.dealers.metaTitle') },
+  { path: '/private/', title: () => t('audiences.private.metaTitle') },
   { path: '/templates/', title: () => t('templates.metaTitle') },
   ...CATALOGUE.map((id) => ({ path: `/templates/${id}/`, title: () => t(`editor.templates.${id}`) })),
   { path: '/guide/photos/', title: () => t('guide.photosTitle') },
