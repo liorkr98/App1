@@ -358,6 +358,11 @@ jobs:
         working-directory: web
         run: npx playwright test signature-motion
 
+      - name: Example links open, and none lead into a CI fixture
+        if: ${{ !cancelled() }}
+        working-directory: web
+        run: npx playwright test links
+
       - name: Screenshots (reported, not blocking, for now)
         if: ${{ !cancelled() }}
         continue-on-error: true
