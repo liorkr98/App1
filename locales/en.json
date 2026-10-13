@@ -864,7 +864,23 @@
     "groupBrand": "",
     "previewNote": "",
     "nextCta": "",
-    "previewWa": ""
+    "previewWa": "",
+    "pageTitle": "",
+    "pageLead": "",
+    "pageOn": "",
+    "pageOff": "",
+    "pageLink": "",
+    "pageCopy": "",
+    "pageCopied": "",
+    "pageHandle": "",
+    "pageHandleHint": "",
+    "pageSave": "",
+    "pageSaved": "",
+    "pageFailed": "",
+    "pageHandleFree": "",
+    "pageHandle_format": "",
+    "pageHandle_reserved": "",
+    "pageHandle_taken": ""
   },
   "dash": {
     "title": "",
@@ -966,7 +982,8 @@
     "restoredFailed": "",
     "more": "",
     "areaRefresh": "",
-    "areaRefreshed": ""
+    "areaRefreshed": "",
+    "countingNote": ""
   },
   "legal": {
     "terms": "",
@@ -1521,5 +1538,15 @@
       "s7Title": "",
       "s7": ""
     }
+  },
+  "agentPage": {
+    "descriptionHomes": "",
+    "descriptionCars": "",
+    "whatsapp": "",
+    "call": "",
+    "liveHomes": "",
+    "liveCars": "",
+    "sold": "",
+    "empty": ""
   }
 }

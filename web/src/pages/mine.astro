@@ -48,6 +48,7 @@ import '../styles/dash.css';
 <Site title={`${t('dash.title')} · ${t('common.brand')}`} robots="noindex,nofollow" account={false}>
   <Fragment slot="nav">
     <a class="site-link" href="/me/">{t('agent.editDetails')}</a>
+    <a class="site-link" id="nav-page" href="/me/" hidden>{t('agent.pageTitle')}</a>
     <a class="site-link" id="nav-admin" href="/admin/" hidden>{t('admin.link')}</a>
     <a class="site-btn site-btn-primary dash-new" href="/new/?fresh=1">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
@@ -143,6 +144,7 @@ import '../styles/dash.css';
         <span class="kpi-note plain" id="k-link-note">{t('dash.kpiLinkNote')}</span>
       </div>
     </section>
+    <p class="kpi-how" id="kpi-how" hidden>{t('dash.countingNote')}</p>
 
     {/*
       Present from the start, hidden by script. The filter is a radio group
@@ -203,6 +205,8 @@ import '../styles/dash.css';
       } from '@/features/analytics/dashboard-stats';
       import { formatValue, parts, t, type Values } from '../lib/i18n';
       import { recordListingEvent } from '../lib/listing-events';
+      import { markOwner } from '../lib/owner-cookie';
+      import { fetchAll } from '@/features/analytics/paging';
       import { loadProfile } from '../lib/profile';
       import { supabase, supabaseConfigured } from '../lib/supabase';
       import { revealIfSiteAdmin } from '../lib/site-admin';
@@ -632,6 +636,7 @@ import '../styles/dash.css';
           ...sentence(daily ? 'dash.leadLive' : 'dash.leadLiveAll', { live: live.length, taps }),
         );
         $('kpis').hidden = false;
+        $('kpi-how').hidden = false;
       };
 
       // ------------------------------------------------------------------
@@ -1236,9 +1241,23 @@ import '../styles/dash.css';
         if (!supabaseConfigured) return show('failed');
         const client = supabase();
         const { data: session } = await client.auth.getSession();
+        markOwner(Boolean(session.session));
         if (!session.session) return show('anon');
 
         void revealIfSiteAdmin(document.getElementById('nav-admin'));
+        // The agent page (0041), when it is on: a link to it in the header.
+        void client
+          .from('profiles')
+          .select('page_enabled, page_code, page_handle')
+          .maybeSingle()
+          .then(({ data: page }) => {
+            const row = page as { page_enabled?: boolean; page_code?: string | null; page_handle?: string | null } | null;
+            const key = row?.page_handle ?? row?.page_code;
+            const nav = document.getElementById('nav-page') as HTMLAnchorElement | null;
+            if (!nav || !row?.page_enabled || !key) return;
+            nav.href = `/agent/${key}/`;
+            nav.hidden = false;
+          });
 
         /*
          * No `.eq('owner_id', …)`, on purpose.
@@ -1254,21 +1273,46 @@ import '../styles/dash.css';
         if (error) return show('failed');
         rows = (data ?? []) as Row[];
 
+        /*
+         * Every row, page by page (paging.ts). PostgREST stops at 1000 rows a
+         * request without a word, and the daily view is one row per listing
+         * per day: 34 live listings over 30 days already passed it. Each read
+         * has a stable order, so no page repeats or skips a row.
+         */
+        const since = windowDays[0] ?? '';
         const [counts, perDay, perDayReads, perLink] = await Promise.all([
-          client.from('listing_event_counts').select('listing_id, views, wa_taps'),
+          fetchAll((from, to) =>
+            client.from('listing_event_counts').select('listing_id, views, wa_taps').order('listing_id').range(from, to),
+          ),
           // The same RLS: listing_event_daily is security_invoker (0029).
-          client
-            .from('listing_event_daily')
-            .select('listing_id, day, views, wa_taps')
-            .gte('day', windowDays[0] ?? ''),
+          fetchAll((from, to) =>
+            client
+              .from('listing_event_daily')
+              .select('listing_id, day, views, wa_taps')
+              .gte('day', since)
+              .order('listing_id')
+              .order('day')
+              .range(from, to),
+          ),
           // Its own request: a database without 0030 answers this with an
           // error, and only the read-through numbers go missing.
-          client
-            .from('listing_event_daily')
-            .select('listing_id, day, views, read_to_agent')
-            .gte('day', windowDays[0] ?? ''),
+          fetchAll((from, to) =>
+            client
+              .from('listing_event_daily')
+              .select('listing_id, day, views, read_to_agent')
+              .gte('day', since)
+              .order('listing_id')
+              .order('day')
+              .range(from, to),
+          ),
           // Its own request too: without 0035 only the time-to-link tile goes.
-          client.from('listing_time_to_link').select('listing_id, started_at, published_at, first_share_at'),
+          fetchAll((from, to) =>
+            client
+              .from('listing_time_to_link')
+              .select('listing_id, started_at, published_at, first_share_at')
+              .order('listing_id')
+              .range(from, to),
+          ),
         ]);
 
         if (!counts.error && counts.data) {

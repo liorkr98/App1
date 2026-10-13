@@ -144,6 +144,7 @@ const themeColor = ls === 'onyx' ? '#0b0c0a' : '#f6f4ef';
 
     {account && (
       <script>
+        import { markOwner } from '../lib/owner-cookie';
         import { supabase, supabaseConfigured } from '../lib/supabase';
 
         if (supabaseConfigured) {
@@ -153,6 +154,7 @@ const themeColor = ls === 'onyx' ? '#0b0c0a' : '#f6f4ef';
           const paint = async () => {
             const { data } = await client.auth.getSession();
             const signedIn = Boolean(data.session);
+            markOwner(signedIn);
             if (enter) enter.hidden = signedIn;
             if (mine) mine.hidden = !signedIn;
           };

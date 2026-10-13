@@ -253,8 +253,140 @@ const sampleTitle = sample.title.split('\n');
           <a class="site-btn site-btn-primary" href="/new/?fresh=1">{t('agent.nextCta')}</a>
         </p>
       </form>
+
+      {/* The agent page (0041): agents, offices and dealers only. */}
+      <section class="me-group me-page" id="g-page" hidden>
+        <h2>{t('agent.pageTitle')}</h2>
+        <p class="hint">{t('agent.pageLead')}</p>
+        <div class="field">
+          <button type="button" class="site-btn site-btn-primary" id="page-on">{t('agent.pageOn')}</button>
+          <button type="button" class="quiet" id="page-off" hidden>{t('agent.pageOff')}</button>
+        </div>
+        <div class="field" id="page-live" hidden>
+          <span class="label">{t('agent.pageLink')}</span>
+          <p class="me-page-link"><a id="page-link" dir="ltr" href="#"></a></p>
+          <button type="button" class="quiet" id="page-copy">{t('agent.pageCopy')}</button>
+        </div>
+        <div class="field" id="page-name" hidden>
+          <label for="page-handle">{t('agent.pageHandle')}</label>
+          <div class="licence-row">
+            <input id="page-handle" type="text" dir="ltr" inputmode="url" autocapitalize="none" autocomplete="off" spellcheck="false" maxlength="30" />
+            <button type="button" class="quiet" id="page-save">{t('agent.pageSave')}</button>
+          </div>
+          <p class="hint">{t('agent.pageHandleHint')}</p>
+          <p class="hint" id="page-said" role="status" aria-live="polite"></p>
+        </div>
+      </section>
     </div>
   </div>
+
+  <script>
+    import { supabase, supabaseConfigured } from '../lib/supabase';
+    import { t } from '../lib/i18n';
+
+    /*
+     * The agent page switch (migration 0041). Every rule — who may have a
+     * page, the handle's format, reserved words, uniqueness — is decided by
+     * the database functions; this only asks and shows the answer.
+     */
+    const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+    const AGENTS = ['agent', 'office', 'dealer'];
+    const group = $('g-page');
+    const on = $<HTMLButtonElement>('page-on');
+    const off = $<HTMLButtonElement>('page-off');
+    const live = $('page-live');
+    const named = $('page-name');
+    const link = $<HTMLAnchorElement>('page-link');
+    const handle = $<HTMLInputElement>('page-handle');
+    const said = $('page-said');
+
+    const kindNow = () => document.querySelector<HTMLInputElement>('input[name="accountKind"]:checked')?.value ?? '';
+
+    function paint(enabled: boolean, code: string | null, chosen: string | null) {
+      on.hidden = enabled;
+      off.hidden = !enabled;
+      live.hidden = !enabled;
+      named.hidden = !enabled;
+      const path = `/agent/${chosen ?? code ?? ''}/`;
+      link.href = path;
+      link.textContent = `${window.location.host}${path}`;
+      if (chosen !== null && document.activeElement !== handle) handle.value = chosen;
+    }
+
+    async function start() {
+      if (!supabaseConfigured) return;
+      const client = supabase();
+      const { data: session } = await client.auth.getSession();
+      if (!session.session) return;
+      const { data } = await client
+        .from('profiles')
+        .select('account_kind, page_enabled, page_code, page_handle')
+        .maybeSingle();
+      const row = (data ?? {}) as { account_kind?: string; page_enabled?: boolean; page_code?: string | null; page_handle?: string | null };
+      const show = (kind: string) => {
+        group.hidden = !AGENTS.includes(kind);
+      };
+      show(row.account_kind ?? kindNow());
+      for (const input of document.querySelectorAll<HTMLInputElement>('input[name="accountKind"]')) {
+        input.addEventListener('change', () => show(input.value));
+      }
+      let code = row.page_code ?? null;
+      let chosen = row.page_handle ?? null;
+      paint(Boolean(row.page_enabled), code, chosen);
+
+      on.addEventListener('click', async () => {
+        on.disabled = true;
+        const { data: given, error } = await client.rpc('enable_agent_page');
+        on.disabled = false;
+        if (error) {
+          said.textContent = t('agent.pageFailed');
+          return;
+        }
+        code = String(given);
+        paint(true, code, chosen);
+      });
+      off.addEventListener('click', async () => {
+        const { error } = await client.rpc('disable_agent_page');
+        if (!error) paint(false, code, chosen);
+      });
+      $('page-copy').addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(link.href);
+          said.textContent = t('agent.pageCopied');
+        } catch {
+          said.textContent = link.href;
+        }
+      });
+
+      let timer = 0;
+      handle.addEventListener('input', () => {
+        window.clearTimeout(timer);
+        const wanted = handle.value.trim().toLowerCase();
+        if (!wanted) {
+          said.textContent = '';
+          return;
+        }
+        timer = window.setTimeout(async () => {
+          const { data: problem } = await client.rpc('agent_handle_available', { p_handle: wanted });
+          said.textContent = problem ? t(`agent.pageHandle_${problem}`) : t('agent.pageHandleFree');
+        }, 400);
+      });
+      $('page-save').addEventListener('click', async () => {
+        const { data: saved, error } = await client.rpc('set_agent_handle', { p_handle: handle.value });
+        if (error) {
+          const reason = ['format', 'reserved', 'taken'].find((word) => error.message.includes(word));
+          said.textContent = t(reason ? `agent.pageHandle_${reason}` : 'agent.pageFailed');
+          return;
+        }
+        chosen = (saved as string | null) ?? null;
+        handle.value = chosen ?? '';
+        said.textContent = t('agent.pageSaved');
+        paint(true, code, chosen);
+      });
+    }
+
+    void start();
+  </script>
 
   <script>
       import { ACCENTS } from '@/features/agents/accents';
@@ -264,6 +396,7 @@ const sampleTitle = sample.title.split('\n');
       import { removeAgencyLogo, uploadAgencyLogo } from '../lib/agency-logo';
       import { checkLicence, isAccountKind, loadAccount, saveAccountKind } from '../lib/account';
       import { loadProfile, saveProfile } from '../lib/profile';
+      import { markOwner } from '../lib/owner-cookie';
       import { revealIfSiteAdmin } from '../lib/site-admin';
       import { supabaseConfigured } from '../lib/supabase';
 
@@ -467,6 +600,7 @@ const sampleTitle = sample.title.split('\n');
 
         const result = await loadProfile();
 
+        markOwner(!('signedOut' in result));
         if ('signedOut' in result) {
           panel.hidden = true;
           gate.hidden = false;

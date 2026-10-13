@@ -6,6 +6,12 @@ done, so the next session knows.
 
 ## Switch on
 
+- [ ] **Agent pages and true view counts: migration 0041.** Supabase → SQL
+  editor → paste `supabase/migrations/0041_agent_pages.sql` → Run, BEFORE
+  merging the PR that adds it. It is safe to run twice. Without it the
+  agent page section in /me cannot turn a page on, and /agent/... answers
+  "not found"; nothing else breaks. The new view counting needs no database
+  change.
 - [ ] **Billing's daily job.** Supabase → Database → Extensions → enable
   `pg_cron`, then in the SQL editor:
   `select cron.schedule('billing-daily', '17 3 * * *', 'select public.run_billing_daily()');`

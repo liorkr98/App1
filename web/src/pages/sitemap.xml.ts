@@ -1,10 +1,12 @@
 import type { APIRoute } from 'astro';
 
+import { agentPageKeys } from '../lib/agent-page';
 import { indexableListings } from '../lib/listing-from-row';
 import { PUBLIC_PAGES } from '../lib/seo';
 
 /**
- * Sitemap — the public site pages, plus listings whose seller opted in.
+ * Sitemap — the public site pages, listings whose seller opted in, and the
+ * agent pages that are on.
  *
  * Written by hand rather than with @astrojs/sitemap because the filter is the
  * entire point: a sitemap that lists every page would hand Google the pages
@@ -18,7 +20,7 @@ export const prerender = false;
 
 export const GET: APIRoute = async ({ site }) => {
   const origin = site ?? new URL('https://amudsell.com');
-  const listed = await indexableListings();
+  const [listed, agents] = await Promise.all([indexableListings(), agentPageKeys()]);
 
   const urls = [
     ...PUBLIC_PAGES.map((page) => `  <url>\n    <loc>${new URL(page.path, origin).href}</loc>\n  </url>`),
@@ -29,6 +31,8 @@ export const GET: APIRoute = async ({ site }) => {
         : '';
       return `  <url>\n    <loc>${location}</loc>${lastmod}\n  </url>`;
     }),
+    // Agent pages that are on (0041): turning one on is the agent's opt-in.
+    ...agents.map((key) => `  <url>\n    <loc>${new URL(`/agent/${encodeURIComponent(key)}/`, origin).href}</loc>\n  </url>`),
   ].join('\n');
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;

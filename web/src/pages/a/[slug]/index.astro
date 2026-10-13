@@ -4,7 +4,7 @@ import DemoBar from '../../../components/DemoBar.astro';
 import ListingPage from '../../../components/ListingPage.astro';
 import { listingBySlug } from '../../../lib/listings';
 import NotFound from '../../../components/NotFound.astro';
-import { recordListingEvent } from '../../../lib/listing-events';
+import { countListingEvent } from '../../../lib/listing-events';
 import { publishedListing, purchaseExpired } from '../../../lib/listing-from-row';
 
 /**
@@ -65,8 +65,14 @@ if (!listing || listing.indexable !== true || ended) {
   Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
 }
 
-if (listing && !ended) {
-  await recordListingEvent(slug, 'view', Astro.request.headers.get('user-agent'));
+/*
+ * A view is a person opening the page: not a bot, a prefetch, a HEAD, the
+ * agent's own browser, or the same browser again within 30 minutes
+ * (count-rules.ts, 13 Oct 2026). Never a fixture: it is not in the table.
+ */
+if (listing && !ended && !demo) {
+  const counted = await countListingEvent(slug, 'view', Astro.request);
+  if (counted) Astro.response.headers.append('Set-Cookie', counted);
 }
 ---
 {ended ? <ListingEnded /> : listing ? (

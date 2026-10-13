@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 
 import { CATEGORY_PRESENTATION } from '../../../lib/category-presentation';
-import { recordListingEvent } from '../../../lib/listing-events';
+import { countListingEvent } from '../../../lib/listing-events';
 import { publishedListing } from '../../../lib/listing-from-row';
 import { listingBySlug } from '../../../lib/listings';
 
@@ -30,14 +30,14 @@ export const GET: APIRoute = async ({ params, request, url }) => {
     });
   }
 
-  await recordListingEvent(slug, 'wa', request.headers.get('user-agent'));
+  // Counted only when a person tapped (count-rules.ts); the hop happens either way.
+  const counted = await countListingEvent(slug, 'wa', request);
 
   const fallback = CATEGORY_PRESENTATION[listing.category].whatsappMessage;
   const text = url.searchParams.get('text') || fallback;
   const location = `https://wa.me/${listing.seller.phone}?text=${encodeURIComponent(text)}`;
 
-  return new Response(null, {
-    status: 302,
-    headers: { Location: location },
-  });
+  const headers = new Headers({ Location: location });
+  if (counted) headers.append('Set-Cookie', counted);
+  return new Response(null, { status: 302, headers });
 };

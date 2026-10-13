@@ -38,6 +38,7 @@ export const SITE_PAGES: CheckPage[] = [
   { name: 'private', path: '/private/' },
   { name: 'guides', path: '/guide/' },
   { name: 'guide-privacy', path: '/guide/privacy/' },
+  { name: 'agent-page', path: '/template-check/agent/' },
 ];
 
 /** One WhatsApp card per look (share-card.ts cardFamily). */

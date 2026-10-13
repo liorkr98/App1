@@ -1,0 +1,27 @@
+---
+import AgentProfile from '../../components/AgentProfile.astro';
+import NotFound from '../../components/NotFound.astro';
+import { agentPath, loadAgentPage } from '../../lib/agent-page';
+
+/**
+ * /agent/{code or handle}: an agent's public page (migration 0041).
+ *
+ * Rendered per request, like /a/[slug]: a page an agent turns on, or a
+ * listing they publish, appears without a rebuild. Off, unknown or
+ * unreadable is a 404. Reached by its code when the agent has chosen a
+ * handle, it sends the visitor on to the handle — one address for search.
+ */
+export const prerender = false;
+
+const key = Astro.params.key ?? '';
+const page = key ? await loadAgentPage(key) : undefined;
+
+if (page?.handle && key !== page.handle) {
+  return Astro.redirect(agentPath(page), 301);
+}
+if (!page) {
+  Astro.response.status = 404;
+  Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
+}
+---
+{page ? <AgentProfile page={page} /> : <NotFound />}
