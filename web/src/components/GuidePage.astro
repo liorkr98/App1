@@ -1,0 +1,148 @@
+---
+import { guidePath, relatedGuides, type Guide } from '@/features/guides/guides';
+import Prose from './Prose.astro';
+import Plain from '../layouts/Plain.astro';
+import { parts, t } from '../lib/i18n';
+import { guideDate, guideTitle, type GuideSection } from '../lib/guide-copy';
+import { demoPath } from '../lib/template-pages';
+
+/**
+ * One guide (SEO plan, phase 4): the reading layout of the legal pages,
+ * with a byline, an Article in JSON-LD, and the way back into the product —
+ * two related guides, one live example and the matching product page.
+ *
+ * The author is the brand (guides.ts GUIDE_AUTHOR) until the owner names a
+ * person; the byline and the Article say the same thing.
+ */
+interface Props {
+  guide: Guide;
+  title: string;
+  lead: string;
+  sections: GuideSection[];
+}
+
+const { guide, title, lead, sections } = Astro.props;
+const origin = Astro.site ?? new URL(Astro.url.origin);
+const url = new URL(guidePath(guide.slug), origin).href;
+const organization = { '@id': new URL('/#organization', origin).href };
+const related = relatedGuides(guide.slug);
+const audienceLabel = {
+  agents: t('audiences.navAgents'),
+  dealers: t('audiences.navDealers'),
+  private: t('audiences.navPrivate'),
+}[guide.audience];
+
+const ld = [
+  {
+    '@type': 'Article',
+    '@id': `${url}#article`,
+    headline: title,
+    description: lead,
+    url,
+    mainEntityOfPage: url,
+    inLanguage: 'he-IL',
+    image: new URL('/og-home.webp', origin).href,
+    datePublished: guide.published,
+    dateModified: guide.updated,
+    author: organization,
+    publisher: organization,
+    isPartOf: { '@id': new URL('/guide/#page', origin).href },
+  },
+];
+---
+<Plain
+  title={title}
+  description={lead}
+  ld={ld}
+  trail={[
+    { name: t('guides.title'), path: '/guide/' },
+    { name: title, path: guidePath(guide.slug) },
+  ]}
+>
+  <article class="guide">
+    <p class="guide-kicker"><a href="/guide/">{t('guides.title')}</a></p>
+    <h1>{title}</h1>
+    <p class="updated">
+      {parts('guides.byline').map((part) =>
+        'text' in part ? part.text
+        : part.slot === 'date' ? <time datetime={guide.updated}><bdi>{guideDate(guide.updated)}</bdi></time>
+        : t('guides.author'),
+      )}
+    </p>
+    <p class="guide-lead"><Prose text={lead} /></p>
+
+    {sections.map((section) => (
+      <section>
+        <h2>{section.title}</h2>
+        {section.paragraphs?.map((paragraph) => <p><Prose text={paragraph} /></p>)}
+        {section.items && (
+          <ul>
+            {section.items.map((item) => <li><Prose text={item} /></li>)}
+          </ul>
+        )}
+      </section>
+    ))}
+
+    <aside class="guide-next" aria-label={t('guides.related')}>
+      <h2>{t('guides.related')}</h2>
+      <ul>
+        {related.map((other) => <li><a href={guidePath(other.slug)}>{guideTitle(other.slug)}</a></li>)}
+        <li><a href={demoPath(guide.template)}>{t('guides.example', { name: t(`editor.templates.${guide.template}`) })}</a></li>
+        <li><a href={`/${guide.audience}/`}>{t('common.brand')} {audienceLabel}</a></li>
+      </ul>
+      <a class="guide-cta" href="/new/?fresh=1">{t('pricing.start')}</a>
+    </aside>
+  </article>
+</Plain>
+
+<style>
+  .guide-kicker {
+    margin: 0 0 0.3rem;
+    font-size: var(--t-label);
+    font-weight: 600;
+  }
+  .guide-kicker a {
+    color: var(--olive);
+  }
+  .guide-lead {
+    font-size: var(--t-lead);
+    line-height: 1.6;
+  }
+  .guide ul {
+    margin: 0;
+    padding-inline-start: 1.2rem;
+  }
+  .guide li + li {
+    margin-block-start: 0.4rem;
+  }
+  .guide-next {
+    margin-block-start: 2.5rem;
+    padding: 1.2rem 1.4rem 1.4rem;
+    border: 1px solid var(--stone);
+    border-radius: 14px;
+    background: var(--stone-warm);
+  }
+  .guide-next h2 {
+    margin-block-start: 0;
+  }
+  .guide-next a {
+    color: var(--ink);
+  }
+  .guide-next li a {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+  }
+  .guide-cta {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 48px;
+    margin-block-start: 1rem;
+    padding-inline: 1.4rem;
+    border-radius: 99px;
+    background: var(--ink);
+    color: var(--plaster) !important;
+    font-weight: 600;
+    text-decoration: none;
+  }
+</style>

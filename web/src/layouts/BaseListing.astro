@@ -172,6 +172,9 @@ const showBarLogo =
 
 <a class="skip" href="#main">{t('a11y.skip')}</a>
 
+{/* Above everything on the page: the demo bar on /templates/{id}/demo/. Empty on a real listing. */}
+<slot name="top" />
+
 {/*
   The progress line is decoration for something the scrollbar already says,
   so it is hidden from assistive technology. It has no styles at all outside

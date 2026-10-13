@@ -1,0 +1,26 @@
+---
+import DemoBar from '../../../components/DemoBar.astro';
+import ListingPage from '../../../components/ListingPage.astro';
+import { templateExamples } from '../../../lib/template-pages';
+
+/**
+ * A template's live example: the real ListingPage, drawn with that template,
+ * on the demo flat (or the demo car, for a design drawn only for cars).
+ *
+ * WHY NOT /template-check/. Those are CI fixtures and `.assetsignore` keeps
+ * them out of the deploy, so every example link on the homepage answered
+ * "page not found" on the live site while working locally and in CI. These
+ * files are public and uploaded; e2e/links.spec.ts and
+ * scripts/verify-public-links.mjs keep a public page from linking back.
+ *
+ * noindex: a made-up flat must never be found in search as a home for sale.
+ */
+export function getStaticPaths() {
+  return templateExamples().map(({ id, listing }) => ({ params: { id }, props: { id, listing } }));
+}
+
+const { id, listing } = Astro.props;
+---
+<ListingPage listing={listing} robots="noindex,nofollow">
+  <DemoBar slot="top" template={id} />
+</ListingPage>

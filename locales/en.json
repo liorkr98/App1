@@ -1269,5 +1269,247 @@
     "unavailable": "",
     "privacy": "",
     "done": ""
+  },
+  "templates": {
+    "title": "",
+    "metaTitle": "",
+    "eyebrow": "",
+    "lead": "",
+    "open": "",
+    "see": "",
+    "build": "",
+    "forHomes": "",
+    "forCars": "",
+    "forBoth": "",
+    "lookTitle": "",
+    "fitsTitle": "",
+    "all": "",
+    "home": "",
+    "demo": "",
+    "demoNote": "",
+    "aurora": {
+      "lead": "",
+      "fits": ""
+    },
+    "prints": {
+      "lead": "",
+      "fits": ""
+    },
+    "keytag": {
+      "lead": "",
+      "fits": ""
+    },
+    "streetsign": {
+      "lead": "",
+      "fits": ""
+    },
+    "heliograph": {
+      "lead": "",
+      "fits": ""
+    },
+    "walk": {
+      "lead": "",
+      "fits": ""
+    },
+    "blueprint": {
+      "lead": "",
+      "fits": ""
+    },
+    "monolith": {
+      "lead": "",
+      "fits": ""
+    },
+    "atelier": {
+      "lead": "",
+      "fits": ""
+    },
+    "glass": {
+      "lead": "",
+      "fits": ""
+    },
+    "poster": {
+      "lead": "",
+      "fits": ""
+    },
+    "zine": {
+      "lead": "",
+      "fits": ""
+    },
+    "ticket": {
+      "lead": "",
+      "fits": ""
+    },
+    "showroom": {
+      "lead": "",
+      "fits": ""
+    },
+    "dashboard": {
+      "lead": "",
+      "fits": ""
+    },
+    "dossier": {
+      "lead": "",
+      "fits": ""
+    }
+  },
+  "audiences": {
+    "navAgents": "",
+    "navDealers": "",
+    "navPrivate": "",
+    "homeLine": "",
+    "examplesTitle": "",
+    "planTitle": "",
+    "allPrices": "",
+    "faqTitle": "",
+    "freeLine": "",
+    "agents": {
+      "metaTitle": "",
+      "eyebrow": "",
+      "title": "",
+      "lead": "",
+      "b1t": "",
+      "b1": "",
+      "b2t": "",
+      "b2": "",
+      "b3t": "",
+      "b3": "",
+      "b4t": "",
+      "b4": "",
+      "q1": "",
+      "a1": "",
+      "q2": "",
+      "a2": "",
+      "q3": "",
+      "a3": ""
+    },
+    "dealers": {
+      "metaTitle": "",
+      "eyebrow": "",
+      "title": "",
+      "lead": "",
+      "b1t": "",
+      "b1": "",
+      "b2t": "",
+      "b2": "",
+      "b3t": "",
+      "b3": "",
+      "b4t": "",
+      "b4": "",
+      "q1": "",
+      "a1": "",
+      "q2": "",
+      "a2": "",
+      "q3": "",
+      "a3": ""
+    },
+    "private": {
+      "metaTitle": "",
+      "eyebrow": "",
+      "title": "",
+      "lead": "",
+      "b1t": "",
+      "b1": "",
+      "b2t": "",
+      "b2": "",
+      "b3t": "",
+      "b3": "",
+      "b4t": "",
+      "b4": "",
+      "q1": "",
+      "a1": "",
+      "q2": "",
+      "a2": "",
+      "q3": "",
+      "a3": ""
+    }
+  },
+  "guides": {
+    "title": "",
+    "lead": "",
+    "author": "",
+    "byline": "",
+    "related": "",
+    "example": "",
+    "read": "",
+    "homes": "",
+    "cars": "",
+    "description": {
+      "title": "",
+      "lead": "",
+      "s1Title": "",
+      "s1": "",
+      "s2Title": "",
+      "s2": "",
+      "s3Title": "",
+      "s3": "",
+      "s4Title": "",
+      "s4": "",
+      "s5Title": "",
+      "s5": "",
+      "s6Title": "",
+      "s6": "",
+      "s7Title": "",
+      "s7": "",
+      "s8Title": "",
+      "s8": ""
+    },
+    "car-photos": {
+      "title": "",
+      "lead": "",
+      "s1Title": "",
+      "s1": "",
+      "s2Title": "",
+      "s2": "",
+      "s3Title": "",
+      "s3": "",
+      "s4Title": "",
+      "s4": "",
+      "s5Title": "",
+      "s5": "",
+      "s6Title": "",
+      "s6": "",
+      "s7Title": "",
+      "s7": "",
+      "s8Title": "",
+      "s8": ""
+    },
+    "car-listing": {
+      "title": "",
+      "lead": "",
+      "s1Title": "",
+      "s1": "",
+      "s2Title": "",
+      "s2": "",
+      "s3Title": "",
+      "s3": "",
+      "s4Title": "",
+      "s4": "",
+      "s5Title": "",
+      "s5": "",
+      "s6Title": "",
+      "s6": "",
+      "s7Title": "",
+      "s7": "",
+      "s8Title": "",
+      "s8": ""
+    },
+    "privacy": {
+      "title": "",
+      "lead": "",
+      "s1Title": "",
+      "s1": "",
+      "s2Title": "",
+      "s2": "",
+      "s3Title": "",
+      "s3": "",
+      "s4Title": "",
+      "s4": "",
+      "s5Title": "",
+      "s5": "",
+      "s6Title": "",
+      "s6": "",
+      "s7Title": "",
+      "s7": ""
+    }
   }
 }

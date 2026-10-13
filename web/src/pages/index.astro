@@ -15,6 +15,7 @@ import '../styles/film.css';
 import Film from '../components/Film.astro';
 import { filmDuration } from '@/features/listings/ken-burns';
 import { softwareLd } from '../lib/seo';
+import { demoPath } from '../lib/template-pages';
 
 /**
  * The homepage (עמוד מכירה 2.0, plan §7.1). Onyx: the product demo is the page.
@@ -31,7 +32,8 @@ import { softwareLd } from '../lib/seo';
  *     editor's steps, and the aria-label says so.
  *   - The template row shows SCREENSHOTS of the real pages
  *     (/home/templates/{id}.webp, the first screen of /template-check at 390
- *     px, Hebrew, reduced motion). Each one links to that live page. When a
+ *     px, Hebrew, reduced motion). Each one links to the same page's public
+ *     copy, /templates/{id}/demo/. When a
  *     template's first screen changes, its screenshot is retaken —
  *     scripts/verify-template-ids.mjs fails if one is missing.
  *   - The WhatsApp card is built by ogTitle/ogDescription, the functions
@@ -49,10 +51,10 @@ const builderPhotos = [home.media.cover, ...home.media.gallery].slice(0, 4);
 const titleLines = home.title.split('\n');
 
 // The catalogue: the Living Surfaces templates, in TEMPLATE_IDS order.
+// Each links to its live example under /templates/ — never /template-check/,
+// which is a CI fixture that is not deployed (e2e/links.spec.ts).
 const catalogue = TEMPLATE_IDS.filter((id) => templateSpec(id).ls !== undefined).map((id) => {
-  const forHomes = templateFits(id, 'property');
-  const slug = forHomes ? home.slug : golfListing.slug;
-  return { id, car: !forHomes, href: `/template-check/${slug}-${id}/` };
+  return { id, car: !templateFits(id, 'property'), href: demoPath(id) };
 });
 
 const cardTitle = ogTitle(home);
@@ -66,9 +68,9 @@ const photoOf = (index: number) => {
 const plan = home.media.floorPlan;
 
 const wow = [
-  { key: 'Plan', live: true, href: `/template-check/${home.slug}-blueprint/`, image: plan ? largest(plan, GALLERY_WIDTHS) : photoOf(0), contain: Boolean(plan) },
-  { key: 'Sun', live: true, href: `/template-check/${home.slug}-heliograph/`, drawing: 'sun' },
-  { key: 'Walk', live: true, href: `/template-check/${home.slug}-walk/`, drawing: 'walk' },
+  { key: 'Plan', live: true, href: demoPath('blueprint'), image: plan ? largest(plan, GALLERY_WIDTHS) : photoOf(0), contain: Boolean(plan) },
+  { key: 'Sun', live: true, href: demoPath('heliograph'), drawing: 'sun' },
+  { key: 'Walk', live: true, href: demoPath('walk'), drawing: 'walk' },
   { key: 'Depth', live: false, image: photoOf(0) },
   // Built in P7 (the editor takes the frames, Showroom turns them); no demo
   // listing has a real sequence yet, so the tile says so without a link.
@@ -287,6 +289,10 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
       <h2 class="site-h2">{t('home.pricingTitle')}</h2>
       <PriceTiers />
       <p class="hm-more"><a class="site-link" href="/pricing/">{t('home.pricingLink')}</a></p>
+      <p class="hm-more">
+        {t('audiences.homeLine')}{' '}
+        <a href="/agents/">{t('audiences.navAgents')}</a> · <a href="/dealers/">{t('audiences.navDealers')}</a> · <a href="/private/">{t('audiences.navPrivate')}</a>
+      </p>
     </div>
   </section>
 

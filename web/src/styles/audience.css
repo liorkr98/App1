@@ -1,0 +1,131 @@
+/*
+  The audience pages: /agents/, /dealers/, /private/ (AudiencePage.astro).
+  Onyx site tokens, logical properties. Thumbnails and their grid come from
+  templates.css.
+*/
+
+.au-hero {
+  padding-block-end: 2rem;
+}
+
+.au-actions {
+  margin-block: 1.6rem 1rem;
+}
+
+.au-h2 {
+  margin: 0 0 1.4rem;
+  font-family: var(--ls-font-display);
+  font-weight: 800;
+  font-size: clamp(1.5rem, 4vw, 2.2rem);
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+.au-benefits ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 1.6rem 2rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.au-benefits li {
+  padding-block-start: 1rem;
+  border-block-start: 1px solid var(--ls-line);
+}
+
+.au-benefits p {
+  margin: 0;
+  color: var(--ls-ink-2);
+  line-height: 1.7;
+}
+
+.au-examples {
+  padding-block-end: 0;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr));
+}
+
+.au-plans ul {
+  display: grid;
+  /* auto-fill, not auto-fit: the dealers' one plan stays a card, not a banner. */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  gap: 1rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.au-plans li {
+  display: grid;
+  align-content: start;
+  gap: 0.4rem;
+  padding: 1.2rem 1.3rem;
+  border: 1px solid var(--ls-line);
+  border-radius: 18px;
+}
+
+.au-plans p {
+  margin: 0;
+}
+
+.au-plan-name {
+  font-weight: 800;
+}
+
+.au-plan-sum {
+  font-family: var(--ls-font-display);
+  font-weight: 800;
+  font-size: 1.35rem;
+}
+
+.au-plan-note {
+  color: var(--ls-ink-2);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.au-faq dl {
+  display: grid;
+  gap: 1.4rem;
+  max-inline-size: 62ch;
+  margin: 0 0 2rem;
+}
+
+.au-faq dt {
+  font-weight: 800;
+}
+
+.au-faq dd {
+  margin: 0.3rem 0 0;
+  color: var(--ls-ink-2);
+  line-height: 1.7;
+}
+
+.au-guides {
+  padding-block-start: clamp(3rem, 8vw, 5rem);
+}
+
+.au-guides ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 1.2rem 2rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.au-guides a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+  color: var(--ls-ink);
+  font-weight: 800;
+}
+
+.au-guides p {
+  margin: 0;
+  color: var(--ls-ink-2);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}

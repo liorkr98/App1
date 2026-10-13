@@ -1,0 +1,75 @@
+---
+import Plain from '../../layouts/Plain.astro';
+import { GUIDES, guidePath } from '@/features/guides/guides';
+import { t } from '../../lib/i18n';
+import { guideLead, guideTitle } from '../../lib/guide-copy';
+
+/** The guides hub (SEO plan, phase 4): every guide in guides.ts, homes first. */
+const origin = Astro.site ?? new URL(Astro.url.origin);
+const url = new URL('/guide/', origin).href;
+const groups = [
+  { label: t('guides.homes'), guides: GUIDES.filter((guide) => guide.category === 'property') },
+  { label: t('guides.cars'), guides: GUIDES.filter((guide) => guide.category === 'vehicle') },
+];
+
+const ld = [
+  {
+    '@type': 'CollectionPage',
+    '@id': `${url}#page`,
+    name: t('guides.title'),
+    description: t('guides.lead'),
+    url,
+    inLanguage: 'he-IL',
+    isPartOf: { '@id': new URL('/#website', origin).href },
+    mainEntity: {
+      '@type': 'ItemList',
+      numberOfItems: GUIDES.length,
+      itemListElement: GUIDES.map((guide, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        url: new URL(guidePath(guide.slug), origin).href,
+        name: guideTitle(guide.slug),
+      })),
+    },
+  },
+];
+---
+<Plain title={t('guides.title')} description={t('guides.lead')} ld={ld}>
+  <h1>{t('guides.title')}</h1>
+  <p>{t('guides.lead')}</p>
+  {groups.map((group) => (
+    <section>
+      <h2>{group.label}</h2>
+      <ul class="hub">
+        {group.guides.map((guide) => (
+          <li>
+            <a href={guidePath(guide.slug)}>{guideTitle(guide.slug)}</a>
+            <p>{guideLead(guide.slug)}</p>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
+</Plain>
+
+<style>
+  .hub {
+    display: grid;
+    gap: 1.2rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .hub a {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    color: var(--ink);
+    font-weight: 600;
+    font-size: 1.08rem;
+  }
+  .hub p {
+    margin: 0;
+    color: var(--muted);
+  }
+</style>

@@ -1,3 +1,6 @@
+import { GUIDES, guidePath } from '@/features/guides/guides';
+import { CATALOGUE } from '@/features/templates/manifest';
+import { guideTitle } from './guide-copy';
 import { t } from './i18n';
 
 /**
@@ -19,7 +22,13 @@ export const ALTERNATE_NAMES = ['AmudSell', 'Amud Mechira', 'עמוד-מכירה
 export const PUBLIC_PAGES: readonly { path: string; title: () => string }[] = [
   { path: '/', title: () => t('seo.home') },
   { path: '/pricing/', title: () => t('pricing.title') },
-  { path: '/guide/photos/', title: () => t('guide.photosTitle') },
+  { path: '/agents/', title: () => t('audiences.agents.metaTitle') },
+  { path: '/dealers/', title: () => t('audiences.dealers.metaTitle') },
+  { path: '/private/', title: () => t('audiences.private.metaTitle') },
+  { path: '/templates/', title: () => t('templates.metaTitle') },
+  ...CATALOGUE.map((id) => ({ path: `/templates/${id}/`, title: () => t(`editor.templates.${id}`) })),
+  { path: '/guide/', title: () => t('guides.title') },
+  ...GUIDES.map((guide) => ({ path: guidePath(guide.slug), title: () => guideTitle(guide.slug) })),
   { path: '/about/', title: () => t('legal.about') },
   { path: '/contact/', title: () => t('legal.contact') },
   { path: '/legal/terms/', title: () => t('legal.terms') },

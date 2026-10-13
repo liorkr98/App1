@@ -9,18 +9,28 @@ interface Props {
   title: string;
   robots?: string;
   description?: string;
+  /** Structured data for this page, added to the Organization and WebSite every page carries. */
+  ld?: object[];
+  /** The breadcrumb trail after the brand. Default: this page alone. */
+  trail?: { name: string; path: string }[];
 }
 
-const { title, robots = 'index,follow', description } = Astro.props;
+const { title, robots = 'index,follow', description, ld = [], trail } = Astro.props;
 const origin = Astro.site ?? new URL(Astro.url.origin);
 const canonical = new URL(Astro.url.pathname, origin).href;
 const fullTitle = `${title} · ${t('common.brand')}`;
 const summary = description ?? t('seo.summary');
+const steps = trail ?? [{ name: title, path: Astro.url.pathname }];
 const crumbs = {
   '@type': 'BreadcrumbList',
   itemListElement: [
     { '@type': 'ListItem', position: 1, name: t('common.brand'), item: new URL('/', origin).href },
-    { '@type': 'ListItem', position: 2, name: title, item: canonical },
+    ...steps.map((step, index) => ({
+      '@type': 'ListItem',
+      position: index + 2,
+      name: step.name,
+      item: new URL(step.path, origin).href,
+    })),
   ],
 };
 ---
@@ -47,7 +57,7 @@ const crumbs = {
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
     {robots.startsWith('index') && (
-      <script is:inline type="application/ld+json" set:html={ldGraph([organizationLd(origin), websiteLd(origin), crumbs])} />
+      <script is:inline type="application/ld+json" set:html={ldGraph([organizationLd(origin), websiteLd(origin), crumbs, ...ld])} />
     )}
     <style is:global>
       html {
@@ -136,7 +146,7 @@ const crumbs = {
     <footer>
       <a href="/pricing/">{t('pricing.title')}</a>
       {' · '}
-      <a href="/guide/photos/">{t('guide.photosTitle')}</a>
+      <a href="/guide/">{t('guides.title')}</a>
       {' · '}
       <a href="/about/">{t('legal.about')}</a>
       {' · '}

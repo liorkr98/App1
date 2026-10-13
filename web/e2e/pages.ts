@@ -31,6 +31,13 @@ export const SITE_PAGES: CheckPage[] = [
   { name: 'home', path: '/' },
   { name: 'new', path: '/new/' },
   { name: 'pricing', path: '/pricing/' },
+  { name: 'templates', path: '/templates/' },
+  { name: 'template-heliograph', path: '/templates/heliograph/' },
+  { name: 'agents', path: '/agents/' },
+  { name: 'dealers', path: '/dealers/' },
+  { name: 'private', path: '/private/' },
+  { name: 'guides', path: '/guide/' },
+  { name: 'guide-privacy', path: '/guide/privacy/' },
 ];
 
 /** One WhatsApp card per look (share-card.ts cardFamily). */

@@ -1,0 +1,20 @@
+---
+import GuidePage from '../../components/GuidePage.astro';
+import { GUIDES, type GuideSlug } from '@/features/guides/guides';
+import { guideLead, guideSections, guideTitle } from '../../lib/guide-copy';
+
+/**
+ * Every guide in src/features/guides/guides.ts except the photo guide,
+ * which has its own page (photos.astro) for its older keys.
+ */
+export function getStaticPaths() {
+  return GUIDES.filter((guide) => guide.slug !== 'photos').map((guide) => ({
+    params: { slug: guide.slug },
+    props: { guide },
+  }));
+}
+
+const { guide } = Astro.props;
+const slug = guide.slug as Exclude<GuideSlug, 'photos'>;
+---
+<GuidePage guide={guide} title={guideTitle(slug)} lead={guideLead(slug)} sections={guideSections(slug)} />

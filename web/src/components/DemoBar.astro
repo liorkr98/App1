@@ -1,0 +1,72 @@
+---
+import type { TemplateId } from '@/types/listing';
+import { t } from '../lib/i18n';
+import { buildPath, templatePath } from '../lib/template-pages';
+
+/**
+ * The strip above a template's live example (/templates/{id}/demo/).
+ *
+ * The page under it is a real ListingPage on a made-up flat, so the strip
+ * says so in words before anything else: a stranger who lands here from a
+ * shared link must not read the demo as a home for sale. It is in the flow,
+ * not fixed, so it never sits on top of a template's first screen.
+ *
+ * Its colours are its own, not the template's tokens: sixteen templates
+ * restyle everything they own, and this strip has to read the same on all.
+ */
+interface Props {
+  template: TemplateId;
+}
+
+const { template } = Astro.props;
+const name = t(`editor.templates.${template}`);
+---
+<aside class="demo-bar" aria-label={t('templates.demo')}>
+  <p class="demo-bar-what">
+    <a href={templatePath(template)}>{t('templates.demo')} · {name}</a>
+    <span>{t('templates.demoNote')}</span>
+  </p>
+  <a class="demo-bar-go" href={buildPath(template)}>{t('templates.build')}</a>
+</aside>
+
+<style>
+  .demo-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    padding-block: 0.6rem;
+    padding-inline: max(1rem, env(safe-area-inset-left, 0px));
+    background: #f6f4ef;
+    color: #16170f;
+    border-block-end: 1px solid #d9d5c9;
+    font-family: inherit;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  .demo-bar-what {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 0.6rem;
+    margin: 0;
+  }
+  .demo-bar-what a {
+    color: inherit;
+    font-weight: 700;
+  }
+  .demo-bar-what span {
+    color: #55574c;
+  }
+  .demo-bar-go {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    padding-inline: 1.1rem;
+    border-radius: 99px;
+    background: #16170f;
+    color: #f6f4ef;
+    font-weight: 700;
+    text-decoration: none;
+  }
+</style>
