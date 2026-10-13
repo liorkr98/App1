@@ -101,3 +101,31 @@
   color: var(--ls-ink-2);
   line-height: 1.7;
 }
+
+.au-guides {
+  padding-block-start: clamp(3rem, 8vw, 5rem);
+}
+
+.au-guides ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 1.2rem 2rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.au-guides a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+  color: var(--ls-ink);
+  font-weight: 800;
+}
+
+.au-guides p {
+  margin: 0;
+  color: var(--ls-ink-2);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}

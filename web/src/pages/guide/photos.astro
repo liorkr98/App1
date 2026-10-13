@@ -1,8 +1,14 @@
 ---
-import Plain from '../../layouts/Plain.astro';
-import Prose from '../../components/Prose.astro';
+import GuidePage from '../../components/GuidePage.astro';
+import { guideBySlug } from '@/features/guides/guides';
 import { t } from '../../lib/i18n';
 
+/**
+ * The photo guide, the first of the guides. Its copy predates the guides
+ * table (guide.* keys); since 13 Oct 2026 it renders through the same
+ * GuidePage as the rest, so it carries the byline, the Article and the
+ * related links.
+ */
 const sections = [
   {
     title: t('guide.beforeTitle'),
@@ -22,17 +28,9 @@ const sections = [
   },
 ];
 ---
-<Plain title={t('guide.photosTitle')} robots="index,follow">
-  <h1>{t('guide.photosTitle')}</h1>
-  <p>{t('guide.photosLead')}</p>
-  {sections.map((section) => (
-    <section>
-      <h2>{section.title}</h2>
-      <ul>
-        {section.items.map((item) => (
-          <li><Prose text={item} /></li>
-        ))}
-      </ul>
-    </section>
-  ))}
-</Plain>
+<GuidePage
+  guide={guideBySlug('photos')}
+  title={t('guide.photosTitle')}
+  lead={t('guide.photosLead')}
+  sections={sections}
+/>

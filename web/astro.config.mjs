@@ -2,6 +2,7 @@ import react from '@astrojs/react';
 import cloudflare from '@astrojs/cloudflare';
 import { defineConfig } from 'astro/config';
 
+import clientCopy from './integrations/client-copy.mjs';
 import securityHeaders from './integrations/security-headers.mjs';
 import vendorMapLibre from './integrations/vendor-maplibre.mjs';
 
@@ -100,7 +101,10 @@ export default defineConfig({
   // vendorMapLibre serves the listing map's library as published, from a
   // versioned path, loaded only when the map section nears the screen
   // (integrations/vendor-maplibre.mjs).
-  integrations: [react(), vendorMapLibre(), securityHeaders()],
+  //
+  // clientCopy keeps the page-only copy (template, audience and guide pages)
+  // out of the editor's bundle (integrations/client-copy.mjs).
+  integrations: [react(), vendorMapLibre(), securityHeaders(), clientCopy()],
 
   // Share the Listing type and category schemas with the mobile app without
   // making the repo an npm workspace. Turning the root into a workspace root

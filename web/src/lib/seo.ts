@@ -1,4 +1,6 @@
+import { GUIDES, guidePath } from '@/features/guides/guides';
 import { CATALOGUE } from '@/features/templates/manifest';
+import { guideTitle } from './guide-copy';
 import { t } from './i18n';
 
 /**
@@ -25,7 +27,8 @@ export const PUBLIC_PAGES: readonly { path: string; title: () => string }[] = [
   { path: '/private/', title: () => t('audiences.private.metaTitle') },
   { path: '/templates/', title: () => t('templates.metaTitle') },
   ...CATALOGUE.map((id) => ({ path: `/templates/${id}/`, title: () => t(`editor.templates.${id}`) })),
-  { path: '/guide/photos/', title: () => t('guide.photosTitle') },
+  { path: '/guide/', title: () => t('guides.title') },
+  ...GUIDES.map((guide) => ({ path: guidePath(guide.slug), title: () => guideTitle(guide.slug) })),
   { path: '/about/', title: () => t('legal.about') },
   { path: '/contact/', title: () => t('legal.contact') },
   { path: '/legal/terms/', title: () => t('legal.terms') },

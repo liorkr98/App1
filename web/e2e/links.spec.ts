@@ -28,7 +28,7 @@ test('the fixture rule fires on a planted /template-check/ link', () => {
   ]);
 });
 
-for (const path of ['/', '/templates/', `/templates/${CATALOGUE[0]}/`, '/agents/', '/dealers/', '/private/']) {
+for (const path of ['/', '/templates/', `/templates/${CATALOGUE[0]}/`, '/agents/', '/dealers/', '/private/', '/guide/', '/guide/photos/', '/guide/car-listing/']) {
   test(`${path}: no link into a fixture, and every link opens`, async ({ page, request }) => {
     await page.goto(path);
     const hrefs = [...new Set(await sameSiteLinks(page))];

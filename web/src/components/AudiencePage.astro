@@ -8,6 +8,8 @@ import Site from '../layouts/Site.astro';
 import { parts, t } from '../lib/i18n';
 import { amount, noteValues, offerLd, termsPath } from '../lib/plan-copy';
 import { demoPath } from '../lib/template-pages';
+import { guidePath, guidesFor } from '@/features/guides/guides';
+import { guideLead, guideTitle } from '../lib/guide-copy';
 import '../styles/templates.css';
 import '../styles/audience.css';
 
@@ -40,6 +42,7 @@ const k = (name: string) => `audiences.${key}.${name}`;
 const benefits = [1, 2, 3, 4].map((n) => ({ title: t(k(`b${n}t`)), body: k(`b${n}`) }));
 const questions = [1, 2, 3].map((n) => ({ q: t(k(`q${n}`)), a: k(`a${n}`) }));
 const values = { ...noteValues(free), ...answers };
+const guides = guidesFor(key);
 /** A message with a {slot} goes through Msg; one without through Prose, which <bdi>s Latin like "QR". */
 const hasSlot = (path: string) => parts(path).some((part) => !('text' in part));
 
@@ -127,6 +130,18 @@ const ld = [
       ))}
     </ul>
     <p><a class="site-link" href="/pricing/">{t('audiences.allPrices')}</a></p>
+  </section>
+
+  <section class="site-shell au-guides">
+    <h2 class="au-h2">{t('guides.title')}</h2>
+    <ul>
+      {guides.map((guide) => (
+        <li>
+          <a href={guidePath(guide.slug)}>{guideTitle(guide.slug)}</a>
+          <p>{guideLead(guide.slug)}</p>
+        </li>
+      ))}
+    </ul>
   </section>
 
   <section class="site-sect site-shell au-faq">

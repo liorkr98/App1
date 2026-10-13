@@ -152,6 +152,15 @@ jobs:
       - name: Verify the public-links check actually fires
         run: bash scripts/verify-public-links-fires.sh
 
+      # The client build drops the page-only copy (templates, audiences,
+      # guides) so the editor does not download it; no browser script may
+      # read it (web/integrations/client-copy.mjs).
+      - name: Verify no browser script reads page-only copy
+        run: node scripts/verify-client-copy.mjs
+
+      - name: Verify the client-copy check actually fires
+        run: bash scripts/verify-client-copy-fires.sh
+
       # docs/PRICING.md §9: no price outside the price list.
       - name: Verify no price is written outside the price list
         run: node scripts/verify-no-price-literals.mjs
