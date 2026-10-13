@@ -103,6 +103,12 @@ const extraCss = extra.length > 0 ? `<style>${extra.join('')}</style>` : '';
     ) : (
       <div class="film" style={film}>
         <input class="visually-hidden" type="checkbox" id="listing-film" />
+        {/*
+          Lazy and low priority (13 Oct 2026): since the film takes every
+          photograph, up to ten stills downloaded with the page and pushed the
+          first screen's photo past 2 s on a cheap phone. They load when the
+          tile comes near the screen, long before anyone presses play.
+        */}
         {frames.map((frame) => {
           const image = images[frame.index];
           return image ? (
@@ -113,6 +119,9 @@ const extraCss = extra.length > 0 ? `<style>${extra.join('')}</style>` : '';
               alt=""
               width={image.width}
               height={image.height}
+              loading="lazy"
+              decoding="async"
+              fetchpriority="low"
             />
           ) : null;
         })}
