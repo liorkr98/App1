@@ -3,7 +3,13 @@ import { useState } from 'react';
 import type { ListingVideo } from '@/features/listings/rich-media';
 import { stripVideoLocation } from '@/features/listings/video-strip';
 
+import { FILM_MIN } from '@/features/listings/ken-burns';
+import type { Listing } from '@/types/listing';
+
 import { recordFilm } from '../../lib/film-file';
+import { filmPhotos, filmStory } from '../../lib/film-story';
+import { listingFromRow, LISTING_COLUMNS, type ListingRow } from '../../lib/listing-row-map';
+import { loadShareFonts } from '../../lib/share-draw';
 import { t } from '../../lib/i18n';
 import { supabase } from '../../lib/supabase';
 import type { EditorPhoto } from './PhotosStep';
@@ -12,6 +18,17 @@ interface Props {
   photos: readonly EditorPhoto[];
   listingId: string | undefined;
   onVideo: (video: ListingVideo) => void;
+}
+
+/** The listing as saved, or undefined when it cannot be read or is not whole yet. */
+async function savedListing(listingId: string): Promise<Listing | undefined> {
+  try {
+    const { data, error } = await supabase().from('listings').select(LISTING_COLUMNS).eq('id', listingId).maybeSingle();
+    if (error || !data) return undefined;
+    return listingFromRow(data as unknown as ListingRow);
+  } catch {
+    return undefined;
+  }
 }
 
 /**
@@ -67,15 +84,21 @@ export function FilmFile({ photos, listingId, onVideo }: Props) {
       setNote(t('editor.film.needSave'));
       return;
     }
-    const urls = photos.flatMap((photo) => (photo.publicUrl ? [photo.publicUrl] : []));
-    if (urls.length === 0) {
-      setNote(t('editor.film.needPhotos'));
+    const uploaded = photos.flatMap((photo) => (photo.publicUrl ? [photo.publicUrl] : []));
+    if (uploaded.length < FILM_MIN) {
+      setNote(t('editor.film.needPhotos')); // "three" in words: FILM_MIN, pinned by ken-burns.test.ts
       return;
     }
     setBusy(true);
     setNote(t('editor.film.working'));
     try {
-      const made = await recordFilm(urls);
+      // The saved listing gives the film its order, its room names and its
+      // words — the same ones the WhatsApp card prints. Without it the film
+      // still records, silent of words, from the uploaded photographs.
+      const listing = await savedListing(listingId);
+      const urls = listing ? filmPhotos(listing).map((photo) => photo.url) : uploaded;
+      if (listing) await loadShareFonts();
+      const made = await recordFilm(urls, listing ? filmStory(listing) : undefined);
       if (!made) {
         setNote(t('editor.film.failed'));
         return;

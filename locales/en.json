@@ -1214,7 +1214,16 @@
     "m8": "",
     "press": "",
     "m9": "",
-    "m9Note": ""
+    "m9Note": "",
+    "filmTitle": "",
+    "filmLead": "",
+    "filmMake": "",
+    "filmWorking": "",
+    "filmFailed": "",
+    "filmFormat": "",
+    "filmLength": "",
+    "filmSize": "",
+    "filmSave": ""
   },
   "guide": {
     "photosTitle": "",
@@ -1350,7 +1359,8 @@
     "dossier": {
       "lead": "",
       "fits": ""
-    }
+    },
+    "demoContact": ""
   },
   "audiences": {
     "navAgents": "",

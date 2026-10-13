@@ -367,6 +367,11 @@ jobs:
         working-directory: web
         run: npx playwright test signature-motion
 
+      - name: The story video is honestly labelled and as long as the film
+        if: ${{ !cancelled() }}
+        working-directory: web
+        run: npx playwright test film
+
       - name: Example links open, and none lead into a CI fixture
         if: ${{ !cancelled() }}
         working-directory: web

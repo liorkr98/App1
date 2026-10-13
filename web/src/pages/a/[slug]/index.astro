@@ -1,6 +1,8 @@
 ---
 import ListingEnded from '../../../components/ListingEnded.astro';
+import DemoBar from '../../../components/DemoBar.astro';
 import ListingPage from '../../../components/ListingPage.astro';
+import { listingBySlug } from '../../../lib/listings';
 import NotFound from '../../../components/NotFound.astro';
 import { recordListingEvent } from '../../../lib/listing-events';
 import { publishedListing, purchaseExpired } from '../../../lib/listing-from-row';
@@ -26,6 +28,8 @@ export const prerender = false;
 
 const slug = Astro.params.slug ?? '';
 const listing = slug ? await publishedListing(slug) : undefined;
+// A fixture answering here is an example page: its contact buttons call no one.
+const demo = Boolean(slug && listingBySlug(slug));
 
 /*
  * A missing listing is a 404, and so is a DRAFT — publishedListing cannot see
@@ -65,4 +69,8 @@ if (listing && !ended) {
   await recordListingEvent(slug, 'view', Astro.request.headers.get('user-agent'));
 }
 ---
-{ended ? <ListingEnded /> : listing ? <ListingPage listing={listing} /> : <NotFound />}
+{ended ? <ListingEnded /> : listing ? (
+  <ListingPage listing={listing} demo={demo}>
+    {demo && <DemoBar slot="top" template={listing.template} />}
+  </ListingPage>
+) : <NotFound />}

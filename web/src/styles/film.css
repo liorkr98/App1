@@ -3,8 +3,8 @@
 
   direction: ltr because a pan is a camera move. Motion runs only when the
   viewer allows it and, on a listing, only after they check נגן. The first
-  still starts visible at scale 1. Fade keyframes assume the fade is a
-  quarter of a still (ken-burns.ts).
+  still starts visible at scale 1. Every timing and zoom comes from
+  ken-burns.ts through Film.astro.
 */
 
 .film {
@@ -63,24 +63,16 @@
     animation-fill-mode: none;
   }
 
-  @keyframes film-show {
-    0% { opacity: 0; }
-    25%, 75% { opacity: 1; }
-    100% { opacity: 0; }
-  }
+  /* film-show and film-show-first are written by Film.astro from
+     FILM_FADE_SEC / FILM_STILL_SEC, so the fade cannot drift from the file. */
 
-  @keyframes film-show-first {
-    0%, 75% { opacity: 1; }
-    100% { opacity: 0; }
-  }
-
-  /* 1 + FILM_ZOOM (ken-burns.ts). Calmer since 12 Oct: it was 1.12. */
+  /* --fz is 1 + FILM_ZOOM (ken-burns.ts), set by Film.astro. */
   @keyframes film-in {
-    to { scale: 1.04; }
+    to { scale: var(--fz); }
   }
 
   @keyframes film-out {
-    from { scale: 1.04; }
+    from { scale: var(--fz); }
     to { scale: 1; }
   }
 }

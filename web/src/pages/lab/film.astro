@@ -1,0 +1,122 @@
+---
+import Plain from '../../layouts/Plain.astro';
+import { t } from '../../lib/i18n';
+
+/**
+ * The story file, made on demand from the demo flat (13 Oct 2026).
+ *
+ * Noindex, and /lab/ is disallowed in robots.txt. It exists so the owner can
+ * see the REAL file on a real iPhone and Android phone — the codec, the
+ * length, how it plays in WhatsApp — and so e2e/film.spec.ts can record one
+ * in CI. It runs the same recordFilm and filmStory the editor's button does.
+ */
+---
+<Plain title={t('lab.filmTitle')} robots="noindex,nofollow">
+  <h1>{t('lab.filmTitle')}</h1>
+  <p>{t('lab.filmLead')}</p>
+  <p><button type="button" class="film-lab-go" data-film-make>{t('lab.filmMake')}</button></p>
+  <p class="film-lab-note" data-film-note hidden>{t('lab.filmWorking')}</p>
+  <p class="film-lab-note" data-film-failed hidden>{t('lab.filmFailed')}</p>
+  <figure class="film-lab" data-film-out hidden>
+    <video controls playsinline muted data-film-video></video>
+    <dl>
+      <dt>{t('lab.filmFormat')}</dt><dd><bdi data-film-format></bdi></dd>
+      <dt>{t('lab.filmLength')}</dt><dd><bdi data-film-length></bdi></dd>
+      <dt>{t('lab.filmSize')}</dt><dd><bdi data-film-size></bdi></dd>
+    </dl>
+    <a data-film-save download>{t('lab.filmSave')}</a>
+  </figure>
+</Plain>
+
+<script>
+  import { recordFilm } from '../../lib/film-file';
+  import { filmPhotos, filmStory } from '../../lib/film-story';
+  import { tlvListing } from '../../lib/fixtures';
+  import { GALLERY_WIDTHS, largest } from '../../lib/images';
+  import { loadShareFonts } from '../../lib/share-draw';
+
+  const $ = <T extends HTMLElement>(name: string) => document.querySelector<T>(`[data-film-${name}]`);
+  const button = $<HTMLButtonElement>('make');
+  const page = document.documentElement;
+
+  button?.addEventListener('click', async () => {
+    button.disabled = true;
+    page.dataset.film = 'working';
+    $('note')!.hidden = false;
+    $('failed')!.hidden = true;
+    await loadShareFonts();
+    const urls = filmPhotos(tlvListing).map((photo) => largest(photo, GALLERY_WIDTHS));
+    const made = await recordFilm(urls, filmStory(tlvListing));
+    $('note')!.hidden = true;
+    button.disabled = false;
+    if (!made) {
+      page.dataset.film = 'failed';
+      $('failed')!.hidden = false;
+      return;
+    }
+    const url = URL.createObjectURL(made.blob);
+    const video = $<HTMLVideoElement>('video')!;
+    video.src = url;
+    $('format')!.textContent = `${made.mime} · ${made.width}×${made.height}`;
+    $('length')!.textContent = `${made.seconds}s`;
+    $('size')!.textContent = `${(made.blob.size / 1024 / 1024).toFixed(1)} MB`;
+    const save = $<HTMLAnchorElement>('save')!;
+    save.href = url;
+    save.download = `amudsell-film.${made.extension}`;
+    $('out')!.hidden = false;
+    Object.assign(page.dataset, {
+      film: 'done',
+      filmCodec: made.codec,
+      filmExtension: made.extension,
+      filmSeconds: String(made.seconds),
+      filmBytes: String(made.blob.size),
+      filmWidth: String(made.width),
+      filmHeight: String(made.height),
+    });
+  });
+</script>
+
+<style>
+  .film-lab-go,
+  .film-lab a {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 48px;
+    padding-inline: 1.4rem;
+    border: 0;
+    border-radius: 99px;
+    background: var(--ink);
+    color: var(--plaster);
+    font: inherit;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .film-lab-go:active,
+  .film-lab a:active {
+    opacity: 0.8;
+  }
+  .film-lab-note {
+    color: var(--muted);
+  }
+  .film-lab {
+    display: grid;
+    gap: 1rem;
+    margin: 1.5rem 0 0;
+  }
+  .film-lab video {
+    inline-size: min(100%, 360px);
+    aspect-ratio: 9 / 16;
+    background: #111;
+    border-radius: 18px;
+  }
+  .film-lab dl {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.3rem 1rem;
+    margin: 0;
+  }
+  .film-lab dd {
+    margin: 0;
+  }
+</style>

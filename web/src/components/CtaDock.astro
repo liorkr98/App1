@@ -13,11 +13,13 @@ interface Props {
    * something that is gone and points at more listings instead.
    */
   sold?: boolean;
+  /** Overrides the WhatsApp route: an example page points at its note. */
+  href?: string | undefined;
 }
 
-const { message, slug, sold = false } = Astro.props;
+const { message, slug, sold = false, href: given } = Astro.props;
 
-const href = sold ? '/' : `/a/${slug}/wa?text=${encodeURIComponent(message)}`;
+const href = sold ? '/' : (given ?? `/a/${slug}/wa?text=${encodeURIComponent(message)}`);
 const label = sold ? t('listing.moreListings') : t('listing.whatsappCta');
 ---
 <div class="cta-dock">
