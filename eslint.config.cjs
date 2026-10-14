@@ -29,6 +29,9 @@ module.exports = defineConfig([
       'ingest/**',
       // Deno.
       'supabase/functions/**',
+      // Third-party design skills, installed with `npx skills add`
+      // (docs/DESIGN-SKILLS.md). Not our code; reviewed, not linted.
+      '.claude/skills/**',
     ],
   },
 

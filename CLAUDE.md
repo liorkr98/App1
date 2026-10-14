@@ -335,6 +335,12 @@ price, a phone number, and a date. Screenshots in Hebrew, not English.
 - **Punctuation:** gershayim `״` is U+05F4, geresh `׳` is U+05F3, maqaf `־` is
   U+05BE. Not the ASCII lookalikes. Verify at codepoint level, not by eye.
 
+Design work runs through four installed skills (`.claude/skills/`, 14 Oct
+2026): taste-skill, frontend-design, web-design-guidelines and UI/UX Pro Max.
+**This file and the design contract outrank them.** Where they conflict —
+italics, tracked labels, Google Fonts, GSAP, placeholder photos — see
+`docs/DESIGN-SKILLS.md`.
+
 Design tokens and the visual contract are in `docs/DESIGN-CONTRACT.md`. The
 reference HTML files are the contract — port them, do not redesign them.
 
