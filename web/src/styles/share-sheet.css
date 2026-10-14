@@ -73,8 +73,8 @@
   flex: none;
   display: grid;
   place-items: center;
-  inline-size: 44px;
-  block-size: 44px;
+  inline-size: 48px;
+  block-size: 48px;
   border: 0;
   border-radius: 999px;
   background: var(--ss-tile);

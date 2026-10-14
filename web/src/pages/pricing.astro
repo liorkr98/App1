@@ -4,7 +4,6 @@ import { planByKey } from '@/features/billing/price';
 import Msg from '../components/Msg.astro';
 import { t } from '../lib/i18n';
 import { amount, cohortCap, noteValues, offerLd, termsPath } from '../lib/plan-copy';
-import { ADDONS } from '../lib/tiers';
 import Site from '../layouts/Site.astro';
 import '../styles/pricing.css';
 
@@ -14,7 +13,7 @@ import '../styles/pricing.css';
  * and scripts/verify-no-price-literals.mjs fails the build if one appears.
  *
  * DISPLAY ONLY — CLAUDE.md §8. Nothing here reads or decides entitlement;
- * checkout is a disabled control until an Israeli PSP is signed.
+ * until an Israeli PSP is signed, a paid plan's button leads to /contact/.
  *
  * NO LAYOUT SHIFT WHEN IT SWITCHES: both variants share one grid cell and
  * trade visibility, and the seat line keeps its height while empty (the
@@ -67,9 +66,7 @@ const ld = [
   <link slot="head" rel="preload" href="/fonts/noto-sans-hebrew-latin.woff2" as="font" type="font/woff2" crossorigin />
   <link slot="head" rel="preload" href="/fonts/heebo-latin.woff2" as="font" type="font/woff2" crossorigin />
   <section class="pr-hero">
-    <div class="pr-aurora" aria-hidden="true"></div>
     <div class="site-shell pr-head">
-      <p class="site-eyebrow">{t('pricing.eyebrow')}</p>
       <h1 class="site-h2 pr-title">
         <span data-offer="agent_launch" data-path="pricing.headline" data-launch={amount(agentLaunch)}>
           <Msg path="pricing.headline" values={{ price: amount(agent) }} />
@@ -105,7 +102,10 @@ const ld = [
             </div>
           )}
           </div>
-          <button type="button" class="site-btn pr-go" disabled>{t('pricing.disabled')}</button>
+          {/* Until a PSP is signed (CLAUDE.md §8) a paid plan is granted by
+              hand: the button says how to get one, instead of a greyed
+              control that reads as a broken site. Nothing here grants. */}
+          <a class="site-btn site-btn-ghost pr-go" href="/contact/">{t('pricing.talk')}</a>
         </li>
       ))}
     </ul>
@@ -130,24 +130,7 @@ const ld = [
     </p>
   </section>
 
-  <section class="site-sect ls-sect">
-    <div class="site-shell">
-      <p class="site-eyebrow">{t('pricing.addonsLabel')}</p>
-      <h2 class="site-h2">{t('pricing.addonsTitle')}</h2>
-      <p class="site-sub">{t('pricing.addonsBody')}</p>
-      <ul class="pr-addons">
-        {ADDONS.map((id) => (
-          <li>
-            <span class="site-tag is-soon">{t('pricing.soon')}</span>
-            <b>{t(`pricing.addon_${id}`)}</b>
-            <span>{t(`pricing.addon_${id}Note`)}</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  </section>
-
-  <section class="site-sect" data-ls="paper">
+  <section class="site-sect">
     <div class="site-shell pr-faq">
       <h2 class="site-h2">{t('pricing.faqTitle')}</h2>
       <details>

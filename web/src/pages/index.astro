@@ -39,8 +39,9 @@ import { demoPath } from '../lib/template-pages';
  *   - The WhatsApp card is built by ogTitle/ogDescription, the functions
  *     that write the real meta tags, so it cannot promise a card the product
  *     does not make.
- *   - "Wow" features that do not exist yet say בקרוב. Nothing on this page
- *     sells a feature before it is built.
+ *   - Only features that work today are on this page (14 Oct 2026): the
+ *     בקרוב tiles went, because an unfinished feature beside a finished one
+ *     makes both look unfinished.
  *
  * No OSM-derived data is shown here any more (the "around" section went with
  * the redesign), so there is no ODbL line to carry.
@@ -71,12 +72,10 @@ const wow = [
   { key: 'Plan', live: true, href: demoPath('blueprint'), image: plan ? largest(plan, GALLERY_WIDTHS) : photoOf(0), contain: Boolean(plan) },
   { key: 'Sun', live: true, href: demoPath('heliograph'), drawing: 'sun' },
   { key: 'Walk', live: true, href: demoPath('walk'), drawing: 'walk' },
-  { key: 'Depth', live: false, image: photoOf(0) },
   // Built in P7 (the editor takes the frames, Showroom turns them); no demo
   // listing has a real sequence yet, so the tile says so without a link.
   { key: 'Spin', live: true, image: largest(golfListing.media.cover, GALLERY_WIDTHS) },
   { key: 'Video', live: true, href: '#hero', image: photoOf(1) },
-  { key: 'Staging', live: false, image: photoOf(2) },
 ] as const;
 
 const title = `${t('common.brand')} — ${t('home.tagline')}`;
@@ -90,13 +89,11 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
   ld={[softwareLd(Astro.site ?? new URL(Astro.url.origin))]}
 >
   <section class="hm-hero ls-grain" id="hero">
-    <div class="hm-aurora" aria-hidden="true"></div>
     <div class="site-shell hm-hero-grid">
       <div class="hm-copy">
-        <p class="site-eyebrow ls-fade" style="--i:0">{t('home.eyebrow')}</p>
         <h1 class="hm-title">
           <span class="ls-line"><span style="--i:0">{t('home.heroLine1')}</span></span>
-          <span class="ls-line"><span class="hm-glow" style="--i:1">{t('home.heroLine2')}</span></span>
+          <span class="ls-line"><span class="hm-line2" style="--i:1">{t('home.heroLine2')}</span></span>
         </h1>
         <p class="site-sub ls-fade" style="--i:2">{t('home.heroSub')}</p>
         <div class="site-actions hm-actions ls-fade" style="--i:3">
@@ -144,7 +141,6 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
 
   <section class="site-sect ls-sect">
     <div class="site-shell">
-      <p class="site-eyebrow">{t('home.raceLabel')}</p>
       <h2 class="site-h2">{t('home.raceTitle')}</h2>
       <div class="hm-race" data-race>
         <div class="hm-race-card">
@@ -174,7 +170,6 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
 
   <section class="site-sect hm-templates" id="templates">
     <div class="site-shell">
-      <p class="site-eyebrow">{t('home.templatesLabel')} · <bdi>{catalogue.length}</bdi></p>
       <h2 class="site-h2">{t('home.templatesTitle')}</h2>
       <p class="site-sub">{t('home.templatesBody')}</p>
     </div>
@@ -203,9 +198,8 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
     </ul>
   </section>
 
-  <section class="site-sect ls-sect" data-ls="paper">
+  <section class="site-sect ls-sect">
     <div class="site-shell">
-      <p class="site-eyebrow">{t('home.wowLabel')}</p>
       <h2 class="site-h2">{t('home.wowTitle')}</h2>
       <ul class="hm-wow">
         {wow.map((item) => {
@@ -239,15 +233,12 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
                   </svg>
                 )}
               </span>
-              <span class:list={['site-tag', !item.live && 'is-soon']}>
-                {item.live ? t('home.liveTag') : t('home.soonTag')}
-              </span>
               <b>{t(`home.wow${item.key}`)}</b>
               <span>{t(`home.wow${item.key}Body`)}</span>
             </>
           );
           return (
-            <li class:list={['hm-wow-card', item.live && 'is-live']}>
+            <li class="hm-wow-card is-live">
               {'href' in item ? <a href={item.href}>{body}</a> : <div>{body}</div>}
             </li>
           );
@@ -259,7 +250,6 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
   <section class="site-sect ls-sect">
     <div class="site-shell hm-wa-grid">
       <div>
-        <p class="site-eyebrow">{t('home.waLabel')}</p>
         <h2 class="site-h2">{t('home.waTitle')}</h2>
         <p class="site-sub">{t('home.waNote')}</p>
       </div>
@@ -284,7 +274,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
     </div>
   </section>
 
-  <section class="site-sect" data-ls="paper">
+  <section class="site-sect">
     <div class="site-shell">
       <h2 class="site-h2">{t('home.pricingTitle')}</h2>
       <PriceTiers />

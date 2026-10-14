@@ -38,7 +38,7 @@ A skill's finding that breaks a rule above is recorded and dropped, not built.
 | Open-collection or picsum photographs to fill sections | **Never on a listing; credited and only where honest on site pages** | A listing shows the seller's photographs, and nothing else may pass as the property |
 | `left` / `right`, `text-align: left` | **Logical properties** | `verify-web-logical-props` |
 | Testimonials, logos, statistics as proof | **Only real ones** | taste-skill agrees: proof is never invented |
-| "No glass, no gradients, no eyebrows" (taste-skill house rules) | **Audit findings for site pages** | The Onyx/Paper system uses all three. Whether to keep them is the owner's call, made in the audit report |
+| "No glass, no gradients, no eyebrows" (taste-skill house rules) | **Adopted on site pages, 14 Oct 2026** | The audit removed the glows, the gradient text, the glass cards and the small labels above headings. Listing templates keep theirs (design contract) |
 
 ## Dials
 
@@ -67,3 +67,19 @@ python3 .claude/skills/ui-ux-pro-max/scripts/search.py "icon button accessible l
 
 `web-design-guidelines` fetches its rules from GitHub on each run, and
 `frontend-design` is prose. Neither has a script.
+
+## Decided in the 14 Oct 2026 audit
+
+- **One system for every site page.** Marketing pages are Onyx, while
+  reading pages (guides, legal, about, contact, the 404) and the editor are
+  Paper. Both use the same shell (`layouts/Site.astro`), faces, header and
+  footer. `layouts/Plain.astro` is now only a reading column on that shell.
+- **Faces:** Noto Sans Hebrew for display and Heebo for body (CLAUDE.md §5).
+  The wordmark stays Frank Ruhl Libre.
+- **Scale on site pages:** body 17px in full ink. The lead is 1.15rem, notes
+  are at least 0.95rem, and tags at least 0.8rem.
+- **Focus:** one 2px accent ring for every control, 3px outside it.
+- **Flat colour:** no gradients, glows or glass on site pages. Shadows only
+  on what floats (a dialog, the share sheet).
+- **Only what works today** is sold on a marketing page.
+

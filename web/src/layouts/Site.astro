@@ -106,32 +106,37 @@ const themeColor = ls === 'onyx' ? '#0b0c0a' : '#f6f4ef';
       <slot />
     </main>
 
+    {/*
+      A designed close rather than a row of eleven links (design audit,
+      14 Oct 2026): the name and what it is, then three short groups. Every
+      link keeps a 44px target.
+    */}
     <footer class="site-foot">
-      <div class="site-shell site-foot-row">
-        <a href="/" class="site-foot-brand">{t('common.brand')}</a>
-        <span>
+      <div class="site-shell site-foot-grid">
+        <div class="site-foot-id">
+          <a href="/" class="site-foot-brand">{t('common.brand')}</a>
+          <p>{t('home.tagline')}</p>
+        </div>
+        <nav aria-label={t('footer.product')}>
+          <h2>{t('footer.product')}</h2>
           <a href="/pricing/">{t('pricing.title')}</a>
-          {' · '}
           <a href="/templates/">{t('templates.title')}</a>
-          {' · '}
           <a href="/agents/">{t('audiences.navAgents')}</a>
-          {' · '}
           <a href="/dealers/">{t('audiences.navDealers')}</a>
-          {' · '}
           <a href="/private/">{t('audiences.navPrivate')}</a>
-          {' · '}
+        </nav>
+        <nav aria-label={t('footer.help')}>
+          <h2>{t('footer.help')}</h2>
           <a href="/guide/">{t('guides.title')}</a>
-          {' · '}
-          <a href="/about/">{t('legal.about')}</a>
-          {' · '}
           <a href="/contact/">{t('legal.contact')}</a>
-          {' · '}
+          <a href="/about/">{t('legal.about')}</a>
+        </nav>
+        <nav aria-label={t('footer.legal')}>
+          <h2>{t('footer.legal')}</h2>
           <a href="/legal/terms/">{t('legal.terms')}</a>
-          {' · '}
           <a href="/legal/privacy/">{t('legal.privacy')}</a>
-          {' · '}
           <a href="/legal/accessibility/">{t('legal.accessibility')}</a>
-        </span>
+        </nav>
         <slot name="foot" />
       </div>
     </footer>

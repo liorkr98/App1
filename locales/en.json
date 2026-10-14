@@ -1071,6 +1071,7 @@
     "vatNote": "",
     "checkoutOff": "",
     "disabled": "",
+    "talk": "",
     "start": "",
     "contact": "",
     "soon": "",
@@ -1749,5 +1750,10 @@
     "fbCopied": "",
     "kit": "",
     "close": ""
+  },
+  "footer": {
+    "product": "",
+    "help": "",
+    "legal": ""
   }
 }

@@ -67,14 +67,17 @@ const cards = [
     }
   }
 
+  /* Living Surfaces tokens, so the strip reads on the Onyx homepage: on
+     the old fixed tokens it was a cream card with the page's light ink on
+     it, unreadable (design audit, 14 Oct 2026). Flat surfaces, no lines. */
   .price-tier {
-    border: 1px solid var(--stone);
-    border-radius: 14px;
+    border-radius: var(--ls-r-card);
     padding: 1.25rem 1.2rem 1.35rem;
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
-    background: var(--plaster);
+    background: var(--ls-surface);
+    color: var(--ls-ink);
     min-block-size: 100%;
   }
 
@@ -88,15 +91,15 @@ const cards = [
   }
 
   .price-tier-flag {
-    font-size: var(--t-label);
-    font-weight: 700;
-    color: var(--olive);
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: var(--ls-accent);
     margin: 0;
   }
 
   .price-tier-name {
-    font-size: 0.95rem;
-    font-weight: 600;
+    font-size: 1rem;
+    font-weight: 800;
     margin: 0;
   }
 
@@ -114,7 +117,7 @@ const cards = [
   }
 
   .price-tier-sum {
-    font-size: 0.95rem;
+    font-size: 1rem;
     font-weight: 600;
     line-height: 1.5;
     margin: 0.15rem 0 0.1rem;
@@ -122,54 +125,29 @@ const cards = [
 
   /* The number is the card's headline; לחודש + מע״מ sits beside it. */
   .price-tier-sum :global(bdi) {
-    font-family: 'Frank Ruhl Libre', serif;
+    font-family: var(--ls-font-display);
     font-size: clamp(2rem, 4vw, 2.55rem);
-    font-weight: 700;
+    font-weight: 800;
     line-height: 1.05;
     margin-inline-end: 0.25rem;
   }
 
   .price-tier-note {
-    color: var(--muted);
-    font-size: 0.92rem;
+    color: var(--ls-ink-2);
+    font-size: 1rem;
     line-height: 1.55;
     margin: 0;
     max-inline-size: 28ch;
   }
 
-  .price-tier button {
-    margin-block-start: auto;
-    padding: 0.7rem 1rem;
-    min-block-size: 44px;
-    border: 1px solid var(--stone);
-    border-radius: 999px;
-    background: transparent;
-    color: var(--muted);
-    font: inherit;
-    font-weight: 700;
-  }
-
   .price-tier.is-featured {
-    background: var(--ink-deep);
-    color: var(--plaster);
-    border-color: var(--ink-deep);
-    padding-block: 1.45rem;
+    background: var(--ls-ink);
+    color: var(--ls-ground);
   }
 
-  .price-tier.is-featured .price-tier-flag {
-    /* 6.94:1 on ink-deep. Olive on this ground fails AA at this size. */
-    color: #9c9d93;
-  }
-
+  .price-tier.is-featured .price-tier-flag,
   .price-tier.is-featured .price-tier-note {
-    color: rgba(251, 250, 247, 0.78);
-  }
-
-  .price-tier.is-featured button {
-    /* Opacity on the whole control dropped plaster-on-olive below AA. */
-    background: var(--olive);
-    color: var(--plaster);
-    border-color: var(--olive);
+    color: color-mix(in srgb, var(--ls-ground) 72%, var(--ls-ink));
   }
 
   .is-compact .price-tier {

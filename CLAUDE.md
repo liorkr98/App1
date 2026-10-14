@@ -324,8 +324,14 @@ price, a phone number, and a date. Screenshots in Hebrew, not English.
 
 ## 5. Hebrew typography
 
-- **Fonts:** Frank Ruhl Libre 500/700 for headlines, prices and numeric facts;
-  Assistant 400/600 for body and UI. `font-display: swap`.
+- **Fonts:** two systems, both self-hosted, `font-display: swap`.
+  - **Site and app pages** (Site.astro: home, audiences, pricing, guides,
+    legal, editor, dashboard): Noto Sans Hebrew for display, Heebo for body
+    and UI (`--ls-font-display`, `--ls-font-body`). Decided 14 Oct 2026 in
+    the design audit; the wordmark stays Frank Ruhl Libre (it is the logo).
+  - **Listing templates** (design contract): Frank Ruhl Libre 500/700 for
+    headlines, prices and numeric facts; Assistant 400/600 for body, unless
+    a template's own spec says otherwise.
 - **Line height:** minimum `1.5×`. Hebrew has no ascenders or descenders, so
   tight leading looks cramped.
 - **No italics.** Hebrew has no italic form; synthetic italics look broken.

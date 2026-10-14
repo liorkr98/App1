@@ -43,6 +43,8 @@ const benefits = [1, 2, 3, 4].map((n) => ({ title: t(k(`b${n}t`)), body: k(`b${n
 const questions = [1, 2, 3].map((n) => ({ q: t(k(`q${n}`)), a: k(`a${n}`) }));
 const values = { ...noteValues(free), ...answers };
 const guides = guidesFor(key);
+/** The first example leads the page, as its picture. */
+const leadTemplate = examples[0] ?? 'aurora';
 /** A message with a {slot} goes through Msg; one without through Prose, which <bdi>s Latin like "QR". */
 const hasSlot = (path: string) => parts(path).some((part) => !('text' in part));
 
@@ -77,9 +79,17 @@ const ld = [
 ---
 
 <Site title={`${t(k('metaTitle'))} · ${t('common.brand')}`} description={t(k('lead'))} ld={ld}>
+  {/*
+    The product on the first screen (design audit, 14 Oct 2026): these pages
+    opened on a headline and grey text, and the thing being sold — a page
+    that looks good on a phone — appeared only further down.
+  */}
   <section class="site-sect au-hero">
-    <div class="site-shell">
-      <p class="site-eyebrow">{t(k('eyebrow'))}</p>
+    <div class="site-shell au-hero-grid">
+      <a class="au-hero-shot" href={demoPath(leadTemplate)} aria-label={t(`editor.templates.${leadTemplate}`)}>
+        <img src={`/home/templates/${leadTemplate}.webp`} alt="" width="400" height="866" fetchpriority="high" decoding="async" />
+      </a>
+      <div class="au-hero-copy">
       <h1 class="site-h2">{t(k('title'))}</h1>
       <p class="site-sub"><Prose text={t(k('lead'))} /></p>
       <div class="site-actions au-actions">
@@ -87,6 +97,7 @@ const ld = [
         <a class="site-btn site-btn-ghost" href="#examples">{t('audiences.examplesTitle')}</a>
       </div>
       <p class="site-note"><Msg path="audiences.freeLine" values={values} /></p>
+      </div>
     </div>
   </section>
 

@@ -7,12 +7,22 @@
 body.site {
   margin: 0;
   font-family: var(--ls-font-body);
-  font-size: var(--ls-fs-body);
+  /* 17px: running text on the site pages was 13–16px (design audit,
+     14 Oct 2026). Site pages only — the listing templates keep their own. */
+  font-size: 1.0625rem;
   line-height: var(--ls-lh-body);
   background: var(--ls-ground);
   color: var(--ls-ink);
   -webkit-font-smoothing: antialiased;
   touch-action: manipulation;
+  /* A short page (about, contact, a 404) keeps its footer at the bottom. */
+  display: flex;
+  flex-direction: column;
+  min-block-size: 100svh;
+}
+
+body.site > main {
+  flex: 1 0 auto;
 }
 
 .site [hidden] {
@@ -98,8 +108,9 @@ body.site {
 .site-sub {
   margin: 0;
   max-inline-size: 56ch;
-  color: var(--ls-ink-2);
-  font-size: 1.05rem;
+  color: var(--ls-ink);
+  font-size: 1.15rem;
+  line-height: 1.6;
 }
 
 /* ---------- Buttons ---------- */
@@ -143,7 +154,7 @@ body.site {
 
 .site-note {
   color: var(--ls-ink-2);
-  font-size: 0.9rem;
+  font-size: 0.95rem;
 }
 
 .site-tag {
@@ -152,7 +163,7 @@ body.site {
   align-self: flex-start;
   padding: 0.15rem 0.65rem;
   border-radius: var(--ls-r-pill);
-  font-size: 0.74rem;
+  font-size: 0.82rem;
   font-weight: 800;
   background: var(--ls-ink);
   color: var(--ls-ground);
@@ -164,33 +175,87 @@ body.site {
   border: 1px solid var(--ls-line);
 }
 
+/* ---------- Focus ----------
+   One ring for every control on the site, in the accent, outside the
+   element. Inputs drew focus as a 1px colour change and buttons had only
+   the browser's default (design audit, Vercel focus rules). */
+
+.site :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--ls-accent);
+  outline-offset: 3px;
+}
+
 /* ---------- Footer ---------- */
 
 .site-foot {
-  border-block-start: 1px solid var(--ls-line);
+  margin-block-start: clamp(2rem, 6vw, 4rem);
+  background: var(--ls-surface);
   color: var(--ls-ink-2);
-  font-size: 0.86rem;
+  font-size: 0.95rem;
 }
 
-.site-foot-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.4rem 1.2rem;
-  padding-block: 1.4rem 2rem;
+.site-foot-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem 1.5rem;
+  padding-block: clamp(2.5rem, 6vw, 4rem) 3rem;
 }
 
-.site-foot a {
+.site-foot-id {
+  grid-column: 1 / -1;
+  display: grid;
+  align-content: start;
+  gap: 0.4rem;
+}
+
+.site-foot-id p {
+  margin: 0;
+  max-inline-size: 22ch;
+}
+
+.site-foot-brand {
+  color: var(--ls-ink);
+  font-family: var(--ls-font-display);
+  font-size: 1.5rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.site-foot nav {
+  display: grid;
+  align-content: start;
+}
+
+.site-foot h2 {
+  margin: 0 0 0.3rem;
+  color: var(--ls-ink);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.site-foot nav a {
   display: inline-flex;
   align-items: center;
   min-block-size: 44px;
   color: inherit;
+  text-decoration: none;
 }
 
-.site-foot-brand {
-  font-weight: 800;
-  text-decoration: none;
+.site-foot nav a:hover {
+  color: var(--ls-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@media (min-width: 900px) {
+  .site-foot-grid {
+    grid-template-columns: 1.6fr repeat(3, 1fr);
+    gap: 2rem 2.5rem;
+  }
+
+  .site-foot-id {
+    grid-column: auto;
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {
