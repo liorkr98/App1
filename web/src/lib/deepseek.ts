@@ -249,6 +249,62 @@ export async function deepseekVision(request: VisionRequest): Promise<string | u
   }
 }
 
+export interface JsonRequest {
+  apiKey: string;
+  system: string;
+  user: string;
+  baseUrl?: string;
+  maxTokens?: number;
+  timeoutMs?: number;
+}
+
+export type JsonAnswer = { ok: true; content: string } | { ok: false; reason: 'timeout' | 'network' | 'http' | 'empty' };
+
+/**
+ * One JSON object as text, or why not. Unlike the paragraph calls there is
+ * no fallback to write instead, so the caller needs the reason to say what
+ * went wrong (the admin data page's "AI analysis", 0042).
+ */
+export async function deepseekJson(request: JsonRequest): Promise<JsonAnswer> {
+  try {
+    const response = await fetch(request.baseUrl ?? DEFAULT_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${request.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        response_format: { type: 'json_object' },
+        temperature: 0.3,
+        max_tokens: request.maxTokens ?? 1600,
+        messages: [
+          { role: 'system', content: request.system },
+          { role: 'user', content: request.user },
+        ],
+      }),
+      signal: AbortSignal.timeout(request.timeoutMs ?? 45_000),
+    });
+
+    if (!response.ok) {
+      modelLog(`json_http_${response.status}`);
+      return { ok: false, reason: 'http' };
+    }
+
+    const body = (await response.json()) as {
+      choices?: { message?: { content?: unknown } }[];
+    };
+    const content = body.choices?.[0]?.message?.content;
+    if (typeof content === 'string' && content.trim() !== '') return { ok: true, content };
+    modelLog('json_empty');
+    return { ok: false, reason: 'empty' };
+  } catch (error) {
+    const reason = failureCode(error);
+    modelLog(`json_${reason}`);
+    return { ok: false, reason: reason === 'timeout' ? 'timeout' : 'network' };
+  }
+}
+
 /**
  * Why the model gave nothing, as a code for the Worker log (Cloudflare
  * Observability). Never the prompt or the reply: both are the seller's

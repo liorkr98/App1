@@ -136,16 +136,20 @@ const themeColor = ls === 'onyx' ? '#0b0c0a' : '#f6f4ef';
       </div>
     </footer>
 
-    <script>
-      // Where this visitor first came from, for billing events (PRICING §7).
-      import { captureFirstTouch } from '../lib/first-touch';
-      captureFirstTouch();
-    </script>
-
-    {account && (
+    {/*
+      Where this visitor first came from, for billing events (PRICING §7),
+      and one count for this page on the owner's data page (0042). In the
+      account script when there is one: a script of its own is a chunk and a
+      tag, and the homepage is at its 900 KB budget.
+    */}
+    {account ? (
       <script>
+        import { captureFirstTouch, sendSiteView } from '../lib/first-touch';
+        import { markOwner } from '../lib/owner-cookie';
         import { supabase, supabaseConfigured } from '../lib/supabase';
 
+        captureFirstTouch();
+        sendSiteView();
         if (supabaseConfigured) {
           const enter = document.getElementById('nav-enter');
           const mine = document.getElementById('nav-mine');
@@ -153,12 +157,19 @@ const themeColor = ls === 'onyx' ? '#0b0c0a' : '#f6f4ef';
           const paint = async () => {
             const { data } = await client.auth.getSession();
             const signedIn = Boolean(data.session);
+            markOwner(signedIn);
             if (enter) enter.hidden = signedIn;
             if (mine) mine.hidden = !signedIn;
           };
           void paint();
           client.auth.onAuthStateChange(() => void paint());
         }
+      </script>
+    ) : (
+      <script>
+        import { captureFirstTouch, sendSiteView } from '../lib/first-touch';
+        captureFirstTouch();
+        sendSiteView();
       </script>
     )}
   </body>

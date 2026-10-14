@@ -19,3 +19,24 @@ export function captureFirstTouch(): Source {
     return classifySource(window.location.href, document.referrer);
   }
 }
+
+/**
+ * One site visit, sent once per page per tab (migration 0042, the owner's
+ * data page). No cookie and nothing personal: this page's address and the
+ * referring page go to /api/site-view, which decides whether it counts and
+ * keeps only a count per day, path and source. Here, not in its own module,
+ * because it runs on every page and the homepage is at its 900 KB budget:
+ * a separate chunk costs more than the code.
+ */
+export function sendSiteView(): void {
+  try {
+    // ' /a/ /b/ ': the paths this tab has counted, space-separated.
+    const path = ` ${location.pathname} `;
+    const seen = sessionStorage.getItem('amud.seen') ?? ' ';
+    if (seen.includes(path)) return;
+    sessionStorage.setItem('amud.seen', seen + path.slice(1));
+    navigator.sendBeacon('/api/site-view', `${location.href}\n${document.referrer}`);
+  } catch {
+    // A blocked sessionStorage or beacon costs one visit, never the page.
+  }
+}

@@ -1,0 +1,112 @@
+---
+import { accentFor } from '@/features/agents/accents';
+import { ogPriceFragment, publicPlace } from '@/features/listings/control-surface';
+import { displayPhone, telHref } from '@/features/listings/phone';
+import Prose from './Prose.astro';
+import Site from '../layouts/Site.astro';
+import { agentPath, agentWhatsApp, type AgentPage } from '../lib/agent-page';
+import { ils } from '../lib/format';
+import { t } from '../lib/i18n';
+import { GALLERY_WIDTHS, largest } from '../lib/images';
+import '../styles/agent-page.css';
+
+/**
+ * An agent's public page (0041): who they are and everything they have live
+ * or sold. Rendered by /agent/[key] for real agents and by a CI fixture for
+ * the checks — one component, so the two cannot differ.
+ *
+ * Indexable: turning the page on is the agent's opt-in for this page. Each
+ * listing it links to keeps its own search setting. No address, no pin, no
+ * coordinates; a listing card names the street at most (publicPlace).
+ */
+interface Props {
+  page: AgentPage;
+  robots?: string;
+}
+
+const { page, robots = 'index,follow' } = Astro.props;
+const origin = Astro.site ?? new URL(Astro.url.origin);
+const url = new URL(agentPath(page), origin).href;
+const accent = accentFor(page.accent);
+const tel = page.phone ? telHref(page.phone) : '';
+const whatsapp = agentWhatsApp(page.phone);
+const live = page.listings.filter((listing) => listing.status !== 'sold');
+const sold = page.listings.filter((listing) => listing.status === 'sold');
+const cars = page.kind === 'dealer';
+const byline = [page.role, page.agency].filter(Boolean).join(' · ');
+const description = t(cars ? 'agentPage.descriptionCars' : 'agentPage.descriptionHomes', { name: page.name });
+
+const price = (listing: (typeof page.listings)[number]) =>
+  ogPriceFragment(listing.price, listing.priceDisplay, ils(listing.price), t('listing.priceFrom')).replace(/^[\s·]+/, '');
+
+const ld = [
+  {
+    '@type': cars ? 'AutoDealer' : 'RealEstateAgent',
+    '@id': `${url}#agent`,
+    name: page.agency ? `${page.name} · ${page.agency}` : page.name,
+    url,
+    ...(page.logo ? { image: new URL(page.logo, origin).href } : {}),
+    ...(tel ? { telephone: tel.replace('tel:', '') } : {}),
+    areaServed: { '@type': 'Country', name: 'Israel' },
+    knowsLanguage: 'he',
+  },
+];
+---
+<Site title={`${page.name}${page.agency ? ` · ${page.agency}` : ''} · ${t('common.brand')}`} description={description} robots={robots} ld={ld}>
+  <section class="site-sect ap-head" style={`--ap-accent:${accent.lift}`}>
+    <div class="site-shell ap-who">
+      {page.logo && <img class="ap-logo" src={page.logo} alt="" width="96" height="96" />}
+      <div>
+        <h1 class="site-h2 ap-name">{page.name}</h1>
+        {byline && <p class="site-sub">{byline}</p>}
+        {page.licenceVerified && <p class="ap-licence">{t('listing.licenceVerified')}</p>}
+        <div class="site-actions ap-contact">
+          {whatsapp && <a class="site-btn ap-wa" href={whatsapp} rel="noopener">{t('agentPage.whatsapp')}</a>}
+          {tel && (
+            <a class="site-btn site-btn-ghost" href={tel}>
+              {t('agentPage.call')} <bdi>{displayPhone(page.phone ?? '')}</bdi>
+            </a>
+          )}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="site-shell ap-list" aria-labelledby="ap-live">
+    <h2 class="ap-h2" id="ap-live">{t(cars ? 'agentPage.liveCars' : 'agentPage.liveHomes')} · <bdi>{live.length}</bdi></h2>
+    {live.length === 0 ? (
+      <p class="site-sub">{t('agentPage.empty')}</p>
+    ) : (
+      <ul class="ap-grid">
+        {live.map((listing) => (
+          <li>
+            <a class="ap-card" href={`/a/${listing.slug}/`}>
+              <img src={largest(listing.media.cover, GALLERY_WIDTHS)} alt="" width="400" height="300" loading="lazy" decoding="async" />
+              <span class="ap-title"><Prose text={listing.title.replace(/\s*\n\s*/g, ' ')} /></span>
+              {listing.location && <span class="ap-place">{publicPlace(listing.location)}</span>}
+              {price(listing) && <span class="ap-price"><bdi>{price(listing)}</bdi></span>}
+            </a>
+          </li>
+        ))}
+      </ul>
+    )}
+  </section>
+
+  {sold.length > 0 && (
+    <section class="site-shell ap-list" aria-labelledby="ap-sold">
+      <h2 class="ap-h2" id="ap-sold">{t('agentPage.sold')} · <bdi>{sold.length}</bdi></h2>
+      <ul class="ap-grid">
+        {sold.map((listing) => (
+          <li>
+            <a class="ap-card is-sold" href={`/a/${listing.slug}/`}>
+              <img src={largest(listing.media.cover, GALLERY_WIDTHS)} alt="" width="400" height="300" loading="lazy" decoding="async" />
+              <span class="ap-tag">{t('dash.statusSold')}</span>
+              <span class="ap-title"><Prose text={listing.title.replace(/\s*\n\s*/g, ' ')} /></span>
+              {listing.location && <span class="ap-place">{publicPlace(listing.location)}</span>}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+</Site>

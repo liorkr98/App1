@@ -1,0 +1,27 @@
+---
+import he from '@locales/he.json';
+
+import AdminData from '../../layouts/AdminData.astro';
+
+/**
+ * The owner's data page on sample numbers, for CI (never deployed:
+ * .assetsignore keeps /template-check/ out of the upload). The same layout
+ * and the same renderer as /admin/data/, so the gates, the browser checks
+ * and the screenshots see what the owner sees. The AI answer is canned.
+ */
+---
+
+<AdminData note={he.adminData.fixtureNote}>
+  <script>
+    import type { Range } from '@/features/analytics/admin-data';
+
+    import { FIXTURE_INSIGHTS, fixtureAnalytics } from '../../lib/admin-data-fixture';
+    import { mountAdminData } from '../../lib/admin-data-view';
+
+    document.getElementById('d-app')?.removeAttribute('hidden');
+    mountAdminData({
+      load: async (days: Range) => fixtureAnalytics(days),
+      ask: async () => ({ insights: FIXTURE_INSIGHTS }),
+    });
+  </script>
+</AdminData>

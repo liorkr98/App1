@@ -158,5 +158,10 @@ const crumbs = {
       {' · '}
       <a href="/legal/accessibility/">{t('legal.accessibility')}</a>
     </footer>
+    <script>
+      // One count for this page on the owner's data page (0042).
+      import { sendSiteView } from '../lib/first-touch';
+      sendSiteView();
+    </script>
   </body>
 </html>

@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 
+import { OWNER_COOKIE, isAutomated } from '@/features/analytics/count-rules';
 import { isBeaconKind } from '@/features/analytics/events';
 
 import { recordListingEvent } from '../../../lib/listing-events';
@@ -18,7 +19,10 @@ export const prerender = false;
 
 export const POST: APIRoute = async ({ params, request }) => {
   const kind = (await request.text().catch(() => '')).trim();
-  if (isBeaconKind(kind)) {
+  // The agent reading their own page, or automation, is not a buyer reading
+  // to the end (count-rules.ts).
+  const own = (request.headers.get('cookie') ?? '').split(';').some((part) => part.trim().startsWith(`${OWNER_COOKIE}=`));
+  if (isBeaconKind(kind) && !own && !isAutomated(request.headers.get('user-agent'))) {
     await recordListingEvent(params.slug ?? '', kind, request.headers.get('user-agent'));
   }
   return new Response(null, { status: 204 });

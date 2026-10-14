@@ -1,0 +1,26 @@
+---
+import AgentProfile from '../../components/AgentProfile.astro';
+import type { AgentPage } from '../../lib/agent-page';
+import { holonListing, moshavListing, tlvListing } from '../../lib/fixtures';
+
+/**
+ * The agent page on fixture data, for CI (never deployed: .assetsignore
+ * keeps /template-check/ out of the upload). The same AgentProfile the real
+ * /agent/[key] route renders, so the gates, the browser checks and the
+ * screenshots see what an agent's visitors see.
+ */
+const page: AgentPage = {
+  code: 'K7M2Q',
+  handle: 'noa-cohen',
+  name: tlvListing.seller.name,
+  role: 'מתווכת',
+  agency: tlvListing.seller.agencyName ?? 'כהן נכסים',
+  logo: tlvListing.seller.agencyLogoUrl ?? '/fixtures/agency-mark.svg',
+  accent: 'olive',
+  kind: 'agent',
+  licenceVerified: true,
+  // Holon is sold in the fixtures: two live, one sold.
+  listings: [tlvListing, moshavListing, holonListing],
+};
+---
+<AgentProfile page={page} robots="noindex,nofollow" />
