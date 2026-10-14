@@ -213,6 +213,19 @@ html[data-template='heliograph'] .hl-seasons button {
   cursor: pointer;
 }
 
+/* "21 in December" and "21 في كانون الأول" are twice the Hebrew's width and
+   pushed the panel off a phone (e2e/languages.spec.ts). Outside Hebrew the
+   columns may shrink and a label may take two lines. */
+html[data-template='heliograph']:not([lang='he']) .hl-seasons {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+html[data-template='heliograph']:not([lang='he']) .hl-seasons button {
+  padding-inline: 0.5rem;
+  line-height: 1.2;
+  white-space: normal;
+}
+
 html[data-template='heliograph'] .hl-seasons [aria-pressed='true'] {
   background: var(--ink);
   border-color: var(--ink);

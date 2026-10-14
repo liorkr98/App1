@@ -1,7 +1,7 @@
 ---
 import { ils } from '../lib/format';
 import { priceHeadline } from '@/features/listings/control-surface';
-import { t } from '../lib/i18n';
+import { t, tr } from '../lib/i18n';
 import type { PerUnitPrice } from '../lib/price';
 
 interface Props {
@@ -35,7 +35,7 @@ const { price, listPrice, priceNote, priceDisplay, perUnit, priceWas } = Astro.p
 const headline = priceHeadline(priceDisplay);
 const priced = headline.showAmount && Number.isFinite(price) && price > 0;
 const onRequest = priceDisplay === 'on_request';
-const note = listPrice !== undefined ? `מחיר מחירון: ` : priceNote;
+const note = listPrice !== undefined ? `${tr('מחיר מחירון:')} ` : priceNote;
 const showBar = priced || onRequest || Boolean(note) || Boolean(perUnit);
 const dropped = priced && priceWas !== undefined && priceWas > price;
 ---

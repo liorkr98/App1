@@ -2,6 +2,7 @@ import { factDefinition, type ListingCategory } from '@/features/listings/schema
 import type { Fact } from '@/types/listing';
 
 import { ils } from './format';
+import { tr } from './i18n';
 
 /**
  * The per-unit price under the asking price — ₪19,474 למ״ר.
@@ -49,7 +50,7 @@ export function perUnitPrice(
       // ל is the Hebrew "per" prefix and attaches directly to the unit:
       // מ״ר becomes למ״ר. No space, no slash — a slash between two Hebrew
       // units in an RTL line is one more neutral character to fight.
-      per: `ל${unit}`,
+      per: tr(`ל${unit}`),
     };
   }
 

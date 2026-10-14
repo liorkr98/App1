@@ -3,7 +3,8 @@ import { accentFor } from '@/features/agents/accents';
 import { canonicalSellerRole } from '@/features/agents/profile';
 import { telHref } from '@/features/listings/phone';
 import type { Listing } from '@/types/listing';
-import { t } from '../lib/i18n';
+import { dir, lang, t, tr } from '../lib/i18n';
+import { languagePath, pageLanguages } from '../lib/translated';
 import { listingJsonLd } from '../lib/jsonld';
 import { scriptJson } from '@/features/listings/script-json';
 import { livingSurfacesMode } from '../lib/living-surfaces';
@@ -37,7 +38,7 @@ interface Props {
 }
 
 const { listing, ogFactKeys, heroHeight, robots: robotsOverride, hasWalk = false, preview = false } = Astro.props;
-const sellerRole = listing.seller.role ? canonicalSellerRole(listing.seller.role) : '';
+const sellerRole = listing.seller.role ? tr(canonicalSellerRole(listing.seller.role)) : '';
 
 /**
  * The agent's accent, resolved to two stops and set as inline custom
@@ -65,7 +66,12 @@ const description = ogDescription(listing, ogFactKeys);
 // real 1200x630 crop — see ogImageUrl.
 const ogImage = ogImageUrl(listing, Astro.site);
 
-const canonical = new URL(`/a/${listing.slug}/`, Astro.site).href;
+// The page in the language being rendered (lib/locale-server.ts): its own
+// address, and the others it can be read in when search may see them.
+const language = lang();
+const canonical = new URL(languagePath(listing.slug, language), Astro.site).href;
+const OG_LOCALE = { he: 'he_IL', en: 'en_US', ru: 'ru_RU', ar: 'ar_AR' } as const;
+const languages = pageLanguages(listing);
 
 // noindex unless the seller opted in. A private seller usually does not want
 // their home address permanently searchable; an agent does. Not our call.
@@ -105,8 +111,8 @@ const showBarLogo =
   and a fifth divergence cannot slip in as a style override.
 */}
 <html
-  lang="he"
-  dir="rtl"
+  lang={language}
+  dir={dir()}
   data-template={listing.template}
   data-slug={listing.status === 'draft' ? undefined : listing.slug}
   data-ls={lsMode}
@@ -128,7 +134,10 @@ const showBarLogo =
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 
 <meta property="og:type" content="website">
-<meta property="og:locale" content="he_IL">
+<meta property="og:locale" content={OG_LOCALE[language]}>
+{robots.startsWith('index') && languages.length > 1 && languages.map((code) => (
+  <link rel="alternate" hreflang={code} href={new URL(languagePath(listing.slug, code), Astro.site).href}>
+))}
 <meta property="og:url" content={canonical}>
 <meta property="og:site_name" content={t('common.brand')}>
 <meta property="og:title" content={title}>

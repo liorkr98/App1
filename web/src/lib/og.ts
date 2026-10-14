@@ -4,7 +4,7 @@ import { factDefinition } from '@/features/listings/schemas';
 import { ogPriceFragment } from '@/features/listings/control-surface';
 import { currentCard } from '@/features/listings/share-card';
 import { factValue, ils, num } from './format';
-import { t } from './i18n';
+import { lang, t, tr } from './i18n';
 import { supabaseUrl } from './supabase';
 
 /**
@@ -32,6 +32,9 @@ export function ogTitle(listing: Listing): string {
     ils(listing.price),
     t('listing.priceFrom'),
   );
+
+  // Another language: the agent's own translated title says what it is.
+  if (lang() !== 'he') return `${listing.title.replace(/\s*\n\s*/g, ' ').trim()}${price}`;
 
   if (listing.category === 'property') {
     const rooms = get(listing.facts, 'rooms');
@@ -79,21 +82,18 @@ export function ogDescription(listing: Listing, keys: string[]): string {
      */
     const definition = factDefinition(listing.category, key);
     if (definition?.phrase) {
+      // The phrase in the page's language ("{value} rooms"), the value as said.
+      const phrase = tr(definition.phrase);
       if (fact.type === 'boolean') {
-        if (fact.value === true) parts.push(definition.phrase.replace('{value}', '').trim());
+        if (fact.value === true) parts.push(phrase.replace('{value}', '').trim());
         continue;
       }
-      parts.push(
-        definition.phrase.replace(
-          '{value}',
-          factValue(fact.value, definition.grouped !== false),
-        ),
-      );
+      parts.push(phrase.replace('{value}', factValue(fact.value, definition.grouped !== false)));
       continue;
     }
 
     const value = factValue(fact.value);
-    parts.push(fact.unit ? `${value} ${fact.unit}` : `${fact.label} ${value}`.trim());
+    parts.push(fact.unit ? `${value} ${tr(fact.unit)}` : `${tr(fact.label)} ${value}`.trim());
   }
 
   return parts.join(', ');

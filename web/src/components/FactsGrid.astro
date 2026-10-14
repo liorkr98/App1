@@ -2,7 +2,7 @@
 import type { Fact, ListingAudience } from '@/types/listing';
 import type { ListingCategory } from '@/features/listings/schemas';
 import { toCells } from '../lib/facts';
-import { t } from '../lib/i18n';
+import { t, tr } from '../lib/i18n';
 
 interface Props {
   category: ListingCategory;
@@ -41,8 +41,8 @@ const rest = present.slice(6);
         <div class="fact-lbl">{cell.label}</div>
         {cell.verified && (
           <div class="fact-src">
-            <span class="verified">מאומת</span>
-            <span class="fact-cite">{cell.sourceName} · נכון ל־<bdi>{cell.sourceDate}</bdi></span>
+            <span class="verified">{tr('מאומת')}</span>
+            <span class="fact-cite">{tr(cell.sourceName ?? '')} · {tr('נכון ל־')}<bdi>{cell.sourceDate}</bdi></span>
           </div>
         )}
       </div>

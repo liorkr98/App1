@@ -1032,6 +1032,71 @@ h1 {
   grid-column: 1 / -1;
 }
 
+/* שליחה בשפה אחרת (0044): three languages, the text to check, then send. */
+.langs {
+  margin-block: 1.2rem 0.4rem;
+  margin-inline: 0.4rem;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.langs h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.lang-choices {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.lang-choices .act {
+  justify-content: center;
+  min-block-size: 46px;
+}
+
+.lang-choices .act[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--plaster);
+}
+
+.lang-choices .act.is-saved::after {
+  content: ' ✓';
+}
+
+.lang-form {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.lang-form label {
+  display: grid;
+  gap: 0.3rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.lang-form textarea {
+  inline-size: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--stone);
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 400;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.lang-form .act {
+  justify-content: center;
+  min-block-size: 46px;
+}
+
+.lang-acts {
+  margin-inline: 0;
+}
+
 /* הורדתי מחיר (0043): the new price, then the card, then the message. */
 .drop-form {
   grid-column: 1 / -1;

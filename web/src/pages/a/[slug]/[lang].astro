@@ -1,0 +1,52 @@
+---
+import ListingEnded from '../../../components/ListingEnded.astro';
+import ListingPage from '../../../components/ListingPage.astro';
+import NotFound from '../../../components/NotFound.astro';
+import { isPageLang } from '../../../lib/i18n';
+import { countListingEvent } from '../../../lib/listing-events';
+import { publishedListing, purchaseExpired } from '../../../lib/listing-from-row';
+import { translatedListing } from '../../../lib/translated';
+
+/**
+ * The listing page in English, Russian or Arabic (14 Oct 2026): /a/{slug}/{lang}/.
+ *
+ * The same page as /a/{slug}/ — the same component, view count, 404, 410
+ * and noindex rules — rendered in the language the middleware set from the
+ * path (lib/locale-server.ts). The title and description are the agent's
+ * own translation, saved from /mine (migration 0044); a language they never
+ * saved sends the visitor to the Hebrew page rather than a half-translated
+ * one. Fixtures have no translations here; CI renders its own under
+ * /template-check/{slug}/{lang}/.
+ */
+export const prerender = false;
+
+const slug = Astro.params.slug ?? '';
+const language = Astro.params.lang;
+if (!isPageLang(language)) {
+  Astro.response.status = 404;
+}
+const found = isPageLang(language) && slug ? await publishedListing(slug) : undefined;
+const listing = found && isPageLang(language) ? translatedListing(found, language) : undefined;
+
+if (found && !listing) {
+  return Astro.redirect(`/a/${encodeURIComponent(found.slug)}/`, 302);
+}
+if (!listing) {
+  Astro.response.status = 404;
+}
+
+const ended = listing ? await purchaseExpired(listing.id) : false;
+if (ended) {
+  Astro.response.status = 410;
+}
+
+if (!listing || listing.indexable !== true || ended) {
+  Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
+}
+
+if (listing && !ended) {
+  const counted = await countListingEvent(listing.slug, 'view', Astro.request);
+  if (counted) Astro.response.headers.append('Set-Cookie', counted);
+}
+---
+{ended ? <ListingEnded /> : listing ? <ListingPage listing={listing} /> : <NotFound />}

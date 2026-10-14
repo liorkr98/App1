@@ -89,10 +89,65 @@ describe('locale files', () => {
     assert.deepEqual(duplicateKeys('{"a":1,"b":{"a":1}}'), []);
   });
 
-  for (const file of ['he.json', 'en.json']) {
+  for (const file of ['he.json', 'en.json', 'ru.json', 'ar.json', 'strings/en.json', 'strings/ru.json', 'strings/ar.json']) {
     it(`${file} holds every key once`, () => {
-      const text = readFileSync(resolve(process.cwd(), 'locales', file), 'utf8');
-      assert.deepEqual(duplicateKeys(text), []);
+      assert.deepEqual(duplicateKeys(read(file)), []);
     });
   }
+});
+
+/** Every key path that holds text, with its text. */
+function leaves(value: unknown, path = ''): Map<string, string> {
+  const found = new Map<string, string>();
+  if (typeof value === 'string') found.set(path, value);
+  else if (value && typeof value === 'object') {
+    for (const [key, inner] of Object.entries(value)) {
+      for (const [at, text] of leaves(inner, path ? `${path}.${key}` : key)) found.set(at, text);
+    }
+  }
+  return found;
+}
+
+const read = (file: string) => readFileSync(resolve(process.cwd(), 'locales', file), 'utf8');
+const placeholders = (text: string) => [...text.matchAll(/\{\w+\}/g)].map((match) => match[0]).sort();
+
+/**
+ * The listing page in another language (0044) looks a key up in that
+ * language and falls back to Hebrew. A key Hebrew does not have would never
+ * be asked for, and a `{value}` the translation dropped would leave a fact
+ * without its number.
+ */
+describe('page languages', () => {
+  const hebrew = leaves(JSON.parse(read('he.json')));
+
+  for (const file of ['en.json', 'ru.json', 'ar.json']) {
+    it(`${file}: every key exists in Hebrew and keeps its placeholders`, () => {
+      for (const [key, text] of leaves(JSON.parse(read(file)))) {
+        const source = hebrew.get(key);
+        assert.ok(source !== undefined, `${file}: ${key} is not in he.json`);
+        if (text) assert.deepEqual(placeholders(text), placeholders(source), `${file}: ${key}`);
+      }
+    });
+  }
+
+  it('ru.json and ar.json translate the same keys, none empty', () => {
+    const russian = leaves(JSON.parse(read('ru.json')));
+    const arabic = leaves(JSON.parse(read('ar.json')));
+    assert.deepEqual([...russian.keys()].sort(), [...arabic.keys()].sort());
+    for (const [key, text] of [...russian, ...arabic]) assert.ok(text.trim(), `${key} is empty`);
+  });
+
+  it('the Hebrew-text dictionaries cover the same phrases and keep their placeholders', () => {
+    const files = ['strings/en.json', 'strings/ru.json', 'strings/ar.json'].map(
+      (file) => [file, JSON.parse(read(file)) as Record<string, string>] as const,
+    );
+    const phrases = Object.keys(files[0]![1]).sort();
+    for (const [file, strings] of files) {
+      assert.deepEqual(Object.keys(strings).sort(), phrases, file);
+      for (const [hebrewText, text] of Object.entries(strings)) {
+        assert.ok(text.trim(), `${file}: ${hebrewText} is empty`);
+        assert.deepEqual(placeholders(text), placeholders(hebrewText), `${file}: ${hebrewText}`);
+      }
+    }
+  });
 });

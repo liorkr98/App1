@@ -1,5 +1,6 @@
 import { defineMiddleware } from 'astro:middleware';
 
+import { pathLang, withLang } from './lib/locale-server';
 import SECURITY_HEADERS from './lib/security-headers.json';
 
 /**
@@ -11,7 +12,17 @@ import SECURITY_HEADERS from './lib/security-headers.json';
  * says so itself, and this does not overwrite it.
  */
 export const onRequest = defineMiddleware(async (context, next) => {
-  const response = await next();
+  // A listing page in English, Russian or Arabic (lib/locale-server.ts): the
+  // whole render, body included, inside that language. The body is read here
+  // because a streamed one would finish rendering outside it.
+  const language = pathLang(context.url.pathname);
+  const response = language
+    ? await withLang(language, async () => {
+        const rendered = await next();
+        const body = await rendered.text();
+        return new Response(body, rendered);
+      })
+    : await next();
   const extra = neverIndexed(context.url.pathname) ? NOINDEX : {};
   try {
     addTo(response.headers, extra);
@@ -28,10 +39,11 @@ const NOINDEX = { 'X-Robots-Tag': 'noindex, nofollow, noarchive' };
 
 /**
  * What the Worker renders that is never a search result: the API, and a
- * listing's share, story, flyer and card pages. The listing page itself
- * decides for itself (/a/[slug]/index.astro), from the seller's choice.
+ * listing's share, story, flyer and card pages. The listing page itself, in
+ * any language, decides for itself from the seller's choice.
  */
 function neverIndexed(path: string): boolean {
+  if (pathLang(path)) return false;
   return path.startsWith('/api/') || /^\/a\/[^/]+\/[^/]+/.test(path);
 }
 

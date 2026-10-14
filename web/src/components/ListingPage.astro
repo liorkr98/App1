@@ -19,7 +19,8 @@ import Stage from './Stage.astro';
 import AgentCard from './AgentCard.astro';
 import Walk from './Walk.astro';
 import { CATEGORY_PRESENTATION } from '../lib/category-presentation';
-import { t } from '../lib/i18n';
+import { lang, t, tr } from '../lib/i18n';
+import { languagePath, pageLanguages } from '../lib/translated';
 import { perUnitPrice } from '../lib/price';
 import { ils } from '../lib/format';
 import { areaMap } from '@/features/listings/area-map';
@@ -77,7 +78,10 @@ const listing: Listing = { ...given, template: templateFor(given.template, given
 const presentation = CATEGORY_PRESENTATION[listing.category];
 
 const paragraphs = listing.description.split('\n\n');
-const heading = listing.category === 'property' ? 'על הדירה' : 'על הרכב';
+const heading = tr(listing.category === 'property' ? 'על הדירה' : 'על הרכב');
+const current = lang();
+const languages = listing.status === 'published' ? pageLanguages(listing) : [];
+const LANGUAGE_NAMES = { he: 'עברית', en: 'English', ru: 'Русский', ar: 'العربية' } as const;
 
 // A vehicle has no street, so no map. See DESIGN-CONTRACT §5.4.
 const showMap = showListingMap(listing.location);
@@ -150,18 +154,18 @@ const stageCells = composed
 const stageKeys = stageCells.filter((cell) => !cell.verified).map((cell) => cell.key);
 const flatTitle = listing.title.replace(/\s*\n\s*/g, ' ');
 const shareFacts = shareCells
-  .filter((cell) => !cell.absent && cell.value !== 'אין')
+  .filter((cell) => !cell.absent && cell.value !== tr('אין'))
   .filter((cell) => !(flatTitle.includes(cell.value) && flatTitle.includes(cell.label)))
   .slice(0, 4)
   .map((cell) => {
-    if (cell.value === 'יש') return cell.label;
+    if (cell.value === tr('יש')) return cell.label;
     if (cell.displayValue !== cell.value) return `${cell.label} ${cell.displayValue}`;
     return `${cell.value} ${cell.label}`;
   });
 const sharePlace = listing.location?.street
   ? `${listing.location.street}, ${listing.location.city}`
   : listing.location?.city;
-const pageUrl = new URL(`/a/${listing.slug}/`, Astro.site).href;
+const pageUrl = new URL(languagePath(listing.slug, current), Astro.site).href;
 const shareHref = whatsappShareUrl(
   shareMessage({
     title: listing.title,
@@ -321,11 +325,23 @@ const shareHref = whatsappShareUrl(
         a paid grant sets listing.hyadMark false and the mark comes off.
         The ODbL line is a LICENCE CONDITION, not a courtesy (§10). */}
     <footer>
+      {/* The page in the languages the agent saved (0044), each named in itself. */}
+      {languages.length > 1 && (
+        <nav class="page-langs" aria-label={t('language.label')}>
+          {languages.map((code) =>
+            code === current ? (
+              <span lang={code} aria-current="page">{LANGUAGE_NAMES[code]}</span>
+            ) : (
+              <a href={languagePath(listing.slug, code)} lang={code} hreflang={code}>{LANGUAGE_NAMES[code]}</a>
+            ),
+          )}
+        </nav>
+      )}
       {listing.hyadMark !== false && (
         <Fragment>{t('common.builtByPrefix')}<a href="/?src=credit">{t('common.brand')}</a></Fragment>
       )}
       {attributions.map((attribution) => (
-        <Fragment><br /><span class="attribution"><Prose text={attribution} /></span></Fragment>
+        <Fragment><br /><span class="attribution"><Prose text={tr(attribution)} /></span></Fragment>
       ))}
       <br />
       <a href="/about/">{t('legal.about')}</a>
@@ -337,8 +353,12 @@ const shareHref = whatsappShareUrl(
       <a href="/legal/privacy/">{t('legal.privacy')}</a>
       {' · '}
       <a href="/legal/accessibility/">{t('legal.accessibility')}</a>
-      {' · '}
-      <a href="/guide/photos/">{t('guide.photosTitle')}</a>
+      {current === 'he' && (
+        <Fragment>
+          {' · '}
+          <a href="/guide/photos/">{t('guide.photosTitle')}</a>
+        </Fragment>
+      )}
     </footer>
   </Fragment>
 </BaseListing>

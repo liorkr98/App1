@@ -382,6 +382,11 @@ jobs:
         working-directory: web
         run: npx playwright test price-drop
 
+      - name: The page in English, Russian and Arabic keeps no Hebrew copy and fits a phone
+        if: ${{ !cancelled() }}
+        working-directory: web
+        run: npx playwright test languages
+
       - name: The story video is honestly labelled and as long as the film
         if: ${{ !cancelled() }}
         working-directory: web
