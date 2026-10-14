@@ -9,6 +9,7 @@ import type { PerUnitPrice } from '../lib/price';
 import AgentCard from './AgentCard.astro';
 import HighlightChips from './HighlightChips.astro';
 import PriceBar from './PriceBar.astro';
+import { priceProps as stagePriceProps } from '../lib/stage';
 import Prose from './Prose.astro';
 import AtelierStage from './stages/AtelierStage.astro';
 import GlassStage from './stages/GlassStage.astro';
@@ -113,13 +114,7 @@ const objectPosition = [
   .filter(Boolean)
   .join(';');
 
-const priceProps = {
-  price: listing.price,
-  listPrice: listing.listPrice,
-  priceNote: listing.priceNote,
-  priceDisplay: listing.priceDisplay,
-  perUnit,
-};
+const priceProps = stagePriceProps(listing, perUnit);
 ---
 {layout === 'gallery' && (
   <section class="stage stage-gallery">

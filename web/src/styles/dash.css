@@ -1032,6 +1032,40 @@ h1 {
   grid-column: 1 / -1;
 }
 
+/* הורדתי מחיר (0043): the new price, then the card, then the message. */
+.drop-form {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.drop-form label {
+  display: grid;
+  gap: 0.3rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.drop-form input {
+  min-block-size: 46px;
+  padding-inline: 0.8rem;
+  border: 1px solid var(--stone);
+  border-radius: 10px;
+  font: inherit;
+  font-size: 1.1rem;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.drop-form .act {
+  justify-content: center;
+  min-block-size: 46px;
+}
+
+.drop-form .d-note {
+  margin: 0;
+}
+
 /* ---------- States ---------- */
 
 .state {

@@ -7,7 +7,7 @@ import {
 import { cardFor, shareCardKey } from '@/features/listings/share-card';
 import type { Listing } from '@/types/listing';
 
-import { listingFromRow, LISTING_COLUMNS, type ListingRow } from './listing-row-map';
+import { listingFromRow, selectListingColumns, type ListingRow } from './listing-row-map';
 import { drawCard, drawStory, encode, loadCover, loadShareFonts } from './share-draw';
 import { supabase } from './supabase';
 
@@ -38,7 +38,9 @@ const FAILED: ShareImagesResult = { status: 'failed' };
 export async function makeShareImages(listingId: string): Promise<ShareImagesResult> {
   try {
     const client = supabase();
-    const { data, error } = await client.from('listings').select(LISTING_COLUMNS).eq('id', listingId).maybeSingle();
+    const { data, error } = await selectListingColumns((columns) =>
+      client.from('listings').select(columns).eq('id', listingId).maybeSingle(),
+    );
     if (error || !data) return FAILED;
     const row = data as unknown as ListingRow;
     const listing = listingFromRow(row);
@@ -118,6 +120,32 @@ async function upload(
     if (error) return undefined;
     return storage.getPublicUrl(path).data.publicUrl;
   } catch {
+    return undefined;
+  }
+}
+
+/**
+ * The "נמכר" card (0043), drawn in this browser and handed back as a file to
+ * share. Not uploaded: a sold listing has no public page to preview it on,
+ * so it travels as an image (the phone's share sheet) rather than as a link.
+ * The agent's own row only — RLS decides that, as for every read here.
+ */
+export async function soldCardFile(listingId: string): Promise<File | undefined> {
+  try {
+    const client = supabase();
+    const { data, error } = await selectListingColumns((columns) =>
+      client.from('listings').select(columns).eq('id', listingId).maybeSingle(),
+    );
+    if (error || !data) return undefined;
+    const listing = listingFromRow(data as unknown as ListingRow);
+    if (!listing || listing.status !== 'sold') return undefined;
+    const [cover] = await Promise.all([loadCover(listing.media.cover.url), loadShareFonts()]);
+    const canvas = document.createElement('canvas');
+    drawCard(canvas, listing, cover);
+    const encoded = await encode(canvas, CARD_QUALITIES[0]);
+    return new File([encoded.blob], `${listing.slug}-sold.${encoded.extension}`, { type: encoded.blob.type });
+  } catch {
+    console.warn('sold card failed');
     return undefined;
   }
 }

@@ -26,8 +26,25 @@ import { cardFor } from '@/features/listings/share-card';
 import { resolveTemplateId } from '@/features/templates/manifest';
 
 
-export const LISTING_COLUMNS =
+/** Every column a page reads, before migration 0043. */
+export const LISTING_COLUMNS_BEFORE_0043 =
   'id, slug, category, title, description, price, currency, list_price, price_note, facts, media, disclosures, location, seller, template, accent, status, indexable, pre_portal, published_at, og_image_hash, audience, hyad_mark, area_places';
+
+export const LISTING_COLUMNS = `${LISTING_COLUMNS_BEFORE_0043}, price_was, price_dropped_at`;
+
+/**
+ * Runs a select with every column, and again without 0043's two when the
+ * database does not have them yet (Postgres 42703, undefined column). The
+ * code deploys on merge and the migration is run by hand: in between, every
+ * listing page would otherwise answer 404 for want of a price history.
+ */
+export async function selectListingColumns<T>(
+  query: (columns: string) => PromiseLike<{ data: T; error: { code?: string } | null }>,
+): Promise<{ data: T; error: { code?: string } | null }> {
+  const first = await query(LISTING_COLUMNS);
+  if (first.error?.code !== '42703') return first;
+  return query(LISTING_COLUMNS_BEFORE_0043);
+}
 
 export interface ListingRow {
   id: string;
@@ -39,6 +56,8 @@ export interface ListingRow {
   currency: string | null;
   list_price: number | string | null;
   price_note: string | null;
+  price_was?: number | string | null;
+  price_dropped_at?: string | null;
   facts: unknown;
   media: unknown;
   disclosures: string[] | null;
@@ -288,6 +307,8 @@ export function listingFromRow(row: ListingRow): Listing | undefined {
     currency: row.currency ?? 'ILS',
     ...(row.list_price != null ? { listPrice: Number(row.list_price) } : {}),
     ...(row.price_note ? { priceNote: row.price_note } : {}),
+    ...(row.price_was != null && Number.isFinite(Number(row.price_was)) ? { priceWas: Number(row.price_was) } : {}),
+    ...(row.price_dropped_at ? { priceDroppedAt: row.price_dropped_at } : {}),
     facts: Array.isArray(row.facts) ? (row.facts as Fact[]) : [],
     media,
     ...(row.disclosures && row.disclosures.length > 0 ? { disclosures: row.disclosures } : {}),

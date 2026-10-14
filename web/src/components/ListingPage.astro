@@ -12,6 +12,7 @@ import Hero from './Hero.astro';
 import MonthlyCost from './MonthlyCost.astro';
 import MapSection from './MapSection.astro';
 import PriceBar from './PriceBar.astro';
+import { priceProps } from '../lib/stage';
 import Prose from './Prose.astro';
 import SellerBlock from './SellerBlock.astro';
 import Stage from './Stage.astro';
@@ -225,13 +226,7 @@ const shareHref = whatsappShareUrl(
 
   {!composed && (
     <Fragment>
-      <PriceBar
-        price={listing.price}
-        listPrice={listing.listPrice}
-        priceNote={listing.priceNote}
-        priceDisplay={listing.priceDisplay}
-        perUnit={perUnit}
-      />
+      <PriceBar {...priceProps(listing, perUnit)} />
 
       <HighlightChips highlights={listing.highlights} facts={listing.facts} />
     </Fragment>

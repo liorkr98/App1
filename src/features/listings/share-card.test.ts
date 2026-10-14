@@ -65,6 +65,16 @@ describe('shareCardKey', () => {
     );
     assert.notEqual(shareCardKey({ ...LISTING, seller: { ...LISTING.seller, name: 'אחר' } }), key);
   });
+
+  it('changes when the ribbon does (0043), and again when a drop is no longer news', () => {
+    const at = new Date('2026-10-14T12:00:00Z');
+    const live = { ...LISTING, status: 'published' as const };
+    const plain = shareCardKey(live, at);
+    const dropped = { ...live, priceWas: live.price + 100_000, priceDroppedAt: '2026-10-12T09:00:00Z' };
+    assert.notEqual(shareCardKey(dropped, at), plain);
+    assert.equal(shareCardKey(dropped, new Date('2026-11-14T12:00:00Z')), shareCardKey(live, new Date('2026-11-14T12:00:00Z')));
+    assert.notEqual(shareCardKey({ ...live, status: 'sold' }, at), plain);
+  });
 });
 
 describe('cardFor', () => {

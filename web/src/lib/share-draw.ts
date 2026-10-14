@@ -2,6 +2,7 @@ import type { Listing } from '@/types/listing';
 import { accentFor } from '@/features/agents/accents';
 import { coverCrop, fitSize, wrapLines, type Measure } from '@/features/listings/card-layout';
 import { ogPriceFragment } from '@/features/listings/control-surface';
+import { priceDrop } from '@/features/listings/price-drop';
 import { cardFamily, type CardFamily } from '@/features/listings/share-card';
 import { templateFor, templateSpec } from '@/features/templates/manifest';
 
@@ -61,9 +62,16 @@ interface Content {
   role: string;
   licence?: string;
   category: Listing['category'];
+  /**
+   * The ribbon (0043): "המחיר ירד" with the price it came down from, or
+   * "נמכר". A sold card prints no price: the figure is between the parties.
+   */
+  badge?: { kind: 'drop' | 'sold'; was?: string };
 }
 
-export function shareContent(listing: Listing): Content {
+export function shareContent(listing: Listing, at: Date = new Date()): Content {
+  const sold = listing.status === 'sold';
+  const drop = sold ? undefined : priceDrop(listing, at);
   const template = templateFor(listing.template, listing.category);
   const cells = toCells(listing.category, listing.facts, listing.audience)
     .filter((cell) => !cell.absent)
@@ -78,12 +86,13 @@ export function shareContent(listing: Listing): Content {
     title: listing.title.replace(/\s*\n\s*/g, ' '),
     titleLines: titleLines(listing),
     // ogPriceFragment is written for og:title ("… · ₪x"); the separator is not ours.
-    price: ogPriceFragment(listing.price, listing.priceDisplay, ils(listing.price), t('listing.priceFrom')).replace(/^[\s·]+/, ''),
+    price: sold ? '' : ogPriceFragment(listing.price, listing.priceDisplay, ils(listing.price), t('listing.priceFrom')).replace(/^[\s·]+/, ''),
     cells,
     name: listing.seller.name,
     role: listing.seller.agencyName ?? listing.seller.role ?? '',
     ...(listing.seller.licenceNumber ? { licence: listing.seller.licenceNumber } : {}),
     category: listing.category,
+    ...(sold ? { badge: { kind: 'sold' as const } } : drop ? { badge: { kind: 'drop' as const, was: ils(drop.was) } } : {}),
   };
 }
 
@@ -511,6 +520,41 @@ function cardScene(ctx: Ctx, content: Content, look: CardLook, cover: HTMLImageE
   }
 }
 
+/**
+ * The ribbon, its own pill so it reads on any ground and any family. `edge`
+ * is the pill's inline-start edge (its RIGHT side): the label sits there and
+ * the old price, crossed out, after it.
+ */
+function ribbon(ctx: Ctx, badge: NonNullable<Content['badge']>, edge: number, top: number, size: number): void {
+  const label = t(badge.kind === 'sold' ? 'card.badgeSold' : 'card.badgeDrop');
+  const labelFont = `800 ${size}px ${BODY}`;
+  const wasFont = `700 ${Math.round(size * 0.82)}px ${BODY}`;
+  const pad = Math.round(size * 0.75);
+  const gap = Math.round(size * 0.55);
+  const height = Math.round(size * 1.9);
+  const labelWidth = measureWith(ctx, labelFont)(label);
+  const wasWidth = badge.was ? measureWith(ctx, wasFont)(badge.was) : 0;
+  const width = pad * 2 + labelWidth + (badge.was ? gap + wasWidth : 0);
+  const x = edge - width;
+  const middle = top + height / 2;
+  ctx.fillStyle = badge.kind === 'sold' ? '#121310' : '#c4362b';
+  ctx.beginPath();
+  if (typeof ctx.roundRect === 'function') ctx.roundRect(x, top, width, height, height / 2);
+  else ctx.rect(x, top, width, height);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.font = labelFont;
+  run(ctx, label, edge - pad, middle);
+  if (badge.was) {
+    const wasEnd = edge - pad - labelWidth - gap;
+    ctx.globalAlpha = 0.86;
+    ctx.font = wasFont;
+    run(ctx, badge.was, wasEnd, middle, true);
+    ctx.fillRect(wasEnd - wasWidth, middle - 1, wasWidth, 3);
+    ctx.globalAlpha = 1;
+  }
+}
+
 export function drawCard(canvas: HTMLCanvasElement, listing: Listing, cover: HTMLImageElement): void {
   const content = shareContent(listing);
   const look = cardLook(content);
@@ -609,6 +653,10 @@ export function drawCard(canvas: HTMLCanvasElement, listing: Listing, cover: HTM
     const stubHeight = stack(lines, 12);
     drawStack(lines, stubRight, (CARD_HEIGHT - stubHeight) / 2, 12);
   }
+
+  // Over the photograph's corner, away from the words (every family keeps
+  // its text box on the inline-start side).
+  if (content.badge) ribbon(ctx, content.badge, 40 + 380, 36, 30);
 }
 
 // ---------------------------------------------------------------------------
@@ -696,6 +744,8 @@ export function drawStory(canvas: HTMLCanvasElement, listing: Listing, cover: HT
   ctx.fillRect(0, 0, W, photoHeight);
 
   drawStack(pieces, edge, Math.max(640 - 150, H - bodyHeight), 34);
+
+  if (content.badge) ribbon(ctx, content.badge, edge, 120, 46);
 }
 
 // ---------------------------------------------------------------------------
