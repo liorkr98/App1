@@ -1,0 +1,36 @@
+---
+import Site from '../../../layouts/Site.astro';
+import { listingBySlug } from '../../../lib/listings';
+import { shareText } from '../../../lib/share-text';
+
+/**
+ * The share sheet (lib/share-sheet.ts) on a fixture, for CI (never linked).
+ * The real sheet reads /a/{slug}/message.json, which the static test server
+ * cannot answer, so this page hands it the same data at build time — through
+ * the same shareText() that route uses. Paper is the editor, Onyx the
+ * dashboard.
+ */
+export function getStaticPaths() {
+  return [{ params: { ls: 'paper' } }, { params: { ls: 'onyx' } }];
+}
+
+const ls = Astro.params.ls === 'paper' ? 'paper' : 'onyx';
+const listing = listingBySlug('T4V7A');
+const data = listing ? shareText(listing, 'https://amudsell.com') : undefined;
+---
+<Site title="share sheet" robots="noindex,nofollow" ls={ls} account={false}>
+  <div class="site-shell">
+    <button type="button" id="open" class="site-btn site-btn-primary" data-share={JSON.stringify(data ?? null)}>
+      open
+    </button>
+  </div>
+  <script>
+    import { openShareSheet, type ShareSheetData } from '../../../lib/share-sheet';
+
+    const open = document.getElementById('open') as HTMLButtonElement;
+    const data = JSON.parse(open.dataset.share ?? 'null') as ShareSheetData | null;
+    open.addEventListener('click', () => {
+      openShareSheet({ slug: 'T4V7A', fresh: true, ...(data ? { data } : {}) });
+    });
+  </script>
+</Site>

@@ -131,6 +131,17 @@ const AREA_RETRY_MS = [5_000, 15_000, 30_000] as const;
 /** Drawing two images and uploading them: a few seconds on a phone on 4G. */
 const SHARE_IMAGES_AT_PUBLISH_MS = 12_000;
 
+/**
+ * The share sheet (lib/share-sheet.ts): WhatsApp, Facebook, the phone's own
+ * share menu, the link. Loaded on demand — nothing in it is needed before
+ * the page exists.
+ */
+function openShare(publishedSlug: string, fresh: boolean): void {
+  void import('../../lib/share-sheet')
+    .then(({ openShareSheet }) => openShareSheet({ slug: publishedSlug, fresh }))
+    .catch(() => undefined);
+}
+
 /** The paragraph a tone chip writes before the server answers. */
 function draftInVoice(
   category: EditorState['category'],
@@ -1432,6 +1443,8 @@ export default function Editor() {
         if (publishedSlug) {
           slug.current = publishedSlug;
           setPublishedUrl(`${window.location.origin}/a/${publishedSlug}/`);
+          // The page exists: offer to send it, once, the moment it does.
+          openShare(publishedSlug, true);
         }
         clearDraft();
       } else {
@@ -1823,6 +1836,7 @@ export default function Editor() {
             ) : null}
 
             <PublishStep
+              onShare={() => (slug.current ? openShare(slug.current, false) : undefined)}
               state={state}
               blockers={outstanding}
               publishedUrl={publishedUrl}

@@ -550,6 +550,7 @@
       "failed": "",
       "noPhotos": "",
       "saveFailed": "",
+      "shareNow": "",
       "share": "",
       "waitingArea": ""
     },
@@ -1731,5 +1732,22 @@
     },
     "empty": "",
     "fixtureNote": ""
+  },
+  "shareSheet": {
+    "dialog": "",
+    "titleFresh": "",
+    "title": "",
+    "lead": "",
+    "preview": "",
+    "loading": "",
+    "whatsapp": "",
+    "facebook": "",
+    "more": "",
+    "copy": "",
+    "copied": "",
+    "copyFailed": "",
+    "fbCopied": "",
+    "kit": "",
+    "close": ""
   }
 }
