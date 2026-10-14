@@ -61,6 +61,8 @@
     "sent": "",
     "signedInAs": "",
     "failed": "",
+    "googleFailed": "",
+    "returnFailed": "",
     "unconfigured": "",
     "myListings": ""
   },

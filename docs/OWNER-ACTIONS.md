@@ -57,6 +57,12 @@ done, so the next session knows.
   and submit `https://amudsell.com/sitemap.xml`. The sitemap already lists
   the template pages, the agent, dealer and private-seller pages and the
   guides.
+- [ ] **"המשך עם Google" on `/enter/`.** Needs Supabase → Authentication →
+  Providers → Google switched on with the Client ID and Secret from the
+  Google Cloud project's Web client (redirect URI: the Supabase callback
+  shown on that screen), and the Google app published (Branding: home page
+  `https://amudsell.com`, privacy `/legal/privacy/`, terms `/legal/terms/`).
+  Done 14 Oct. Without it, the button returns with "הכניסה לא הושלמה".
 
 ## Check
 
