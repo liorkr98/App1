@@ -3,7 +3,7 @@ import type { Listing } from '@/types/listing';
 import { HERO_WIDTHS, largest, srcset } from '../../lib/images';
 import type { FactCell } from '../../lib/facts';
 import { heMonthYear } from '../../lib/format';
-import { t } from '../../lib/i18n';
+import { t, tr } from '../../lib/i18n';
 import type { PerUnitPrice } from '../../lib/price';
 import { coverStyle, priceProps, stagePlace, titleLines } from '../../lib/stage';
 import HighlightChips from '../HighlightChips.astro';
@@ -53,7 +53,7 @@ const testSource = vehicle?.testSource;
       {spec ? (
         <p class="ds-stamp ds-red">
           {t('listing.dossier.verified')}
-          <small>{spec.sourceName} · {t('listing.dossier.asOf')}<bdi>{spec.sourceDate}</bdi></small>
+          <small>{tr(spec.sourceName)} · {t('listing.dossier.asOf')}<bdi>{spec.sourceDate}</bdi></small>
         </p>
       ) : (
         <p class="ds-stamp ds-blue">
@@ -110,7 +110,7 @@ const testSource = vehicle?.testSource;
               {history.map((period, i) => (
                 <li>
                   <span class="ds-hand">{t('listing.dossier.hand')} <bdi>{i + 1}</bdi></span>
-                  <b>{period.type}</b>
+                  <b>{tr(period.type)}</b>
                   <span>
                     <bdi>{heMonthYear(period.fromMonth)}</bdi> — {period.toMonth ? <bdi>{heMonthYear(period.toMonth)}</bdi> : t('listing.dossier.now')}
                   </span>
@@ -118,7 +118,7 @@ const testSource = vehicle?.testSource;
               ))}
             </ol>
             {historySource && (
-              <p class="ds-src">{t('listing.dossier.verified')} · {historySource.sourceName} · {t('listing.dossier.asOf')}<bdi>{historySource.sourceDate}</bdi></p>
+              <p class="ds-src">{t('listing.dossier.verified')} · {tr(historySource.sourceName)} · {t('listing.dossier.asOf')}<bdi>{historySource.sourceDate}</bdi></p>
             )}
           </Fragment>
         )}
@@ -126,7 +126,7 @@ const testSource = vehicle?.testSource;
           <p class="ds-test">
             <span>{t('listing.dossier.test')}</span>
             <b><bdi>{heMonthYear(test)}</bdi></b>
-            {testSource && <small>{testSource.sourceName} · {t('listing.dossier.asOf')}<bdi>{testSource.sourceDate}</bdi></small>}
+            {testSource && <small>{tr(testSource.sourceName)} · {t('listing.dossier.asOf')}<bdi>{testSource.sourceDate}</bdi></small>}
           </p>
         )}
       </div>

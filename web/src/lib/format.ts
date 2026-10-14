@@ -1,3 +1,5 @@
+import { tr } from './i18n';
+
 /**
  * Formatting for the web page.
  *
@@ -49,11 +51,13 @@ export function factValue(
   grouped = true,
 ): string {
   if (value === null) return '';
-  if (typeof value === 'boolean') return value ? 'יש' : 'אין';
+  if (typeof value === 'boolean') return tr(value ? 'יש' : 'אין');
   // grouped:false comes from the schema, for a number that identifies rather
   // than counts. A year is the one that matters — 2021 grouped reads "2,021".
   if (typeof value === 'number') return grouped ? num(value) : String(value);
-  return value;
+  // An option's text (משופץ, דרום) in the page's language; a measurement or a
+  // date, and anything not in the dictionary, stays as the seller wrote it.
+  return /\d/.test(value) ? value : tr(value);
 }
 
 /** True when a value should be wrapped in <bdi> — numbers and numeric strings. */

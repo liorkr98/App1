@@ -203,7 +203,8 @@ import '../styles/dash.css';
         type LinkRow,
         type ReadRow,
       } from '@/features/analytics/dashboard-stats';
-      import { priceDropMessage, soldMessage, whatsappShareUrl } from '@/features/listings/share-message';
+      import { priceDropMessage, shareMessage, soldMessage, whatsappShareUrl } from '@/features/listings/share-message';
+      import { translationSource, type TranslationDraft, type TranslationLang } from '@/features/listings/translate';
       import { ils } from '../lib/format';
       import { formatValue, parts, t, type Values } from '../lib/i18n';
       import { recordListingEvent } from '../lib/listing-events';
@@ -234,6 +235,11 @@ import '../styles/dash.css';
         area_places?: Record<string, unknown> | null;
         views?: number;
         waTaps?: number;
+        description?: string | null;
+        price_note?: string | null;
+        disclosures?: string[] | null;
+        /** Saved translations (0044): {en: {title, description, priceNote?, disclosures?, source}}. */
+        translations?: Record<string, Record<string, unknown>> | null;
       };
 
       const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -520,6 +526,207 @@ import '../styles/dash.css';
         } catch {
           tell(t('dash.copyFailed'), 'bad');
         }
+      };
+
+      /**
+       * שליחה בשפה אחרת (0044): the page in English, Russian or Arabic. The
+       * first time, the agent's text is translated (/api/translate) and shown
+       * to them to read and fix; saved, the page exists at /a/{slug}/{lang}/
+       * and the message to send is in that language too.
+       */
+      const LANGS: { code: TranslationLang; name: string }[] = [
+        { code: 'en', name: 'English' },
+        { code: 'ru', name: 'Русский' },
+        { code: 'ar', name: 'العربية' },
+      ];
+      /** What a message in each language says around the link. */
+      const MESSAGE_CLOSE: Record<TranslationLang, string> = {
+        en: 'Details and photos:',
+        ru: 'Подробности и фото:',
+        ar: 'التفاصيل والصور:',
+      };
+
+      const hebrewSource = (row: Row) => ({
+        title: row.title ?? '',
+        description: row.description ?? '',
+        ...(row.price_note ? { priceNote: row.price_note } : {}),
+        ...(row.disclosures && row.disclosures.length > 0 ? { disclosures: row.disclosures } : {}),
+      });
+
+      const languagesPanel = (row: Row) => {
+        const box = document.createElement('section');
+        box.className = 'langs';
+        const heading = document.createElement('h3');
+        heading.textContent = t('dash.langTitle');
+        const lead = document.createElement('p');
+        lead.className = 'd-note';
+        lead.textContent = t('dash.langLead');
+        const choices = document.createElement('div');
+        choices.className = 'lang-choices';
+        const work = document.createElement('div');
+        work.className = 'lang-work';
+        box.append(heading, lead, choices, work);
+
+        const open = (code: TranslationLang) => {
+          for (const node of choices.querySelectorAll('button')) {
+            node.setAttribute('aria-pressed', String(node.dataset.lang === code));
+          }
+          work.replaceChildren();
+          const saved = row.translations?.[code];
+          const current = translationSource(hebrewSource(row));
+          if (saved && typeof saved.title === 'string') {
+            editor(code, {
+              title: saved.title,
+              description: typeof saved.description === 'string' ? saved.description : '',
+              ...(typeof saved.priceNote === 'string' ? { priceNote: saved.priceNote } : {}),
+              ...(Array.isArray(saved.disclosures) ? { disclosures: saved.disclosures as string[] } : {}),
+            }, saved.source === current, true);
+            return;
+          }
+          void translate(code);
+        };
+
+        const translate = async (code: TranslationLang) => {
+          const note = document.createElement('p');
+          note.className = 'd-note';
+          note.setAttribute('role', 'status');
+          note.textContent = t('dash.langWorking');
+          work.replaceChildren(note);
+          const { data: session } = await supabase().auth.getSession();
+          const token = session.session?.access_token;
+          if (!token || !row.id) {
+            note.textContent = t('dash.langFailed.unauthenticated');
+            return;
+          }
+          const response = await fetch('/api/translate', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ listingId: row.id, lang: code }),
+          }).catch(() => undefined);
+          const body = (await response?.json().catch(() => ({}))) as { draft?: TranslationDraft; error?: string } | undefined;
+          if (!body?.draft) {
+            const reason = body?.error ?? 'unavailable';
+            const known = t(`dash.langFailed.${reason}`);
+            note.textContent = known.startsWith('dash.') ? t('dash.langFailed.unavailable') : known;
+            const again = button(t('dash.langRetry'), 'act', () => void translate(code));
+            work.append(again);
+            return;
+          }
+          editor(code, body.draft, true, false);
+        };
+
+        /** The text to read and fix, then save, then send. */
+        const editor = (code: TranslationLang, draft: TranslationDraft, fresh: boolean, saved: boolean) => {
+          work.replaceChildren();
+          const form = document.createElement('form');
+          form.className = 'lang-form';
+          form.noValidate = true;
+          form.lang = code;
+          form.dir = code === 'ar' ? 'rtl' : 'ltr';
+          if (!fresh) {
+            const stale = document.createElement('p');
+            stale.className = 'd-note lang-stale';
+            stale.dir = 'rtl';
+            stale.lang = 'he';
+            stale.textContent = t('dash.langStale');
+            const redo = button(t('dash.langRedo'), 'act', () => void translate(code));
+            form.append(stale, redo);
+          }
+          const field = (label: string, value: string, rows: number) => {
+            const wrap = document.createElement('label');
+            const name = document.createElement('span');
+            name.dir = 'rtl';
+            name.lang = 'he';
+            name.textContent = label;
+            const input = document.createElement('textarea');
+            input.rows = rows;
+            input.value = value;
+            wrap.append(name, input);
+            form.append(wrap);
+            return input;
+          };
+          const title = field(t('dash.langFieldTitle'), draft.title, 2);
+          const description = field(t('dash.langFieldDescription'), draft.description, 7);
+          const priceNote = draft.priceNote !== undefined ? field(t('dash.langFieldPriceNote'), draft.priceNote, 1) : undefined;
+          const disclosures = (draft.disclosures ?? []).map((text, index) =>
+            field(`${t('dash.langFieldDisclosure')} ${index + 1}`, text, 2),
+          );
+          const note = document.createElement('p');
+          note.className = 'd-note';
+          note.setAttribute('role', 'status');
+          note.dir = 'rtl';
+          note.lang = 'he';
+          note.textContent = saved ? t('dash.langSaved') : t('dash.langCheck');
+          const save = document.createElement('button');
+          save.type = 'submit';
+          save.className = 'act primary';
+          save.textContent = t('dash.langSave');
+          form.append(note, save);
+          const acts = document.createElement('div');
+          acts.className = 'd-acts lang-acts';
+          form.append(acts);
+          work.append(form);
+
+          const showActions = (finalTitle: string) => {
+            acts.replaceChildren();
+            const url = `${location.origin}/a/${row.slug}/${code}/`;
+            const message = shareMessage({
+              title: finalTitle,
+              price: row.price ? ils(row.price) : '',
+              facts: [],
+              url: `${MESSAGE_CLOSE[code]}\n${url}`,
+            });
+            const send = link(t('dash.langSend'), 'act primary', whatsappShareUrl(message));
+            send.target = '_blank';
+            send.rel = 'noopener';
+            send.addEventListener('click', () => void recordListingEvent(row.slug, 'share', null));
+            const view = link(t('dash.langOpen'), 'act', url);
+            view.target = '_blank';
+            view.rel = 'noopener';
+            const copyButton = button(t('dash.copyLink'), 'act', () => void copy(url, row.slug));
+            acts.append(send, view, copyButton);
+          };
+          if (saved && fresh) showActions(draft.title);
+
+          form.addEventListener('submit', (event) => {
+            event.preventDefault();
+            void (async () => {
+              const next = {
+                title: title.value.trim(),
+                description: description.value.trim(),
+                ...(priceNote && priceNote.value.trim() ? { priceNote: priceNote.value.trim() } : {}),
+                ...(disclosures.length > 0 ? { disclosures: disclosures.map((input) => input.value.trim()) } : {}),
+                source: translationSource(hebrewSource(row)),
+              };
+              if (!next.title) {
+                note.textContent = t('dash.langNeedsTitle');
+                return;
+              }
+              save.disabled = true;
+              note.textContent = t('dash.dropSaving');
+              const translations = { ...(row.translations ?? {}), [code]: next };
+              const { error } = await supabase().from('listings').update({ translations }).eq('slug', row.slug);
+              save.disabled = false;
+              if (error) {
+                note.textContent = error.code === '42703' ? t('dash.langNeedsMigration') : t('dash.dropFailed');
+                return;
+              }
+              row.translations = translations;
+              note.textContent = t('dash.langSaved');
+              showActions(next.title);
+            })();
+          });
+        };
+
+        for (const language of LANGS) {
+          const choice = button(language.name, 'act lang-choice', () => open(language.code));
+          choice.dataset.lang = language.code;
+          choice.lang = language.code;
+          choice.setAttribute('aria-pressed', 'false');
+          if (row.translations?.[language.code]) choice.classList.add('is-saved');
+          choices.append(choice);
+        }
+        return box;
       };
 
       const button = (label: string, className: string, onClick: (self: HTMLButtonElement) => void) => {
@@ -1098,7 +1305,7 @@ import '../styles/dash.css';
           }
         }
 
-        if (row.status === 'published') detail.append(studio(row));
+        if (row.status === 'published') detail.append(studio(row), languagesPanel(row));
 
         const acts = document.createElement('div');
         acts.className = 'd-acts';
@@ -1393,10 +1600,16 @@ import '../styles/dash.css';
          * Adding the filter here would LOOK like the security and quietly
          * become the security the day somebody edits the policy.
          */
-        const { data, error } = await client
-          .from('listings')
-          .select('id, slug, title, price, status, category, template, media, location, published_at, area_places')
-          .order('created_at', { ascending: false });
+        const BASE = 'id, slug, title, price, status, category, template, media, location, published_at, area_places';
+        // The seller's text and its translations (0044), for "שליחה בשפה אחרת".
+        // A database before 0044 has no translations column: read without it.
+        const read = (columns: string) =>
+          client.from('listings').select(columns).order('created_at', { ascending: false }) as unknown as Promise<{
+            data: unknown[] | null;
+            error: { code?: string } | null;
+          }>;
+        let { data, error } = await read(`${BASE}, description, price_note, disclosures, translations`);
+        if (error?.code === '42703') ({ data, error } = await read(`${BASE}, description, price_note, disclosures`));
         if (error) return show('failed');
         rows = (data ?? []) as Row[];
 

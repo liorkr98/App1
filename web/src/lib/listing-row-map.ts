@@ -30,20 +30,29 @@ import { resolveTemplateId } from '@/features/templates/manifest';
 export const LISTING_COLUMNS_BEFORE_0043 =
   'id, slug, category, title, description, price, currency, list_price, price_note, facts, media, disclosures, location, seller, template, accent, status, indexable, pre_portal, published_at, og_image_hash, audience, hyad_mark, area_places';
 
-export const LISTING_COLUMNS = `${LISTING_COLUMNS_BEFORE_0043}, price_was, price_dropped_at`;
+/** Columns added by migrations the owner runs by hand (0043, 0044). */
+const LATER_COLUMNS = ['price_was', 'price_dropped_at', 'translations'] as const;
+
+export const LISTING_COLUMNS = [LISTING_COLUMNS_BEFORE_0043, ...LATER_COLUMNS].join(', ');
 
 /**
- * Runs a select with every column, and again without 0043's two when the
- * database does not have them yet (Postgres 42703, undefined column). The
- * code deploys on merge and the migration is run by hand: in between, every
- * listing page would otherwise answer 404 for want of a price history.
+ * Runs a select with every column, and again without a later migration's
+ * columns when the database does not have them yet (Postgres 42703,
+ * undefined column, which names the column). The code deploys on merge and
+ * the migration is run by hand: in between, every listing page would
+ * otherwise answer 404 for want of a price history or a translation.
  */
 export async function selectListingColumns<T>(
-  query: (columns: string) => PromiseLike<{ data: T; error: { code?: string } | null }>,
-): Promise<{ data: T; error: { code?: string } | null }> {
-  const first = await query(LISTING_COLUMNS);
-  if (first.error?.code !== '42703') return first;
-  return query(LISTING_COLUMNS_BEFORE_0043);
+  query: (columns: string) => PromiseLike<{ data: T; error: { code?: string; message?: string } | null }>,
+): Promise<{ data: T; error: { code?: string; message?: string } | null }> {
+  let later: string[] = [...LATER_COLUMNS];
+  for (;;) {
+    const answer = await query([LISTING_COLUMNS_BEFORE_0043, ...later].join(', '));
+    if (answer.error?.code !== '42703' || later.length === 0) return answer;
+    const message = answer.error.message ?? '';
+    const named = later.filter((column) => message.includes(column));
+    later = named.length > 0 ? later.filter((column) => !named.includes(column)) : [];
+  }
 }
 
 export interface ListingRow {
@@ -58,6 +67,7 @@ export interface ListingRow {
   price_note: string | null;
   price_was?: number | string | null;
   price_dropped_at?: string | null;
+  translations?: unknown;
   facts: unknown;
   media: unknown;
   disclosures: string[] | null;
@@ -309,6 +319,7 @@ export function listingFromRow(row: ListingRow): Listing | undefined {
     ...(row.price_note ? { priceNote: row.price_note } : {}),
     ...(row.price_was != null && Number.isFinite(Number(row.price_was)) ? { priceWas: Number(row.price_was) } : {}),
     ...(row.price_dropped_at ? { priceDroppedAt: row.price_dropped_at } : {}),
+    ...translationsFrom(row.translations),
     facts: Array.isArray(row.facts) ? (row.facts as Fact[]) : [],
     media,
     ...(row.disclosures && row.disclosures.length > 0 ? { disclosures: row.disclosures } : {}),
@@ -336,4 +347,29 @@ export function listingFromRow(row: ListingRow): Listing | undefined {
       : {}),
     ...(enrichment ? { enrichment } : {}),
   };
+}
+
+/** The saved translations (0044), each with a title and a description, or nothing. */
+function translationsFrom(value: unknown): Pick<Listing, 'translations'> {
+  if (!isRecord(value)) return {};
+  const out: NonNullable<Listing['translations']> = {};
+  for (const language of ['en', 'ru', 'ar'] as const) {
+    const entry = value[language];
+    if (!isRecord(entry)) continue;
+    const title = typeof entry.title === 'string' ? entry.title.trim() : '';
+    const description = typeof entry.description === 'string' ? entry.description.trim() : '';
+    if (!title) continue;
+    const priceNote = typeof entry.priceNote === 'string' ? entry.priceNote.trim() : '';
+    const disclosures = Array.isArray(entry.disclosures)
+      ? entry.disclosures.filter((item): item is string => typeof item === 'string' && item.trim() !== '')
+      : [];
+    out[language] = {
+      title,
+      description,
+      source: typeof entry.source === 'string' ? entry.source : '',
+      ...(priceNote ? { priceNote } : {}),
+      ...(disclosures.length > 0 ? { disclosures } : {}),
+    };
+  }
+  return Object.keys(out).length > 0 ? { translations: out } : {};
 }

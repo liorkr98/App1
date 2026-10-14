@@ -83,11 +83,10 @@ for (const file of walk(DIST).filter((name) => name.endsWith('.html')).sort()) {
   const prose = html.replace(NOT_PROSE, ' ').replace(TAGS, '\n');
 
   for (const line of prose.split('\n')) {
-    const text = line.trim();
+    // An entity like &#8207; or the apostrophe in "Seller&#39;s" is markup,
+    // not a number a reader sees.
+    const text = line.replace(/&[#a-z0-9]+;/gi, ' ').trim();
     if (!text || !DIGIT.test(text)) continue;
-
-    // An entity like &#8207; is markup, not a number a reader sees.
-    if (/^&[#a-z0-9]+;$/i.test(text)) continue;
 
     console.error(`${route}  ${text}`);
     failures += 1;

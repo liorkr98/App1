@@ -7,11 +7,72 @@ import he from '@locales/he.json';
  * and importing this from a page should not pull React into that page's
  * bundle.
  *
- * There is no locale switching here and that is not an oversight. Hebrew is
- * the design baseline, English is a secondary locale with an empty file, and
- * a runtime switcher for a locale with no strings in it would be dead code
- * that looks like a feature.
+ * THE LISTING PAGE IN ENGLISH, RUSSIAN AND ARABIC (14 Oct 2026). Hebrew stays
+ * the design baseline and the only language anywhere else. A listing page at
+ * /a/{slug}/{en|ru|ar}/ is rendered in that language by the server:
+ * lib/locale-server.ts registers the other dictionaries and says, per
+ * request, which language is being rendered. In the browser nothing is ever
+ * registered, so everything here is Hebrew, as before, and the other
+ * dictionaries never reach a bundle.
+ *
+ * Two kinds of copy: keyed messages (`t`, `parts`), and Hebrew text that
+ * lives in code — a fact's label in its schema, a place category, a unit —
+ * which `tr` looks up by the Hebrew itself.
  */
+
+export type Lang = 'he' | 'en' | 'ru' | 'ar';
+export const PAGE_LANGS = ['en', 'ru', 'ar'] as const;
+export type PageLang = (typeof PAGE_LANGS)[number];
+
+export function isPageLang(value: unknown): value is PageLang {
+  return (PAGE_LANGS as readonly unknown[]).includes(value);
+}
+
+interface Dictionary {
+  /** The same shape as he.json; a missing or empty value falls back to Hebrew. */
+  keys: Record<string, unknown>;
+  /** Hebrew text in code → this language. */
+  strings: Record<string, string>;
+}
+
+const dictionaries: Partial<Record<Lang, Dictionary>> = {};
+let source: () => Lang = () => 'he';
+let missing: ((kind: 'key' | 'string', what: string) => void) | undefined;
+
+/** Server only (lib/locale-server.ts): the dictionaries and the per-request language. */
+export function registerLocales(
+  next: Partial<Record<PageLang, Dictionary>>,
+  current: () => Lang,
+  onMissing?: (kind: 'key' | 'string', what: string) => void,
+): void {
+  Object.assign(dictionaries, next);
+  source = current;
+  missing = onMissing;
+}
+
+/** The language being rendered: Hebrew everywhere but a translated listing page. */
+export function lang(): Lang {
+  return source();
+}
+
+export function dir(): 'rtl' | 'ltr' {
+  const current = lang();
+  return current === 'he' || current === 'ar' ? 'rtl' : 'ltr';
+}
+
+/**
+ * Hebrew text from code, in the language being rendered. Unknown text stays
+ * Hebrew (and is reported, so the test that renders every language can say
+ * which string is missing).
+ */
+export function tr(text: string): string {
+  const current = lang();
+  if (current === 'he' || !text) return text;
+  const found = dictionaries[current]?.strings[text];
+  if (found) return found;
+  missing?.('string', text);
+  return text;
+}
 
 export type Values = Record<string, string | number>;
 
@@ -31,7 +92,7 @@ export type Part = { readonly text: string } | { readonly slot: string };
 
 const PLACEHOLDER = /\{(\w+)\}/g;
 
-function lookup(path: string): string | undefined {
+function walk(root: Record<string, unknown>, path: string): string | undefined {
   const found = path
     .split('.')
     .reduce<unknown>(
@@ -39,10 +100,20 @@ function lookup(path: string): string | undefined {
         node !== null && typeof node === 'object'
           ? (node as Record<string, unknown>)[key]
           : undefined,
-      he,
+      root,
     );
 
   return typeof found === 'string' && found !== '' ? found : undefined;
+}
+
+function lookup(path: string): string | undefined {
+  const current = lang();
+  if (current !== 'he') {
+    const found = walk(dictionaries[current]?.keys ?? {}, path);
+    if (found !== undefined) return found;
+    missing?.('key', path);
+  }
+  return walk(he, path);
 }
 
 /**
@@ -111,5 +182,8 @@ export function formatValue(value: string | number): string {
  * a build machine in another timezone must not change what a seller reads.
  */
 function format(value: string | number): string {
-  return typeof value === 'number' ? new Intl.NumberFormat('he-IL').format(value) : value;
+  // Western digits in every language: the agent wrote them, and Arabic in
+  // Israel reads them (en-US groups the same way he-IL does).
+  if (typeof value !== 'number') return value;
+  return new Intl.NumberFormat(lang() === 'he' ? 'he-IL' : 'en-US').format(value);
 }

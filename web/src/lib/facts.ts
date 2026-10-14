@@ -5,6 +5,7 @@ import { factDefinition, factShown, schemaFor, type ListingCategory } from '@/fe
 
 import { pairedCellText } from '@/features/listings/monthly-cost';
 import { factValue, needsBdi } from './format';
+import { tr } from './i18n';
 
 /**
  * Turns a listing's facts into grid cells.
@@ -110,9 +111,9 @@ export function toCells(
       if (!absenceIsStated(definition?.type ?? fact.type)) continue;
       cells.push({
         key: fact.key,
-        label: unitLabel(definition?.gridLabel ?? fact.label, fact.unit),
-        value: 'אין',
-        displayValue: 'אין',
+        label: tr(unitLabel(definition?.gridLabel ?? fact.label, fact.unit)),
+        value: tr('אין'),
+        displayValue: tr('אין'),
         bdi: false,
         absent: true,
         // A register does not record the absence of a balcony. Absence is
@@ -142,7 +143,7 @@ export function toCells(
     const value = factValue(fact.value, definition?.grouped);
     cells.push({
       key: fact.key,
-      label: unitLabel(definition?.gridLabel ?? fact.label, fact.unit),
+      label: tr(unitLabel(definition?.gridLabel ?? fact.label, fact.unit)),
       value,
       displayValue: pairedCellText(value, partnerValue),
       bdi: needsBdi(fact.value) || partnerValue !== undefined,

@@ -1,0 +1,35 @@
+---
+import type { Listing } from '@/types/listing';
+import ListingPage from '../../../components/ListingPage.astro';
+import { PAGE_LANGS } from '../../../lib/i18n';
+import { matrixListings } from '../../../lib/listings';
+import { withFixtureTranslations } from '../../../lib/translation-fixtures';
+import { translatedListing } from '../../../lib/translated';
+
+/**
+ * The listing page in English, Russian and Arabic on fixtures, for CI (never
+ * deployed). The same ListingPage /a/{slug}/{lang}/ renders, in the language
+ * the middleware sets from this path, for a flat and a car in composed
+ * templates and a 1.x one.
+ */
+export function getStaticPaths() {
+  const pick = (slug: string, template: Listing['template']) => {
+    const listing = matrixListings.find((candidate) => candidate.slug === slug);
+    return listing ? withFixtureTranslations({ ...listing, template }) : undefined;
+  };
+  const pages = [
+    ['T4V7A-aurora', pick('T4V7A', 'aurora')],
+    ['T4V7A-agency', pick('T4V7A', 'agency')],
+    ['T4V7A-heliograph', pick('T4V7A', 'heliograph')],
+    ['G7F2K-dossier', pick('G7F2K', 'dossier')],
+  ] as const;
+  return pages.flatMap(([slug, listing]) =>
+    listing
+      ? PAGE_LANGS.map((lang) => ({ params: { slug, lang }, props: { listing: translatedListing(listing, lang) ?? listing } }))
+      : [],
+  );
+}
+
+const { listing } = Astro.props;
+---
+<ListingPage listing={listing} robots="noindex,nofollow" />

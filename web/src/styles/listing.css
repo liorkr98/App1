@@ -43,6 +43,14 @@
 /* הסקאלה הפלואידית וה-gutter נמצאים ב-styles/tokens.css, כי גם העורך
    ב-/new משתמש בהם. הגדרה אחת לשני המשטחים. */
 
+/* A listing page in English or Russian (lib/locale-server.ts) reads left to
+   right; Arabic stays right to left. Everything else is logical already. */
+html[dir='ltr']{direction:ltr;--dir:1}
+/* The templates size their giant titles for Hebrew, which is short. The same
+   title in English, Russian or Arabic runs a third longer and fell under the
+   panel below it, so the first screen's title is set smaller there, whatever
+   size the template gives it. */
+html:not([lang='he']) .stage-title{zoom:.74}
 html{
   background:var(--stone);direction:rtl;scroll-behavior:smooth;
   /* Light-only. Without it a browser in dark mode inverts native controls
@@ -749,6 +757,10 @@ html:is([data-ls='onyx'],.hl-night) :is(.map-nav,.map-nearby-walk,.area-map-walk
 .cta:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
 
 footer{padding:1.6rem var(--gut) .5rem;text-align:center;font-size:.8rem;color:var(--muted)}
+/* The page in another language (0044): one row, each name in its own language. */
+.page-langs{display:flex;justify-content:center;flex-wrap:wrap;gap:.35rem 1.1rem;margin-block-end:.9rem;font-size:.95rem}
+.page-langs a,.page-langs span{display:inline-flex;align-items:center;min-block-size:44px}
+.page-langs [aria-current]{font-weight:700;color:var(--ink)}
 footer a{
   display:inline-flex;align-items:center;justify-content:center;
   min-block-size:44px;min-inline-size:44px;

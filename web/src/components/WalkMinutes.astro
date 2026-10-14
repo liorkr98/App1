@@ -1,5 +1,6 @@
 ---
 import { walkingLineParts, walkMinuteParts } from '@/features/listings/hebrew-plural';
+import { lang } from '../lib/i18n';
 
 interface Props {
   minutes: number;
@@ -7,9 +8,28 @@ interface Props {
   walking?: boolean;
 }
 
-const parts = Astro.props.walking
-  ? walkingLineParts(Astro.props.minutes)
-  : walkMinuteParts(Astro.props.minutes);
+/**
+ * Another language (a translated listing page): always the digit, and a
+ * noun that agrees with it — Arabic counts 3 to 10 with the plural and the
+ * rest with the singular; English and Russian use the short unit, which has
+ * no plural to get wrong.
+ */
+function foreign(language: 'en' | 'ru' | 'ar', count: number, walking: boolean) {
+  if (language === 'ar') {
+    const noun = count >= 3 && count <= 10 ? 'دقائق' : 'دقيقة';
+    return { digit: count, noun: walking ? `${noun} مشيًا` : noun };
+  }
+  if (language === 'ru') return { digit: count, noun: walking ? 'мин пешком' : 'мин' };
+  return { digit: count, noun: walking ? 'min walk' : 'min' };
+}
+
+const language = lang();
+const parts =
+  language !== 'he'
+    ? foreign(language, Astro.props.minutes, Boolean(Astro.props.walking))
+    : Astro.props.walking
+      ? walkingLineParts(Astro.props.minutes)
+      : walkMinuteParts(Astro.props.minutes);
 ---
 {
   'digit' in parts ? (

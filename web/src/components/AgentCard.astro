@@ -2,7 +2,7 @@
 import { canonicalSellerRole } from '@/features/agents/profile';
 import { displayPhone, telHref } from '@/features/listings/phone';
 import type { Seller } from '@/types/listing';
-import { t } from '../lib/i18n';
+import { t, tr } from '../lib/i18n';
 
 interface Props {
   seller: Seller;
@@ -14,7 +14,7 @@ interface Props {
 }
 
 const { seller, waHref, sold = false, as: Tag = 'aside' } = Astro.props as Props;
-const role = seller.role ? canonicalSellerRole(seller.role) : '';
+const role = seller.role ? tr(canonicalSellerRole(seller.role)) : '';
 const callHref = sold ? '' : telHref(seller.phone);
 const phoneLabel = displayPhone(seller.phone);
 const photo = seller.avatarUrl;

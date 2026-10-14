@@ -745,6 +745,17 @@ export type TemplateId = (typeof TEMPLATE_IDS)[number];
  */
 export type ListingAccent = string;
 
+export interface ListingTranslation {
+  title: string;
+  description: string;
+  /** The seller's free-text price note (פינוי גמיש), when there is one. */
+  priceNote?: string;
+  /** The seller's disclosures, in the same order. */
+  disclosures?: string[];
+  /** A hash of the Hebrew title and description it was made from, to tell when they changed. */
+  source: string;
+}
+
 export interface Listing {
   id: string;
   /** 5 characters, base32 Crockford, generated server-side. */
@@ -779,6 +790,13 @@ export interface Listing {
    */
   priceWas?: number;
   priceDroppedAt?: string;
+
+  /**
+   * The page in another language (migration 0044): the agent's title and
+   * description, translated by AI and checked by the agent in /mine. Only
+   * the languages saved here have a page at /a/{slug}/{lang}/.
+   */
+  translations?: Partial<Record<'en' | 'ru' | 'ar', ListingTranslation>>;
 
   /**
    * Up to three first-screen chips. Agent-chosen from HIGHLIGHT_LABELS plus

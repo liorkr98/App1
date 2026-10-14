@@ -10,9 +10,10 @@ import {
   modeLabel,
   orderTransit,
 } from '../lib/enrichment';
-import { t } from '../lib/i18n';
+import { t, tr } from '../lib/i18n';
 import Prose from './Prose.astro';
 import SectionLabel from './SectionLabel.astro';
+import Grades from './Grades.astro';
 import WalkMinutes from './WalkMinutes.astro';
 
 interface Props {
@@ -99,7 +100,7 @@ const yearsBetween = (from: string, to: string): number => {
 };
 
 /** Hebrew has a singular. שנה for one, שנים for the rest. */
-const yearsLabel = (years: number): string => (years === 1 ? 'שנה' : 'שנים');
+const yearsLabel = (years: number): string => tr(years === 1 ? 'שנה' : 'שנים');
 
 const leftover = (total: number) => leftoverCount(total, MAX_ROWS);
 
@@ -121,17 +122,17 @@ const sources = isProperty
 {hasContent && (
 <section class="enrich" id="enrich">
   <SectionLabel text={isProperty ? t('listing.section.around') : t('listing.section.verified')} />
-  <h2>{isProperty ? <Fragment>מה יש <span class="h2-num">מסביב</span></Fragment> : <Fragment>מה <span class="h2-num">מאומת</span></Fragment>}</h2>
+  <h2>{isProperty ? <Fragment>{`${tr('מה יש')} `}<span class="h2-num">{tr('מסביב')}</span></Fragment> : <Fragment>{`${tr('מה')} `}<span class="h2-num">{tr('מאומת')}</span></Fragment>}</h2>
   <p class="enrich-sub">
-    {isProperty ? 'מרחקי הליכה אמיתיים, לא מרחק אווירי.' : 'מה שרשום במרשם הציבורי, עם התאריך שבו היה נכון.'}
+    {tr(isProperty ? 'מרחקי הליכה אמיתיים, לא מרחק אווירי.' : 'מה שרשום במרשם הציבורי, עם התאריך שבו היה נכון.')}
   </p>
 
   {transit.length > 0 && (
     <div class="egroup clip-reveal">
       <div class="egroup-head">
-        <h3>תחבורה</h3>
+        <h3>{tr('תחבורה')}</h3>
         {leftover(transit.length) > 0 && (
-          <span class="count">ועוד <bdi>{leftover(transit.length)}</bdi></span>
+          <span class="count">{tr('ועוד')} <bdi>{leftover(transit.length)}</bdi></span>
         )}
       </div>
       {transit.slice(0, MAX_ROWS).map((stop) => (
@@ -140,8 +141,8 @@ const sources = isProperty
           <div class="who">
             <b><Prose text={stop.name} /></b>
             <em>
-              {modeLabel(stop.mode)}
-              {stop.routes.length > 0 && <Fragment> · <bdi>{stop.routes.join(', ')}</bdi></Fragment>}
+              {tr(modeLabel(stop.mode))}
+              {stop.routes.length > 0 && <Fragment> · <bdi>{stop.routes.map((route) => tr(route)).join(", ")}</bdi></Fragment>}
             </em>
           </div>
         </div>
@@ -152,9 +153,9 @@ const sources = isProperty
   {schools.length > 0 && (
     <div class="egroup clip-reveal">
       <div class="egroup-head">
-        <h3>חינוך</h3>
+        <h3>{tr('חינוך')}</h3>
         {leftover(schools.length) > 0 && (
-          <span class="count">ועוד <bdi>{leftover(schools.length)}</bdi></span>
+          <span class="count">{tr('ועוד')} <bdi>{leftover(schools.length)}</bdi></span>
         )}
       </div>
       {schools.slice(0, MAX_ROWS).map((school) => (
@@ -162,7 +163,7 @@ const sources = isProperty
           <div class="mins"><WalkMinutes minutes={school.walkMinutes} /></div>
           <div class="who">
             <b><Prose text={school.name} /></b>
-            <em>{[school.type, school.stream, school.gradeSpan].filter(Boolean).join(' · ')}</em>
+            <em>{[school.type, school.stream].filter(Boolean).map((part) => tr(part as string)).join(' · ')}{school.gradeSpan ? <Fragment>{school.type || school.stream ? ' · ' : ''}<Grades span={tr(school.gradeSpan)} /></Fragment> : null}</em>
           </div>
         </div>
       ))}
@@ -172,9 +173,9 @@ const sources = isProperty
   {placeGroups.map((group) => (
     <div class="egroup clip-reveal">
       <div class="egroup-head">
-        <h3>{group.label}</h3>
+        <h3>{tr(group.label)}</h3>
         {leftover(group.places.length) > 0 && (
-          <span class="count">ועוד <bdi>{leftover(group.places.length)}</bdi></span>
+          <span class="count">{tr('ועוד')} <bdi>{leftover(group.places.length)}</bdi></span>
         )}
       </div>
       {group.places.slice(0, MAX_ROWS).map((place) => (
@@ -191,7 +192,7 @@ const sources = isProperty
       <div class="egroup-head">
         <h3>{t(`listing.civicKind.${group.kind}`)}</h3>
         {leftover(group.items.length) > 0 && (
-          <span class="count">ועוד <bdi>{leftover(group.items.length)}</bdi></span>
+          <span class="count">{tr('ועוד')} <bdi>{leftover(group.items.length)}</bdi></span>
         )}
       </div>
       {group.items.slice(0, MAX_ROWS).map((site) => (
@@ -205,12 +206,12 @@ const sources = isProperty
 
   {!isProperty && enrichment.testValidUntil && (
     <div class="egroup clip-reveal">
-      <div class="egroup-head"><h3>טסט</h3></div>
+      <div class="egroup-head"><h3>{tr('טסט')}</h3></div>
       <div class="erow">
-        <div class="mins"><bdi>{yearOf(enrichment.testValidUntil)}</bdi><small>עד</small></div>
+        <div class="mins"><bdi>{yearOf(enrichment.testValidUntil)}</bdi><small>{tr('עד')}</small></div>
         <div class="who">
-          <b>טסט בתוקף</b>
-          <em>עד <bdi>{asMonth(enrichment.testValidUntil)}</bdi></em>
+          <b>{tr('טסט בתוקף')}</b>
+          <em>{tr('עד')} <bdi>{asMonth(enrichment.testValidUntil)}</bdi></em>
         </div>
       </div>
     </div>
@@ -219,9 +220,9 @@ const sources = isProperty
   {ownership.length > 0 && (
     <div class="egroup clip-reveal">
       <div class="egroup-head">
-        <h3>בעלות</h3>
+        <h3>{tr('בעלות')}</h3>
         {leftover(ownership.length) > 0 && (
-          <span class="count">ועוד <bdi>{leftover(ownership.length)}</bdi></span>
+          <span class="count">{tr('ועוד')} <bdi>{leftover(ownership.length)}</bdi></span>
         )}
       </div>
       {ownership.slice(0, MAX_ROWS).map((period) => (
@@ -233,16 +234,16 @@ const sources = isProperty
                 <small>{yearsLabel(yearsBetween(period.fromMonth, period.toMonth))}</small>
               </Fragment>
             ) : (
-              <Fragment><bdi>{yearOf(period.fromMonth)}</bdi><small>מאז</small></Fragment>
+              <Fragment><bdi>{yearOf(period.fromMonth)}</bdi><small>{tr('מאז')}</small></Fragment>
             )}
           </div>
           <div class="who">
-            <b>{period.type}</b>
+            <b>{tr(period.type)}</b>
             <em>
               {period.toMonth ? (
                 <bdi>{asMonth(period.fromMonth)} – {asMonth(period.toMonth)}</bdi>
               ) : (
-                <Fragment><bdi>{asMonth(period.fromMonth)}</bdi> – היום</Fragment>
+                <Fragment><bdi>{asMonth(period.fromMonth)}</bdi> – {tr('היום')}</Fragment>
               )}
             </em>
           </div>
@@ -262,10 +263,10 @@ const sources = isProperty
     <p class="source">
       {sources.map((source) => (
         <Fragment>
-          מאומת · <Prose text={source.sourceName} />, נכון ל־<bdi>{source.sourceDate}</bdi><br />
+          {tr('מאומת')} · <Prose text={tr(source.sourceName)} />, {tr('נכון ל־')}<bdi>{source.sourceDate}</bdi><br />
         </Fragment>
       ))}
-      {isProperty && 'זמני הליכה מחושבים על רשת הדרכים בפועל.'}
+      {isProperty && tr('זמני הליכה מחושבים על רשת הדרכים בפועל.')}
     </p>
   )}
 </section>

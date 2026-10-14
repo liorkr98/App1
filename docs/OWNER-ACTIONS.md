@@ -24,6 +24,15 @@ done, so the next session knows.
   all of it, paste into a NEW empty tab → Run. Safe to run twice. Until it
   runs nothing breaks: pages read the listing without the price history and
   the dashboard's "הורדתי מחיר" saves the price without the crossed-out one.
+- [ ] **The page in English, Russian and Arabic: migration 0044.** Same way:
+  `supabase/migrations/0044_listing_translations.sql` → **Raw** → copy all →
+  a NEW empty tab → Run. Safe to run twice. Until it runs, saving a translation
+  on the dashboard says 0044 is missing, and nothing else changes. The
+  translation uses the `DEEPSEEK_API_KEY` the Worker already has.
+- [ ] **Read the Russian and Arabic copy** when you can: `locales/ru.json`,
+  `locales/ar.json` and `locales/strings/` were written without a native
+  reviewer (you chose to ship as is). The listing text itself is the
+  agent's: the AI drafts it and they edit it before saving.
 - [ ] **The site's address for the build.** Cloudflare → Workers → besivov →
   Settings → Build → Variables: `SITE_URL` must be exactly
   `https://amudsell.com` (or deleted: that is the default). Search Console

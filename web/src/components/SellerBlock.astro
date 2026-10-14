@@ -2,7 +2,7 @@
 import { canonicalSellerRole } from '@/features/agents/profile';
 import type { Seller } from '@/types/listing';
 import { displayPhone, telHref } from '@/features/listings/phone';
-import { t } from '../lib/i18n';
+import { t, tr } from '../lib/i18n';
 import SectionLabel from './SectionLabel.astro';
 
 interface Props {
@@ -15,7 +15,7 @@ interface Props {
 }
 
 const { seller, whatsappHref, shareHref, sold = false } = Astro.props;
-const sellerRole = seller.role ? canonicalSellerRole(seller.role) : '';
+const sellerRole = seller.role ? tr(canonicalSellerRole(seller.role)) : '';
 
 /**
  * A person photo, or the agency mark when the profile put the logo only
@@ -69,7 +69,7 @@ const phoneLabel = displayPhone(seller.phone);
         run of digits inside a Hebrew line (CLAUDE.md §4.2).
       */}
       {seller.licenceNumber && (
-        <div class="seller-role">רישיון מס׳ <bdi>{seller.licenceNumber}</bdi></div>
+        <div class="seller-role">{t('listing.licenceNumber')} <bdi>{seller.licenceNumber}</bdi></div>
       )}
       {/*
         מאומת · פנקס המתווכים only when the register matched at signup.

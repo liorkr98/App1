@@ -1,0 +1,232 @@
+{
+  "listing": {
+    "odometer": "عدد الكيلومترات",
+    "dashKm": "كم",
+    "plateStreet": "شارع",
+    "create": "إعلان جديد",
+    "whatsappCta": "مراسلة عبر واتساب",
+    "whatsappShort": "واتساب",
+    "priceFrom": "ابتداءً من ",
+    "priceOnRequest": "السعر عند الطلب",
+    "callCta": "اتصال",
+    "moreListings": "إعلانات أخرى",
+    "share": "مشاركة عبر واتساب",
+    "copyLink": "نسخ الرابط",
+    "sold": "تم البيع",
+    "soldBanner": "تم وضع علامة \"تم البيع\" على هذا الإعلان. تبقى التفاصيل هنا للتوثيق.",
+    "prePortal": "حصري · لم يُنشر بعد في مواقع الإعلانات",
+    "prePortalNote": "حسب البائع",
+    "walkTitle": "جولة في الشقة",
+    "walkLead": "غرفة بعد غرفة، من الصور التي التُقطت.",
+    "filmstrip": "صور الجولة",
+    "nextPhoto": "الصورة التالية",
+    "showAllPhotos": "كل الصور",
+    "currentPhoto": "الحالية",
+    "filmPlay": "تشغيل",
+    "filmStop": "إيقاف",
+    "filmCaption": "فيديو ·",
+    "mapTitle": "الموقع",
+    "mapAlt": "خريطة المنطقة",
+    "mapNavigate": "التنقل عبر Waze",
+    "mapGoogle": "فتح في خرائط Google",
+    "mapNearby": {
+      "transit": "المواصلات",
+      "school": "التعليم",
+      "grocery": "بقالة"
+    },
+    "mapNearbyMinutes": "دقائق مشيًا",
+    "mapNearbyMin": "د",
+    "mapNearbyMinAria": "{minutes} دقائق مشيًا إلى {label}",
+    "neighborhoodTitle": "عن الحي",
+    "neighborhoodDisclaimer": "كُتب استنادًا إلى المعطيات الموجودة في الصفحة. ليس تقييمًا للقيمة.",
+    "civicKind": {
+      "police": "الشرطة",
+      "parking": "موقف سيارات عام",
+      "park_ride": "موقف \"اركن وسافر\""
+    },
+    "tourCta": "جولة ثلاثية الأبعاد",
+    "floorPlan": "مخطط",
+    "lightboxCount": "{current} / {total}",
+    "newWindow": "يُفتح في نافذة جديدة",
+    "section": {
+      "home": "الشقة",
+      "vehicle": "المركبة",
+      "gallery": "المعرض",
+      "around": "المحيط",
+      "verified": "موثّق",
+      "map": "الموقع",
+      "seller": "الوسيط",
+      "disclosures": "من المهم أن تعرف"
+    },
+    "licenceVerified": "موثّق · سجل الوسطاء",
+    "highlights": "المزايا",
+    "factsMore": "عرض كل التفاصيل",
+    "factsAbsent": "لا يوجد",
+    "readMore": "اقرأ المزيد",
+    "monthlyCost": "التكلفة الشهرية التقديرية: أرنونا {arnona} شهريًا ({arnonaBill} كل شهرين) · لجنة البناية {vaad}",
+    "closeLightbox": "إغلاق",
+    "openPhoto": "فتح الصورة",
+    "licenceNumber": "رخصة رقم",
+    "metricPrev": "المعطى السابق",
+    "metricNext": "المعطى التالي",
+    "keyFacts": "المعطيات الرئيسية",
+    "blueprintRooms": "الغرف",
+    "issue": "العدد",
+    "helio": {
+      "plotLabel": "مسار الشمس خلال يوم واحد، من الأعلى. الشمال في الأعلى.",
+      "north": "ش",
+      "south": "ج",
+      "east": "شر",
+      "west": "غ",
+      "seasons": "يوم في السنة",
+      "summer": "في حزيران",
+      "winter": "في كانون الأول",
+      "facing": "الشمس مقابل الشرفة",
+      "side": "الشمس تلامس الواجهة من الجانب",
+      "behind": "الشمس في الجهة الأخرى من البناية",
+      "twilight": "الغسق",
+      "night": "الليل",
+      "belowHorizon": "الشمس تحت الأفق",
+      "altitude": "الارتفاع",
+      "hoursOn": "ساعات شمس مباشرة على واجهة الشرفة",
+      "hours": "ساعات",
+      "scrollHint": "مرّروا، والشمس تنتقل من الشروق حتى الليل.",
+      "honest": "مسار الشمس محسوب فلكيًا من الموقع والتاريخ واتجاه الشرفة حسب البائع. هذا ليس قياسًا للضوء: لا تؤخذ المباني والأشجار المحيطة بالحسبان.",
+      "approx": "الموقع تقريبي.",
+      "up": "الشمس فوق الأفق",
+      "honestNoAspect": "مسار الشمس محسوب فلكيًا من الموقع والتاريخ. هذا ليس قياسًا للضوء: لا تؤخذ المباني والأشجار المحيطة بالحسبان."
+    },
+    "walk": {
+      "start": "نقطة الانطلاق",
+      "door": "بابك",
+      "places": "أماكن، حتى",
+      "minutes": "دقائق مشيًا",
+      "back": "والعودة إلى البيت",
+      "rooms": "جولة في الغرف",
+      "roomsNote": "لا توجد بعد معطيات عن المنطقة لهذا الإعلان، لذا يمرّ المسار في الغرف.",
+      "routed": "أوقات المشي حسب مسار سيرًا على الأقدام، لا خط مستقيم.",
+      "teaser": "المسار من الباب",
+      "home": "جولة في البيت",
+      "group": {
+        "bus": "محطة حافلات",
+        "rail": "قطار",
+        "school": "التعليم",
+        "park": "حديقة",
+        "community": "المجتمع والثقافة",
+        "shop": "التسوق"
+      }
+    },
+    "poster": {
+      "fig": "صورة"
+    },
+    "dossier": {
+      "tab": "ملف المركبة",
+      "verified": "موثّق",
+      "asOf": "محدّث حتى ",
+      "declared": "حسب البائع",
+      "notChecked": "لم يُفحص مقابل السجل",
+      "plate": "رقم اللوحة",
+      "plateHidden": "لا يُنشر",
+      "asking": "السعر المطلوب",
+      "owners": "سجل الملكية",
+      "hand": "يد",
+      "now": "اليوم",
+      "test": "الفحص السنوي ساري حتى"
+    },
+    "ticket": {
+      "boarding": "بطاقة صعود",
+      "departs": "المغادرة",
+      "now": "الآن",
+      "to": "إلى",
+      "tear": "اقطعوا وأرسلوا عبر واتساب",
+      "qr": "رمز QR يفتح صفحة الإعلان",
+      "stop": "محطة"
+    },
+    "spinLabel": "المركبة من كل الجهات. اسحبوا أو استخدموا الأسهم لتدويرها.",
+    "spinHint": "اسحبوا للتدوير",
+    "spinBack": "تدوير للخلف",
+    "spinOn": "تدوير للأمام",
+    "liveMap": {
+      "region": "خريطة تفاعلية للمنطقة",
+      "home": "منطقة العقار",
+      "gestureMobile": "لتحريك الخريطة استخدموا إصبعين",
+      "gestureWindows": "للتكبير: Ctrl والتمرير",
+      "gestureMac": "للتكبير: ⌘ والتمرير",
+      "zoomIn": "تكبير",
+      "zoomOut": "تصغير",
+      "fullscreenEnter": "ملء الشاشة",
+      "fullscreenExit": "الخروج من ملء الشاشة",
+      "attribution": "مصادر الخريطة",
+      "close": "إغلاق",
+      "marker": "مكان على الخريطة"
+    },
+    "blueprintSheet": "لوحة",
+    "priceDropped": "انخفض السعر",
+    "priceWas": "السعر السابق:"
+  },
+  "common": {
+    "close": "إغلاق",
+    "back": "رجوع",
+    "next": "التالي",
+    "share": "مشاركة",
+    "loading": "جارٍ التحميل…",
+    "yes": "نعم",
+    "no": "لا",
+    "brand": "AmudSell",
+    "builtByPrefix": "صُنع بواسطة "
+  },
+  "card": {
+    "dossierProperty": "ملف العقار",
+    "dossierVehicle": "ملف المركبة",
+    "ticketTrip": "المغادرة: الآن",
+    "ticketTo": "إلى",
+    "badgeDrop": "انخفض السعر",
+    "badgeSold": "تم البيع"
+  },
+  "legal": {
+    "terms": "شروط الاستخدام",
+    "privacy": "سياسة الخصوصية",
+    "home": "الصفحة الرئيسية",
+    "accessibility": "بيان إتاحة",
+    "odbl": "© مساهمو OpenStreetMap، بترخيص ODbL",
+    "about": "من نحن",
+    "contact": "اتصل بنا"
+  },
+  "notFound": {
+    "title": "الصفحة غير موجودة",
+    "body": "هذا الرابط لا يقود إلى إعلان. ربما ما زال مسودة، أو أن العنوان خاطئ.",
+    "home": "الصفحة الرئيسية"
+  },
+  "source": {
+    "verified": "موثّق",
+    "seller": "حسب البائع",
+    "asOf": "محدّث حتى "
+  },
+  "enrich": {
+    "notAppraisal": "للمقارنة فقط ولا يُعدّ تخمينًا"
+  },
+  "vehicle": {
+    "plate": "رقم اللوحة"
+  },
+  "a11y": {
+    "skip": "انتقال إلى المحتوى"
+  },
+  "flyer": {
+    "qrLabel": "رمز QR لصفحة الإعلان",
+    "scan": "امسحوا للوصول إلى الصفحة"
+  },
+  "language": {
+    "label": "اللغة"
+  },
+  "editor": {
+    "rooms": {
+      "living": "صالون",
+      "kitchen": "مطبخ",
+      "bedroom": "غرفة نوم",
+      "bathroom": "حمّام",
+      "balcony": "شرفة",
+      "outdoor": "خارج",
+      "other": "غرفة أخرى"
+    }
+  }
+}

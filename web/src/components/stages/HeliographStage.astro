@@ -15,7 +15,7 @@ import {
 } from '@/features/sun/sun';
 import { HERO_WIDTHS, largest, srcset } from '../../lib/images';
 import type { FactCell } from '../../lib/facts';
-import { t } from '../../lib/i18n';
+import { t, tr } from '../../lib/i18n';
 import type { PerUnitPrice } from '../../lib/price';
 import { coverStyle, priceProps, stagePlace, titleLines } from '../../lib/stage';
 import HighlightChips from '../HighlightChips.astro';
@@ -102,8 +102,8 @@ const facing = sun?.facing ?? null;
 const summerMinutes = sun && facing !== null ? facadeSunMinutes('summer', sun.lat, sun.lng, facing) : 0;
 const winterMinutes = sun && facing !== null ? facadeSunMinutes('winter', sun.lat, sun.lng, facing) : 0;
 const compassName = (bearing: number) =>
-  Object.entries(ASPECT_BEARING).reduce((best, [name, deg]) =>
-    bearingGap(bearing, deg) < bearingGap(bearing, ASPECT_BEARING[best]!) ? name : best, 'צפון');
+  tr(Object.entries(ASPECT_BEARING).reduce((best, [name, deg]) =>
+    bearingGap(bearing, deg) < bearingGap(bearing, ASPECT_BEARING[best]!) ? name : best, 'צפון'));
 
 const strings = {
   facing: t('listing.helio.facing'),
@@ -118,7 +118,7 @@ const strings = {
 ---
 <section
   class="stage stage-helio"
-  data-helio={sun ? JSON.stringify({ tables, facing: sun.facing, strings, names: ASPECT_BEARING }) : undefined}
+  data-helio={sun ? JSON.stringify({ tables, facing: sun.facing, strings, names: Object.fromEntries(Object.entries(ASPECT_BEARING).map(([name, deg]) => [tr(name), deg])) }) : undefined}
 >
   <div class="hl-head">
     {place && <p class="stage-place"><Prose text={place} /></p>}
