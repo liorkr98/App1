@@ -772,6 +772,15 @@ export interface Listing {
   priceDisplay?: 'exact' | 'from' | 'on_request';
 
   /**
+   * The asking price a live listing came down from, and when (migration
+   * 0043). Set by the database from the price change itself, never by the
+   * editor. Whether the page still shows the drop is
+   * features/listings/price-drop.ts's decision.
+   */
+  priceWas?: number;
+  priceDroppedAt?: string;
+
+  /**
    * Up to three first-screen chips. Agent-chosen from HIGHLIGHT_LABELS plus
    * one custom. Absent means none — "up to three" is a maximum, not a quota.
    */

@@ -19,6 +19,19 @@ done, so the next session knows.
   Site visits start counting from the deploy; listing views, sign-ups,
   pages and the editor funnel show their history at once. The "ניתוח AI"
   button uses the `DEEPSEEK_API_KEY` the Worker already has.
+- [ ] **"המחיר ירד": migration 0043.** Supabase → SQL editor → open
+  `supabase/migrations/0043_price_drop.sql` on GitHub, press **Raw**, copy
+  all of it, paste into a NEW empty tab → Run. Safe to run twice. Until it
+  runs nothing breaks: pages read the listing without the price history and
+  the dashboard's "הורדתי מחיר" saves the price without the crossed-out one.
+- [ ] **The site's address for the build.** Cloudflare → Workers → besivov →
+  Settings → Build → Variables: `SITE_URL` must be exactly
+  `https://amudsell.com` (or deleted: that is the default). Search Console
+  refused all 40 sitemap entries on 14 Oct because they named another host;
+  the sitemap now always uses the address it was asked on, but the page
+  canonicals and the WhatsApp card links still come from this variable.
+  Then retry the deployment, and in Search Console resubmit
+  `https://amudsell.com/sitemap.xml`.
 - [ ] **Billing's daily job.** Supabase → Database → Extensions → enable
   `pg_cron`, then in the SQL editor:
   `select cron.schedule('billing-daily', '17 3 * * *', 'select public.run_billing_daily()');`

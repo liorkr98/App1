@@ -272,7 +272,9 @@
       "close": "",
       "marker": ""
     },
-    "blueprintSheet": ""
+    "blueprintSheet": "",
+    "priceDropped": "",
+    "priceWas": ""
   },
   "notFound": {
     "title": "",
@@ -983,7 +985,22 @@
     "more": "",
     "areaRefresh": "",
     "areaRefreshed": "",
-    "countingNote": ""
+    "countingNote": "",
+    "lowerPrice": "",
+    "dropLabel": "",
+    "dropSave": "",
+    "dropTooHigh": "",
+    "dropSaving": "",
+    "dropFailed": "",
+    "dropMaking": "",
+    "dropDone": "",
+    "dropMessage": "",
+    "dropSend": "",
+    "shareSold": "",
+    "soldMaking": "",
+    "soldCardFailed": "",
+    "soldMessage": "",
+    "soldCopied": ""
   },
   "legal": {
     "terms": "",
@@ -1278,7 +1295,9 @@
     "dossierProperty": "",
     "dossierVehicle": "",
     "ticketTrip": "",
-    "ticketTo": ""
+    "ticketTo": "",
+    "badgeDrop": "",
+    "badgeSold": ""
   },
   "phoneUpload": {
     "title": "",

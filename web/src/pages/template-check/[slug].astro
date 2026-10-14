@@ -9,7 +9,7 @@ import {
   propertyListing,
   withNamedRooms,
 } from '../../lib/listings';
-import { realShapedListings } from '../../lib/real-shaped';
+import { priceDropped, realShapedListings } from '../../lib/real-shaped';
 import { CATALOGUE, templateFits } from '@/features/templates/manifest';
 
 export function getStaticPaths() {
@@ -44,7 +44,13 @@ export function getStaticPaths() {
       props: { listing: { ...listing, template: id } },
     })),
   );
-  return [...demos, ...templates, ...fixturePages, ...combos, ...real];
+  // A price that came down two days ago (0043): the composed first screen
+  // and a 1.x template, each with "המחיר ירד" and the old price crossed out.
+  const drops = (['aurora', 'agency'] as const).map((id) => ({
+    params: { slug: `drop-${id}` },
+    props: { listing: priceDropped(applyTemplate(propertyListing, id)) },
+  }));
+  return [...demos, ...templates, ...fixturePages, ...combos, ...real, ...drops];
 }
 
 const { listing } = Astro.props;

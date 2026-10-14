@@ -1,7 +1,7 @@
 import type { Listing } from '@/types/listing';
 import { telHref } from '@/features/listings/phone';
 
-import { listingFromRow, LISTING_COLUMNS, type ListingRow } from './listing-row-map';
+import { listingFromRow, selectListingColumns, type ListingRow } from './listing-row-map';
 import { supabaseConfigured, supabasePublic } from './supabase';
 
 /**
@@ -72,7 +72,9 @@ export async function loadAgentPage(key: string): Promise<AgentPage | undefined>
 /** The listings, in the order public_agent gave them; any that will not render drop out. */
 async function listingsBySlug(slugs: readonly string[]): Promise<Listing[]> {
   if (slugs.length === 0) return [];
-  const { data, error } = await supabasePublic().from('listings').select(LISTING_COLUMNS).in('slug', [...slugs]);
+  const { data, error } = await selectListingColumns((columns) =>
+    supabasePublic().from('listings').select(columns).in('slug', [...slugs]),
+  );
   if (error || !data) return [];
   const bySlug = new Map<string, Listing>();
   for (const row of data as unknown as ListingRow[]) {

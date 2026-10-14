@@ -191,6 +191,19 @@ body{
   margin-inline-end:.35rem;
 }
 .price-note{text-align:end;padding-block-end:.2rem}
+/* המחיר ירד (0043): only on a page whose price came down, so no other page moves. */
+.price-bar.has-drop{flex-wrap:wrap;row-gap:.45rem}
+.price-drop{
+  flex-basis:100%;margin:0;
+  display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;
+  font-family:'Assistant',sans-serif;font-size:.95rem;line-height:1.5;
+}
+.price-drop-tag{
+  padding:.1rem .6rem;border-radius:999px;
+  background:var(--accent-base,#4a5d3a);color:#fff;font-weight:600;
+}
+.price-drop s{opacity:.72;text-decoration-thickness:2px}
+.price-drop s bdi{font-family:'Frank Ruhl Libre',serif;font-weight:500}
 .price-note bdi{font-family:'Frank Ruhl Libre',serif;font-weight:500}
 
 .hero-thumbs{

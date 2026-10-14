@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { shareMessage, whatsappShareUrl } from './share-message.js';
+import { priceDropMessage, shareMessage, soldMessage, whatsappShareUrl } from './share-message.js';
 
 const base = {
   title: 'דירת 4 חדרים,\nמשופצת מהיסוד',
@@ -97,5 +97,20 @@ describe('the wa.me link', () => {
     const encoded = whatsappShareUrl(message).replace('https://wa.me/?text=', '');
 
     assert.equal(decodeURIComponent(encoded), message);
+  });
+});
+
+describe('priceDropMessage and soldMessage (0043)', () => {
+  it('puts the link last so WhatsApp previews the new card', () => {
+    const text = priceDropMessage({ title: 'דירת 4 חדרים\nבנווה צדק', line: 'המחיר ירד', url: 'https://amudsell.com/a/K7M2Q/' });
+    assert.equal(text.split('\n').at(-1), 'https://amudsell.com/a/K7M2Q/');
+    assert.equal(text.split('\n')[0], 'דירת 4 חדרים בנווה צדק');
+  });
+
+  it('names the agent and their page on a sold message, and works without a page', () => {
+    const withPage = soldMessage({ title: 'גולף 2021', line: 'נמכר:', agent: 'נועה כהן', agentUrl: 'https://amudsell.com/agent/noa-cohen/' });
+    assert.ok(withPage.startsWith('נמכר: גולף 2021'));
+    assert.ok(withPage.endsWith('https://amudsell.com/agent/noa-cohen/'));
+    assert.ok(soldMessage({ title: 'גולף', line: 'נמכר:', agent: 'נועה' }).endsWith('נועה'));
   });
 });

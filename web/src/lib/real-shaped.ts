@@ -96,3 +96,16 @@ export const realVehicleListing: Listing = {
 };
 
 export const realShapedListings: Listing[] = [realListing, realBareListing, realVehicleListing];
+
+/**
+ * The same listing, its price lowered two days before the build (0043), so
+ * the page shows "המחיר ירד" with the old price crossed out.
+ */
+export function priceDropped(listing: Listing): Listing {
+  return {
+    ...listing,
+    status: 'published',
+    priceWas: listing.price + 150_000,
+    priceDroppedAt: new Date(Date.now() - 2 * 86_400_000).toISOString(),
+  };
+}

@@ -18,8 +18,11 @@ import { PUBLIC_PAGES } from '../lib/seo';
  */
 export const prerender = false;
 
-export const GET: APIRoute = async ({ site }) => {
-  const origin = site ?? new URL('https://amudsell.com');
+export const GET: APIRoute = async ({ url }) => {
+  // The host that was asked. Google refuses every entry on another host as
+  // "URL not allowed" (Search Console, 14 Oct 2026: all 40, because the build's
+  // SITE_URL named a different one), so the sitemap never trusts the build.
+  const origin = new URL(url.origin);
   const [listed, agents] = await Promise.all([indexableListings(), agentPageKeys()]);
 
   const urls = [

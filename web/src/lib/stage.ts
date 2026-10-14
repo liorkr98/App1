@@ -1,5 +1,6 @@
 import type { Listing } from '@/types/listing';
 import { clusters } from '@/features/motion/clusters';
+import { priceDrop } from '@/features/listings/price-drop';
 import type { PerUnitPrice } from './price';
 
 /**
@@ -36,12 +37,14 @@ export function coverStyle(listing: Listing): string {
 }
 
 export function priceProps(listing: Listing, perUnit: PerUnitPrice | undefined) {
+  const drop = priceDrop(listing);
   return {
     price: listing.price,
     listPrice: listing.listPrice,
     priceNote: listing.priceNote,
     priceDisplay: listing.priceDisplay,
     perUnit,
+    ...(drop ? { priceWas: drop.was } : {}),
   };
 }
 

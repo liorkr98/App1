@@ -2,7 +2,7 @@ import { parseEnrichmentBlock } from '@/features/listings/enrichment-payload';
 import { descriptionOrArea } from '@/features/listings/neighborhood-note';
 import type { Listing } from '@/types/listing';
 
-import { listingFromRow, LISTING_COLUMNS, type ListingRow } from './listing-row-map';
+import { listingFromRow, LISTING_COLUMNS, selectListingColumns, type ListingRow } from './listing-row-map';
 import { listingBySlug } from './listings';
 import { supabaseConfigured, supabasePublic } from './supabase';
 
@@ -25,15 +25,12 @@ export async function publishedListing(slug: string): Promise<Listing | undefine
   if (!supabaseConfigured) return undefined;
 
   try {
-    const { data, error } = await supabasePublic()
-      .from('listings')
-      .select(LISTING_COLUMNS)
-      .eq('slug', slug)
-      .eq('status', 'published')
-      .maybeSingle();
+    const { data, error } = await selectListingColumns((columns) =>
+      supabasePublic().from('listings').select(columns).eq('slug', slug).eq('status', 'published').maybeSingle(),
+    );
 
     if (error || !data) return undefined;
-    const listing = listingFromRow(data as ListingRow);
+    const listing = listingFromRow(data as unknown as ListingRow);
     if (!listing) return undefined;
 
     try {

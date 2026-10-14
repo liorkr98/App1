@@ -377,6 +377,11 @@ jobs:
         working-directory: web
         run: npx playwright test admin-data
 
+      - name: A lowered price shows the old one crossed out, on the page and the card
+        if: ${{ !cancelled() }}
+        working-directory: web
+        run: npx playwright test price-drop
+
       - name: The story video is honestly labelled and as long as the film
         if: ${{ !cancelled() }}
         working-directory: web

@@ -203,6 +203,8 @@ import '../styles/dash.css';
         type LinkRow,
         type ReadRow,
       } from '@/features/analytics/dashboard-stats';
+      import { priceDropMessage, soldMessage, whatsappShareUrl } from '@/features/listings/share-message';
+      import { ils } from '../lib/format';
       import { formatValue, parts, t, type Values } from '../lib/i18n';
       import { recordListingEvent } from '../lib/listing-events';
       import { markOwner } from '../lib/owner-cookie';
@@ -405,6 +407,119 @@ import '../styles/dash.css';
         if (row) row.status = 'archived';
         tell(t('dash.archivedDone'));
         paint();
+      };
+
+      /** The agent's public page (0041), when it is on: the close of a "נמכר" message. */
+      let agentPageUrl: string | undefined;
+      /** The agent's name, for the close of a "נמכר" message (from loadProfile). */
+      let profileName: string | undefined;
+
+      /**
+       * הורדתי מחיר (0043): a lower price, saved, then the card made again
+       * (its key changes with the drop, so WhatsApp gets a new file) and the
+       * message ready to send. The database records the drop; a higher price
+       * is refused here because this button is only for lowering it.
+       */
+      const lowerPrice = (row: Row) => {
+        const box = document.createElement('form');
+        box.className = 'drop-form';
+        box.noValidate = true;
+        const label = document.createElement('label');
+        label.textContent = t('dash.dropLabel');
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.inputMode = 'numeric';
+        input.dir = 'ltr';
+        input.autocomplete = 'off';
+        input.placeholder = row.price ? ils(row.price) : '';
+        label.append(input);
+        const note = document.createElement('p');
+        note.className = 'd-note';
+        note.setAttribute('role', 'status');
+        const save = document.createElement('button');
+        save.type = 'submit';
+        save.className = 'act primary';
+        save.textContent = t('dash.dropSave');
+        box.append(label, save, note);
+        box.addEventListener('submit', (event) => {
+          event.preventDefault();
+          void (async () => {
+            const next = Number(input.value.replace(/[^0-9]/g, ''));
+            const current = row.price ?? 0;
+            if (!Number.isFinite(next) || next <= 0 || (current > 0 && next >= current)) {
+              note.textContent = t('dash.dropTooHigh');
+              return;
+            }
+            save.disabled = true;
+            note.textContent = t('dash.dropSaving');
+            const { error } = await supabase().from('listings').update({ price: next }).eq('slug', row.slug);
+            if (error) {
+              save.disabled = false;
+              note.textContent = t('dash.dropFailed');
+              return;
+            }
+            const before = current;
+            row.price = next;
+            note.textContent = t('dash.dropMaking');
+            if (row.id) {
+              await import('../lib/share-images')
+                .then(({ makeShareImages }) => makeShareImages(row.id ?? ''))
+                .catch(() => undefined);
+            }
+            const message = priceDropMessage({
+              title: row.title ?? '',
+              line: t('dash.dropMessage', { was: ils(before), now: ils(next) }),
+              url: `${location.origin}/a/${row.slug}/`,
+            });
+            note.textContent = t('dash.dropDone');
+            const send = link(t('dash.dropSend'), 'act primary', whatsappShareUrl(message));
+            send.target = '_blank';
+            send.rel = 'noopener';
+            send.addEventListener('click', () => void recordListingEvent(row.slug, 'share', null));
+            save.replaceWith(send);
+            input.disabled = true;
+          })();
+        });
+        return box;
+      };
+
+      /**
+       * שתפו שנמכר (0043): the sold card as an image, through the phone's share
+       * sheet (a sold listing has no public page to preview). Where the
+       * browser cannot share files, the image opens and the text is copied.
+       */
+      const shareSold = async (row: Row, self: HTMLButtonElement) => {
+        if (!row.id) return;
+        self.disabled = true;
+        const label = self.textContent;
+        self.textContent = t('dash.soldMaking');
+        const file = await import('../lib/share-images')
+          .then(({ soldCardFile }) => soldCardFile(row.id ?? ''))
+          .catch(() => undefined);
+        self.disabled = false;
+        self.textContent = label;
+        if (!file) return tell(t('dash.soldCardFailed'), 'bad');
+        const text = soldMessage({
+          title: row.title ?? '',
+          line: t('dash.soldMessage'),
+          agent: profileName ?? '',
+          ...(agentPageUrl ? { agentUrl: agentPageUrl } : {}),
+        });
+        try {
+          if (navigator.canShare?.({ files: [file] })) {
+            await navigator.share({ files: [file], text });
+            return;
+          }
+        } catch (error) {
+          if (error instanceof DOMException && error.name === 'AbortError') return;
+        }
+        window.open(URL.createObjectURL(file), '_blank', 'noopener');
+        try {
+          await navigator.clipboard.writeText(text);
+          tell(t('dash.soldCopied'));
+        } catch {
+          tell(t('dash.copyFailed'), 'bad');
+        }
       };
 
       const button = (label: string, className: string, onClick: (self: HTMLButtonElement) => void) => {
@@ -990,6 +1105,16 @@ import '../styles/dash.css';
         acts.append(link(t('dash.edit'), 'act', `/new/?id=${encodeURIComponent(row.slug)}`));
         if (row.status === 'published') {
           acts.append(button(t('dash.markSold'), 'act', (self) => void markSold(row.slug, self)));
+          if ((row.price ?? 0) > 0) {
+            acts.append(
+              button(t('dash.lowerPrice'), 'act', (self) => {
+                self.replaceWith(lowerPrice(row));
+              }),
+            );
+          }
+        }
+        if (row.status === 'sold') {
+          acts.append(button(t('dash.shareSold'), 'act primary', (self) => void shareSold(row, self)));
         }
         detail.append(acts);
       };
@@ -1254,7 +1379,9 @@ import '../styles/dash.css';
             const row = page as { page_enabled?: boolean; page_code?: string | null; page_handle?: string | null } | null;
             const key = row?.page_handle ?? row?.page_code;
             const nav = document.getElementById('nav-page') as HTMLAnchorElement | null;
-            if (!nav || !row?.page_enabled || !key) return;
+            if (!row?.page_enabled || !key) return;
+            agentPageUrl = `${location.origin}/agent/${key}/`;
+            if (!nav) return;
             nav.href = `/agent/${key}/`;
             nav.hidden = false;
           });
@@ -1349,6 +1476,9 @@ import '../styles/dash.css';
           .then((result) => {
             if (!('profile' in result)) return;
             if (isProfileEmpty(result.profile)) $('onboard').hidden = false;
+            profileName = result.profile.agencyName?.trim()
+              ? `${result.profile.displayName ?? ''} · ${result.profile.agencyName}`.replace(/^ · /, '')
+              : result.profile.displayName?.trim() || undefined;
             const first = result.profile.displayName?.trim().split(/\s+/)[0];
             if (first) {
               $('hello').textContent = t('dash.hello', { name: first });

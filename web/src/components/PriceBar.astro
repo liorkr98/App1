@@ -14,9 +14,15 @@ interface Props {
   priceDisplay?: 'exact' | 'from' | 'on_request';
   /** Derived, never declared. See lib/price.ts. */
   perUnit?: PerUnitPrice;
+  /**
+   * The asking price it came down from, while the drop is news
+   * (features/listings/price-drop.ts, migration 0043). The seller's own
+   * figure: a price history, never a valuation.
+   */
+  priceWas?: number;
 }
 
-const { price, listPrice, priceNote, priceDisplay, perUnit } = Astro.props;
+const { price, listPrice, priceNote, priceDisplay, perUnit, priceWas } = Astro.props;
 
 /**
  * DIVERGENCE #2 (DESIGN-CONTRACT §5.2) — and it is still driven by DATA,
@@ -31,9 +37,17 @@ const priced = headline.showAmount && Number.isFinite(price) && price > 0;
 const onRequest = priceDisplay === 'on_request';
 const note = listPrice !== undefined ? `מחיר מחירון: ` : priceNote;
 const showBar = priced || onRequest || Boolean(note) || Boolean(perUnit);
+const dropped = priced && priceWas !== undefined && priceWas > price;
 ---
 {showBar ? (
-<div class="price-bar">
+<div class:list={['price-bar', { 'has-drop': dropped }]}>
+  {dropped && (
+    <p class="price-drop">
+      <span class="price-drop-tag">{t('listing.priceDropped')}</span>
+      <span class="visually-hidden">{t('listing.priceWas')}</span>
+      <s><bdi>{ils(priceWas)}</bdi></s>
+    </p>
+  )}
   {onRequest ? (
     <div class="price">{t('listing.priceOnRequest')}</div>
   ) : priced ? (

@@ -2,6 +2,7 @@
 import type { Listing } from '@/types/listing';
 import { accentFor } from '@/features/agents/accents';
 import { ogPriceFragment } from '@/features/listings/control-surface';
+import { priceDrop } from '@/features/listings/price-drop';
 import { cardFamily, shareCardKey } from '@/features/listings/share-card';
 import { templateFor } from '@/features/templates/manifest';
 import Prose from './Prose.astro';
@@ -47,6 +48,8 @@ const titleSize = title.length > 56 ? 50 : title.length > 34 ? 60 : 72;
 const photo = largest(listing.media.cover, HERO_WIDTHS);
 const mode = family === 'night' ? 'onyx' : 'paper';
 const serif = template === 'atelier';
+// The ribbon (0043), as share-draw.ts draws it.
+const drop = priceDrop(listing);
 ---
 <!DOCTYPE html>
 <html lang="he" dir="rtl" data-ls={mode} data-card={family} data-serif={serif ? 'true' : undefined}>
@@ -58,6 +61,12 @@ const serif = template === 'atelier';
     <title>{title}</title>
     <style is:global>
       html, body { margin: 0; }
+      .cd-ribbon {
+        position: absolute; inset-block-start: 36px; inset-inline-start: 780px; z-index: 2; margin: 0;
+        display: flex; align-items: center; gap: 16px; padding: 8px 22px; border-radius: 999px;
+        background: #c4362b; color: #fff; font: 800 30px/1.5 'Heebo', 'Assistant', sans-serif;
+      }
+      .cd-ribbon s { font-weight: 700; font-size: 25px; opacity: 0.86; text-decoration-thickness: 3px; }
       body {
         inline-size: 1200px;
         block-size: 630px;
@@ -284,6 +293,9 @@ const serif = template === 'atelier';
     <div class="cd-photo">
       <img src={photo} alt="" style={coverStyle(listing)} />
     </div>
+    {drop && (
+      <p class="cd-ribbon">{t('card.badgeDrop')} <s><bdi>{ils(drop.was)}</bdi></s></p>
+    )}
     {family === 'dossier' && (
       <p class="cd-tab">{t(listing.category === 'vehicle' ? 'card.dossierVehicle' : 'card.dossierProperty')}</p>
     )}

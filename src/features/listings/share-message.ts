@@ -78,3 +78,24 @@ export function shareMessage(input: ShareInput): string {
 export function whatsappShareUrl(message: string): string {
   return `https://wa.me/?text=${encodeURIComponent(message)}`;
 }
+
+/**
+ * "המחיר ירד" (0043): the title, the line about the price, the link last so
+ * WhatsApp previews the new card. The line is the locale's, with both
+ * figures already formatted.
+ */
+export function priceDropMessage(input: { title: string; line: string; url: string }): string {
+  const title = input.title.replace(/\s*\n\s*/g, ' ').trim();
+  return [title, input.line, '', input.url].join('\n');
+}
+
+/**
+ * "נמכר": shared as an image with this text, since a sold listing has no
+ * public page to preview. The agent's own page closes it when there is one.
+ */
+export function soldMessage(input: { title: string; line: string; agent: string; agentUrl?: string }): string {
+  const title = input.title.replace(/\s*\n\s*/g, ' ').trim();
+  const lines = [`${input.line} ${title}`, '', input.agent];
+  if (input.agentUrl) lines.push(input.agentUrl);
+  return lines.join('\n');
+}

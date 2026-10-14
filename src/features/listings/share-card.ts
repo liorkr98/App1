@@ -1,4 +1,5 @@
 import type { Listing, TemplateId } from '../../types/listing.js';
+import { priceDrop } from './price-drop.js';
 
 /**
  * The WhatsApp card, designed per template (plan §6: "a matching OG card").
@@ -72,8 +73,11 @@ export function cardFamily(template: TemplateId): CardFamily {
  * FNV-1a, 32 bits: this detects change, it is not a secret and not a
  * signature. Synchronous, so the page computes it without awaiting.
  */
-export function shareCardKey(listing: Listing): string {
+export function shareCardKey(listing: Listing, at: Date = new Date()): string {
   const parts = [
+    // The ribbon (0043). A drop that is no longer news changes the key once,
+    // so the page stops advertising a card that still says "המחיר ירד".
+    listing.status === 'sold' ? 'sold' : (priceDrop(listing, at)?.was ?? ''),
     listing.template,
     listing.accent ?? '',
     listing.category,
