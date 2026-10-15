@@ -137,6 +137,21 @@
   opacity: 1;
 }
 
+/* A hidden label is not measured: between steps the tiles change their
+   crop and the labels would slide with it (layout shift on speed.spec). */
+.hm-room {
+  visibility: hidden;
+}
+
+.hm-screen[data-state='1'] .hm-room {
+  visibility: visible;
+}
+
+/* Until the faces load (index.astro): see the script beside <Site>. */
+html.hm-wait .hm-phone {
+  visibility: hidden;
+}
+
 /* State 0 — scattered, as they come off the camera roll. The tiles fill
    the height of the screen: at 0.19 they sat in its top half and a phone
    showed a device that was mostly black (design audit, 14 Oct 2026). */
@@ -650,7 +665,10 @@
       clip-path 0.9s var(--ls-ease-expo);
   }
 
-  .hm-room,
+  .hm-room {
+    transition: opacity 0.5s ease, visibility 0.5s;
+  }
+
   .hm-shade {
     transition: opacity 0.5s ease;
   }

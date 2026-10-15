@@ -88,6 +88,40 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
   og={{ image: ogImage, title: t('common.brand'), description: t('home.subTagline') }}
   ld={[softwareLd(Astro.site ?? new URL(Astro.url.origin))]}
 >
+  {/*
+    The demo phone waits for the faces (home.css, html.hm-wait). When Heebo
+    and Noto arrive the hero copy rewraps shorter and the phone moved up
+    63px under the reader: 0.11 layout shift on CI's cheap phone, over the
+    0.05 limit (e2e/speed.spec.ts). Something that appears is not a shift;
+    something that moves is. Without script the class is never set, and the
+    phone shows from the start; with it, never later than six seconds.
+
+    It waits for the two faces the hero copy is set in, not fonts.ready,
+    which also waits for faces that move nothing (and the phone is the
+    first screen's largest paint). The script runs before the stylesheets
+    that declare the faces, and until they are parsed load() finds no face
+    and resolves at once, so it asks again until both exist and loaded.
+  */}
+  <script is:inline slot="head">
+    document.documentElement.classList.add('hm-wait');
+    (function () {
+      var root = document.documentElement;
+      var done = function () { root.classList.remove('hm-wait'); };
+      var tries = 0;
+      var wait = function () {
+        Promise.all([
+          document.fonts.load('900 1em "Noto Sans Hebrew"', 'א'),
+          document.fonts.load('400 1em Heebo', 'א'),
+        ]).then(function (faces) {
+          if ((faces[0].length && faces[1].length) || ++tries > 100) done();
+          else setTimeout(wait, 50);
+        }, done);
+      };
+      if (document.fonts && document.fonts.load) wait();
+      else done();
+      setTimeout(done, 6000);
+    })();
+  </script>
   <section class="hm-hero ls-grain" id="hero">
     <div class="site-shell hm-hero-grid">
       <div class="hm-copy">
