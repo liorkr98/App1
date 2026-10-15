@@ -352,6 +352,14 @@ jobs:
         working-directory: web
         run: npx playwright test editor-flow
 
+      # A photo is picked up and moved with a mouse and with a held finger,
+      # and the first photo (the cover) stays the rightmost (CLAUDE.md §4.4,
+      # 15 Oct 2026). Blocking.
+      - name: Photo ordering by drag
+        if: ${{ !cancelled() }}
+        working-directory: web
+        run: npx playwright test photo-order
+
       - name: Cover parallax
         if: ${{ !cancelled() }}
         working-directory: web

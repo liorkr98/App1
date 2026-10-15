@@ -201,6 +201,10 @@ export default function Editor() {
   const [photos, setPhotos] = useState<EditorPhoto[]>([]);
   // For callbacks that outlive a render (the phone poll in PhonePortal).
   const photosRef = useRef(photos);
+  // Photos an upload run has already claimed. Every change to the photos
+  // starts a run, so a reorder mid-upload would otherwise send the
+  // still-queued ones a second time.
+  const claimed = useRef(new Set<string>());
   photosRef.current = photos;
 
   /**
@@ -279,6 +283,7 @@ export default function Editor() {
   const [publishing, setPublishing] = useState(false);
   // What publish is waiting on, when it is waiting on something nameable.
   const [publishNote, setPublishNote] = useState<string | undefined>();
+  const [publishStage, setPublishStage] = useState(1);
 
   /**
    * Why the last publish, or the last save, did not work.
@@ -513,13 +518,19 @@ export default function Editor() {
   const uploadPending = async (current: EditorPhoto[], category: EditorState['category']) => {
     if (!supabaseConfigured || !signedIn || !category) return;
 
-    const pending = current.filter((photo) => photo.status === 'local' && photo.file);
+    const pending = current.filter(
+      (photo) => photo.status === 'local' && photo.file && !claimed.current.has(photo.id),
+    );
     if (pending.length === 0) return;
+    for (const photo of pending) claimed.current.add(photo.id);
 
-    let latest = current;
+    // Marked against the photos as they are NOW, not as they were when the
+    // upload began: an agent reorders while fifteen photos upload, and a
+    // copy taken at the start would put the old order back on every mark.
     const mark = (id: string, patch: Partial<EditorPhoto>) => {
-      latest = latest.map((photo) => (photo.id === id ? { ...photo, ...patch } : photo));
-      setPhotos(latest);
+      const next = photosRef.current.map((photo) => (photo.id === id ? { ...photo, ...patch } : photo));
+      photosRef.current = next;
+      setPhotos(next);
     };
 
     try {
@@ -530,12 +541,19 @@ export default function Editor() {
         setSavedRow({ id: draft.id, slug: draft.slug });
       }
     } catch {
-      for (const photo of pending) mark(photo.id, { status: 'failed' });
+      for (const photo of pending) {
+        claimed.current.delete(photo.id);
+        mark(photo.id, { status: 'failed' });
+      }
       return;
     }
 
     for (const photo of pending) {
-      if (!photo.file) continue;
+      // Released before any await below can be the last: a failed photo is
+      // set back to 'local' by its retry button and must be claimable again.
+      claimed.current.delete(photo.id);
+      // Removed while it waited its turn: nothing to send.
+      if (!photo.file || !photosRef.current.some((item) => item.id === photo.id)) continue;
       mark(photo.id, { status: 'uploading' });
 
       const result = await uploadOriginal(listingId.current, photo.file);
@@ -582,7 +600,7 @@ export default function Editor() {
 
     const id = listingId.current;
     if (id) {
-      const result = await saveListing(id, stateRef.current, latest, extrasRef.current).catch(
+      const result = await saveListing(id, stateRef.current, photosRef.current, extrasRef.current).catch(
         () => ({ error: 'failed' }) as const,
       );
       setFailure('error' in result ? t('errors.upload') : undefined);
@@ -802,6 +820,7 @@ export default function Editor() {
   }, [screen, area, suggestSource, suggesting, state.description, state.generatedDescription]);
 
   const changePhotos = (next: EditorPhoto[]) => {
+    photosRef.current = next;
     setPhotos(next);
     setState((current) => ({ ...current, photoCount: next.length }));
     void uploadPending(next, state.category);
@@ -1379,6 +1398,7 @@ export default function Editor() {
     }
 
     setPublishing(true);
+    setPublishStage(1);
     setFailure(undefined);
 
     void (async () => {
@@ -1406,6 +1426,7 @@ export default function Editor() {
         if (areaRef.current?.key === key && areaRef.current.status === 'failed') areaAskedFor.current = undefined;
         lookUpArea(id);
         if (!areaSettled(areaRef.current?.key === key ? areaRef.current.status : undefined)) {
+          setPublishStage(2);
           setPublishNote(t('editor.publish.waitingArea'));
           const until = Date.now() + AREA_AT_PUBLISH_MS;
           while (Date.now() < until) {
@@ -1417,12 +1438,14 @@ export default function Editor() {
         }
       }
 
+      setPublishStage(3);
       const result = await publishListing(id, state, photos, extrasRef.current).catch(
         () => ({ error: 'failed' }) as const,
       );
 
       if ('ok' in result) {
         void recordEditorEvent('publish', 'publish_ok', id);
+        setPublishStage(4);
 
         /*
          * The WhatsApp card and the story image, drawn on this phone.
@@ -1443,8 +1466,10 @@ export default function Editor() {
         if (publishedSlug) {
           slug.current = publishedSlug;
           setPublishedUrl(`${window.location.origin}/a/${publishedSlug}/`);
-          // The page exists: offer to send it, once, the moment it does.
-          openShare(publishedSlug, true);
+          // The page exists: offer to send it, once — after the check has
+          // drawn, so the agent sees it worked before the sheet covers it.
+          const still = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+          window.setTimeout(() => openShare(publishedSlug, true), still ? 300 : 900);
         }
         clearDraft();
       } else {
@@ -1843,10 +1868,10 @@ export default function Editor() {
               publishedSlug={slug.current ?? undefined}
               publishing={publishing}
               publishNote={publishNote}
+              publishStage={publishStage}
               areaStatus={state.category === 'property' && area && area.key === addressKey ? area.status : undefined}
               areaCount={area && area.key === addressKey ? area.count : undefined}
               photoCheck={<PhotoChecklist coverage={coverage} count={photos.length} variant="line" />}
-              shelf={false}
               failure={failure}
               onPublish={publish}
               onCopy={(url) =>

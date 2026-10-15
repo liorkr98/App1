@@ -505,6 +505,8 @@ h1 {
 }
 
 .stats {
+  position: relative;
+  isolation: isolate;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: center;
@@ -517,6 +519,30 @@ h1 {
   font-weight: 700;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
+}
+
+/* A card's 14-day trend, behind its numbers (mine.astro, trend()). */
+.stats svg.trend {
+  position: absolute;
+  z-index: -1;
+  inset-inline: 0;
+  inset-block-end: 0;
+  inline-size: 100%;
+  block-size: 70%;
+}
+
+.trend-wash {
+  fill: var(--olive);
+  fill-opacity: 0.08;
+}
+
+.trend-line {
+  fill: none;
+  stroke: var(--olive);
+  stroke-opacity: 0.4;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
 }
 
 .stats > span {
@@ -1133,6 +1159,62 @@ h1 {
 
 /* ---------- States ---------- */
 
+/* Loading: the cards' shape, pulsing. */
+.sk-card {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.5rem 0.5rem 1rem;
+  border-radius: var(--radius);
+  background: var(--card);
+  border: 1px solid var(--stone);
+}
+
+.sk {
+  display: block;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ink) 9%, transparent);
+}
+
+.sk-shot {
+  aspect-ratio: 4 / 3;
+  border-radius: 14px;
+}
+
+.sk-line {
+  block-size: 0.9rem;
+  margin-inline: 0.6rem;
+  inline-size: 70%;
+}
+
+.sk-short {
+  inline-size: 40%;
+}
+
+.sk-stats {
+  block-size: 2.4rem;
+  margin-inline: 0.6rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .sk {
+    animation: sk-pulse 1.4s ease-in-out infinite;
+  }
+
+  .sk-card:nth-child(2) .sk {
+    animation-delay: 0.15s;
+  }
+
+  .sk-card:nth-child(3) .sk {
+    animation-delay: 0.3s;
+  }
+}
+
+@keyframes sk-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
 .state {
   padding-block: 3.5rem;
   text-align: center;
@@ -1321,6 +1403,34 @@ h1 {
 .site-nav .dash-new {
   min-block-size: 44px;
   padding: 0.5rem 1.1rem;
+}
+
+.site-nav > * {
+  white-space: nowrap;
+}
+
+/* A phone has room for the name, one link and a button, not a button with
+   a label: the button keeps its name for a screen reader and shows the +. */
+@media (max-width: 26.25rem) {
+  .site-nav {
+    gap: 0.75rem;
+  }
+
+  .site-nav .dash-new {
+    inline-size: 44px;
+    padding: 0;
+    justify-content: center;
+    border-radius: 999px;
+  }
+
+  .dash-new-label {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 }
 
 .studio-made {

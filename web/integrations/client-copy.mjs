@@ -17,7 +17,20 @@
  * fails the build when any client bundle names a key in one of these
  * namespaces, and its -fires.sh proves the check still matches.
  */
-export const SERVER_ONLY_NAMESPACES = ['templates', 'audiences', 'guides', 'agentPage', 'adminData'];
+// home, lab, flyer and notFound joined on 15 Oct 2026, when the photo drag
+// and the publish moment took /new/ back over by 4 KB: all four are rendered
+// by .astro frontmatter alone.
+export const SERVER_ONLY_NAMESPACES = [
+  'templates',
+  'audiences',
+  'guides',
+  'agentPage',
+  'adminData',
+  'home',
+  'lab',
+  'flyer',
+  'notFound',
+];
 
 const LOCALE = /[\\/]locales[\\/](he|en)\.json$/;
 

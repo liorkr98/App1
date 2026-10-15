@@ -52,7 +52,7 @@ import '../styles/dash.css';
     <a class="site-link" id="nav-admin" href="/admin/" hidden>{t('admin.link')}</a>
     <a class="site-btn site-btn-primary dash-new" href="/new/?fresh=1">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
-      {t('dash.new')}
+      <span class="dash-new-label">{t('dash.new')}</span>
     </a>
   </Fragment>
 
@@ -165,7 +165,21 @@ import '../styles/dash.css';
       <span class="count" id="count"></span>
     </div>
 
-    <p class="state" id="loading">{t('common.loading')}</p>
+    {/* The shape of what is coming, instead of a word: three cards, pulsing
+        gently, still for a reader who asked for less motion. */}
+    <div class="sk-wrap" id="loading" role="status">
+      <span class="visually-hidden">{t('common.loading')}</span>
+      <ul class="grid" aria-hidden="true">
+        {[0, 1, 2].map(() => (
+          <li class="sk-card">
+            <span class="sk sk-shot"></span>
+            <span class="sk sk-line"></span>
+            <span class="sk sk-line sk-short"></span>
+            <span class="sk sk-stats"></span>
+          </li>
+        ))}
+      </ul>
+    </div>
     <div class="state" id="anon" hidden>
       <b>{t('dash.signedOut')}</b>
       <a href="/enter/">{t('dash.signIn')}</a>
@@ -264,6 +278,10 @@ import '../styles/dash.css';
       const WINDOW = 30;
       const today = new Date();
       const windowDays = lastDays(today, WINDOW);
+      // Each card's own trend: two weeks is enough to see a link travel.
+      const trendDays = lastDays(today, 14);
+      // Card numbers count up once, on the first paint, not on every filter.
+      let firstGrid = true;
 
       const money = new Intl.NumberFormat('he-IL', {
         style: 'currency',
@@ -893,6 +911,32 @@ import '../styles/dash.css';
         svg.removeAttribute('data-empty');
       };
 
+      /**
+       * A card's last 14 days of views, as a faint wash behind its numbers.
+       * Oldest on the start side (the right), like the tiles above. Scaled
+       * to the card's own peak: it shows the shape, the numbers say how many.
+       */
+      const trend = (values: number[]) => {
+        const svg = document.createElementNS(svgNS, 'svg');
+        svg.setAttribute('class', 'trend');
+        svg.setAttribute('viewBox', '0 0 140 30');
+        svg.setAttribute('preserveAspectRatio', 'none');
+        svg.setAttribute('aria-hidden', 'true');
+        const max = Math.max(...values, 1);
+        const step = 140 / Math.max(1, values.length - 1);
+        const points = values.map(
+          (value, index) => `${(140 - index * step).toFixed(1)},${(29 - (value / max) * 24).toFixed(1)}`,
+        );
+        const area = document.createElementNS(svgNS, 'path');
+        area.setAttribute('class', 'trend-wash');
+        area.setAttribute('d', `M${points.join('L')}L0,30L140,30Z`);
+        const line = document.createElementNS(svgNS, 'path');
+        line.setAttribute('class', 'trend-line');
+        line.setAttribute('d', `M${points.join('L')}`);
+        svg.append(area, line);
+        return svg;
+      };
+
       const paintTiles = () => {
         const live = rows.filter((row) => row.status === 'published');
         const kept = rows.filter((row) => row.status !== 'archived');
@@ -1049,7 +1093,9 @@ import '../styles/dash.css';
             const figure = document.createElement('span');
             figure.className = 'n';
             const bdi = document.createElement('bdi');
-            bdi.textContent = value === undefined ? '—' : num(value);
+            if (value === undefined) bdi.textContent = '—';
+            else if (firstGrid) countUp(bdi, value, num(value));
+            else bdi.textContent = num(value);
             figure.append(icon(d, fill), bdi);
             const caption = document.createElement('small');
             caption.textContent = label;
@@ -1061,6 +1107,11 @@ import '../styles/dash.css';
             stat(CHAT, true, row.waTaps ?? 0, t('dash.waTaps')),
             stat(CLOCK, false, daysLive(row), t('dash.daysLive')),
           );
+          // Behind the numbers, not beside them: the card keeps its shape.
+          if (daily && row.id) {
+            const points = series(daily, trendDays, row.id);
+            if (points.some((point) => point.views > 0)) stats.append(trend(points.map((point) => point.views)));
+          }
         } else {
           stats.classList.add('is-quiet');
           stats.textContent = row.status === 'draft' ? t('dash.statsDraft') : t('dash.statsArchived');
@@ -1578,6 +1629,7 @@ import '../styles/dash.css';
           chosen = (shown.find((row) => row.status === 'published') ?? shown[0])?.slug;
         }
         grid.replaceChildren(...shown.map(card));
+        firstGrid = false;
         paintDetail();
         show('workspace');
       };
