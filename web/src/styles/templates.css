@@ -34,7 +34,6 @@
   border: 6px solid #1d1e1a;
   overflow: hidden;
   background: #0b0c0a;
-  box-shadow: 0 30px 50px -30px rgba(0, 0, 0, 0.9);
 }
 
 .tp-screen img {
@@ -59,13 +58,13 @@
   border-radius: 99px;
   border: 1px solid var(--ls-line);
   color: var(--ls-ink-2);
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   font-weight: 700;
 }
 
 .tp-note {
   color: var(--ls-ink-2);
-  font-size: 0.84rem;
+  font-size: 0.95rem;
   line-height: 1.5;
 }
 
@@ -77,7 +76,7 @@
   gap: 0.5rem;
   margin-block-end: 2rem;
   color: var(--ls-ink-2);
-  font-size: 0.9rem;
+  font-size: 0.95rem;
 }
 
 .tp-crumbs a {

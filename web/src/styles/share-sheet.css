@@ -1,0 +1,346 @@
+/* The share sheet (lib/share-sheet.ts). On the editor (Paper) and the
+   dashboard (Onyx) alike, so every colour comes from the --ls tokens or the
+   two local ones below. A bottom sheet on a phone, a card in the middle on a
+   wider screen. It floats, so it is the one place here with a shadow. */
+
+.ss {
+  --ss-bubble: #dcf5d3;
+  --ss-bubble-ink: #111b21;
+  --ss-link: #027eb5;
+  --ss-tile: color-mix(in srgb, var(--ls-ink) 7%, var(--ls-surface));
+
+  box-sizing: border-box;
+  inline-size: 100%;
+  max-inline-size: 100%;
+  max-block-size: 92svh;
+  margin: auto 0 0;
+  padding: 0;
+  border: 0;
+  border-start-start-radius: 26px;
+  border-start-end-radius: 26px;
+  background: var(--ls-surface);
+  color: var(--ls-ink);
+  font-family: var(--ls-font-body);
+  box-shadow: 0 -20px 60px -20px rgba(0, 0, 0, 0.45);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+[data-ls='onyx'] .ss {
+  --ss-bubble: #144d37;
+  --ss-bubble-ink: #e9edef;
+  --ss-link: #53bdeb;
+}
+
+.ss::backdrop {
+  background: rgba(8, 9, 7, 0.55);
+}
+
+.ss-panel {
+  display: grid;
+  gap: 1.1rem;
+  padding-block: 0.75rem calc(1.25rem + env(safe-area-inset-bottom, 0px));
+  padding-inline: 1.25rem;
+}
+
+/* The grab handle: a phone's sign that this sheet came up from the bottom. */
+.ss-panel::before {
+  content: '';
+  justify-self: center;
+  inline-size: 40px;
+  block-size: 4px;
+  border-radius: 999px;
+  background: var(--ls-line);
+}
+
+.ss-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.ss-title {
+  margin: 0;
+  font-family: var(--ls-font-display);
+  font-size: 1.45rem;
+  font-weight: 800;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+.ss-close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  inline-size: 48px;
+  block-size: 48px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ss-tile);
+  color: var(--ls-ink);
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+
+.ss-close svg {
+  inline-size: 20px;
+  block-size: 20px;
+}
+
+.ss-close:hover {
+  background: color-mix(in srgb, var(--ls-ink) 14%, var(--ls-surface));
+}
+
+/* --- The message, as it will arrive -------------------------------- */
+
+.ss-chat {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.9rem;
+  border-radius: 18px;
+  background: var(--ls-ground);
+}
+
+.ss-caption {
+  margin: 0;
+  color: var(--ls-ink-2);
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.ss-bubble {
+  justify-self: start;
+  display: grid;
+  gap: 0.45rem;
+  max-inline-size: min(100%, 22rem);
+  padding: 0.35rem;
+  border-radius: 14px;
+  border-start-start-radius: 4px;
+  background: var(--ss-bubble);
+  color: var(--ss-bubble-ink);
+}
+
+.ss-card {
+  overflow: hidden;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ss-bubble-ink) 8%, var(--ss-bubble));
+}
+
+.ss-cover {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  aspect-ratio: 1200 / 630;
+  max-block-size: 10.5rem;
+  object-fit: cover;
+}
+
+.ss-card-text {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.5rem 0.65rem 0.6rem;
+}
+
+.ss-card-title {
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.ss-card-host {
+  justify-self: start;
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.ss-text {
+  margin: 0;
+  padding-inline: 0.35rem;
+  padding-block-end: 0.2rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  max-block-size: 9.5em;
+  overflow-y: auto;
+}
+
+.ss[data-loading] .ss-text {
+  opacity: 0.6;
+}
+
+.ss-link {
+  color: var(--ss-link);
+}
+
+/* --- Where it goes --------------------------------------------------- */
+
+.ss-targets {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 0.5rem;
+}
+
+.ss-tile {
+  display: grid;
+  justify-items: center;
+  gap: 0.45rem;
+  min-block-size: 88px;
+  padding-block: 0.4rem;
+  border: 0;
+  border-radius: 16px;
+  background: none;
+  color: var(--ls-ink);
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ss-icon {
+  display: grid;
+  place-items: center;
+  inline-size: 56px;
+  block-size: 56px;
+  border-radius: 999px;
+  background: var(--ss-tile);
+  transition: transform 160ms var(--ls-ease-expo, ease), filter 160ms ease;
+}
+
+.ss-icon svg {
+  inline-size: 26px;
+  block-size: 26px;
+}
+
+.ss-whatsapp .ss-icon {
+  background: #25d366;
+  color: #ffffff;
+}
+
+.ss-whatsapp .ss-icon svg {
+  inline-size: 30px;
+  block-size: 30px;
+}
+
+.ss-facebook .ss-icon {
+  background: #1877f2;
+  color: #ffffff;
+}
+
+.ss-facebook .ss-icon svg {
+  inline-size: 34px;
+  block-size: 34px;
+}
+
+.ss-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.ss-tile:hover .ss-icon {
+  filter: brightness(1.08);
+}
+
+.ss-tile:active .ss-icon {
+  transform: scale(0.92);
+}
+
+.ss-tile:focus-visible,
+.ss-close:focus-visible,
+.ss-kit:focus-visible {
+  outline: 2px solid var(--ls-accent);
+  outline-offset: 3px;
+}
+
+.ss-said {
+  min-block-size: 1.4em;
+  margin: -0.4rem 0 0;
+  color: var(--ls-accent);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.ss-said:empty {
+  display: none;
+}
+
+.ss-lead {
+  margin: 0;
+  color: var(--ls-ink-2);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.ss-kit {
+  justify-self: center;
+  padding: 0.6rem 0.9rem;
+  color: var(--ls-ink);
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* A card in the middle once there is room for one. */
+@media (min-width: 640px) {
+  .ss {
+    inline-size: min(100% - 2rem, 27rem);
+    margin: auto;
+    border-radius: 26px;
+    box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.55);
+  }
+
+  .ss-panel {
+    padding-block: 1.25rem 1.5rem;
+    padding-inline: 1.5rem;
+  }
+
+  .ss-panel::before {
+    display: none;
+  }
+}
+
+/* The page under the sheet stays where it was. */
+html:has(.ss[open]) {
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ss[open] {
+    animation: ss-rise 340ms var(--ls-ease-expo, cubic-bezier(0.16, 1, 0.3, 1));
+  }
+
+  .ss[open]::backdrop {
+    animation: ss-fade 240ms ease-out;
+  }
+
+  @media (min-width: 640px) {
+    .ss[open] {
+      animation-name: ss-pop;
+    }
+  }
+}
+
+@keyframes ss-rise {
+  from {
+    transform: translateY(40px);
+    opacity: 0.4;
+  }
+}
+
+@keyframes ss-pop {
+  from {
+    transform: translateY(12px) scale(0.98);
+    opacity: 0;
+  }
+}
+
+@keyframes ss-fade {
+  from {
+    opacity: 0;
+  }
+}

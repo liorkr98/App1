@@ -1,0 +1,63 @@
+/*
+  Reading pages (layouts/Plain.astro): guides, legal, about, contact, the
+  404. On the site shell in Paper since 14 Oct 2026. Its own file so the
+  pages that never show a reading column (the editor is at its weight
+  budget) do not carry these rules.
+*/
+
+.site-read {
+  max-inline-size: calc(42rem + 2 * var(--site-gut));
+  padding-block: clamp(1.5rem, 5vw, 3rem) clamp(3rem, 8vw, 5rem);
+}
+
+.site-read h1 {
+  margin: 0 0 0.5rem;
+  font-family: var(--ls-font-display);
+  font-weight: 800;
+  font-size: clamp(2.2rem, 7vw, 3.4rem);
+  font-variation-settings: 'wdth' var(--ls-wdth-display);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.site-read h2 {
+  margin: 2.2rem 0 0.6rem;
+  font-family: var(--ls-font-display);
+  font-weight: 800;
+  font-size: 1.45rem;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+.site-read h3 {
+  margin: 1.6rem 0 0.4rem;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.site-read p,
+.site-read li {
+  max-inline-size: 65ch;
+  line-height: 1.7;
+}
+
+.site-read p {
+  margin: 0;
+}
+
+.site-read p + p {
+  margin-block-start: 0.9rem;
+}
+
+.site-read a {
+  color: var(--ls-ink);
+  text-underline-offset: 3px;
+}
+
+.site-read .updated {
+  margin-block-end: 1.8rem;
+  color: var(--ls-ink-2);
+  font-size: 0.95rem;
+}
+

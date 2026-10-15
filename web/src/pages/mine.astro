@@ -360,6 +360,19 @@ import '../styles/dash.css';
       };
 
       /**
+       * שיתוף: the share sheet (lib/share-sheet.ts) — WhatsApp, Facebook, the
+       * phone's own menu, the link — loaded the first time it is asked for.
+       * The full kit (story image, message) is one link inside it.
+       */
+      const openShare = (slug: string) => {
+        void import('../lib/share-sheet')
+          .then(({ openShareSheet }) => openShareSheet({ slug }))
+          .catch(() => {
+            window.location.href = `/a/${slug}/share/`;
+          });
+      };
+
+      /**
        * Copying a listing's link is sharing it: the agent is about to paste
        * it somewhere. Recorded like the share kit's opening (0030), so time
        * to link (0035) sees agents who never open the kit.
@@ -1069,7 +1082,7 @@ import '../styles/dash.css';
         acts.className = 'acts';
         if (row.status === 'published') {
           acts.append(
-            link(t('dash.share'), 'act primary', `/a/${row.slug}/share/`),
+            button(t('dash.share'), 'act primary', () => openShare(row.slug)),
             button(t('dash.copyLink'), 'act', () => void copy(href, row.slug)),
           );
         } else if (row.status === 'draft') {

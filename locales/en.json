@@ -550,6 +550,7 @@
       "failed": "",
       "noPhotos": "",
       "saveFailed": "",
+      "shareNow": "",
       "share": "",
       "waitingArea": ""
     },
@@ -1070,6 +1071,7 @@
     "vatNote": "",
     "checkoutOff": "",
     "disabled": "",
+    "talk": "",
     "start": "",
     "contact": "",
     "soon": "",
@@ -1731,5 +1733,27 @@
     },
     "empty": "",
     "fixtureNote": ""
+  },
+  "shareSheet": {
+    "dialog": "",
+    "titleFresh": "",
+    "title": "",
+    "lead": "",
+    "preview": "",
+    "loading": "",
+    "whatsapp": "",
+    "facebook": "",
+    "more": "",
+    "copy": "",
+    "copied": "",
+    "copyFailed": "",
+    "fbCopied": "",
+    "kit": "",
+    "close": ""
+  },
+  "footer": {
+    "product": "",
+    "help": "",
+    "legal": ""
   }
 }

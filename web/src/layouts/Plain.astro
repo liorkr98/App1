@@ -1,9 +1,19 @@
 ---
-import BrandMark from '../components/BrandMark.astro';
 import { t } from '../lib/i18n';
-import { ldGraph, organizationLd, websiteLd } from '../lib/seo';
-import '../styles/tokens.css';
-import '../styles/fonts.css';
+import Site from './Site.astro';
+import '../styles/reading.css';
+
+/**
+ * Reading pages: guides, legal, about, contact, the 404 and an ended listing.
+ *
+ * ON THE SITE SHELL SINCE 14 OCT 2026. These pages had their own head,
+ * header, footer and faces (Frank Ruhl Libre and Assistant on cream), so
+ * they read as a different company from the rest of the site — the design
+ * audit's largest single finding. They now render through layouts/Site.astro
+ * in Paper, the same system the editor uses: same header, same footer, same
+ * faces, a light ground for long reading. This file keeps only what is
+ * theirs: the breadcrumb trail, and a reading column.
+ */
 
 interface Props {
   title: string;
@@ -17,9 +27,7 @@ interface Props {
 
 const { title, robots = 'index,follow', description, ld = [], trail } = Astro.props;
 const origin = Astro.site ?? new URL(Astro.url.origin);
-const canonical = new URL(Astro.url.pathname, origin).href;
 const fullTitle = `${title} · ${t('common.brand')}`;
-const summary = description ?? t('seo.summary');
 const steps = trail ?? [{ name: title, path: Astro.url.pathname }];
 const crumbs = {
   '@type': 'BreadcrumbList',
@@ -35,133 +43,8 @@ const crumbs = {
 };
 ---
 
-<!DOCTYPE html>
-<html lang="he" dir="rtl">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#FBFAF7" />
-    <title>{fullTitle}</title>
-    <meta name="description" content={summary} />
-    <meta name="robots" content={robots} />
-    <link rel="canonical" href={canonical} />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <meta property="og:type" content="website" />
-    <meta property="og:locale" content="he_IL" />
-    <meta property="og:url" content={canonical} />
-    <meta property="og:site_name" content={t('common.brand')} />
-    <meta property="og:title" content={fullTitle} />
-    <meta property="og:description" content={summary} />
-    <meta property="og:image" content={new URL('/og-home.webp', origin).href} />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta name="twitter:card" content="summary_large_image" />
-    {robots.startsWith('index') && (
-      <script is:inline type="application/ld+json" set:html={ldGraph([organizationLd(origin), websiteLd(origin), crumbs, ...ld])} />
-    )}
-    <style is:global>
-      html {
-        background: var(--plaster);
-        color-scheme: light;
-      }
-      body {
-        font-family: 'Assistant', system-ui, sans-serif;
-        background: var(--plaster);
-        color: var(--ink);
-        font-size: var(--t-body);
-        line-height: 1.7;
-        max-inline-size: 40rem;
-        margin-inline: auto;
-        padding: 1.5rem var(--gut) 3rem;
-        -webkit-font-smoothing: antialiased;
-      }
-      .mark {
-        font-family: 'Frank Ruhl Libre', serif;
-        font-weight: 700;
-        font-size: 1.4rem;
-        color: inherit;
-        text-decoration: none;
-      }
-      header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1rem;
-        padding-block-end: 1.5rem;
-        margin-block-end: 1.5rem;
-        border-block-end: 1px solid var(--stone);
-      }
-      header > a:not(.brand-mark) {
-        display: inline-flex;
-        align-items: center;
-        min-block-size: 44px;
-        color: var(--muted);
-        font-size: 0.9rem;
-      }
-      h1 {
-        font-family: 'Frank Ruhl Libre', serif;
-        font-weight: 700;
-        font-size: var(--t-h2);
-        line-height: 1.2;
-        margin-block-end: 0.4rem;
-      }
-      .updated {
-        color: var(--muted);
-        font-size: var(--t-label);
-        margin-block-end: 1.5rem;
-      }
-      h2 {
-        font-family: 'Frank Ruhl Libre', serif;
-        font-weight: 500;
-        font-size: 1.2rem;
-        margin-block: 1.6rem 0.5rem;
-      }
-      p + p {
-        margin-block-start: 0.85rem;
-      }
-      footer {
-        margin-block-start: 2.5rem;
-        padding-block-start: 1.25rem;
-        border-block-start: 1px solid var(--stone);
-        font-size: 0.85rem;
-        color: var(--muted);
-      }
-      footer a {
-        display: inline-flex;
-        align-items: center;
-        min-block-size: 44px;
-        color: var(--muted);
-      }
-    </style>
-  </head>
-  <body>
-    <a class="skip" href="#main">{t('a11y.skip')}</a>
-    <header>
-      <BrandMark />
-      <a href="/">{t('legal.home')}</a>
-    </header>
-    <main id="main">
+<Site title={fullTitle} description={description} robots={robots} ls="paper" ld={[crumbs, ...ld]}>
+  <div class="site-shell site-read">
     <slot />
-    </main>
-    <footer>
-      <a href="/pricing/">{t('pricing.title')}</a>
-      {' · '}
-      <a href="/guide/">{t('guides.title')}</a>
-      {' · '}
-      <a href="/about/">{t('legal.about')}</a>
-      {' · '}
-      <a href="/contact/">{t('legal.contact')}</a>
-      {' · '}
-      <a href="/legal/terms/">{t('legal.terms')}</a>
-      {' · '}
-      <a href="/legal/privacy/">{t('legal.privacy')}</a>
-      {' · '}
-      <a href="/legal/accessibility/">{t('legal.accessibility')}</a>
-    </footer>
-    <script>
-      // One count for this page on the owner's data page (0042).
-      import { sendSiteView } from '../lib/first-touch';
-      sendSiteView();
-    </script>
-  </body>
-</html>
+  </div>
+</Site>

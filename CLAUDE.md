@@ -324,8 +324,14 @@ price, a phone number, and a date. Screenshots in Hebrew, not English.
 
 ## 5. Hebrew typography
 
-- **Fonts:** Frank Ruhl Libre 500/700 for headlines, prices and numeric facts;
-  Assistant 400/600 for body and UI. `font-display: swap`.
+- **Fonts:** two systems, both self-hosted, `font-display: swap`.
+  - **Site and app pages** (Site.astro: home, audiences, pricing, guides,
+    legal, editor, dashboard): Noto Sans Hebrew for display, Heebo for body
+    and UI (`--ls-font-display`, `--ls-font-body`). Decided 14 Oct 2026 in
+    the design audit; the wordmark stays Frank Ruhl Libre (it is the logo).
+  - **Listing templates** (design contract): Frank Ruhl Libre 500/700 for
+    headlines, prices and numeric facts; Assistant 400/600 for body, unless
+    a template's own spec says otherwise.
 - **Line height:** minimum `1.5×`. Hebrew has no ascenders or descenders, so
   tight leading looks cramped.
 - **No italics.** Hebrew has no italic form; synthetic italics look broken.
@@ -334,6 +340,12 @@ price, a phone number, and a date. Screenshots in Hebrew, not English.
 - **No positive letter-spacing** on Hebrew text.
 - **Punctuation:** gershayim `״` is U+05F4, geresh `׳` is U+05F3, maqaf `־` is
   U+05BE. Not the ASCII lookalikes. Verify at codepoint level, not by eye.
+
+Design work runs through four installed skills (`.claude/skills/`, 14 Oct
+2026): taste-skill, frontend-design, web-design-guidelines and UI/UX Pro Max.
+**This file and the design contract outrank them.** Where they conflict —
+italics, tracked labels, Google Fonts, GSAP, placeholder photos — see
+`docs/DESIGN-SKILLS.md`.
 
 Design tokens and the visual contract are in `docs/DESIGN-CONTRACT.md`. The
 reference HTML files are the contract — port them, do not redesign them.

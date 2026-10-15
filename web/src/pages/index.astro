@@ -39,8 +39,9 @@ import { demoPath } from '../lib/template-pages';
  *   - The WhatsApp card is built by ogTitle/ogDescription, the functions
  *     that write the real meta tags, so it cannot promise a card the product
  *     does not make.
- *   - "Wow" features that do not exist yet say בקרוב. Nothing on this page
- *     sells a feature before it is built.
+ *   - Only features that work today are on this page (14 Oct 2026): the
+ *     בקרוב tiles went, because an unfinished feature beside a finished one
+ *     makes both look unfinished.
  *
  * No OSM-derived data is shown here any more (the "around" section went with
  * the redesign), so there is no ODbL line to carry.
@@ -71,12 +72,10 @@ const wow = [
   { key: 'Plan', live: true, href: demoPath('blueprint'), image: plan ? largest(plan, GALLERY_WIDTHS) : photoOf(0), contain: Boolean(plan) },
   { key: 'Sun', live: true, href: demoPath('heliograph'), drawing: 'sun' },
   { key: 'Walk', live: true, href: demoPath('walk'), drawing: 'walk' },
-  { key: 'Depth', live: false, image: photoOf(0) },
   // Built in P7 (the editor takes the frames, Showroom turns them); no demo
   // listing has a real sequence yet, so the tile says so without a link.
   { key: 'Spin', live: true, image: largest(golfListing.media.cover, GALLERY_WIDTHS) },
   { key: 'Video', live: true, href: '#hero', image: photoOf(1) },
-  { key: 'Staging', live: false, image: photoOf(2) },
 ] as const;
 
 const title = `${t('common.brand')} — ${t('home.tagline')}`;
@@ -89,14 +88,46 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
   og={{ image: ogImage, title: t('common.brand'), description: t('home.subTagline') }}
   ld={[softwareLd(Astro.site ?? new URL(Astro.url.origin))]}
 >
+  {/*
+    The demo phone waits for the faces (home.css, html.hm-wait). When Heebo
+    and Noto arrive the hero copy rewraps shorter and the phone moved up
+    63px under the reader: 0.11 layout shift on CI's cheap phone, over the
+    0.05 limit (e2e/speed.spec.ts). Something that appears is not a shift;
+    something that moves is. Without script the class is never set, and the
+    phone shows from the start; with it, never later than six seconds.
+
+    It waits for the two faces the hero copy is set in, not fonts.ready,
+    which also waits for faces that move nothing (and the phone is the
+    first screen's largest paint). The script runs before the stylesheets
+    that declare the faces, and until they are parsed load() finds no face
+    and resolves at once, so it asks again until both exist and loaded.
+  */}
+  <script is:inline slot="head">
+    document.documentElement.classList.add('hm-wait');
+    (function () {
+      var root = document.documentElement;
+      var done = function () { root.classList.remove('hm-wait'); };
+      var tries = 0;
+      var wait = function () {
+        Promise.all([
+          document.fonts.load('900 1em "Noto Sans Hebrew"', 'א'),
+          document.fonts.load('400 1em Heebo', 'א'),
+        ]).then(function (faces) {
+          if ((faces[0].length && faces[1].length) || ++tries > 100) done();
+          else setTimeout(wait, 50);
+        }, done);
+      };
+      if (document.fonts && document.fonts.load) wait();
+      else done();
+      setTimeout(done, 6000);
+    })();
+  </script>
   <section class="hm-hero ls-grain" id="hero">
-    <div class="hm-aurora" aria-hidden="true"></div>
     <div class="site-shell hm-hero-grid">
       <div class="hm-copy">
-        <p class="site-eyebrow ls-fade" style="--i:0">{t('home.eyebrow')}</p>
         <h1 class="hm-title">
           <span class="ls-line"><span style="--i:0">{t('home.heroLine1')}</span></span>
-          <span class="ls-line"><span class="hm-glow" style="--i:1">{t('home.heroLine2')}</span></span>
+          <span class="ls-line"><span class="hm-line2" style="--i:1">{t('home.heroLine2')}</span></span>
         </h1>
         <p class="site-sub ls-fade" style="--i:2">{t('home.heroSub')}</p>
         <div class="site-actions hm-actions ls-fade" style="--i:3">
@@ -144,7 +175,6 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
 
   <section class="site-sect ls-sect">
     <div class="site-shell">
-      <p class="site-eyebrow">{t('home.raceLabel')}</p>
       <h2 class="site-h2">{t('home.raceTitle')}</h2>
       <div class="hm-race" data-race>
         <div class="hm-race-card">
@@ -174,7 +204,6 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
 
   <section class="site-sect hm-templates" id="templates">
     <div class="site-shell">
-      <p class="site-eyebrow">{t('home.templatesLabel')} · <bdi>{catalogue.length}</bdi></p>
       <h2 class="site-h2">{t('home.templatesTitle')}</h2>
       <p class="site-sub">{t('home.templatesBody')}</p>
     </div>
@@ -203,9 +232,8 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
     </ul>
   </section>
 
-  <section class="site-sect ls-sect" data-ls="paper">
+  <section class="site-sect ls-sect">
     <div class="site-shell">
-      <p class="site-eyebrow">{t('home.wowLabel')}</p>
       <h2 class="site-h2">{t('home.wowTitle')}</h2>
       <ul class="hm-wow">
         {wow.map((item) => {
@@ -239,15 +267,12 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
                   </svg>
                 )}
               </span>
-              <span class:list={['site-tag', !item.live && 'is-soon']}>
-                {item.live ? t('home.liveTag') : t('home.soonTag')}
-              </span>
               <b>{t(`home.wow${item.key}`)}</b>
               <span>{t(`home.wow${item.key}Body`)}</span>
             </>
           );
           return (
-            <li class:list={['hm-wow-card', item.live && 'is-live']}>
+            <li class="hm-wow-card is-live">
               {'href' in item ? <a href={item.href}>{body}</a> : <div>{body}</div>}
             </li>
           );
@@ -259,7 +284,6 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
   <section class="site-sect ls-sect">
     <div class="site-shell hm-wa-grid">
       <div>
-        <p class="site-eyebrow">{t('home.waLabel')}</p>
         <h2 class="site-h2">{t('home.waTitle')}</h2>
         <p class="site-sub">{t('home.waNote')}</p>
       </div>
@@ -284,7 +308,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
     </div>
   </section>
 
-  <section class="site-sect" data-ls="paper">
+  <section class="site-sect">
     <div class="site-shell">
       <h2 class="site-h2">{t('home.pricingTitle')}</h2>
       <PriceTiers />

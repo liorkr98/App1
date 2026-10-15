@@ -12,21 +12,6 @@
   padding-block: clamp(1.5rem, 5vw, 3rem) clamp(3rem, 8vw, 5rem);
 }
 
-.hm-aurora {
-  position: absolute;
-  inset: -25%;
-  z-index: 0;
-  background: conic-gradient(
-    from 200deg at 60% 40%,
-    rgba(134, 183, 154, 0.2),
-    rgba(233, 216, 166, 0.13),
-    rgba(159, 201, 255, 0.13),
-    rgba(134, 183, 154, 0.2)
-  );
-  filter: blur(70px);
-  pointer-events: none;
-}
-
 .hm-hero-grid {
   position: relative;
   z-index: 2;
@@ -51,11 +36,10 @@
   letter-spacing: -0.03em;
 }
 
-.hm-glow {
-  background: linear-gradient(90deg, #86b79a, #e9d8a6);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+/* The second line in the accent-lift green: one colour, flat. It was a
+   green-to-sand gradient clipped to the text (design audit, 14 Oct 2026). */
+.hm-line2 {
+  color: var(--ls-accent-lift);
 }
 
 .hm-actions {
@@ -153,17 +137,34 @@
   opacity: 1;
 }
 
-/* State 0 — scattered, as they come off the camera roll. */
-.hm-screen[data-state='0'] .hm-photo[data-i='0'] { --x: 0.05; --y: 0.13; --w: 0.43; --h: 0.19; --r: -4deg; }
-.hm-screen[data-state='0'] .hm-photo[data-i='1'] { --x: 0.52; --y: 0.16; --w: 0.43; --h: 0.19; --r: 5deg; }
-.hm-screen[data-state='0'] .hm-photo[data-i='2'] { --x: 0.07; --y: 0.38; --w: 0.43; --h: 0.19; --r: 6deg; }
-.hm-screen[data-state='0'] .hm-photo[data-i='3'] { --x: 0.5; --y: 0.41; --w: 0.43; --h: 0.19; --r: -7deg; }
+/* A hidden label is not measured: between steps the tiles change their
+   crop and the labels would slide with it (layout shift on speed.spec). */
+.hm-room {
+  visibility: hidden;
+}
+
+.hm-screen[data-state='1'] .hm-room {
+  visibility: visible;
+}
+
+/* Until the faces load (index.astro): see the script beside <Site>. */
+html.hm-wait .hm-phone {
+  visibility: hidden;
+}
+
+/* State 0 — scattered, as they come off the camera roll. The tiles fill
+   the height of the screen: at 0.19 they sat in its top half and a phone
+   showed a device that was mostly black (design audit, 14 Oct 2026). */
+.hm-screen[data-state='0'] .hm-photo[data-i='0'] { --x: 0.05; --y: 0.1; --w: 0.43; --h: 0.3; --r: -4deg; }
+.hm-screen[data-state='0'] .hm-photo[data-i='1'] { --x: 0.52; --y: 0.17; --w: 0.43; --h: 0.3; --r: 5deg; }
+.hm-screen[data-state='0'] .hm-photo[data-i='2'] { --x: 0.07; --y: 0.48; --w: 0.43; --h: 0.3; --r: 6deg; }
+.hm-screen[data-state='0'] .hm-photo[data-i='3'] { --x: 0.5; --y: 0.56; --w: 0.43; --h: 0.3; --r: -7deg; }
 
 /* State 1 — sorted into walk order, rooms tagged. */
-.hm-screen[data-state='1'] .hm-photo[data-i='0'] { --x: 0.04; --y: 0.11; --w: 0.45; --h: 0.19; }
-.hm-screen[data-state='1'] .hm-photo[data-i='1'] { --x: 0.51; --y: 0.11; --w: 0.45; --h: 0.19; }
-.hm-screen[data-state='1'] .hm-photo[data-i='2'] { --x: 0.04; --y: 0.32; --w: 0.45; --h: 0.19; }
-.hm-screen[data-state='1'] .hm-photo[data-i='3'] { --x: 0.51; --y: 0.32; --w: 0.45; --h: 0.19; }
+.hm-screen[data-state='1'] .hm-photo[data-i='0'] { --x: 0.04; --y: 0.08; --w: 0.45; --h: 0.42; }
+.hm-screen[data-state='1'] .hm-photo[data-i='1'] { --x: 0.51; --y: 0.08; --w: 0.45; --h: 0.42; }
+.hm-screen[data-state='1'] .hm-photo[data-i='2'] { --x: 0.04; --y: 0.52; --w: 0.45; --h: 0.42; }
+.hm-screen[data-state='1'] .hm-photo[data-i='3'] { --x: 0.51; --y: 0.52; --w: 0.45; --h: 0.42; }
 
 /* States 2–3 — the cover fills the screen; the rest become a strip. */
 .hm-screen:is([data-state='2'], [data-state='3']) .hm-photo[data-i='0'] { --x: 0; --y: 0; --w: 1; --h: 1; }
@@ -342,7 +343,6 @@
   border: 6px solid #1d1e1a;
   overflow: hidden;
   background: #0b0c0a;
-  box-shadow: 0 30px 50px -30px rgba(0, 0, 0, 0.9);
 }
 
 .hm-device-screen img {
@@ -366,13 +366,13 @@
   border-radius: 99px;
   border: 1px solid var(--ls-line);
   color: var(--ls-ink-2);
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   font-weight: 700;
 }
 
 .hm-device-note {
   color: var(--ls-ink-2);
-  font-size: 0.84rem;
+  font-size: 0.95rem;
   line-height: 1.5;
 }
 
@@ -396,8 +396,6 @@
   padding: 0 1.2rem 1.3rem;
   border-radius: var(--ls-r-hero);
   background: var(--ls-surface);
-  border: 1px solid var(--ls-line);
-  box-shadow: var(--ls-shadow);
   color: var(--ls-ink);
   text-decoration: none;
   overflow: hidden;
@@ -411,7 +409,7 @@
 
 .hm-wow-card b + span {
   color: var(--ls-ink-2);
-  font-size: 0.9rem;
+  font-size: 1rem;
   line-height: 1.5;
 }
 
@@ -498,17 +496,18 @@
 }
 
 @media (min-width: 1000px) {
-  /* Three live features on the first row, four coming ones on the second. */
+  /* Five features: three on the first row, two wider ones on the second,
+     so no row ends on an empty cell. */
   .hm-wow {
-    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 
   .hm-wow-card {
-    grid-column: span 3;
+    grid-column: span 2;
   }
 
-  .hm-wow-card.is-live {
-    grid-column: span 4;
+  .hm-wow-card:nth-child(n + 4) {
+    grid-column: span 3;
   }
 }
 
@@ -658,10 +657,6 @@
     animation-iteration-count: 1;
   }
 
-  .hm-aurora {
-    animation: hm-spin 48s linear infinite;
-  }
-
   .hm-photo {
     transition:
       translate 0.9s var(--ls-ease-expo),
@@ -670,7 +665,10 @@
       clip-path 0.9s var(--ls-ease-expo);
   }
 
-  .hm-room,
+  .hm-room {
+    transition: opacity 0.5s ease, visibility 0.5s;
+  }
+
   .hm-shade {
     transition: opacity 0.5s ease;
   }
@@ -702,9 +700,10 @@
     transform: translateY(-4px);
   }
 
-  @keyframes hm-spin {
-    to {
-      rotate: 1turn;
-    }
-  }
+}
+
+/* The audience line under the prices: the page's ink, not the browser's blue. */
+.hm-more a {
+  color: var(--ls-ink);
+  text-underline-offset: 3px;
 }

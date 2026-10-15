@@ -387,6 +387,11 @@ jobs:
         working-directory: web
         run: npx playwright test languages
 
+      - name: The share sheet sends to WhatsApp and Facebook and fits a phone
+        if: ${{ !cancelled() }}
+        working-directory: web
+        run: npx playwright test share-sheet
+
       - name: The story video is honestly labelled and as long as the film
         if: ${{ !cancelled() }}
         working-directory: web

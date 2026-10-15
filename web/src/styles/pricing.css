@@ -12,17 +12,6 @@
  * while the page loaded moved the whole layer: a 0.29 layout shift on a
  * background nobody can see move.
  */
-.pr-aurora {
-  position: absolute;
-  inset-block-start: -20vh;
-  inset-inline: -10%;
-  block-size: 110vh;
-  background: radial-gradient(60% 50% at 70% 30%, rgba(134, 183, 154, 0.22), transparent 70%),
-    radial-gradient(40% 40% at 20% 20%, rgba(233, 216, 166, 0.14), transparent 70%);
-  filter: blur(40px);
-  pointer-events: none;
-}
-
 .pr-head {
   position: relative;
 }
@@ -46,11 +35,8 @@
   gap: 0.45rem;
   padding: 1.5rem 1.4rem;
   border-radius: var(--ls-r-hero);
-  background: var(--ls-glass);
-  border: 1px solid var(--ls-glass-edge);
-  box-shadow: inset 0 1px 0 var(--ls-glass-edge);
-  backdrop-filter: blur(18px) saturate(1.2);
-  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  /* A flat surface one tone off the ground (no glass, no edge glow). */
+  background: var(--ls-surface);
 }
 
 .pr-tier p {
@@ -96,7 +82,7 @@
 
 .pr-note {
   color: var(--ls-ink-2);
-  font-size: 0.94rem;
+  font-size: 1rem;
   line-height: 1.55;
 }
 
@@ -109,16 +95,14 @@
   align-self: stretch;
 }
 
-.pr-tier button.pr-go {
-  background: transparent;
-  color: var(--ls-ink-2);
-  border-color: var(--ls-line);
-  cursor: default;
+/* On the featured (light) card, the ghost button takes the card's own ink. */
+.pr-tier.is-featured .site-btn-ghost {
+  color: var(--ls-ground);
+  border-color: rgba(11, 12, 10, 0.3);
 }
 
-.pr-tier.is-featured button.pr-go {
-  color: #3f403a;
-  border-color: rgba(11, 12, 10, 0.25);
+.pr-tier.is-featured .site-btn-ghost:hover {
+  border-color: var(--ls-ground);
 }
 
 .pr-tier .pr-go {
@@ -219,18 +203,6 @@
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .pr-aurora {
-    animation: pr-drift 30s ease-in-out infinite alternate;
-  }
-
-  @keyframes pr-drift {
-    to {
-      transform: translateY(6%) scale(1.08);
-    }
-  }
-}
-
 /* PRICING.md (12 Oct 2026): the true seat count, private pages, the regular price after the lock. */
 /*
  * The regular and launch prices share one cell and trade visibility, and the
@@ -258,7 +230,7 @@
 }
 
 .pr-after {
-  font-size: 0.86rem;
+  font-size: 0.92rem;
 }
 
 .pr-private {

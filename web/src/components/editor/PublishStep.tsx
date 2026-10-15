@@ -37,6 +37,8 @@ interface Props {
   failure?: string | undefined;
   onPublish: () => void;
   onCopy: (url: string) => void;
+  /** Opens the share sheet: WhatsApp, Facebook, the phone's menu, the link. */
+  onShare: () => void;
   onIndexable: (indexable: boolean) => void;
   onPrePortal: (prePortal: boolean) => void;
 }
@@ -71,7 +73,6 @@ export function PublishStep({
   state,
   blockers,
   publishedUrl,
-  publishedSlug,
   publishing,
   publishNote,
   areaStatus,
@@ -81,12 +82,12 @@ export function PublishStep({
   failure,
   onPublish,
   onCopy,
+  onShare,
   onIndexable,
   onPrePortal,
 }: Props) {
   // The link exists: nothing else on this step matters any more.
   if (publishedUrl) {
-    const shareHref = publishedSlug ? `/a/${publishedSlug}/share/` : publishedUrl;
     return (
       <div className="published">
         <h2 className="published-title">{t('editor.publish.done')}</h2>
@@ -99,14 +100,14 @@ export function PublishStep({
         </div>
 
         <div className="published-actions">
-          <button type="button" className="primary" onClick={() => onCopy(publishedUrl)}>
+          <button type="button" className="primary" onClick={onShare}>
+            {t('editor.publish.shareNow')}
+          </button>
+          <button type="button" className="secondary" onClick={() => onCopy(publishedUrl)}>
             {t('dash.copyLink')}
           </button>
           <a className="secondary" href={publishedUrl}>
             {t('editor.publish.open')}
-          </a>
-          <a className="secondary" href={shareHref}>
-            {t('editor.publish.share')}
           </a>
           <a className="secondary" href="/mine/">
             {t('dash.title')}

@@ -103,3 +103,6 @@ web/.wrangler/
 # and ARE committed; these are per-run results, reports and diffs.
 web/test-results/
 web/playwright-report/
+
+# Python bytecode from the installed design skills (docs/DESIGN-SKILLS.md)
+__pycache__/

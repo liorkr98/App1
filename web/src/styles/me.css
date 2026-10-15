@@ -283,7 +283,6 @@
 
 .me input:not([type='radio']):focus-visible {
   border-color: var(--ls-accent);
-  outline: none;
 }
 
 .me input[type='file'] {

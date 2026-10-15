@@ -1,10 +1,8 @@
 ---
-import { shareMessage, whatsappShareUrl } from '@/features/listings/share-message';
-import { toCells } from '../../../lib/facts';
-import { ils } from '../../../lib/format';
-import { t } from '../../../lib/i18n';
+import { whatsappShareUrl } from '@/features/listings/share-message';
 import { recordListingEvent } from '../../../lib/listing-events';
 import { publishedListing } from '../../../lib/listing-from-row';
+import { shareText } from '../../../lib/share-text';
 import '../../../styles/tokens.css';
 import '../../../styles/fonts.css';
 
@@ -41,49 +39,9 @@ if (!listing) {
 await recordListingEvent(listing.slug, 'share', Astro.request.headers.get('user-agent'));
 
 const site = Astro.site?.origin ?? '';
-const url = `${site}/a/${listing.slug}/`;
-
-/**
- * Facts for the teaser, in schema order.
- *
- * Absences are dropped. "אין מחסן" is honest information on the page, where a
- * buyer is weighing the whole property, and it is a strange thing to lead with
- * in a message whose only job is to earn a tap.
- */
-const flatTitle = listing.title.replace(/\s*\n\s*/g, ' ');
-
-// Same ordering as the page, so the teaser leads with whatever the grid does.
-const cells = toCells(listing.category, listing.facts, listing.audience);
-const teaser = cells
-  .filter((cell) => !cell.absent && cell.value !== 'אין')
-  /*
-   * Drop anything the title already said.
-   *
-   * "דירת 4 חדרים" followed by a facts line beginning "4 חדרים" is the message
-   * repeating itself in the two lines that get read. The title is written by
-   * the seller and leads with whatever they thought mattered most, so it is
-   * the title that wins and the fact that goes.
-   */
-  .filter((cell) => !(flatTitle.includes(cell.value) && flatTitle.includes(cell.label)))
-  .slice(0, 4)
-  .map((cell) => {
-    if (cell.value === 'יש') return cell.label;
-    if (cell.displayValue !== cell.value) return `${cell.label} ${cell.displayValue}`;
-    return `${cell.value} ${cell.label}`;
-  });
-
-const place = listing.location?.street
-  ? `${listing.location.street}, ${listing.location.city}`
-  : listing.location?.city;
-
-const message = shareMessage({
-  title: listing.title,
-  price: listing.price > 0 ? ils(listing.price) : '',
-  facts: teaser,
-  ...(place ? { place } : {}),
-  ...(listing.prePortal ? { prePortalLine: t('listing.prePortal') } : {}),
-  url,
-});
+// The message, its teaser and the place: one builder for the kit and the
+// share sheet's message.json (lib/share-text.ts).
+const { url, message, title: flatTitle, price, place, teaser } = shareText(listing, site);
 
 const waHref = whatsappShareUrl(message);
 
@@ -121,9 +79,9 @@ const messageLines = message.split('\n').map(isolate);
 // out of the DOM.
 const card = {
   cover: listing.media.cover.url,
-  price: listing.price > 0 ? ils(listing.price) : '',
+  price,
   title: flatTitle,
-  place: place ?? '',
+  place,
   facts: teaser.slice(0, 3),
   agent: listing.seller.name,
   agency: listing.seller.agencyName ?? '',
