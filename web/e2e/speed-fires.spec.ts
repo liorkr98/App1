@@ -22,4 +22,6 @@ test('a late block above the content is caught as a layout shift', async ({ brow
     });
   });
   expect(result.cls).toBeGreaterThan(LIMITS.cls);
+  // And a failure names what moved, so a shift seen only in CI can be found.
+  expect(result.shifts?.[0]).toMatch(/^0\.\d{4} at \d+ ms: .+ y-?\d+→-?\d+/);
 });

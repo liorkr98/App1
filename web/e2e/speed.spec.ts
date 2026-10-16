@@ -44,7 +44,8 @@ test.describe('speed on a cheap phone', () => {
       if (result.longest > LIMITS.longest) slow.push(`long task ${result.longest} ms > ${LIMITS.longest}`);
       for (const note of slow) test.info().annotations.push({ type: 'slow', description: note });
 
-      expect(result.cls, `${page.name}: the page jumped while loading`).toBeLessThanOrEqual(LIMITS.cls);
+      const moved = result.shifts?.length ? `\n  largest shifts:\n  - ${result.shifts.join('\n  - ')}` : '';
+      expect(result.cls, `${page.name}: the page jumped while loading${moved}`).toBeLessThanOrEqual(LIMITS.cls);
       if (BLOCK_TIMING) expect(slow, `${page.name} is slow`).toEqual([]);
     });
   }
