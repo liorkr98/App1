@@ -95,6 +95,8 @@ export async function measure(
         })[]) {
           if (entry.hadRecentInput) continue;
           m.cls += entry.value;
+          // Only shifts worth naming are described; the rest cost nothing.
+          if (entry.value < 0.001) continue;
           const what = (entry.sources ?? [])
             .map((source) => {
               const from = source.previousRect;
