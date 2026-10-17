@@ -38,6 +38,36 @@ async function addFour(page: Page) {
     NAMES.map((name, index) => ({ name, mimeType: 'image/jpeg', buffer: Buffer.from(files[index]!, 'base64') })),
   );
   await expect(page.locator('.strip li')).toHaveCount(4);
+  await inView(page);
+}
+
+/**
+ * Where an agent would see the photos: in the middle of the screen, clear of
+ * the editor's fixed bottom bar, and done arriving. Right after the upload
+ * the fourth photo can still be below the fold or under that bar, and the
+ * strip is still settling from its entrance (about 10 px), so a press aimed
+ * at a position measured then can land on the bar or on nothing. That made
+ * this test fail one run in two once the first-listing hint grew taller
+ * (17 Oct 2026); dragging itself was never broken.
+ */
+async function inView(page: Page) {
+  await page.locator('.strip').evaluate((strip) => strip.scrollIntoView({ block: 'center', behavior: 'instant' }));
+  const top = () => page.locator('.strip > li img').nth(3).evaluate((img) => img.getBoundingClientRect().top);
+  let last = await top();
+  await expect
+    .poll(async () => {
+      await page.waitForTimeout(120);
+      const now = await top();
+      const still = Math.abs(now - last) < 0.5;
+      last = now;
+      return still;
+    })
+    .toBe(true);
+  const hit = await page.locator('.strip > li img').nth(3).evaluate((img) => {
+    const box = img.getBoundingClientRect();
+    return img.contains(document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2));
+  });
+  expect(hit, 'the fourth photo is what a press at its centre lands on').toBe(true);
 }
 
 const order = (page: Page) =>
@@ -102,6 +132,7 @@ test('a finger holds, lifts, and moves the photo; a quick swipe only scrolls', a
   // Let the swipe's fling finish: Chrome treats a touch that lands during a
   // fling as passive, and so would a real phone.
   await page.waitForTimeout(800);
+  await inView(page);
 
   // A hold lifts it, and then it follows the finger.
   from = await centre(page, 3);
