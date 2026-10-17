@@ -70,7 +70,9 @@
   line-height: 1.5;
 }
 
-/* The number is the headline of the card; its terms (לחודש + מע״מ) sit beside it. */
+/* The number is the headline of the card; its terms (לחודש + מע״מ) sit beside
+   it. "Free" is the free card's number. */
+.pr-sum.is-free,
 .pr-sum bdi {
   font-family: var(--ls-font-display);
   font-weight: 800;

@@ -83,7 +83,7 @@
   inset-inline: 0;
   margin: 0;
   text-align: center;
-  font-size: 0.72rem;
+  font-size: 0.82rem;
   font-weight: 800;
   color: #e9d8a6;
 }
@@ -687,7 +687,7 @@ html.hm-wait .hm-phone {
 
 .hm-card small {
   color: #8696a0;
-  font-size: 0.76rem;
+  font-size: 0.82rem;
 }
 
 .hm-card small[dir='ltr'] {
@@ -777,7 +777,7 @@ html.hm-wait .hm-phone {
 
 .hm-story-form dt {
   color: #a7a89c;
-  font-size: 0.72rem;
+  font-size: 0.82rem;
   font-weight: 700;
 }
 
@@ -874,9 +874,12 @@ html.hm-wait .hm-phone {
     grid-area: steps;
   }
 
+  /* The phone sits against the middle, beside the words it shows, not at
+     the far edge with an empty field between them (audit, 17 Oct 2026). */
   .hm-story-stage {
     grid-area: stage;
     align-self: start;
+    justify-content: flex-start;
     inset-block-start: 12svh;
     background: none;
   }
@@ -886,7 +889,16 @@ html.hm-wait .hm-phone {
   }
 
   .hm-story-step {
-    min-block-size: 70svh;
+    min-block-size: 62svh;
+  }
+
+  .hm-story-step h3 {
+    font-size: clamp(1.75rem, 2.6vw, 2.5rem);
+    line-height: 1.15;
+  }
+
+  .hm-story-step p {
+    font-size: 1.2rem;
   }
 }
 
@@ -1031,6 +1043,10 @@ html.hm-wait .hm-phone {
   opacity: 0;
   cursor: ew-resize;
   touch-action: pan-y;
+  /* The thumb below is a screen tall so a drag anywhere catches it; without
+     the clip it also caught taps on the headings above and below the
+     comparison (audit, 17 Oct 2026). */
+  clip-path: inset(0);
   -webkit-appearance: none;
   appearance: none;
 }

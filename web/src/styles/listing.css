@@ -1048,11 +1048,16 @@ footer a{
 /* Room chips in the lightbox (BaseListing.astro): a shortcut to each room's
    first photo, above the counter, when two or more rooms are named. The room
    on screen is still named at the top (.lightbox-room). */
-.lightbox-rooms{position:fixed;inset-block-end:3.2rem;inset-inline:var(--gut);z-index:2;display:flex;justify-content:center;gap:.4rem;overflow-x:auto;scrollbar-width:none}
+/* SAFE center: a plain centred row that overflows cuts its first chips off
+   where scrolling cannot reach them (audit, 17 Oct). Without `safe` support
+   the row starts at the start edge, which clips nothing. */
+.lightbox-rooms{position:fixed;inset-block-end:3.2rem;inset-inline:var(--gut);z-index:2;display:flex;justify-content:safe center;gap:.4rem;overflow-x:auto;scrollbar-width:none}
 .lightbox-chip{flex:none;min-block-size:44px;padding:.3rem .9rem;border:1px solid #fff4;border-radius:999px;background:#0005;color:var(--on-dark);font:inherit;font-size:.88rem;font-weight:600}
 .lightbox-chip:focus-visible{outline:2px solid var(--plaster);outline-offset:2px}
 .lightbox.has-rooms .lightbox-slide{padding-block-end:6.5rem}
-.lightbox-track{touch-action:pan-x pinch-zoom}
+/* A swipe past the last photo stays in the viewer instead of reaching the
+   browser's back gesture. */
+.lightbox-track{touch-action:pan-x pinch-zoom;overscroll-behavior:contain}
 @media (prefers-reduced-motion:no-preference){.lightbox-slide img{transition:transform .22s}.lightbox.is-pulling .lightbox-slide img{transition:none}}
 .lightbox-close{
   position:fixed;

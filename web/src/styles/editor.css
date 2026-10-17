@@ -2393,14 +2393,37 @@ body:has(.live-preview.is-full) .nav {
   background: color-mix(in srgb, var(--olive) 18%, transparent);
 }
 
+.coach-skip {
+  min-block-size: 48px;
+  padding-inline: 0.5rem;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.coach-skip:hover {
+  color: var(--olive);
+}
+
 .coach-target {
   outline: 3px solid var(--olive);
   outline-offset: 4px;
 }
 
+/* The pair of cards is a plain list; the ring follows a corner like theirs. */
+.kind-choices.coach-target {
+  border-radius: 20px;
+}
+
+/* Three pulses, then a still ring: motion that runs on beside the form is
+   a distraction, not a hint. */
 @media (prefers-reduced-motion: no-preference) {
   .coach-target {
-    animation: coach-pulse 1.6s ease-in-out infinite;
+    animation: coach-pulse 1.6s ease-in-out 3;
   }
 
   .coach {

@@ -1230,9 +1230,13 @@ h1 {
   margin-block-end: 0.4rem;
 }
 
-.state a {
+.state a:not(.site-btn) {
   color: var(--olive);
   font-weight: 700;
+}
+
+.state .site-btn {
+  margin-block-start: 1rem;
 }
 
 /* Announces without moving the page: it is positioned, not in flow. */

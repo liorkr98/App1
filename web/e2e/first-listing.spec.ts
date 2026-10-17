@@ -12,7 +12,9 @@ test('a new listing opens with a hint, and a dismissed hint stays gone', async (
   await page.route(/supabase\.co/, (route) => route.abort());
   await page.goto(`${BASE}/new/?fresh=1`);
   await expect(page.locator('.coach')).toContainText('דירה או רכב');
-  await expect(page.locator('.kind-choice.coach-target')).toHaveCount(1);
+  // The ring is on the pair: on one card it would read as advice to pick it.
+  await expect(page.locator('.kind-choices.coach-target')).toHaveCount(1);
+  await expect(page.locator('.kind-choice.coach-target')).toHaveCount(0);
 
   await page.getByRole('button', { name: 'דירה' }).click();
   await expect(page.locator('.coach')).toContainText('התמונות');
@@ -36,5 +38,19 @@ test('no hints on a listing opened for editing, or after the first publish', asy
   await page.evaluate(() => localStorage.setItem('amudsell.coach', JSON.stringify({ done: true })));
   await page.goto(`${BASE}/new/?fresh=1`);
   await page.waitForTimeout(500);
+  await expect(page.locator('.coach')).toHaveCount(0);
+});
+
+test('one tap turns every hint off', async ({ page }) => {
+  await page.setViewportSize(PHONE);
+  await page.route(/supabase\.co/, (route) => route.abort());
+  await page.goto(`${BASE}/new/?fresh=1`);
+  await page.getByRole('button', { name: 'בלי טיפים' }).click();
+  await expect(page.locator('.coach')).toHaveCount(0);
+  await expect(page.locator('.coach-target')).toHaveCount(0);
+
+  // The next step would have had its own hint.
+  await page.getByRole('button', { name: 'דירה' }).click();
+  await page.waitForTimeout(300);
   await expect(page.locator('.coach')).toHaveCount(0);
 });

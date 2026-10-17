@@ -106,3 +106,4 @@ web/playwright-report/
 
 # Python bytecode from the installed design skills (docs/DESIGN-SKILLS.md)
 __pycache__/
+.taste-skill/

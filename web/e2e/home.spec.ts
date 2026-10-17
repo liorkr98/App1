@@ -52,6 +52,34 @@ test('the comparison follows its slider, by keyboard too', async ({ page }) => {
   expect(clip).toContain('45%');
 });
 
+test('the comparison takes drags inside its box and nowhere else', async ({ page }) => {
+  await page.setViewportSize(PHONE);
+  await page.goto(`${BASE}/`);
+  // Its slider's thumb is a screen tall; the headings either side of the box
+  // must still be what a tap there lands on.
+  for (const which of ['before', 'after'] as const) {
+    const heading = page.locator('h2');
+    const index = await page.evaluate((side) => {
+      const box = document.querySelector('[data-compare]')!;
+      const all = [...document.querySelectorAll('h2')];
+      return side === 'before'
+        ? all.findLastIndex((h) => h.compareDocumentPosition(box) & Node.DOCUMENT_POSITION_FOLLOWING)
+        : all.findIndex((h) => h.compareDocumentPosition(box) & Node.DOCUMENT_POSITION_PRECEDING);
+    }, which);
+    expect(index).toBeGreaterThanOrEqual(0);
+    const h = heading.nth(index);
+    await h.evaluate((node) => node.scrollIntoView({ block: 'center', behavior: 'instant' }));
+    // Sections rise into place as they arrive; measure where they settle.
+    await page.waitForTimeout(1200);
+    const onTop = await h.evaluate((node) => {
+      const r = node.getBoundingClientRect();
+      const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      return Boolean(hit && node.contains(hit));
+    });
+    expect(onTop, `the heading ${which} the comparison`).toBe(true);
+  }
+});
+
 test('the story phone shows the step being read', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 860 });
   await page.goto(`${BASE}/`);

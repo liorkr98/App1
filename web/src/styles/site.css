@@ -215,6 +215,9 @@ body.site > main {
 }
 
 .site-foot-brand {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
   color: var(--ls-ink);
   font-family: var(--ls-font-display);
   font-size: 1.5rem;

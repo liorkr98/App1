@@ -11,11 +11,12 @@ name: Verify
 # `expo` root dependency and app.config.ts exist to anchor this project, and
 # without them there is nowhere to verify anything at all.
 
+# Run by hand only, since 17 Oct 2026. The free plan's minutes ran out on
+# 9 Sep 2026, so on every push and pull request this posted a red check that
+# said nothing about the code; GitHub Actions (.github/workflows/verify.yml)
+# is the gate. Kept as the fallback CLAUDE.md §2 describes: start it from the
+# Expo dashboard or `eas workflow:run .eas/workflows/verify.yml`.
 on:
-  push:
-    branches: ['main']
-  pull_request:
-    branches: ['main']
   workflow_dispatch: {}
 
 jobs:

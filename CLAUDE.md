@@ -140,7 +140,9 @@ this section exists to prevent, and it is unchanged.
 EAS project in `.eas/workflows/`, which was the original gate until the free
 plan's CI minutes ran out on 9 September 2026. Kept as a fallback and as the
 only thing that could build a native app if one ever returns. Neither is a
-stack choice.
+stack choice. Since 17 October 2026 that workflow runs by hand only
+(`workflow_dispatch`): on every pull request it posted a red check that was
+the exhausted plan, not the code.
 
 ### Two exclusions and one decision, each with a tempting wrong answer
 
