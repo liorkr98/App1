@@ -14,7 +14,8 @@ import { t } from '../../lib/i18n';
 export type CoachStep = 'kind' | 'photos' | 'order' | 'details' | 'detailsCar' | 'ready' | 'publish';
 
 const TARGET: Record<CoachStep, string> = {
-  kind: '.kind-choice',
+  // The pair, not the first card: a ring on one card reads as advice to pick it.
+  kind: '.kind-choices',
   photos: '.picker',
   order: '.strip .shot',
   details: '#d-city',
@@ -79,6 +80,17 @@ export function Coach({ step }: { step: CoachStep | undefined }) {
         }}
       >
         {t('editor.coach.ok')}
+      </button>
+      {/* A way out of the whole tour, not only this hint (audit, 17 Oct 2026). */}
+      <button
+        type="button"
+        className="coach-skip"
+        onClick={() => {
+          coachDone();
+          setSeen(read());
+        }}
+      >
+        {t('editor.coach.skip')}
       </button>
     </p>
   );

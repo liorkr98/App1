@@ -40,7 +40,10 @@
   inset-block-end: 0.75rem;
   inset-inline-start: 0.75rem;
   margin: 0;
-  padding: 0.4rem 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+  padding: 0.4rem 0.9rem;
   border-radius: 99px;
   background: #fff;
   color: #15140f;

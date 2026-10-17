@@ -81,7 +81,7 @@ const ld = [
     <ul class="site-shell pr-tiers">
       <li class="pr-tier ls-fade" style="--i:0">
         <p class="pr-name">{t(`billing.plans.${free.key}`)}</p>
-        <p class="pr-sum">{t('billing.terms.free')}</p>
+        <p class="pr-sum is-free">{t('billing.terms.free')}</p>
         <p class="pr-note"><Msg path={`billing.notes.${free.key}`} values={noteValues(free)} /></p>
         <a class="site-btn site-btn-primary pr-go" href="/new/?fresh=1">{t('pricing.start')}</a>
       </li>
@@ -170,10 +170,10 @@ const ld = [
 </Site>
 
 <script>
-  import { recordBillingEvent } from '../lib/billing-events';
+  import { recordBillingEventPlain } from '../lib/billing-event-plain';
   import { showLaunchOffers } from '../lib/launch-offer';
   import { showLaunchText } from '../lib/launch-text';
 
-  void recordBillingEvent('paywall_shown', null);
+  void recordBillingEventPlain('paywall_shown', null);
   void showLaunchOffers().then((counts) => showLaunchText(counts));
 </script>

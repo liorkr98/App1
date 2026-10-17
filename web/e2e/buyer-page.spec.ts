@@ -52,6 +52,24 @@ test('the photo viewer has a chip per room that jumps to it', async ({ page }) =
   await expect(viewer.locator('[data-lightbox-room]')).toHaveText('מרפסת');
 });
 
+test('on a narrow screen every room chip can be reached, and a swipe past the last photo stays in the viewer', async ({ page }) => {
+  await page.setViewportSize({ width: 280, height: 640 });
+  await page.goto(PAGE);
+  await page.locator('.gallery-open').first().click();
+  const viewer = page.locator('#listing-lightbox');
+  await expect(viewer).toHaveJSProperty('open', true);
+  const rooms = viewer.locator('.lightbox-rooms');
+  // The row overflows here; scrolled to its start, the first chip is whole.
+  expect(await rooms.evaluate((row) => row.scrollWidth > row.clientWidth)).toBe(true);
+  await viewer.locator('.lightbox-chip').first().scrollIntoViewIfNeeded();
+  const [row, chip] = await Promise.all([rooms.boundingBox(), viewer.locator('.lightbox-chip').first().boundingBox()]);
+  expect(chip!.x + chip!.width).toBeLessThanOrEqual(row!.x + row!.width + 1);
+  expect(chip!.x).toBeGreaterThanOrEqual(row!.x - 1);
+
+  const track = viewer.locator('.lightbox-track');
+  expect(await track.evaluate((node) => getComputedStyle(node).overscrollBehaviorX)).toBe('contain');
+});
+
 test('a swipe down closes the photo viewer', async ({ browser }) => {
   const context = await browser.newContext({ viewport: PHONE, hasTouch: true, isMobile: true });
   const page = await context.newPage();

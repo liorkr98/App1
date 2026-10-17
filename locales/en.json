@@ -740,6 +740,7 @@
     "coach": {
       "label": "",
       "ok": "",
+      "skip": "",
       "kind": "",
       "photos": "",
       "order": "",

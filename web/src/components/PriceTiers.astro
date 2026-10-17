@@ -25,7 +25,7 @@ const cards = [
         <p class="price-tier-name">{t(`billing.plans.${regular.key}`)}</p>
         <div class="price-tier-variants">
         <div data-variant="regular">
-          <p class="price-tier-sum"><Msg path={termsPath(regular)} values={{ price: amount(regular) }} /></p>
+          <p class:list={['price-tier-sum', regular.key === 'free' && 'is-free']}><Msg path={termsPath(regular)} values={{ price: amount(regular) }} /></p>
           <p class="price-tier-note"><Msg path={`billing.notes.${regular.key}`} values={noteValues(regular)} /></p>
         </div>
         {launch && (
@@ -124,6 +124,9 @@ const cards = [
   }
 
   /* The number is the card's headline; לחודש + מע״מ sits beside it. */
+  /* "Free" is the free card's price, so it takes the price's type, not a
+     body line beside the others' display figures (audit, 17 Oct 2026). */
+  .price-tier-sum.is-free,
   .price-tier-sum :global(bdi) {
     font-family: var(--ls-font-display);
     font-size: clamp(2rem, 4vw, 2.55rem);
