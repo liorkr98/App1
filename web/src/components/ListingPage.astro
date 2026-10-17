@@ -216,15 +216,16 @@ const shareHref = whatsappShareUrl(
 
   {/* M7: CSS view-timeline reveals this after the hero (or walkFirst
       tour) leaves. Until then it is display:none / opacity:0, so it
-      cannot sit under the dock on the first screen. */}
-  {!sold && (
+      cannot sit under the dock on the first screen.
+      Price only since 17 Oct 2026 (owner's decision after the audit): it
+      carried a second WhatsApp button, so a reader saw two, and three at
+      the contact block. The dock is the one WhatsApp within thumb reach.
+      With no price to show there is no bar. */}
+  {!sold && (listing.priceDisplay === 'on_request' || listing.price > 0) && (
     <div class="compact-bar">
-      {listing.price > 0 && listing.priceDisplay !== 'on_request' ? (
-        <span class="compact-price"><bdi>{ils(listing.price)}</bdi></span>
-      ) : (
-        <span class="compact-price"></span>
-      )}
-      <a class="compact-wa" href={waHref}>{t('listing.whatsappCta')}</a>
+      <span class="compact-price">
+        {listing.priceDisplay === 'on_request' ? t('listing.priceOnRequest') : <bdi>{ils(listing.price)}</bdi>}
+      </span>
     </div>
   )}
 

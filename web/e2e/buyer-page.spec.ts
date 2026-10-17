@@ -30,6 +30,16 @@ test('the WhatsApp bar folds while reading and opens again at the end', async ({
   await expect.poll(fold).toBe(0);
 });
 
+test('the top bar after the photo is the price alone: the dock is the one WhatsApp', async ({ page }) => {
+  await page.setViewportSize(PHONE);
+  await page.goto(PAGE);
+  await page.evaluate(scrollToFraction, 0.5);
+  const bar = page.locator('.compact-bar');
+  await expect(bar).toBeVisible();
+  await expect(bar.locator('.compact-price bdi')).toContainText('₪');
+  await expect(bar.locator('a')).toHaveCount(0);
+});
+
 test('a reader who asked for less motion keeps the full bar', async ({ browser }) => {
   const context = await browser.newContext({ viewport: PHONE, reducedMotion: 'reduce' });
   const page = await context.newPage();
