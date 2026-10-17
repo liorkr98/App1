@@ -1,6 +1,6 @@
 import { seatsLeft, type CohortCount } from '@/features/billing/seats';
 
-import { supabase, supabaseConfigured } from './supabase';
+import { key, url } from './supabase-project';
 
 /**
  * The launch price, shown only while a seat demonstrably remains
@@ -14,10 +14,18 @@ import { supabase, supabaseConfigured } from './supabase';
  * are rendered by the page; this only chooses which ones show.
  */
 export async function readCounts(): Promise<CohortCount[] | null> {
-  if (!supabaseConfigured) return null;
+  if (!url || !key) return null;
   try {
-    const { data, error } = await supabase().from('cohort_counters').select('cohort, used, cap');
-    return error || !Array.isArray(data) ? null : (data as CohortCount[]);
+    // One public read, so a plain PostgREST request rather than the Supabase
+    // client, which is 210 KB on the homepage and the pricing page
+    // (16 Oct 2026). The publishable key goes in `apikey`, as the client
+    // would send it for a signed-out visitor; RLS decides what it may read.
+    const response = await fetch(`${url}/rest/v1/cohort_counters?select=cohort,used,cap`, {
+      headers: { apikey: key, accept: 'application/json' },
+    });
+    if (!response.ok) return null;
+    const data: unknown = await response.json();
+    return Array.isArray(data) ? (data as CohortCount[]) : null;
   } catch {
     return null;
   }

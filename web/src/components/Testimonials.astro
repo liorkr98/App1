@@ -1,0 +1,32 @@
+---
+import { shownTestimonials } from '@/features/marketing/testimonials';
+import { t } from '../lib/i18n';
+import Prose from './Prose.astro';
+
+/**
+ * Agents' own words, on the homepage. Renders nothing at all until
+ * src/features/marketing/testimonials.ts holds a real one with its consent on
+ * record; that file says why it starts empty.
+ */
+const quotes = shownTestimonials();
+---
+{quotes.length > 0 && (
+  <section class="site-sect" aria-labelledby="hm-voices-title">
+    <div class="site-shell">
+      <h2 class="site-h2" id="hm-voices-title">{t('home.testimonialsTitle')}</h2>
+      <ul class="hm-voices">
+        {quotes.map((item) => (
+          <li>
+            <figure>
+              <blockquote><p><Prose text={item.quote} /></p></blockquote>
+              <figcaption>
+                <b>{item.name}</b>
+                <span><Prose text={item.role} /></span>
+              </figcaption>
+            </figure>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+)}

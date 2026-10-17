@@ -614,6 +614,397 @@ html.hm-wait .hm-phone {
   }
 }
 
+/* ---------- The scroll story (16 Oct 2026) ----------
+   The phone stays while the four steps pass it; index.astro's script sets
+   data-step from the step nearest the middle of the screen. Only opacity and
+   transform change, so nothing moves the layout. On a phone it rides at the
+   top of the screen with the steps passing under it; wider, it sits beside
+   them. */
+
+.hm-story-grid {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.hm-story-stage {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  padding-block: 0.75rem;
+  background: var(--ls-ground);
+}
+
+.hm-story-phone {
+  position: relative;
+  block-size: min(46svh, 440px);
+  aspect-ratio: 9 / 18.5;
+  border: 7px solid #1d1e1a;
+  border-radius: 34px;
+  background: #0e0f0c;
+  overflow: hidden;
+}
+
+.hm-story-screen {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  align-content: center;
+  padding: 0.6rem;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.hm-story-phone[data-step='1'] [data-n='1'],
+.hm-story-phone[data-step='2'] [data-n='2'],
+.hm-story-phone[data-step='3'] [data-n='3'],
+.hm-story-phone[data-step='4'] [data-n='4'] {
+  opacity: 1;
+  visibility: visible;
+}
+
+.hm-story-photos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+}
+
+.hm-story-photos img {
+  inline-size: 100%;
+  block-size: auto;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.hm-story-form {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+}
+
+.hm-story-form div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.hm-story-form dt {
+  color: #a7a89c;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.hm-story-form dd {
+  margin: 0;
+  padding: 0.5rem 0.6rem;
+  border-radius: 10px;
+  background: #1d1e1a;
+  color: #f2f0ea;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.hm-story-screen.is-page {
+  padding: 0;
+}
+
+.hm-story-page {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  object-position: top;
+}
+
+.hm-story-wa {
+  background: #0b141a;
+}
+
+.hm-story-wa .hm-bubble {
+  max-inline-size: 100%;
+}
+
+.hm-story-steps {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hm-story-step {
+  display: grid;
+  align-content: center;
+  gap: 0.4rem;
+  min-block-size: 46svh;
+  padding-block: 1.5rem;
+}
+
+.hm-story-step h3 {
+  margin: 0;
+  font-family: var(--ls-font-display);
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.hm-story-step p {
+  margin: 0;
+  max-inline-size: 34ch;
+  color: var(--ls-ink-2);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.hm-story-n {
+  display: grid;
+  place-items: center;
+  inline-size: 2.2rem;
+  block-size: 2.2rem;
+  border-radius: 999px;
+  background: var(--ls-accent);
+  color: var(--ls-on-accent);
+  font-weight: 800;
+}
+
+/* With the script running, the steps not being shown step back. */
+.hm-story.is-live .hm-story-step:not(.is-on) {
+  opacity: 0.35;
+}
+
+@media (min-width: 900px) {
+  .hm-story-grid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      'title title'
+      'steps stage';
+    column-gap: 3rem;
+  }
+
+  .hm-story-title {
+    grid-area: title;
+  }
+
+  .hm-story-steps {
+    grid-area: steps;
+  }
+
+  .hm-story-stage {
+    grid-area: stage;
+    align-self: start;
+    inset-block-start: 12svh;
+    background: none;
+  }
+
+  .hm-story-phone {
+    block-size: min(70svh, 600px);
+  }
+
+  .hm-story-step {
+    min-block-size: 70svh;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hm-story-screen {
+    transform: translateY(10px) scale(0.98);
+    transition:
+      opacity 0.45s var(--ls-ease-expo),
+      transform 0.45s var(--ls-ease-expo),
+      visibility 0.45s;
+  }
+
+  .hm-story-phone[data-step='1'] [data-n='1'],
+  .hm-story-phone[data-step='2'] [data-n='2'],
+  .hm-story-phone[data-step='3'] [data-n='3'],
+  .hm-story-phone[data-step='4'] [data-n='4'] {
+    transform: none;
+  }
+
+  .hm-story-step {
+    transition: opacity 0.35s ease;
+  }
+}
+
+/* ---------- Before and after (16 Oct 2026) ----------
+   The two chats share one cell; the "after" one is clipped from the start
+   side (the right) by --split, which the range input sets. The range input
+   covers the whole comparison and is invisible, so dragging anywhere moves
+   it, and a keyboard reaches it like any slider. Vertical swipes still
+   scroll the page (touch-action). */
+
+.hm-compare {
+  --split: 50%;
+  --tags: 2.4rem;
+  position: relative;
+  display: grid;
+  padding-block-start: var(--tags);
+  inline-size: 100%;
+  max-inline-size: 420px;
+  margin-inline: auto;
+}
+
+.hm-compare > .hm-chat {
+  grid-area: 1 / 1;
+}
+
+.hm-chat-after {
+  clip-path: inset(0 var(--split) 0 0);
+}
+
+.hm-bubble.is-text {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.55rem 0.8rem;
+  line-height: 1.5;
+}
+
+.hm-bare-link {
+  color: #53bdeb;
+  text-decoration: underline;
+  overflow-wrap: anywhere;
+  text-align: end;
+}
+
+.hm-compare-line {
+  position: absolute;
+  inset-block: var(--tags) 0;
+  inset-inline-start: var(--split);
+  inline-size: 2px;
+  margin-inline-start: -1px;
+  background: #f2f0ea;
+  pointer-events: none;
+}
+
+.hm-compare-knob {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  inline-size: 44px;
+  block-size: 44px;
+  margin-block-start: -22px;
+  margin-inline-start: -22px;
+  border-radius: 999px;
+  background: #f2f0ea;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+
+.hm-compare-knob::before,
+.hm-compare-knob::after {
+  content: '';
+  position: absolute;
+  inset-block-start: 50%;
+  inline-size: 0;
+  block-size: 0;
+  margin-block-start: -6px;
+  border-block: 6px solid transparent;
+}
+
+.hm-compare-knob::before {
+  inset-inline-start: 9px;
+  border-inline-end: 8px solid #121310;
+}
+
+.hm-compare-knob::after {
+  inset-inline-end: 9px;
+  border-inline-start: 8px solid #121310;
+}
+
+/* The range comes just before the line in the markup, so its focus can be
+   drawn on the knob without :has(). */
+.hm-compare-range:focus-visible + .hm-compare-line .hm-compare-knob {
+  outline: 2px solid var(--ls-accent-lift);
+  outline-offset: 3px;
+}
+
+.hm-compare-tag {
+  position: absolute;
+  inset-block-start: 0;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  background: var(--ls-surface);
+  color: var(--ls-ink);
+  font-size: 0.8rem;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.hm-compare-tag.is-before {
+  inset-inline-start: 0;
+}
+
+.hm-compare-tag.is-after {
+  inset-inline-end: 0;
+}
+
+.hm-compare-range {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: ew-resize;
+  touch-action: pan-y;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.hm-compare-range::-webkit-slider-thumb {
+  inline-size: 48px;
+  block-size: 100vh;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.hm-compare-range::-moz-range-thumb {
+  inline-size: 48px;
+  block-size: 100vh;
+  border: 0;
+}
+
+/* ---------- Agents' own words (Testimonials.astro) ---------- */
+
+.hm-voices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hm-voices figure {
+  display: grid;
+  gap: 1rem;
+  block-size: 100%;
+  margin: 0;
+  padding: 1.4rem;
+  border: 1px solid var(--ls-line);
+  border-radius: var(--ls-r-card);
+  background: var(--ls-surface);
+}
+
+.hm-voices blockquote {
+  margin: 0;
+  font-size: 1.08rem;
+  line-height: 1.6;
+}
+
+.hm-voices blockquote p {
+  margin: 0;
+}
+
+.hm-voices figcaption {
+  display: grid;
+  gap: 0.1rem;
+  align-self: end;
+}
+
+.hm-voices figcaption span {
+  color: var(--ls-ink-2);
+  font-size: 0.95rem;
+}
+
 /* ---------- Pricing, closing ---------- */
 
 .hm-more {

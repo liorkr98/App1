@@ -83,3 +83,15 @@ python3 .claude/skills/ui-ux-pro-max/scripts/search.py "icon button accessible l
   on what floats (a dialog, the share sheet).
 - **Only what works today** is sold on a marketing page.
 
+## Decided 17 Oct 2026
+
+- **Testimonials are real or absent.** The owner asked for invented agents
+  and quotes to fill the homepage; that was declined, since the page is
+  shown to Israeli agents and a made-up endorsement presented as real is
+  misleading advertising. `src/features/marketing/testimonials.ts` is empty,
+  the section does not render while it is, and a unit test refuses any entry
+  without the agent's consent (how and when they approved the text).
+- **Site pages do not load the Supabase client to draw the header.**
+  `lib/session-hint.ts` reads the stored session; it took 210 KB off every
+  site page, the homepage from 899.8 KB to 690.
+
