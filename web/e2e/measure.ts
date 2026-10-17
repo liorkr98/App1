@@ -29,6 +29,14 @@ export interface Measurement {
    * machine that could be asked, so the runner has to say what moved.
    */
   shifts?: string[];
+  /**
+   * What the longest frame was busy with, as "312 ms frame: style and layout
+   * 270 ms, script 18 ms (listing-enhance)". On 17 Oct 2026 the zine and
+   * ticket listings failed once in CI at 212 and 237 ms and passed on the
+   * next runs; a trace showed the first layout of the whole page, not script.
+   * Read from long-animation-frame timing where the browser has it.
+   */
+  longestCause?: string;
 }
 
 export const PHONE = { width: 390, height: 844 };
@@ -77,7 +85,14 @@ export async function measure(
   try {
     const page = await context.newPage();
     await page.addInitScript(() => {
-      const m = { lcp: 0, cls: 0, longest: 0, moved: [] as { value: number; text: string }[] };
+      const m = {
+        lcp: 0,
+        cls: 0,
+        longest: 0,
+        longestAt: 0,
+        moved: [] as { value: number; text: string }[],
+        frames: [] as { start: number; end: number; text: string }[],
+      };
       window.__speed = m;
       const name = (node: Node | null) => {
         if (!node) return '?';
@@ -108,8 +123,32 @@ export async function measure(
         }
       }).observe({ type: 'layout-shift', buffered: true });
       new PerformanceObserver((list) => {
-        for (const entry of list.getEntries()) m.longest = Math.max(m.longest, entry.duration);
+        for (const entry of list.getEntries()) {
+          if (entry.duration <= m.longest) continue;
+          m.longest = entry.duration;
+          m.longestAt = entry.startTime;
+        }
       }).observe({ type: 'longtask', buffered: true });
+      if (PerformanceObserver.supportedEntryTypes.includes('long-animation-frame')) {
+        new PerformanceObserver((list) => {
+          for (const entry of list.getEntries() as (PerformanceEntry & {
+            styleAndLayoutStart: number;
+            scripts: { duration: number; sourceURL: string; invoker: string }[];
+          })[]) {
+            const end = entry.startTime + entry.duration;
+            const layout = entry.styleAndLayoutStart > 0 ? end - entry.styleAndLayoutStart : 0;
+            const scripts = [...entry.scripts].sort((a, b) => b.duration - a.duration);
+            const script = scripts.reduce((sum, run) => sum + run.duration, 0);
+            const top = scripts[0];
+            const where = top ? ` (${(top.sourceURL.split('/').pop() ?? '').split('.')[0] || top.invoker})` : '';
+            m.frames.push({
+              start: entry.startTime,
+              end,
+              text: `${Math.round(entry.duration)} ms frame: style and layout ${Math.round(layout)} ms, script ${Math.round(script)} ms${where}`,
+            });
+          }
+        }).observe({ type: 'long-animation-frame', buffered: true });
+      }
     });
     if (prepare) await prepare(page);
 
@@ -123,11 +162,16 @@ export async function measure(
     const result = await page.evaluate(() => window.__speed);
     if (!result) throw new Error(`no measurement for ${url}`);
     const moved = (result as { moved?: { value: number; text: string }[] }).moved ?? [];
+    // The frame that holds the longest task. The first frame of a load spans
+    // the whole wait for it, so the longest frame is not the one to name.
+    const { frames = [], longestAt = 0 } = result as { frames?: { start: number; end: number; text: string }[]; longestAt?: number };
+    const cause = frames.find((frame) => frame.start <= longestAt + 1 && longestAt < frame.end)?.text;
     return {
       lcp: Math.round(result.lcp),
       cls: Number(result.cls.toFixed(4)),
       longest: Math.round(result.longest),
       shifts: [...moved].sort((a, b) => b.value - a.value).slice(0, 3).map((shift) => shift.text),
+      ...(cause ? { longestCause: cause } : {}),
     };
   } finally {
     await context.close();
@@ -145,10 +189,14 @@ export function medianOf(runs: readonly Measurement[]): Measurement {
   // The shifts of the run whose CLS is closest to the median: the one the
   // number describes.
   const closest = [...runs].sort((a, b) => Math.abs(a.cls - cls) - Math.abs(b.cls - cls))[0];
+  const longest = mid(runs.map((run) => run.longest));
+  // Likewise the cause from the run whose longest task is nearest the median.
+  const typical = [...runs].sort((a, b) => Math.abs(a.longest - longest) - Math.abs(b.longest - longest))[0];
   return {
     lcp: mid(runs.map((run) => run.lcp)),
     cls,
-    longest: mid(runs.map((run) => run.longest)),
+    longest,
     ...(closest?.shifts?.length ? { shifts: closest.shifts } : {}),
+    ...(typical?.longestCause ? { longestCause: typical.longestCause } : {}),
   };
 }

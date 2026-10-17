@@ -25,3 +25,20 @@ test('a late block above the content is caught as a layout shift', async ({ brow
   // And a failure names what moved, so a shift seen only in CI can be found.
   expect(result.shifts?.[0]).toMatch(/^0\.\d{4} at \d+ ms: .+ y-?\d+→-?\d+/);
 });
+
+test('a long task is caught and its cause is named', async ({ browser }) => {
+  const result = await measure(browser, `${BASE}/template-check/T4V7A-aurora/`, async (page) => {
+    await page.addInitScript(() => {
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          const until = performance.now() + 300;
+          while (performance.now() < until) {
+            // Busy for 300 ms of wall time: over the limit at any throttle.
+          }
+        }, 300);
+      });
+    });
+  });
+  expect(result.longest).toBeGreaterThan(LIMITS.longest);
+  expect(result.longestCause).toMatch(/^\d+ ms frame: style and layout \d+ ms, script [1-9]\d* ms/);
+});

@@ -187,6 +187,13 @@ It holds the price and nothing else. Until 17 Oct 2026 it also carried a
 WhatsApp button, so a reader saw two at once, and three beside the contact
 block; the owner chose one, the dock, after the second design audit.
 
+The long sections below the first screen (`.walk`, `.gallery`, `.enrich`,
+`.map`, `.seller`) carry `content-visibility: auto` with an intrinsic block
+size of `auto 900px` (17 Oct 2026). The first layout of a whole listing was
+its one long task on a slow phone, and those sections were most of it. It is
+the same rule for every template, so it is not a divergence; drawn in view
+they are pixel-identical to before, bar sub-pixel rounding.
+
 `figure.immersive` is gone from the new reference entirely. It is no longer a
 "deliberately not ported" exception — the design does not contain it.
 

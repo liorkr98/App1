@@ -41,7 +41,9 @@ test.describe('speed on a cheap phone', () => {
 
       const slow: string[] = [];
       if (result.lcp > LIMITS.lcp) slow.push(`LCP ${result.lcp} ms > ${LIMITS.lcp}`);
-      if (result.longest > LIMITS.longest) slow.push(`long task ${result.longest} ms > ${LIMITS.longest}`);
+      if (result.longest > LIMITS.longest) {
+        slow.push(`long task ${result.longest} ms > ${LIMITS.longest}${result.longestCause ? ` (${result.longestCause})` : ''}`);
+      }
       for (const note of slow) test.info().annotations.push({ type: 'slow', description: note });
 
       const moved = result.shifts?.length ? `\n  largest shifts:\n  - ${result.shifts.join('\n  - ')}` : '';
