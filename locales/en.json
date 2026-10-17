@@ -552,7 +552,10 @@
       "saveFailed": "",
       "shareNow": "",
       "share": "",
-      "waitingArea": ""
+      "waitingArea": "",
+      "stageSave": "",
+      "stageLive": "",
+      "stageCard": ""
     },
     "plateLookup": "",
     "plateLooking": "",
@@ -591,9 +594,6 @@
       "pro": "",
       "warm": "",
       "refined": ""
-    },
-    "addons": {
-      "title": ""
     },
     "plan": {
       "title": "",
@@ -1074,18 +1074,6 @@
     "talk": "",
     "start": "",
     "contact": "",
-    "soon": "",
-    "addonsLabel": "",
-    "addonsTitle": "",
-    "addonsBody": "",
-    "addon_video": "",
-    "addon_videoNote": "",
-    "addon_tour": "",
-    "addon_tourNote": "",
-    "addon_staging": "",
-    "addon_stagingNote": "",
-    "addon_qa": "",
-    "addon_qaNote": "",
     "faqTitle": "",
     "faqMark": "",
     "faqMarkA": "",

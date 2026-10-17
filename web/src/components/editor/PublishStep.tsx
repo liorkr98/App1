@@ -4,7 +4,6 @@ import type { Blocker, EditorState } from '@/features/listings/editor';
 
 import type { AreaClientStatus } from '../../lib/area-request';
 import { t } from '../../lib/i18n';
-import { ADDONS } from '../../lib/tiers';
 import { AreaLine } from './AreaLine';
 import { Paywall } from './Paywall';
 
@@ -16,6 +15,8 @@ interface Props {
   publishedUrl?: string | undefined;
   publishedSlug?: string | undefined;
   publishing: boolean;
+  /** Which part of publishing is running: 1 save, 2 the area, 3 live, 4 the card. */
+  publishStage?: number;
   /** What publishing is waiting on right now, e.g. the neighbourhood. */
   publishNote?: string | undefined;
   /** Where the neighbourhood lookup stands, shown before the button. */
@@ -23,10 +24,6 @@ interface Props {
   areaCount?: number | undefined;
   /** The photo checklist's one-line form (PhotoChecklist). Advice only. */
   photoCheck?: ReactNode;
-  /** The "coming soon" add-ons shelf. Off in the four-screen flow: nothing
-      on it can be bought, and it is reading between the agent and the
-      button. */
-  shelf?: boolean;
   /**
    * Why the last publish attempt did not produce a link.
    *
@@ -74,11 +71,11 @@ export function PublishStep({
   blockers,
   publishedUrl,
   publishing,
+  publishStage = 1,
   publishNote,
   areaStatus,
   areaCount,
   photoCheck,
-  shelf = true,
   failure,
   onPublish,
   onCopy,
@@ -90,6 +87,12 @@ export function PublishStep({
   if (publishedUrl) {
     return (
       <div className="published">
+        {/* Drawn once, the moment the link exists; still for a reader who
+            asked for less motion. */}
+        <svg className="published-mark" viewBox="0 0 52 52" aria-hidden="true">
+          <circle cx="26" cy="26" r="24" pathLength={1} />
+          <path d="M15 27l7.5 7.5L38 19" pathLength={1} />
+        </svg>
         <h2 className="published-title">{t('editor.publish.done')}</h2>
         <p className="hint">{t('editor.publish.doneHint')}</p>
 
@@ -201,34 +204,41 @@ export function PublishStep({
         disabled={blockers.length > 0 || publishing}
         onClick={onPublish}
       >
-        {publishing ? t('editor.publish.working') : t('editor.publish.action')}
+        {publishing ? (
+          /*
+           * Real stages, not a spinner: an agent waiting on a neighbourhood
+           * lookup should see that, not wonder whether the button took.
+           * The ring fills a quarter per stage and turns while one runs.
+           */
+          <span className="publish-progress">
+            <svg className="publish-ring" viewBox="0 0 24 24" aria-hidden="true">
+              <circle className="publish-ring-track" cx="12" cy="12" r="10" />
+              <circle
+                className="publish-ring-fill"
+                cx="12"
+                cy="12"
+                r="10"
+                pathLength={100}
+                style={{ strokeDashoffset: 100 - Math.min(4, Math.max(1, publishStage)) * 25 + 8 }}
+              />
+            </svg>
+            <span aria-live="polite">
+              {publishStage === 2 && publishNote
+                ? publishNote
+                : t(
+                    publishStage >= 4
+                      ? 'editor.publish.stageCard'
+                      : publishStage === 3
+                        ? 'editor.publish.stageLive'
+                        : 'editor.publish.stageSave',
+                  )}
+            </span>
+          </span>
+        ) : (
+          t('editor.publish.action')
+        )}
       </button>
-      {publishing && publishNote ? (
-        <p className="publish-note" role="status">
-          {publishNote}
-        </p>
-      ) : null}
 
-      {/*
-        The add-ons shelf (P6), UI only. Nothing here can be bought yet:
-        each is בקרוב, with no price, and it sits AFTER the publish button so
-        it never stands between an agent and their link. It reads nothing
-        and decides nothing (CLAUDE.md §8).
-      */}
-      {shelf ? (
-      <section className="addon-shelf" aria-labelledby="addon-shelf-title">
-        <h3 id="addon-shelf-title">{t('editor.addons.title')}</h3>
-        <ul>
-          {ADDONS.map((id) => (
-            <li key={id}>
-              <span className="addon-soon">{t('pricing.soon')}</span>
-              <b>{t(`pricing.addon_${id}`)}</b>
-              <span>{t(`pricing.addon_${id}Note`)}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
-      ) : null}
     </>
   );
 }

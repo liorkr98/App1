@@ -46,6 +46,18 @@
   margin-block-start: 0.4rem;
 }
 
+/* On a phone the two buttons fill a 350px row to the pixel in Heebo, so a
+   fallback face even slightly wider wraps the second one until Heebo lands,
+   and the phone below jumps 63px (CI, 16 Oct 2026: CLS 0.1). Stacked, the
+   row holds the same shape in any face. */
+@media (max-width: 30rem) {
+  .site-actions.hm-actions {
+    flex-direction: column;
+    align-items: stretch;
+    inline-size: 100%;
+  }
+}
+
 /* The phone. Every tile is absolutely placed from four custom properties,
    so each state below is a table of numbers, not a layout. */
 .hm-phone {

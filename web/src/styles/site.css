@@ -59,6 +59,7 @@ body.site > main {
 
 .site-top .brand-mark {
   color: inherit;
+  white-space: nowrap;
 }
 
 .site-nav {

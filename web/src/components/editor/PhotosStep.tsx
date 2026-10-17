@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { AccentId } from '@/features/agents/accents';
 import { photoFlags, suggestedOrder, type PhotoCheck } from '@/features/listings/photo-quality';
 
@@ -115,6 +115,10 @@ interface Props {
  * buttons, because a drag is unusable with a keyboard and unreliable with a
  * thumb on a moving bus — and because the buttons make the order checkable
  * without a pointer at all.
+ *
+ * The drag itself is pointer events, not HTML5 drag-and-drop (15 Oct 2026):
+ * the HTML5 kind never fires for a finger, so on the phone most agents build
+ * on, the photos could not be dragged at all. See usePhysicalOrder below.
  */
 export function PhotosStep({
   photos,
@@ -122,8 +126,13 @@ export function PhotosStep({
   signedIn,
   category,
 }: Props) {
-  const [dragging, setDragging] = useState<number | null>(null);
-  const strip = useFlip(photos.map((photo) => photo.id).join('|'));
+  const drag = usePhysicalOrder(photos, onChange);
+  // While a photo is held, the grid shows where it would land; the editor
+  // hears about the order once, when it is let go.
+  const shown = drag.order
+    ? drag.order.flatMap((id) => photos.filter((photo) => photo.id === id))
+    : photos;
+  const strip = useFlip(shown.map((photo) => photo.id).join('|'), drag.lifted);
   // A flat gets the room checklist under this step (PhotoChecklist), which
   // owns the "how many" advice; the flat eight is for a car.
   const warnings = photoWarnings(photos).filter((warning) => category !== 'property' || warning !== 'few');
@@ -173,11 +182,11 @@ export function PhotosStep({
 
   // Advice per thumbnail: dark, blurry, small, or the same shot twice (the
   // later copy is the one flagged). Never a blocker.
-  const flags = photos.map((photo, index) =>
+  const flags = shown.map((photo, index) =>
     photo.check
       ? photoFlags(
           photo.check,
-          photos.slice(0, index).flatMap((earlier) => (earlier.check ? [earlier.check.hash] : [])),
+          shown.slice(0, index).flatMap((earlier) => (earlier.check ? [earlier.check.hash] : [])),
         )
       : [],
   );
@@ -258,42 +267,25 @@ export function PhotosStep({
       ) : null}
 
       {photos.length > 0 ? (
-        <ul className="strip" ref={strip}>
-          {photos.map((photo, index) => (
+        <ul className={drag.lifted ? 'strip sorting' : 'strip'} ref={strip}>
+          {shown.map((photo, index) => (
             <li
               key={photo.id}
               data-id={photo.id}
               className={[
                 'shot',
-                dragging === index ? 'dragging' : '',
+                drag.lifted === photo.id ? 'lifted' : '',
                 photo.status ? `is-${photo.status}` : '',
               ]
                 .filter(Boolean)
                 .join(' ')}
-              draggable
-              onDragStart={(event) => {
-                // An input inside a draggable tile would otherwise start a
-                // reorder the moment the seller tries to type an alt.
-                if ((event.target as HTMLElement).closest('input, select, label')) {
-                  event.preventDefault();
-                  return;
-                }
-                setDragging(index);
-              }}
-              onDragEnd={() => setDragging(null)}
-              onDragOver={(event) => event.preventDefault()}
-              onDrop={(event) => {
-                event.preventDefault();
-                // `index` is this thumbnail's own model index. No pointer
-                // arithmetic, so no direction to get wrong.
-                if (dragging !== null) move(dragging, index);
-                setDragging(null);
-              }}
+              onPointerDown={(event) => drag.start(event, strip.current)}
             >
               <img
                 className={photo.status === 'uploaded' ? 'clip-reveal' : undefined}
                 src={photo.url}
                 alt={photo.alt?.trim() ?? ''}
+                draggable={false}
               />
 
               {index === 0 ? <span className="cover">{t('editor.coverPhoto')}</span> : null}
@@ -392,7 +384,6 @@ export function PhotosStep({
                   aria-label={t('editor.photoAlt')}
                   title={t('editor.photoAltHint')}
                   autoComplete="off"
-                  draggable={false}
                   onPointerDown={(event) => event.stopPropagation()}
                   onChange={(event) => {
                     const alt = event.target.value;
@@ -408,12 +399,268 @@ export function PhotosStep({
         </ul>
       ) : null}
 
+      {photos.length > 1 ? <p className="hint order-how">{t('editor.dragToReorder')}</p> : null}
 
       <p className="note">
         <Message path="editor.photoCount" values={{ count: photos.length, max: MAX_IMAGES }} />
       </p>
     </>
   );
+}
+
+/**
+ * A photo you can pick up (15 Oct 2026).
+ *
+ * A finger holds a photo for a moment and it lifts; it then follows the
+ * finger, and the others slide out of its way as it passes them; let go and
+ * it settles into the gap. A mouse lifts it on the first few pixels of
+ * movement instead, since a mouse has no scrolling to tell apart from a drag.
+ *
+ * THE HOLD is what keeps scrolling working. A finger that moves before the
+ * hold is up is scrolling the page, and is left alone. Once the photo is
+ * lifted, touchmove is cancelled on the document so the page stays put
+ * under it, and the page scrolls itself near the top and bottom edges
+ * instead: 25 photos on a phone are taller than the screen.
+ *
+ * RTL is still not computed anywhere (see the comment on PhotosStep). The
+ * target is the tile whose LAID-OUT box holds the pointer, measured from
+ * offsetLeft/offsetTop, which ignore transforms. Hit-testing what is drawn
+ * would catch a neighbour mid-glide and swap the pair back and forth.
+ */
+interface Held {
+  id: string;
+  pointerId: number;
+  touch: boolean;
+  el: HTMLElement;
+  strip: HTMLUListElement;
+  /** Where the pointer went down, for the movement thresholds. */
+  startX: number;
+  startY: number;
+  /** The pointer's offset inside the tile when it was picked up. */
+  grabX: number;
+  grabY: number;
+  x: number;
+  y: number;
+  tx: number;
+  ty: number;
+  live: boolean;
+  order: string[];
+  timer: number;
+  frame: number;
+  /** Removes the listeners this hold added, whichever render added them. */
+  detach: () => void;
+}
+
+/** A tile's box as laid out, before any transform, in viewport pixels. */
+function laidOut(el: HTMLElement, strip: HTMLElement) {
+  const base = strip.getBoundingClientRect();
+  return {
+    x: base.left + strip.clientLeft + el.offsetLeft,
+    y: base.top + strip.clientTop + el.offsetTop,
+    width: el.offsetWidth,
+    height: el.offsetHeight,
+  };
+}
+
+const HOLD_MS = 260;
+const SLOP_TOUCH = 10;
+const SLOP_MOUSE = 5;
+const EDGE = 72;
+
+function usePhysicalOrder(photos: readonly EditorPhoto[], onChange: (photos: EditorPhoto[]) => void) {
+  const [lifted, setLifted] = useState<string | null>(null);
+  const [order, setOrder] = useState<string[] | null>(null);
+  const held = useRef<Held | null>(null);
+  const latest = useRef({ photos, onChange });
+  latest.current = { photos, onChange };
+
+  const follow = (state: Held) => {
+    const box = laidOut(state.el, state.strip);
+    state.tx = state.x - state.grabX - box.x;
+    state.ty = state.y - state.grabY - box.y;
+    state.el.style.transform = `translate(${state.tx}px, ${state.ty}px)`;
+  };
+
+  const retarget = (state: Held) => {
+    for (const item of state.strip.querySelectorAll<HTMLElement>(':scope > li[data-id]')) {
+      const id = item.dataset.id ?? '';
+      if (id === state.id) continue;
+      const box = laidOut(item, state.strip);
+      if (state.x < box.x || state.x > box.x + box.width) continue;
+      if (state.y < box.y || state.y > box.y + box.height) continue;
+      const to = state.order.indexOf(id);
+      const from = state.order.indexOf(state.id);
+      if (to < 0 || from < 0) return;
+      state.order = moveItem(state.order, from, to);
+      setOrder(state.order);
+      return;
+    }
+  };
+
+  // The grid re-rendered in the new order, so the held tile's slot moved:
+  // put it back under the finger before the frame is painted.
+  useLayoutEffect(() => {
+    const state = held.current;
+    if (state?.live) follow(state);
+  }, [order]);
+
+  const lift = (state: Held) => {
+    state.live = true;
+    const box = laidOut(state.el, state.strip);
+    state.grabX = state.startX - box.x;
+    state.grabY = state.startY - box.y;
+    setLifted(state.id);
+    setOrder(state.order);
+    follow(state);
+    // A small tick on the phones that have one: the photo is in your hand.
+    if (state.touch) navigator.vibrate?.(8);
+    const scroll = () => {
+      const current = held.current;
+      if (!current?.live) return;
+      const { y } = current;
+      const speed =
+        y < EDGE ? -((EDGE - y) / EDGE) * 14 : y > innerHeight - EDGE ? ((y - (innerHeight - EDGE)) / EDGE) * 14 : 0;
+      if (speed !== 0) {
+        scrollBy(0, speed);
+        follow(current);
+        retarget(current);
+      }
+      current.frame = requestAnimationFrame(scroll);
+    };
+    state.frame = requestAnimationFrame(scroll);
+  };
+
+  const finish = (keep: boolean) => {
+    const state = held.current;
+    held.current = null;
+    if (!state) return;
+    clearTimeout(state.timer);
+    cancelAnimationFrame(state.frame);
+    state.detach();
+    if (!state.live) return;
+
+    state.el.style.transform = '';
+    const still = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+    if (!still && typeof state.el.animate === 'function' && keep) {
+      state.el.animate([{ transform: `translate(${state.tx}px, ${state.ty}px)` }, { transform: 'none' }], {
+        duration: 220,
+        easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+      });
+    }
+    setLifted(null);
+    setOrder(null);
+    if (!keep) return;
+
+    const { photos: now, onChange: tell } = latest.current;
+    const next = [
+      ...state.order.flatMap((id) => now.filter((photo) => photo.id === id)),
+      ...now.filter((photo) => !state.order.includes(photo.id)),
+    ];
+    if (next.some((photo, index) => photo.id !== now[index]?.id)) tell(next);
+  };
+
+  const onMove = (event: PointerEvent) => {
+    const state = held.current;
+    if (!state || event.pointerId !== state.pointerId) return;
+    state.x = event.clientX;
+    state.y = event.clientY;
+    if (!state.live) {
+      const moved = Math.hypot(state.x - state.startX, state.y - state.startY);
+      if (state.touch) {
+        // Moved before the hold was up: that is a scroll, not a pick-up.
+        if (moved > SLOP_TOUCH) finish(false);
+        return;
+      }
+      if (moved < SLOP_MOUSE) return;
+      lift(state);
+    }
+    follow(state);
+    retarget(state);
+  };
+  const onUp = (event: PointerEvent) => {
+    if (event.pointerId === held.current?.pointerId) finish(true);
+  };
+  const onCancel = (event: PointerEvent) => {
+    if (event.pointerId === held.current?.pointerId) finish(false);
+  };
+  const onKey = (event: KeyboardEvent) => {
+    if (event.key === 'Escape') finish(false);
+  };
+  // Once lifted, the page must not scroll under the finger, and a long
+  // press must not open the image menu.
+  const onTouchMove = (event: TouchEvent) => {
+    if (held.current?.live && event.cancelable) event.preventDefault();
+  };
+  const onMenu = (event: Event) => {
+    if (held.current) event.preventDefault();
+  };
+
+  const attach = () => {
+    addEventListener('pointermove', onMove);
+    addEventListener('pointerup', onUp);
+    addEventListener('pointercancel', onCancel);
+    addEventListener('keydown', onKey);
+    addEventListener('contextmenu', onMenu);
+    document.addEventListener('touchmove', onTouchMove, { passive: false });
+  };
+  const detach = () => {
+    removeEventListener('pointermove', onMove);
+    removeEventListener('pointerup', onUp);
+    removeEventListener('pointercancel', onCancel);
+    removeEventListener('keydown', onKey);
+    removeEventListener('contextmenu', onMenu);
+    document.removeEventListener('touchmove', onTouchMove);
+  };
+
+  // Leaving the step mid-drag leaves nothing listening.
+  useEffect(
+    () => () => {
+      const state = held.current;
+      held.current = null;
+      if (!state) return;
+      clearTimeout(state.timer);
+      cancelAnimationFrame(state.frame);
+      state.detach();
+    },
+    [],
+  );
+
+  const start = (event: ReactPointerEvent<HTMLLIElement>, strip: HTMLUListElement | null) => {
+    if (held.current || !strip || !event.isPrimary || event.button !== 0) return;
+    if ((event.target as HTMLElement).closest('button, input, select, label, a')) return;
+    const touch = event.pointerType !== 'mouse';
+    const state: Held = {
+      id: event.currentTarget.dataset.id ?? '',
+      pointerId: event.pointerId,
+      touch,
+      el: event.currentTarget,
+      strip,
+      startX: event.clientX,
+      startY: event.clientY,
+      grabX: 0,
+      grabY: 0,
+      x: event.clientX,
+      y: event.clientY,
+      tx: 0,
+      ty: 0,
+      live: false,
+      order: latest.current.photos.map((photo) => photo.id),
+      timer: 0,
+      frame: 0,
+      detach,
+    };
+    held.current = state;
+    attach();
+    // A mouse would otherwise start selecting the captions it passes over.
+    if (!touch) event.preventDefault();
+    if (touch) {
+      state.timer = window.setTimeout(() => {
+        if (held.current === state) lift(state);
+      }, HOLD_MS);
+    }
+  };
+
+  return { lifted, order, start };
 }
 
 /**
@@ -426,26 +673,30 @@ export function PhotosStep({
  * uploaded) does not read as a move. Positions are measured, not computed
  * from indexes, so RTL needs no special case: whichever way the tile went on
  * screen is the way it glides.
+ *
+ * Measured as laid out (offsetLeft/offsetTop), so a tile still gliding, or
+ * the one in the agent's hand, is measured where it sits, not where it is
+ * drawn. The held tile is not animated: it is wherever the finger is.
  */
-function useFlip(order: string) {
+function useFlip(order: string, held: string | null) {
   const list = useRef<HTMLUListElement>(null);
-  const last = useRef(new Map<string, DOMRect>());
+  const last = useRef(new Map<string, { x: number; y: number }>());
 
   useLayoutEffect(() => {
     const node = list.current;
     const before = last.current;
-    const after = new Map<string, DOMRect>();
+    const after = new Map<string, { x: number; y: number }>();
     if (!node) return;
     const still = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
     for (const item of node.querySelectorAll<HTMLElement>(':scope > li[data-id]')) {
       const id = item.dataset.id ?? '';
-      const rect = item.getBoundingClientRect();
-      after.set(id, rect);
+      const now = { x: item.offsetLeft, y: item.offsetTop };
+      after.set(id, now);
       const was = before.get(id);
-      if (!was || still || typeof item.animate !== 'function') continue;
-      const dx = was.left - rect.left;
-      const dy = was.top - rect.top;
+      if (!was || still || id === held || typeof item.animate !== 'function') continue;
+      const dx = was.x - now.x;
+      const dy = was.y - now.y;
       if (Math.abs(dx) < 1 && Math.abs(dy) < 1) continue;
       item.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }], {
         duration: 260,

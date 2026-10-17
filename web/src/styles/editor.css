@@ -906,6 +906,8 @@ textarea {
    that; `direction: rtl` on the document does, and the grid follows. */
 
 .strip {
+  /* The reference box for the drag's measurements (PhotosStep). */
+  position: relative;
   display: grid;
   /* auto-fill from a 120px floor. The step's own padding takes 48px, so a
      320px phone has 272px to work with: at 140px that collapses to a single
@@ -931,8 +933,56 @@ textarea {
   display: block;
 }
 
-.shot.dragging {
-  opacity: 0.4;
+/* Picking a photo up (PhotosStep, usePhysicalOrder). The image refuses the
+   browser's own drag, selection and long-press menu, so a held finger is
+   ours. The page still scrolls under a finger that moves before the hold. */
+.shot img {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+@media (pointer: fine) {
+  .shot img {
+    cursor: grab;
+  }
+}
+
+/* In the hand: above the others, a little larger, with the one shadow a
+   floating thing earns. It follows the pointer by an inline transform; the
+   size is the separate `scale` property, so the two never fight. */
+.shot.lifted {
+  z-index: 3;
+  scale: 1.06;
+  cursor: grabbing;
+}
+
+.shot.lifted img {
+  box-shadow: 0 22px 40px -14px rgba(28, 25, 20, 0.5);
+  outline: 2px solid var(--olive);
+  outline-offset: 0;
+}
+
+.shot.lifted :is(.shot-controls, .shot-alt, .shot-flags) {
+  opacity: 0;
+}
+
+.strip.sorting {
+  cursor: grabbing;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .shot {
+    transition: scale 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .shot img {
+    transition: box-shadow 180ms ease;
+  }
+}
+
+.order-how {
+  margin-block: -0.5rem 1rem;
 }
 
 /* Sits on the reading edge of the cover thumbnail — right, in Hebrew. */
@@ -1459,11 +1509,6 @@ textarea {
   margin: 0.2rem 0 0;
   padding-inline-start: 1.1rem;
 }
-.publish-note {
-  margin-block: 0.6rem 0;
-  font-size: var(--t-label);
-  color: var(--muted);
-}
 
 .field-error {
   margin-block-start: 0.35rem;
@@ -1704,10 +1749,136 @@ textarea {
   cursor: default;
 }
 
+/* Publishing, by stage (PublishStep). The ring fills a quarter per stage;
+   the arc's own movement is the only thing that says "still working". */
+.publish-progress {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.publish-ring {
+  flex: none;
+  inline-size: 1.4rem;
+  block-size: 1.4rem;
+  rotate: -90deg;
+}
+
+.publish-ring circle {
+  fill: none;
+  stroke-width: 2.6;
+}
+
+.publish-ring-track {
+  stroke: color-mix(in srgb, currentColor 25%, transparent);
+}
+
+.publish-ring-fill {
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-dasharray: 100;
+}
+
+/* Publishing is not "disabled" to the eye: it is working. */
+.publish-button:disabled:has(.publish-progress) {
+  background: var(--olive);
+  color: var(--plaster);
+  cursor: progress;
+}
+
 /* The link, which is the product. */
 .published {
   text-align: center;
   padding-block: 1rem;
+}
+
+.published-mark {
+  display: block;
+  inline-size: 64px;
+  block-size: 64px;
+  margin-inline: auto;
+  margin-block-end: 0.75rem;
+}
+
+.published-mark circle {
+  fill: var(--olive);
+  stroke: var(--olive);
+  stroke-width: 2;
+}
+
+.published-mark path {
+  fill: none;
+  stroke: var(--plaster);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .publish-ring {
+    animation: publish-turn 1.4s linear infinite;
+  }
+
+  .publish-ring-fill {
+    transition: stroke-dashoffset 600ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .published-mark circle {
+    stroke-dasharray: 1;
+    animation:
+      published-draw 420ms cubic-bezier(0.65, 0, 0.35, 1) both,
+      published-fill 260ms ease-out 360ms both;
+  }
+
+  .published-mark path {
+    stroke-dasharray: 1;
+    animation: published-draw 300ms cubic-bezier(0.65, 0, 0.35, 1) 520ms both;
+  }
+
+  .published-mark {
+    animation: published-pop 360ms cubic-bezier(0.34, 1.56, 0.64, 1) 560ms both;
+  }
+
+  .published-title,
+  .published > .hint {
+    animation: published-rise 420ms cubic-bezier(0.22, 1, 0.36, 1) 200ms both;
+  }
+}
+
+@keyframes publish-turn {
+  to {
+    rotate: 270deg;
+  }
+}
+
+@keyframes published-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes published-fill {
+  from {
+    fill: transparent;
+  }
+}
+
+@keyframes published-pop {
+  50% {
+    scale: 1.08;
+  }
+}
+
+@keyframes published-rise {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
 }
 
 .published-title {
@@ -2170,54 +2341,6 @@ body:has(.live-preview.is-full) .nav {
   background: var(--ink);
   border-color: var(--ink);
   color: var(--plaster);
-}
-
-/* ---------- Add-ons shelf (UI only, CLAUDE.md §8) ---------- */
-
-.addon-shelf {
-  margin-block-start: 2rem;
-  padding-block-start: 1.2rem;
-  border-block-start: 1px solid var(--stone);
-}
-
-.addon-shelf h3 {
-  margin: 0 0 0.8rem;
-  font-size: var(--t-label);
-  font-weight: 800;
-  color: var(--muted);
-}
-
-.addon-shelf ul {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 12rem), 1fr));
-  gap: 0.6rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.addon-shelf li {
-  display: grid;
-  gap: 0.25rem;
-  justify-items: start;
-  padding: 0.9rem;
-  border: 1px dashed var(--stone);
-  border-radius: 14px;
-}
-
-.addon-shelf li > span:last-child {
-  color: var(--muted);
-  font-size: 0.84rem;
-  line-height: 1.5;
-}
-
-.addon-soon {
-  padding: 0.05rem 0.55rem;
-  border: 1px solid var(--stone);
-  border-radius: 999px;
-  color: var(--muted);
-  font-size: 0.7rem;
-  font-weight: 800;
 }
 
 /* ---------- Touch feedback (5 Oct 2026) ----------
@@ -3036,6 +3159,12 @@ body:has(.live-preview.is-full) .nav {
 .new-shell .publish-button:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+/* ...but publishing is not shut: it is working, and looks it. */
+.new-shell .publish-button:disabled:has(.publish-progress) {
+  opacity: 1;
+  cursor: progress;
 }
 
 .new-shell .missing-fix {
