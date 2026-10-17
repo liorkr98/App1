@@ -1,0 +1,26 @@
+/*
+  Assistant, the listing body face (design contract), on its own since
+  17 Oct 2026. Site pages set their body in Heebo and name Assistant only as
+  a fallback behind it, so they never draw with it; declaring it there still
+  charged every site page 29 KB in the page-weight report, /new included,
+  which sits at the 900 KB ceiling. Everything that does draw with it imports
+  this file: listing.css, the share card and share page, the story, the flyer
+  and the admin data page.
+*/
+
+@font-face {
+  font-family: 'Assistant';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('/fonts/assistant-hebrew.woff2') format('woff2');
+  unicode-range: U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F;
+}
+@font-face {
+  font-family: 'Assistant';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('/fonts/assistant-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}

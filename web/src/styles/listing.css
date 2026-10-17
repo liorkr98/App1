@@ -18,6 +18,7 @@
 */
 
 @import './fonts.css';
+@import './fonts-listing.css';
 @import './fonts-ext.css';
 @import './system/tokens.css';
 @import '../motion/motion.css';
@@ -781,6 +782,15 @@ footer a{
 .compact-bar{
   display:none;
 }
+
+/* The long sections below the first screen are laid out when they come near
+   it, not all at once on load (17 Oct 2026). The first layout of a whole
+   listing was the one long task on a slow phone: 230-480 ms at a 4x CPU
+   throttle, nearly all of it Layout and style for the walk-through and the
+   area section, two to three screens below the fold. `auto` in the size
+   keeps each section's real height once it has been drawn, so the scrollbar
+   settles after the first pass. */
+.listing-flow > :is(.walk,.gallery,.enrich,.map,.seller){content-visibility:auto;contain-intrinsic-size:auto 900px}
 
 /* ============================================================
    תנועה — scroll-driven נטיבי. אפס JS.
