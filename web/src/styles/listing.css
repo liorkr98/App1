@@ -912,19 +912,6 @@ footer a{
   font-variant-numeric:tabular-nums;
   margin-inline-end:auto;
 }
-.compact-wa{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  min-block-size:44px;
-  padding:.4rem .9rem;
-  background:var(--olive);
-  color:var(--plaster);
-  font-weight:700;
-  font-size:.88rem;
-  text-decoration:none;
-  border-radius:6px;
-}
 
 /* M5 — centre-active photo tour (lab + optional listing). Index 0 is inline-start = right in RTL. */
 .tour-track{
@@ -1078,7 +1065,6 @@ footer a{
 
 /* M8 — press on every tappable listing control. */
 .gallery-open,
-.compact-wa,
 .tour-chips a,
 .tour-chips label,
 .walk-next,
@@ -1093,7 +1079,6 @@ footer a{
 }
 .agent-actions a:active,
 .gallery-open:active,
-.compact-wa:active,
 .tour-chips a:active,
 .tour-chips label:active,
 .walk-next:active,

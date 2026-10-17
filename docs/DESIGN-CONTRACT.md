@@ -179,9 +179,13 @@ The vehicle inserts `.flaws` **between the description and the gallery** and
 has **no map section**.
 
 `.compact-bar` is `position: fixed` at the top. It is in the markup after the
-hero on unsold listings, but it occupies no first-screen space: opacity 0
-until the hero (or the walkFirst tour) exits, driven by a named view
-timeline. Browsers without `view()` keep only the dock.
+hero on unsold listings that show a price (or לפי פנייה), but it occupies no
+first-screen space: opacity 0 until the hero (or the walkFirst tour) exits,
+driven by a named view timeline. Browsers without `view()` keep only the dock.
+
+It holds the price and nothing else. Until 17 Oct 2026 it also carried a
+WhatsApp button, so a reader saw two at once, and three beside the contact
+block; the owner chose one, the dock, after the second design audit.
 
 `figure.immersive` is gone from the new reference entirely. It is no longer a
 "deliberately not ported" exception — the design does not contain it.
@@ -211,7 +215,7 @@ stylesheet they link — to prove it.
 | First-screen cap | `--heroH: min(var(--heroWant), calc(100svh - 16rem))` so price, chips and the dock fit on 375×667 |
 | Highlights | at most three chips under the price; omitted when the seller named none |
 | Monthly cost | `p.monthly-cost` under the facts grid, never a fifth `<section>` |
-| Compact bar | M7: fixed at the top after the hero leaves; dock is the thumb WhatsApp |
+| Compact bar | M7: fixed at the top after the hero leaves; **the price only** (17 Oct 2026). The dock is the one WhatsApp |
 | Faces | self-hosted under `/fonts`, Hebrew preloaded, no Google Fonts request |
 
 ---
