@@ -36,7 +36,7 @@ An accessible map, when it is on, is a **static image plus the text address**.
 
 ## When an agent asks — the ladder, in this order
 
-Do these one source at a time (CLAUDE.md §13). Do not skip to step 5.
+Do these one source at a time (CLAUDE.md §14). Do not skip to step 5.
 
 1. Address normalisation / Nominatim (or GovMap) for the listing pin.
 2. OSRM foot profile — never Google Distance Matrix, never straight-line

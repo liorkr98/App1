@@ -107,3 +107,6 @@ web/playwright-report/
 # Python bytecode from the installed design skills (docs/DESIGN-SKILLS.md)
 __pycache__/
 .taste-skill/
+
+# The project graph, rebuilt locally with `graphify update .` (docs/AGENT-TOOLS.md)
+graphify-out/

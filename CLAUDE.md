@@ -593,7 +593,34 @@ leave it out.
 
 ---
 
-## 13. Commands
+## 13. How the agent works: Ponytail, agent-skills, graphify
+
+Decided 17 October 2026 by the owner: these are the core of how work is
+done here. What each is, what was left out and why, and the conflicts
+already decided: `docs/AGENT-TOOLS.md`. Everything above outranks them.
+
+- **Ponytail, full level, on every coding task.** Read the code the change
+  touches first, then take the first rung that holds: does it need to
+  exist, is it already in this codebase, does the platform do it, then the
+  smallest complete change, with one small test for real logic. Never cut
+  validation, security, accessibility, the RTL rules (§4), provenance (§7)
+  or billing's fail-closed rule (§8). End each reply with what was skipped
+  or not checked. `/ponytail-review` before a PR, `/ponytail-audit` for the
+  whole repo.
+- **agent-skills for the method.** spec → plan → build → test → review →
+  ship. The relevant skill loads by itself; §11 still decides when to stop
+  and ask.
+- **graphify to find your way.** With `graphify-out/graph.json` present, ask
+  the graph before a broad search: `graphify query "<question>"`,
+  `graphify path "<A>" "<B>"`, `graphify explain "<thing>"`. After changing
+  code, `graphify update .`. It is a local tool, pinned (install line in
+  AGENT-TOOLS.md); where it is not installed, say so and search as before.
+- **Not here:** OmniRoute, or any gateway that sends this code or listing
+  data to another model provider (§9).
+
+---
+
+## 14. Commands
 
 ```bash
 npm run typecheck      # shared domain
