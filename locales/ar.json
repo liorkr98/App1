@@ -162,7 +162,8 @@
     },
     "blueprintSheet": "لوحة",
     "priceDropped": "انخفض السعر",
-    "priceWas": "السعر السابق:"
+    "priceWas": "السعر السابق:",
+    "photoRooms": "الغرف في الصور"
   },
   "common": {
     "close": "إغلاق",

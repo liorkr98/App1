@@ -455,45 +455,7 @@ html:is([data-template='blueprint'],[data-template='atelier'],[data-template='he
 .gallery-room + .gallery-room{padding-block-start:0}
 
 /* ---------- מפה ---------- */
-.map-stage{position:relative}
 .map img{width:100%;display:block;border-radius:2px;background:var(--stone);aspect-ratio:2/1;object-fit:cover}
-.map-pin{
-  position:absolute;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  min-inline-size:2.8rem;
-  padding:.28rem .5rem;
-  border-radius:2px;
-  background:var(--plaster);
-  color:var(--ink);
-  box-shadow:0 1px 8px rgb(28 25 23 / .18);
-  line-height:1.15;
-  pointer-events:none;
-}
-.map-pin-mins{
-  font-family:'Frank Ruhl Libre',serif;
-  font-size:1.2rem;
-  font-weight:700;
-  color:var(--olive);
-  font-variant-numeric:tabular-nums;
-}
-.map-pin-unit{
-  font-size:.68rem;
-  color:var(--muted);
-}
-.map-pin--transit{
-  inset-block-start:.7rem;
-  inset-inline-start:.7rem;
-}
-.map-pin--school{
-  inset-block-start:.7rem;
-  inset-inline-end:.7rem;
-}
-.map-pin--grocery{
-  inset-block-end:.7rem;
-  inset-inline-start:.7rem;
-}
 .addr{font-size:.9rem;color:var(--muted);margin-block-start:.6rem}
 .map-nav{
   display:inline-flex;align-items:center;min-block-size:44px;
@@ -663,21 +625,6 @@ html:is([data-ls='onyx'],.hl-night) :is(.map-nav,.map-nearby-walk,.area-map-walk
   font-size:.72rem;
   color:var(--muted);
 }
-.map-note{margin-block-start:1.15rem}
-.map-note h3{
-  margin:0;
-  margin-block-end:.4rem;
-  font-size:.78rem;
-  font-weight:600;
-  color:var(--olive);
-}
-.map-note p{margin:0;font-size:.95rem;line-height:1.55}
-.map-note-disclaimer{
-  margin-block-start:.45rem;
-  font-size:.78rem;
-  color:var(--muted);
-}
-
 /* ---------- סוכן ---------- */
 .seller{background:var(--stone-warm);padding-block:var(--pad-tight)}
 .seller-row{display:flex;align-items:center;gap:1rem}
@@ -756,6 +703,31 @@ html:is([data-ls='onyx'],.hl-night) :is(.map-nav,.map-nearby-walk,.area-map-walk
 .cta:active{background:var(--olive-lift);transform:scale(.97)}
 .cta:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
 
+/* The dock folds (17 Oct 2026). While the buyer reads, the full bar folds to
+   a round button at the inline end, and opens again for the last stretch of
+   the page. Scroll-driven, so CSS only (§6.3: no scroll listeners): one
+   registered number, --fold, runs 0 → 1 → 0 down the page, and only
+   clip-path, opacity and background-position follow it, so nothing moves the
+   layout. At rest the icon is hidden and the bar looks as it always has;
+   without view timelines, or with reduced motion, it stays the full bar. */
+@property --fold{syntax:'<number>';inherits:true;initial-value:0}
+.cta{position:relative}
+.cta-icon{position:absolute;inset-block:0;inset-inline-end:0;inline-size:3.5rem;block-size:100%;padding:.95rem;box-sizing:border-box;fill:currentColor;opacity:0;pointer-events:none}
+@media (prefers-reduced-motion:no-preference){
+  @supports (animation-timeline:scroll()){
+    html:not([data-preview]) .cta-dock[data-fold]{
+      --c:calc(-2rem * (1 - var(--fold)));--w:calc((100% - 3.5rem) * var(--fold) + var(--c));--r:calc(999px * var(--fold));
+      pointer-events:none;background-repeat:no-repeat;background-position:0 calc(8rem * var(--fold));
+      animation:dock-fold linear both;animation-timeline:scroll(root block);
+    }
+    [data-fold] .cta{pointer-events:auto;clip-path:inset(var(--c) var(--w) var(--c) var(--c) round var(--r))}
+    html[dir='ltr'] [data-fold] .cta{clip-path:inset(var(--c) var(--c) var(--c) var(--w) round var(--r))}
+    [data-fold] .cta-label{opacity:calc(1 - 2 * var(--fold))}
+    [data-fold] .cta-icon{opacity:calc(2 * var(--fold) - 1)}
+    @keyframes dock-fold{0%,6%,94%,100%{--fold:0}12%,88%{--fold:1}}
+  }
+}
+
 footer{padding:1.6rem var(--gut) .5rem;text-align:center;font-size:.8rem;color:var(--muted)}
 /* The page in another language (0044): one row, each name in its own language. */
 .page-langs{display:flex;justify-content:center;flex-wrap:wrap;gap:.35rem 1.1rem;margin-block-end:.9rem;font-size:.95rem}
@@ -767,7 +739,6 @@ footer a{
   color:var(--muted);
 }
 /* #96978E on plaster is 2.83:1 — below WCAG AA. --muted is 4.87:1. */
-.odbl{font-size:.8rem;color:var(--muted);margin-top:.5rem;line-height:1.6}
 .attribution{font-size:.8rem;color:var(--muted);line-height:1.6}
 
 /* Sold — a record, not a live offer. Lives here so property and vehicle CSS
@@ -1074,6 +1045,15 @@ footer a{
   font-size:.92rem;
 }
 .lightbox-room[hidden]{display:none}
+/* Room chips in the lightbox (BaseListing.astro): a shortcut to each room's
+   first photo, above the counter, when two or more rooms are named. The room
+   on screen is still named at the top (.lightbox-room). */
+.lightbox-rooms{position:fixed;inset-block-end:3.2rem;inset-inline:var(--gut);z-index:2;display:flex;justify-content:center;gap:.4rem;overflow-x:auto;scrollbar-width:none}
+.lightbox-chip{flex:none;min-block-size:44px;padding:.3rem .9rem;border:1px solid #fff4;border-radius:999px;background:#0005;color:var(--on-dark);font:inherit;font-size:.88rem;font-weight:600}
+.lightbox-chip:focus-visible{outline:2px solid var(--plaster);outline-offset:2px}
+.lightbox.has-rooms .lightbox-slide{padding-block-end:6.5rem}
+.lightbox-track{touch-action:pan-x pinch-zoom}
+@media (prefers-reduced-motion:no-preference){.lightbox-slide img{transition:transform .22s}.lightbox.is-pulling .lightbox-slide img{transition:none}}
 .lightbox-close{
   position:fixed;
   inset-block-start:.7rem;
@@ -1102,6 +1082,7 @@ footer a{
 .map-nav,
 .facts-more summary,
 .seller-action,
+.lightbox-chip,
 .cta{
   transition:transform var(--dur-press) var(--ease-out);
 }
@@ -1116,6 +1097,7 @@ footer a{
 .map-nav:active,
 .facts-more summary:active,
 .seller-action:active,
+.lightbox-chip:active,
 .cta:active{
   transform:scale(.97);
 }

@@ -59,6 +59,9 @@ const titleLines = home.title.split('\n');
 const catalogue = TEMPLATE_IDS.filter((id) => templateSpec(id).ls !== undefined).map((id) => {
   return { id, car: !templateFits(id, 'property'), href: demoPath(id) };
 });
+// The general templates fit a car too, but their pictures show the flat; the
+// car pill shows only the ones pictured with the car and counts the rest.
+const sharedWithCars = catalogue.filter((tpl) => !tpl.car && templateFits(tpl.id, 'vehicle')).length;
 
 const cardTitle = ogTitle(home);
 const cardFacts = ogDescription(home, CATEGORY_PRESENTATION.property.ogFactKeys);
@@ -266,13 +269,25 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
   </section>
 
   <section class="site-sect hm-templates" id="templates">
+    {/*
+      The category pills (16 Oct 2026): radio inputs and CSS, no script.
+      Each template has one picture, of the flat or of the car, so each pill
+      shows the same listing across its templates. The inputs come first so
+      the row and the labels can follow their state.
+    */}
+    <input class="hm-cat visually-hidden" type="radio" name="hm-cat" id="hm-cat-property" checked />
+    <input class="hm-cat visually-hidden" type="radio" name="hm-cat" id="hm-cat-vehicle" />
     <div class="site-shell">
       <h2 class="site-h2">{t('home.templatesTitle')}</h2>
       <p class="site-sub">{t('home.templatesBody')}</p>
+      <div class="hm-pills" role="group" aria-label={t('home.pillsLabel')}>
+        <label class="hm-pill" for="hm-cat-property">{t('home.pillProperty')}</label>
+        <label class="hm-pill" for="hm-cat-vehicle">{t('home.pillVehicle')}</label>
+      </div>
     </div>
     <ul class="hm-row">
       {catalogue.map((tpl) => (
-        <li>
+        <li data-cat={tpl.car ? 'vehicle' : 'property'}>
           <a class="hm-device" href={tpl.href} aria-label={`${t('home.templatesOpen')} ${t(`editor.templates.${tpl.id}`)}`}>
             <span class="hm-device-screen">
               <img
@@ -293,6 +308,9 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         </li>
       ))}
     </ul>
+    <p class="site-shell hm-pill-note">
+      <Prose text={t('home.pillNote', { n: sharedWithCars })} /> <a href="/templates/">{t('home.pillAll')}</a>
+    </p>
   </section>
 
   <section class="site-sect ls-sect">

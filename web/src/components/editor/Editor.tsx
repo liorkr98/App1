@@ -69,6 +69,7 @@ import { PlateStep } from './PlateStep';
 import { RoomsStep } from './RoomsStep';
 import { TemplateStep } from './TemplateStep';
 import { clearDraft, useDraft } from './useDraft';
+import { Coach, coachDone, type CoachStep } from './Coach';
 
 /**
  * The editor island (Stage E).
@@ -172,6 +173,10 @@ export default function Editor() {
    * names its step — but the agent only ever moves between four.
    */
   const [screen, setScreen] = useState<Screen>('photos');
+  // First-listing hints (Coach.tsx): on a new listing only, never on one
+  // opened for editing. Read after mount; the server render has no URL.
+  const [coachOn, setCoachOn] = useState(false);
+  useEffect(() => setCoachOn(!new URLSearchParams(window.location.search).has('id')), []);
   /**
    * True until the agent picks a step themselves. Opening a saved listing
    * lands on the first gap (`nextStep`); once they tap Next, Back or a
@@ -1472,6 +1477,7 @@ export default function Editor() {
           window.setTimeout(() => openShare(publishedSlug, true), still ? 300 : 900);
         }
         clearDraft();
+        coachDone();
       } else {
         setPublishing(false);
         void recordEditorEvent('publish', 'publish_fail', id);
@@ -1500,6 +1506,24 @@ export default function Editor() {
 
   /** Which way the last screen change went, so the next one slides in from there. */
   const [stepMotion, setStepMotion] = useState<'forward' | 'back'>('forward');
+  const coachStep: CoachStep | undefined =
+    screen === 'photos'
+      ? !state.category
+        ? 'kind'
+        : photos.length === 0
+          ? 'photos'
+          : photos.length > 1
+            ? 'order'
+            : undefined
+      : screen === 'details'
+        ? state.category === 'vehicle'
+          ? 'detailsCar'
+          : 'details'
+        : screen === 'ready'
+          ? 'ready'
+          : publishedUrl
+            ? undefined
+            : 'publish';
 
   /**
    * Next and Back are never disabled (11 Oct 2026). A greyed-out button with
@@ -1576,6 +1600,7 @@ export default function Editor() {
       {/* Keyed by screen so each arrival is a fresh element and its entrance
           plays; the direction follows the reading order (editor.css). */}
       <section key={screen} data-motion={stepMotion} className={`step screen screen-${screen}`}>
+        <Coach step={coachOn ? coachStep : undefined} />
         {screen === 'photos' ? (
           <>
             <CategoryStep chosen={state.category} onChoose={choose} />

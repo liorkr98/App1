@@ -364,6 +364,21 @@ jobs:
         working-directory: web
         run: npx playwright test home.spec
 
+      # A listing page's WhatsApp bar folds while the buyer reads and opens
+      # again at the end; the photo viewer opens, has a chip per room and
+      # closes on a swipe down (17 Oct 2026). Blocking.
+      - name: Buyer's WhatsApp bar and photo viewer
+        if: ${{ !cancelled() }}
+        working-directory: web
+        run: npx playwright test buyer-page
+
+      # The first-listing hints show on a new listing, go when dismissed, and
+      # never on a listing opened for editing or after a publish. Blocking.
+      - name: First-listing hints
+        if: ${{ !cancelled() }}
+        working-directory: web
+        run: npx playwright test first-listing
+
       - name: Photo ordering by drag
         if: ${{ !cancelled() }}
         working-directory: web

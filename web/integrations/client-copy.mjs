@@ -19,7 +19,9 @@
  */
 // home, lab, flyer and notFound joined on 15 Oct 2026, when the photo drag
 // and the publish moment took /new/ back over by 4 KB: all four are rendered
-// by .astro frontmatter alone.
+// by .astro frontmatter alone. seo, footer, a11y, language, enrich and source
+// followed on 17 Oct 2026 for the first-listing hints (also frontmatter only),
+// with settings and paywall, which only the retired app's SettingsScreen read.
 export const SERVER_ONLY_NAMESPACES = [
   'templates',
   'audiences',
@@ -30,6 +32,14 @@ export const SERVER_ONLY_NAMESPACES = [
   'lab',
   'flyer',
   'notFound',
+  'seo',
+  'footer',
+  'a11y',
+  'language',
+  'enrich',
+  'source',
+  'settings',
+  'paywall',
 ];
 
 const LOCALE = /[\\/]locales[\\/](he|en)\.json$/;
