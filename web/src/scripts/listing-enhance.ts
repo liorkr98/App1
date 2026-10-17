@@ -7,6 +7,8 @@ import { observeCounts } from '../motion/counter';
  *       Shared with every Living Surfaces page: web/src/motion/counter.ts.
  *   M4  gallery → lightbox morph via View Transitions, <dialog> fallback.
  *   M5  radio → snap the matching tour card (the track itself is CSS).
+ *   M4+ (17 Oct 2026) in the lightbox: a chip per named room that jumps to
+ *       its first photo, and a swipe down that closes it.
  *
  * Budget: ≤ 12 KB gz, enforced by scripts/verify-listing-js-budget.mjs.
  * window.addEventListener('scroll') is banned. IntersectionObserver only.
@@ -31,7 +33,8 @@ function fillTrack(dialog: HTMLDialogElement, startSrc: string): void {
     seen.add(src);
     const figure = document.createElement('figure');
     figure.className = 'lightbox-slide';
-    const room = button.getAttribute('data-room');
+    // The gallery names a room by its section heading; stages say data-room.
+    const room = button.dataset.room ?? button.closest('.gallery-room')?.querySelector('h2')?.textContent;
     if (room) figure.dataset.room = room;
     const img = document.createElement('img');
     img.src = src;
@@ -50,15 +53,7 @@ function updateLightboxCount(dialog: HTMLDialogElement, track: HTMLElement): voi
   const label = dialog.querySelector<HTMLElement>('[data-lightbox-count]');
   const slides = [...track.querySelectorAll<HTMLElement>('.lightbox-slide')];
   if (!label || slides.length === 0) return;
-  const mid = track.getBoundingClientRect().left + track.clientWidth / 2;
-  let index = 0;
-  for (const [i, slide] of slides.entries()) {
-    const box = slide.getBoundingClientRect();
-    if (box.left <= mid && box.right >= mid) {
-      index = i;
-      break;
-    }
-  }
+  const index = activeSlide(track);
   label.textContent = `${index + 1} / ${slides.length}`;
   const room = dialog.querySelector<HTMLElement>('[data-lightbox-room]');
   const name = slides[index]?.dataset.room ?? '';
@@ -89,7 +84,10 @@ function bindLightbox(): void {
     document as Document & {
       startViewTransition?: (update: () => void) => { finished: Promise<unknown> };
     }
-  ).startViewTransition;
+  ).startViewTransition?.bind(document);
+  // Bound: called detached, Chrome throws "Illegal invocation" and the photo
+  // never opened, for every buyer whose browser has View Transitions and who
+  // had not asked for less motion (found 17 Oct 2026).
 
   const open = (button: HTMLButtonElement) => {
     const src = button.getAttribute('data-lightbox');
@@ -139,6 +137,14 @@ function bindLightbox(): void {
   document.addEventListener('click', (event) => {
     const target = event.target;
     if (!(target instanceof Element)) return;
+    // A room chip: to that room's first photo. A shortcut, not a filter.
+    const chip = target.closest<HTMLElement>('.lightbox-chip');
+    if (chip && track) {
+      track
+        .querySelector(`.lightbox-slide[data-room="${CSS.escape(chip.dataset.room ?? '')}"]`)
+        ?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: reduced ? 'instant' : 'smooth' });
+      return;
+    }
     const button = target.closest<HTMLButtonElement>('[data-lightbox]');
     if (button) {
       event.preventDefault();
@@ -157,6 +163,37 @@ function bindLightbox(): void {
   window.addEventListener('popstate', () => {
     if (dialog.open) hide(true);
   });
+
+  // Swipe down to close: the photo follows the finger and lets go past
+  // 110px, otherwise it springs back (the spring is CSS, listing.css).
+  // Sideways stays the native scroll (touch-action: pan-x pinch-zoom).
+  let x0 = 0;
+  let y0 = 0;
+  let down = false;
+  let img: HTMLElement | null | undefined;
+  const drop = () => {
+    if (img) img.style.transform = '';
+    img = null;
+    dialog.classList.remove('is-pulling');
+  };
+  track?.addEventListener('pointerdown', (event) => {
+    x0 = event.clientX;
+    y0 = event.clientY;
+    down = false;
+    img = (event.target as Element).closest('.lightbox-slide')?.querySelector('img');
+  });
+  track?.addEventListener('pointermove', (event) => {
+    const dy = event.clientY - y0;
+    if (!img || (!down && (dy < 12 || dy < Math.abs(event.clientX - x0) * 1.2))) return;
+    down = true;
+    dialog.classList.add('is-pulling');
+    img.style.transform = `translateY(${Math.max(0, dy)}px)`;
+  });
+  track?.addEventListener('pointerup', (event) => {
+    if (img && down && event.clientY - y0 > 110) hide();
+    drop();
+  });
+  track?.addEventListener('pointercancel', drop);
   dialog.addEventListener('keydown', (event) => {
     if (!dialog.open || !track) return;
     if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;

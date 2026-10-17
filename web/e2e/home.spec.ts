@@ -66,3 +66,22 @@ test('no testimonials section until a real, consented one exists', async ({ page
   await page.goto(`${BASE}/`);
   await expect(page.locator('#hm-voices-title')).toHaveCount(0);
 });
+
+test('the template pills show the flat or the car, and say what fits both', async ({ page }) => {
+  await page.setViewportSize(PHONE);
+  await page.goto(`${BASE}/`);
+  const row = page.locator('.hm-row > li');
+  const shown = () => row.evaluateAll((items) => items.filter((item) => (item as HTMLElement).checkVisibility()).length);
+  await expect(page.locator('#hm-cat-property')).toBeChecked();
+  const flats = await shown();
+  expect(flats).toBeGreaterThan(3);
+  await expect(page.locator('.hm-pill-note')).toBeHidden();
+
+  await page.locator('label[for="hm-cat-vehicle"]').click();
+  await expect.poll(shown).toBe(3);
+  await expect(page.locator('.hm-pill-note')).toBeVisible();
+  // The radios are the controls: a keyboard moves between them.
+  await page.locator('#hm-cat-vehicle').focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.locator('#hm-cat-property')).toBeChecked();
+});

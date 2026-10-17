@@ -85,6 +85,15 @@ const jsonLd =
     : undefined;
 
 const sold = listing.status === 'sold';
+// The lightbox's room chips (17 Oct 2026), one per named room in photo order,
+// when there are two or more. Rendered here; the script only answers a tap.
+const roomChips = [
+  ...new Set(
+    [listing.media.cover, ...listing.media.gallery].flatMap((image) =>
+      image?.room ? [t(`editor.rooms.${image.room}`)] : [],
+    ),
+  ),
+];
 const callHref = sold ? '' : telHref(listing.seller.phone);
 const waBarHref = `/a/${listing.slug}/wa`;
 
@@ -243,9 +252,16 @@ const showBarLogo =
 </main>
 <slot name="after" />
 
-<dialog id="listing-lightbox" class="lightbox" aria-label={t('listing.openPhoto')}>
+<dialog id="listing-lightbox" class:list={['lightbox', roomChips.length > 1 && 'has-rooms']} aria-label={t('listing.openPhoto')}>
   <button type="button" class="lightbox-close">{t('listing.closeLightbox')}</button>
   <p class="lightbox-room" data-lightbox-room hidden></p>
+  {roomChips.length > 1 && (
+    <div class="lightbox-rooms" role="group" aria-label={t('listing.photoRooms')}>
+      {roomChips.map((room) => (
+        <button type="button" class="lightbox-chip" data-room={room}>{room}</button>
+      ))}
+    </div>
+  )}
   <p class="lightbox-count"><bdi data-lightbox-count></bdi></p>
   <div class="lightbox-track"></div>
 </dialog>

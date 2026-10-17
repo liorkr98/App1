@@ -162,7 +162,8 @@
     },
     "blueprintSheet": "Лист",
     "priceDropped": "Цена снижена",
-    "priceWas": "Прежняя цена:"
+    "priceWas": "Прежняя цена:",
+    "photoRooms": "Комнаты на фото"
   },
   "common": {
     "close": "Закрыть",

@@ -2343,6 +2343,85 @@ body:has(.live-preview.is-full) .nav {
   color: var(--plaster);
 }
 
+/* ---------- First-listing hints (Coach.tsx) ----------
+   One line at the top of the screen, and a ring on the thing to tap. The
+   ring is an outline, so it moves nothing; it pulses only when motion is
+   welcome. */
+
+.coach {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.75rem;
+  margin: 0 0 1rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--olive) 12%, var(--plaster));
+  color: var(--ink);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.coach-label {
+  inline-size: 100%;
+  color: var(--olive);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.coach-text {
+  flex: 1 1 14rem;
+}
+
+.coach-ok {
+  min-block-size: 48px;
+  padding-inline: 1rem;
+  border: 1px solid var(--olive);
+  border-radius: 999px;
+  background: none;
+  color: var(--olive);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.coach-ok:hover {
+  background: color-mix(in srgb, var(--olive) 10%, transparent);
+}
+
+.coach-ok:active {
+  background: color-mix(in srgb, var(--olive) 18%, transparent);
+}
+
+.coach-target {
+  outline: 3px solid var(--olive);
+  outline-offset: 4px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .coach-target {
+    animation: coach-pulse 1.6s ease-in-out infinite;
+  }
+
+  .coach {
+    animation: coach-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
+@keyframes coach-pulse {
+  50% {
+    outline-offset: 8px;
+    outline-color: color-mix(in srgb, var(--olive) 35%, transparent);
+  }
+}
+
+@keyframes coach-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
 /* ---------- Touch feedback (5 Oct 2026) ----------
    An audit of the new-listing flow found 24 controls that gave nothing back
    when touched: on a phone the button looked dead until the next screen

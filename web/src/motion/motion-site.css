@@ -1,0 +1,33 @@
+/*
+  The site pages' share of the motion catalogue (motion.css): listing pages
+  never use these, so they are not in the listing stylesheet, which is at its
+  page-weight ceiling. Same rules: visible at rest, every animation inside
+  prefers-reduced-motion, every scroll-driven one inside @supports.
+
+    M16 .ls-sect             a section rises from a visible floor
+        .ls-fade             a staggered entrance for small groups
+*/
+
+@media (prefers-reduced-motion: no-preference) {
+  .ls-fade {
+    animation: ls-fade var(--ls-dur-3) var(--ls-ease-expo) both;
+    animation-delay: calc(var(--i, 0) * 90ms + 380ms);
+  }
+
+  @supports (animation-timeline: view()) {
+    .ls-sect {
+      animation: ls-sect linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 24%;
+    }
+  }
+
+  @keyframes ls-fade {
+    from { opacity: 0; transform: translateY(16px); }
+  }
+  /* From a visible floor, never from nothing: a reader who lands mid-page
+     sees text, not a blank. */
+  @keyframes ls-sect {
+    from { opacity: 0.35; transform: translateY(44px); }
+  }
+}

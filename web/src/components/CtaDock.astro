@@ -22,6 +22,19 @@ const { message, slug, sold = false, href: given } = Astro.props;
 const href = sold ? '/' : (given ?? `/a/${slug}/wa?text=${encodeURIComponent(message)}`);
 const label = sold ? t('listing.moreListings') : t('listing.whatsappCta');
 ---
-<div class="cta-dock">
-  <a class="cta" href={href}>{label}</a>
+{/*
+  While the buyer reads, the bar folds to a round button at the inline end
+  and opens again at the end of the page (listing.css, "the dock folds").
+  Scroll-driven CSS only; the label stays in the link, so its name does not
+  change. A sold listing keeps the full bar: it points at more listings.
+*/}
+<div class="cta-dock" data-fold={sold ? undefined : ''}>
+  <a class="cta" href={href}>
+    <span class="cta-label">{label}</span>
+    {!sold && (
+      <svg class="cta-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 5h16v11H9l-5 4z" />
+      </svg>
+    )}
+  </a>
 </div>

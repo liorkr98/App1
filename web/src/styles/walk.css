@@ -21,42 +21,6 @@
   margin-block:-.15rem .9rem;
   max-inline-size:42ch;
 }
-.walk-nav{
-  display:flex;flex-wrap:wrap;gap:.4rem;
-  margin-block-end:.85rem;
-}
-.walk-nav a,
-.walk-nav span,
-.walk-nav label,
-.walk-chips a,
-.walk-chips label{
-  display:inline-flex;align-items:center;justify-content:center;
-  min-block-size:44px;
-  font-size:.78rem;font-weight:600;color:var(--olive);
-  text-decoration:none;
-  padding:.35rem .7rem;
-  border:1px solid var(--stone);border-radius:999px;
-  cursor:pointer;
-}
-
-.walk-chips{
-  position:absolute;
-  inset-block-start:.7rem;
-  inset-inline:.7rem;
-  z-index:2;
-  display:flex;
-  flex-wrap:wrap;
-  gap:.35rem;
-}
-.walk-chips a,
-.walk-chips label{
-  background:rgba(17,18,8,.78);
-  color:var(--on-dark);
-  border-color:transparent;
-  font-size:.85rem;
-  padding:.45rem .85rem;
-}
-
 .walk-viewer{
   position:relative;
   display:grid;

@@ -320,6 +320,92 @@ html.hm-wait .hm-phone {
 
 /* ---------- Templates ---------- */
 
+/* Category pills (index.astro): radio inputs drive them, no script. The
+   inputs are siblings of the row, so the row follows their state. */
+.hm-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-block-start: 1.2rem;
+}
+
+.hm-pill {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+  padding-inline: 1.2rem;
+  border: 1px solid var(--ls-line);
+  border-radius: 999px;
+  color: var(--ls-ink-2);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#hm-cat-property:checked ~ .site-shell .hm-pill[for='hm-cat-property'],
+#hm-cat-vehicle:checked ~ .site-shell .hm-pill[for='hm-cat-vehicle'] {
+  border-color: var(--ls-ink);
+  background: var(--ls-ink);
+  color: var(--ls-ground);
+}
+
+#hm-cat-property:focus-visible ~ .site-shell .hm-pill[for='hm-cat-property'],
+#hm-cat-vehicle:focus-visible ~ .site-shell .hm-pill[for='hm-cat-vehicle'] {
+  outline: 2px solid var(--ls-accent-lift);
+  outline-offset: 3px;
+}
+
+#hm-cat-property:checked ~ .hm-row li[data-cat='vehicle'],
+#hm-cat-vehicle:checked ~ .hm-row li[data-cat='property'] {
+  display: none;
+}
+
+.hm-pill-note {
+  display: none;
+  margin-block: 0;
+  color: var(--ls-ink-2);
+}
+
+#hm-cat-vehicle:checked ~ .hm-pill-note {
+  display: block;
+}
+
+.hm-pill-note a {
+  color: var(--ls-ink);
+  font-weight: 700;
+}
+
+/* Two keyframes of the same fade, one per pill, so switching restarts it. */
+@media (prefers-reduced-motion: no-preference) {
+  #hm-cat-property:checked ~ .hm-row li {
+    animation: hm-cat-a 0.45s var(--ls-ease-expo) both;
+  }
+
+  #hm-cat-vehicle:checked ~ .hm-row li {
+    animation: hm-cat-b 0.45s var(--ls-ease-expo) both;
+  }
+
+  .hm-pill {
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease,
+      border-color 0.2s ease;
+  }
+}
+
+@keyframes hm-cat-a {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes hm-cat-b {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
 .hm-row {
   display: flex;
   gap: 1.1rem;

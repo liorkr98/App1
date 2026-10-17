@@ -276,7 +276,8 @@
     },
     "blueprintSheet": "Sheet",
     "priceDropped": "Price reduced",
-    "priceWas": "Previous price:"
+    "priceWas": "Previous price:",
+    "photoRooms": "Rooms in the photos"
   },
   "notFound": {
     "title": "Page not found",
@@ -735,6 +736,17 @@
       "addPhotosBig": "",
       "photoTips": "",
       "completeProfile": ""
+    },
+    "coach": {
+      "label": "",
+      "ok": "",
+      "kind": "",
+      "photos": "",
+      "order": "",
+      "details": "",
+      "detailsCar": "",
+      "ready": "",
+      "publish": ""
     }
   },
   "seo": {
@@ -826,7 +838,12 @@
     "beforeMsg": "",
     "beforeBack": "",
     "testimonialsTitle": "",
-    "beforeLink": ""
+    "beforeLink": "",
+    "pillsLabel": "",
+    "pillProperty": "",
+    "pillVehicle": "",
+    "pillNote": "",
+    "pillAll": ""
   },
   "agent": {
     "title": "",

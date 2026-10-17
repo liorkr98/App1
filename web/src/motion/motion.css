@@ -17,12 +17,11 @@
     M2  .ls-letter           letters cascade right to left (split.ts)
     M3  .ls-swell            display axes tighten as the title scrolls away
     M4  .ls-breathe          slow push on a photograph
-    M5  .ls-clip             photograph opens from an inset as it arrives
     M8  [data-count]         numbers count up (counter.ts)
     M11 view transitions     view-transitions.css
     M15 .ls-sheen            a slow light across the one button that matters
-    M16 .ls-sect             a section rises from a visible floor
-        .ls-fade             a staggered entrance for small groups
+    M16 .ls-sect, .ls-fade   in motion-site.css: site pages only, so listing
+                             pages do not carry them (17 Oct 2026)
 */
 
 .ls-line {
@@ -56,11 +55,6 @@
     animation-delay: calc(var(--i, 0) * 22ms + 200ms);
   }
 
-  .ls-fade {
-    animation: ls-fade var(--ls-dur-3) var(--ls-ease-expo) both;
-    animation-delay: calc(var(--i, 0) * 90ms + 380ms);
-  }
-
   .ls-breathe {
     animation: ls-breathe 26s ease-in-out 1.2s infinite alternate;
   }
@@ -78,23 +72,6 @@
   }
 
   @supports (animation-timeline: view()) {
-    .ls-sect {
-      animation: ls-sect linear both;
-      animation-timeline: view();
-      animation-range: entry 0% cover 24%;
-    }
-
-    .ls-clip {
-      animation: ls-clip linear both;
-      animation-timeline: view();
-      animation-range: entry 0% cover 40%;
-    }
-    .ls-clip img {
-      animation: ls-clip-img linear both;
-      animation-timeline: view();
-      animation-range: entry 0% cover 60%;
-    }
-
     .ls-swell {
       animation: ls-swell linear both;
       animation-timeline: view();
@@ -108,9 +85,6 @@
   @keyframes ls-letter {
     from { opacity: 0; transform: translateY(0.5em) scale(0.8); filter: blur(6px); }
   }
-  @keyframes ls-fade {
-    from { opacity: 0; transform: translateY(16px); }
-  }
   @keyframes ls-breathe {
     from { transform: scale(1.02); }
     to { transform: scale(1.1) translateY(-1.4%); }
@@ -118,18 +92,6 @@
   @keyframes ls-sheen {
     0%, 70% { inset-inline-start: -60%; }
     100% { inset-inline-start: 130%; }
-  }
-  /* From a visible floor, never from nothing: a reader who lands mid-page
-     sees text, not a blank. */
-  @keyframes ls-sect {
-    from { opacity: 0.35; transform: translateY(44px); }
-  }
-  @keyframes ls-clip {
-    from { clip-path: inset(8% 6% round 18px); }
-    to { clip-path: inset(0 0 round 0); }
-  }
-  @keyframes ls-clip-img {
-    from { transform: scale(1.18); }
   }
   @keyframes ls-swell {
     to { font-variation-settings: 'wdth' var(--ls-wdth-tight); letter-spacing: -0.03em; }
