@@ -355,6 +355,15 @@ jobs:
       # A photo is picked up and moved with a mouse and with a held finger,
       # and the first photo (the cover) stays the rightmost (CLAUDE.md §4.4,
       # 15 Oct 2026). Blocking.
+      # The homepage: the header reads the session without the Supabase
+      # client, a stray sign-in token goes to /enter/, the scroll story and
+      # the before/after slider work, and no testimonial shows without
+      # consent on record (17 Oct 2026). Blocking.
+      - name: Homepage story, comparison and header
+        if: ${{ !cancelled() }}
+        working-directory: web
+        run: npx playwright test home.spec
+
       - name: Photo ordering by drag
         if: ${{ !cancelled() }}
         working-directory: web

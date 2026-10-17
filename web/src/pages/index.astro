@@ -16,6 +16,8 @@ import Film from '../components/Film.astro';
 import { filmDuration } from '@/features/listings/ken-burns';
 import { softwareLd } from '../lib/seo';
 import { demoPath } from '../lib/template-pages';
+import { MAX_IMAGES } from '@/features/listings/editor';
+import Testimonials from '../components/Testimonials.astro';
 
 /**
  * The homepage (עמוד מכירה 2.0, plan §7.1). Onyx: the product demo is the page.
@@ -61,6 +63,12 @@ const catalogue = TEMPLATE_IDS.filter((id) => templateSpec(id).ls !== undefined)
 const cardTitle = ogTitle(home);
 const cardFacts = ogDescription(home, CATEGORY_PRESENTATION.property.ogFactKeys);
 const cardImage = largest(home.media.cover, HERO_WIDTHS);
+// The scroll story's third screen: the first template the catalogue shows,
+// whose picture the templates row already loads.
+const storyTemplate = catalogue[0]?.id ?? 'aurora';
+const roomsValue = home.facts.find((fact) => fact.key === 'rooms')?.value;
+const storyRooms = typeof roomsValue === 'number' ? String(roomsValue) : '';
+const storySteps = [1, 2, 3, 4] as const;
 
 const photoOf = (index: number) => {
   const image = [home.media.cover, ...home.media.gallery][index] ?? home.media.cover;
@@ -202,6 +210,61 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
     </div>
   </section>
 
+  {/*
+    The scroll story (16 Oct 2026): the four minutes, one screen per step.
+    The phone stays while the steps pass; the step nearest the middle of the
+    screen decides what it shows. Every picture in it is one the page
+    already loads. Without script the phone rests on the last screen and the
+    four steps read as a list; under reduced motion the screens swap without
+    a fade.
+  */}
+  <section class="site-sect hm-story" aria-labelledby="hm-story-title">
+    <div class="site-shell hm-story-grid">
+      <h2 class="site-h2 hm-story-title" id="hm-story-title">{t('home.storyTitle')}</h2>
+      <div class="hm-story-stage">
+        <div class="hm-story-phone" data-story-phone data-step="4" role="img" aria-label={t('home.storyPhone')}>
+          <div class="hm-story-screen" data-n="1">
+            <div class="hm-story-photos">
+              {builderPhotos.map((image) => (
+                <img src={largest(image, GALLERY_WIDTHS)} alt="" loading="lazy" decoding="async" width={image.width} height={image.height} />
+              ))}
+            </div>
+          </div>
+          <div class="hm-story-screen" data-n="2">
+            <dl class="hm-story-form">
+              <div><dt>{t('editor.details.city')}</dt><dd>{home.location?.city}</dd></div>
+              <div><dt>{t('editor.steps.rooms')}</dt><dd><bdi>{storyRooms}</bdi></dd></div>
+              <div><dt>{t('editor.details.price')}</dt><dd><bdi>{ils(home.price)}</bdi></dd></div>
+            </dl>
+          </div>
+          <div class="hm-story-screen is-page" data-n="3">
+            <img class="hm-story-page" src={`/home/templates/${storyTemplate}.webp`} alt="" loading="lazy" decoding="async" width="400" height="866" />
+          </div>
+          <div class="hm-story-screen hm-story-wa" data-n="4">
+            <div class="hm-bubble">
+              <div class="hm-card">
+                <img src={cardImage} alt="" loading="lazy" decoding="async" width="1200" height="630" />
+                <div>
+                  <b><Prose text={cardTitle} /></b>
+                  <small dir="ltr">amudsell.com</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <ol class="hm-story-steps">
+        {storySteps.map((n) => (
+          <li class="hm-story-step" data-story-step={n}>
+            <span class="hm-story-n" aria-hidden="true"><bdi>{n}</bdi></span>
+            <h3>{t(`home.story${n}`)}</h3>
+            <p><Prose text={t(`home.story${n}Body`, { max: MAX_IMAGES })} /></p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
   <section class="site-sect hm-templates" id="templates">
     <div class="site-shell">
       <h2 class="site-h2">{t('home.templatesTitle')}</h2>
@@ -287,26 +350,51 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         <h2 class="site-h2">{t('home.waTitle')}</h2>
         <p class="site-sub">{t('home.waNote')}</p>
       </div>
-      <div class="hm-chat" aria-hidden="true">
-        <p class="hm-chat-top">{t('home.waBuyer')}</p>
-        <div class="hm-chat-body">
-          <p class="hm-bubble is-them">{t('home.waAsk')}</p>
-          <div class="hm-bubble">
-            <div class="hm-card">
-              <img src={cardImage} alt="" loading="lazy" decoding="async" width="1200" height="630" />
-              <div>
-                <b><Prose text={cardTitle} /></b>
-                <small><Prose text={cardFacts} /></small>
-                <small dir="ltr">amudsell.com</small>
-              </div>
-            </div>
-            <p>{t('home.waReply')}</p>
+      {/*
+        Before and after (16 Oct 2026): the same chat, sent the usual way and
+        sent as a page. A real range input carries the comparison, so it
+        works with a keyboard and a screen reader; the divider and the clip
+        follow its value. Without script it rests at the middle.
+      */}
+      <div class="hm-compare" data-compare>
+        <div class="hm-chat hm-chat-before" aria-hidden="true">
+          <p class="hm-chat-top">{t('home.waBuyer')}</p>
+          <div class="hm-chat-body">
+            <p class="hm-bubble is-them">{t('home.waAsk')}</p>
+            <p class="hm-bubble is-text">
+              <span><Prose text={t('home.beforeMsg', { facts: cardFacts })} /></span>
+              <bdi class="hm-bare-link" dir="ltr">{t('home.beforeLink')}</bdi>
+            </p>
+            <p class="hm-bubble is-them">{t('home.beforeBack')}</p>
           </div>
-          <p class="hm-bubble is-them">{t('home.waBack')}</p>
         </div>
+        <div class="hm-chat hm-chat-after" aria-hidden="true">
+          <p class="hm-chat-top">{t('home.waBuyer')}</p>
+          <div class="hm-chat-body">
+            <p class="hm-bubble is-them">{t('home.waAsk')}</p>
+            <div class="hm-bubble">
+              <div class="hm-card">
+                <img src={cardImage} alt="" loading="lazy" decoding="async" width="1200" height="630" />
+                <div>
+                  <b><Prose text={cardTitle} /></b>
+                  <small><Prose text={cardFacts} /></small>
+                  <small dir="ltr">amudsell.com</small>
+                </div>
+              </div>
+              <p>{t('home.waReply')}</p>
+            </div>
+            <p class="hm-bubble is-them">{t('home.waBack')}</p>
+          </div>
+        </div>
+        <span class="hm-compare-tag is-before" aria-hidden="true">{t('home.compareBefore')}</span>
+        <span class="hm-compare-tag is-after" aria-hidden="true">{t('home.compareAfter')}</span>
+        <input class="hm-compare-range" type="range" min="0" max="100" value="50" aria-label={t('home.compareLabel')} />
+        <span class="hm-compare-line" aria-hidden="true"><span class="hm-compare-knob"></span></span>
       </div>
     </div>
   </section>
+
+  <Testimonials />
 
   <section class="site-sect">
     <div class="site-shell">
@@ -361,6 +449,40 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
           builder.dataset.state = '3';
         }
       }, { threshold: 0.3 }).observe(builder);
+    }
+
+    // The scroll story: the step crossing the middle of the screen decides
+    // which screen the phone shows. Reduced motion still switches (the swap
+    // is the content); only the fade is dropped, in home.css.
+    const story = document.querySelector<HTMLElement>('.hm-story');
+    const storyPhone = story?.querySelector<HTMLElement>('[data-story-phone]');
+    const storySteps = [...(story?.querySelectorAll<HTMLElement>('[data-story-step]') ?? [])];
+    if (story && storyPhone && storySteps.length > 0) {
+      const show = (step: HTMLElement) => {
+        storyPhone.dataset.step = step.dataset.storyStep ?? '4';
+        for (const item of storySteps) item.classList.toggle('is-on', item === step);
+      };
+      story.classList.add('is-live');
+      show(storySteps[0]!);
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) if (entry.isIntersecting) show(entry.target as HTMLElement);
+        },
+        // On a phone the phone itself holds the top half of the screen, so a
+        // step counts once it is readable below it.
+        { rootMargin: matchMedia('(min-width: 900px)').matches ? '-45% 0px -45% 0px' : '-66% 0px -24% 0px' },
+      );
+      for (const step of storySteps) io.observe(step);
+    }
+
+    // Before and after: the range input's value is how far the divider sits
+    // from the start side, and the clip and the line follow it.
+    const compare = document.querySelector<HTMLElement>('[data-compare]');
+    const range = compare?.querySelector<HTMLInputElement>('.hm-compare-range');
+    if (compare && range) {
+      const follow = () => compare.style.setProperty('--split', `${range.value}%`);
+      range.addEventListener('input', follow);
+      follow();
     }
 
     // The race clock: counts to 4:00 the first time it scrolls into view.

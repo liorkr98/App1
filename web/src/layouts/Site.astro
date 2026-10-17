@@ -151,23 +151,28 @@ const themeColor = ls === 'onyx' ? '#0b0c0a' : '#f6f4ef';
       <script>
         import { captureFirstTouch, sendSiteView } from '../lib/first-touch';
         import { markOwner } from '../lib/owner-cookie';
-        import { supabase, supabaseConfigured } from '../lib/supabase';
+        import { authInUrl, hasSession, SESSION_KEY, sessionConfigured } from '../lib/session-hint';
 
+        // A sign-in that landed here instead of /enter/ is finished there.
+        if (sessionConfigured && location.pathname !== '/enter/' && authInUrl(location.href)) {
+          location.replace(`/enter/${location.search}${location.hash}`);
+        }
         captureFirstTouch();
         sendSiteView();
-        if (supabaseConfigured) {
+        if (sessionConfigured) {
           const enter = document.getElementById('nav-enter');
           const mine = document.getElementById('nav-mine');
-          const client = supabase();
-          const paint = async () => {
-            const { data } = await client.auth.getSession();
-            const signedIn = Boolean(data.session);
+          // Read from storage, not the Supabase client: see session-hint.ts.
+          const paint = () => {
+            const signedIn = hasSession();
             markOwner(signedIn);
             if (enter) enter.hidden = signedIn;
             if (mine) mine.hidden = !signedIn;
           };
-          void paint();
-          client.auth.onAuthStateChange(() => void paint());
+          paint();
+          addEventListener('storage', (event) => {
+            if (event.key === SESSION_KEY || event.key === null) paint();
+          });
         }
       </script>
     ) : (
