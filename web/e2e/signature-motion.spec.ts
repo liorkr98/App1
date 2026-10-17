@@ -9,15 +9,17 @@ import { BASE, PHONE } from './measure';
  * The owner asked for breathing, motion and parallax, "not all together —
  * something professional". So each of these pages runs its own signature
  * animation and nothing else of its own: no shared section rise, no photo
- * reveal, no entrance fade. Only the two pieces of page furniture every
- * listing shares stay — the compact bar that slides in once the first
- * screen is gone, and the thin reading-progress line.
+ * reveal, no entrance fade. Only the page furniture every listing shares
+ * stays — the compact bar that slides in once the first screen is gone, the
+ * thin reading-progress line, and the WhatsApp bar that folds while reading.
  *
  * Each signature must also really move (a rule that silently stops firing
  * is worse than none), and with reduced motion nothing may run at all.
  */
 
-const FURNITURE = ['compact-enter', 'fill'];
+// dock-fold (17 Oct 2026): the WhatsApp bar folding to a round button while
+// the buyer reads, furniture every listing shares like the two above.
+const FURNITURE = ['compact-enter', 'fill', 'dock-fold'];
 
 const DESIGNS = [
   { id: 'prints', slug: 'A7K2M', signature: ['pr-float-1', 'pr-float-2', 'pr-float-3'] },

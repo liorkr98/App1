@@ -20,7 +20,8 @@ test('a new listing opens with a hint, and a dismissed hint stays gone', async (
   await expect(page.locator('.coach')).toHaveCount(0);
   await expect(page.locator('.coach-target')).toHaveCount(0);
 
-  await page.reload();
+  // The next listing, opened the way an agent opens one (מודעה חדשה).
+  await page.goto(`${BASE}/new/?fresh=1`);
   await page.getByRole('button', { name: 'דירה' }).click();
   await expect(page.locator('.coach')).toHaveCount(0);
 });
