@@ -1759,6 +1759,16 @@ export default function Editor() {
         </ol>
         <h1 className="flow-title">{t(`editor.flow.${screen}.title`)}</h1>
         <p className="flow-lead">{t(`editor.flow.${screen}.lead`)}</p>
+        {/* How near the link is (goal gradient): the real count of screens left. */}
+        <p className="flow-left">
+          {SCREENS.length - 1 - position === 0 ? (
+            t('editor.flow.left.last')
+          ) : SCREENS.length - 1 - position === 1 ? (
+            t('editor.flow.left.one')
+          ) : (
+            <Message path="editor.flow.left.many" values={{ n: SCREENS.length - 1 - position }} />
+          )}
+        </p>
       </header>
 
       {/* Keyed by screen so each arrival is a fresh element and its entrance

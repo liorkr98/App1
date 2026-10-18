@@ -741,7 +741,12 @@
       "fix": "",
       "addPhotosBig": "",
       "photoTips": "",
-      "completeProfile": ""
+      "completeProfile": "",
+      "left": {
+        "many": "",
+        "one": "",
+        "last": ""
+      }
     },
     "coach": {
       "label": "",
@@ -868,6 +873,7 @@
     "wowStagingBody": "",
     "waLabel": "",
     "waTitle": "",
+    "waWhy": "",
     "waBuyer": "",
     "waAsk": "",
     "waReply": "",
@@ -1161,6 +1167,7 @@
     "checkoutOff": "",
     "disabled": "",
     "talk": "",
+    "noRisk": "",
     "recommended": "",
     "perPage": "",
     "start": "",
@@ -1522,7 +1529,6 @@
     "navAgents": "",
     "navDealers": "",
     "navPrivate": "",
-    "homeLine": "",
     "examplesTitle": "",
     "planTitle": "",
     "allPrices": "",

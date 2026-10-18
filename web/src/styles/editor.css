@@ -3389,3 +3389,11 @@ body:has(.live-preview.is-full) .nav {
   gap: 0.35rem;
   line-height: 1.5;
 }
+
+/* Screens left before the link (18 Oct 2026). */
+.flow-left {
+  margin: 0.2rem 0 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+}
