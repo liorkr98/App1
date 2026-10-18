@@ -29,6 +29,9 @@
  * tests hammer.
  */
 
+import type { PhotoAngle, PhotoReview, ReviewIssue } from './photo-review.js';
+import type { PhotoRoom } from './photo-rooms.js';
+
 export type Direction = 'rtl' | 'ltr';
 
 /**
@@ -97,4 +100,84 @@ export function publishedOrder<T>(items: readonly T[]): T[] {
 /** Index 0. Named, because "the cover" is a product concept, not `items[0]`. */
 export function coverOf<T>(items: readonly T[]): T | undefined {
   return items[0];
+}
+
+/**
+ * The order DeepSeek's labels suggest (18 Oct 2026), offered to the seller
+ * and never forced: the editor applies it once, with an undo, and only
+ * while the seller has not arranged the photos themselves.
+ *
+ * A flat walks the way a visitor does: living room, kitchen, bedrooms,
+ * bathroom, balcony, outside. A car goes round the outside from the front
+ * corner, then the inside, then the parts. Photos with no label keep their
+ * place relative to each other, after the labelled ones.
+ *
+ * The cover (index 0, CLAUDE.md §4.4) is the best-scored photo that has
+ * nothing wrong with it a buyer would notice: dark, blurry, a person, a
+ * plate, papers, sideways. None qualifying, the first of the walk stays.
+ */
+const ROOM_RANK: Record<PhotoRoom, number> = {
+  living: 0,
+  kitchen: 1,
+  bedroom: 2,
+  bathroom: 3,
+  balcony: 4,
+  outdoor: 5,
+  other: 6,
+};
+
+const ANGLE_RANK: Record<PhotoAngle, number> = {
+  frontLeft: 0,
+  front: 1,
+  frontRight: 2,
+  left: 3,
+  right: 4,
+  rearLeft: 5,
+  rear: 6,
+  rearRight: 7,
+  interior: 8,
+  dashboard: 9,
+  wheel: 10,
+  trunk: 11,
+  engine: 12,
+  detail: 13,
+};
+
+const SPOILS_COVER = new Set<ReviewIssue>(['dark', 'blurry', 'person', 'plate', 'documents', 'sideways']);
+
+export function autoOrder<T extends { id: string; room?: PhotoRoom | undefined }>(
+  items: readonly T[],
+  reviews: ReadonlyMap<string, PhotoReview>,
+  category: 'property' | 'vehicle',
+): T[] {
+  const rank = (item: T): number => {
+    const review = reviews.get(item.id);
+    if (category === 'vehicle') return review?.angle ? ANGLE_RANK[review.angle] : 99;
+    // The seller's own label wins over the model's.
+    const room = item.room ?? review?.room;
+    return room ? ROOM_RANK[room] : 99;
+  };
+
+  // Array.prototype.sort is stable, so ties keep the seller's order.
+  const walk = items.map((item, index) => ({ item, index, rank: rank(item) }));
+  walk.sort((a, b) => a.rank - b.rank || a.index - b.index);
+  const ordered = walk.map((entry) => entry.item);
+
+  let cover: T | undefined;
+  let best = 0;
+  for (const item of ordered) {
+    const review = reviews.get(item.id);
+    if (!review?.score || review.issues.some((issue) => SPOILS_COVER.has(issue))) continue;
+    if (review.score > best) {
+      best = review.score;
+      cover = item;
+    }
+  }
+  if (!cover || cover === ordered[0]) return ordered;
+  return [cover, ...ordered.filter((item) => item !== cover)];
+}
+
+/** Whether two orders are the same photos in the same places. */
+export function sameOrder(a: readonly { id: string }[], b: readonly { id: string }[]): boolean {
+  return a.length === b.length && a.every((item, index) => item.id === b[index]?.id);
 }

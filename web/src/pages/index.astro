@@ -370,6 +370,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
     <div class="site-shell hm-wa-grid">
       <div>
         <h2 class="site-h2">{t('home.waTitle')}</h2>
+        <p class="site-sub">{t('home.waWhy')}</p>
         <p class="site-sub">{t('home.waNote')}</p>
       </div>
       {/*
@@ -422,11 +423,11 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
     <div class="site-shell">
       <h2 class="site-h2"><Msg path="home.pricingTitle" values={free} /></h2>
       <PriceTiers />
+      {/* The risk taken away, in true words: cancelling unpublishes, it never
+          deletes (CLAUDE.md §8). "למי זה מתאים" lived here until 18 Oct 2026;
+          the owner took it down, and the footer keeps the three pages. */}
+      <p class="hm-more">{t('pricing.noRisk')}</p>
       <p class="hm-more"><a class="site-link" href="/pricing/">{t('home.pricingLink')}</a></p>
-      <p class="hm-more">
-        {t('audiences.homeLine')}{' '}
-        <a href="/agents/">{t('audiences.navAgents')}</a> · <a href="/dealers/">{t('audiences.navDealers')}</a> · <a href="/private/">{t('audiences.navPrivate')}</a>
-      </p>
     </div>
   </section>
 

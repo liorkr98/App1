@@ -4,8 +4,9 @@
 #
 # The production database cannot be exercised from CI, and the publish gate
 # is SQL, so this is where it is proven: a fresh cluster, Supabase's auth
-# stubbed (bootstrap.sql), the migrations the gate depends on, then 0040,
-# then tests.sql. Any failed assertion raises and the script exits non-zero.
+# stubbed (bootstrap.sql), the migrations the gate depends on, then 0040
+# and 0045, then tests.sql and plan-limits.sql. Any failed assertion raises
+# and the script exits non-zero.
 #
 #   bash scripts/sql-test/run.sh
 
@@ -35,12 +36,17 @@ trap cleanup EXIT
 PSQL=("$BIN/psql" -h "$WORK" -p "$PORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -q -X)
 
 "${PSQL[@]}" -f "$HERE/bootstrap.sql"
-for migration in 0001 0002 0009 0011 0013 0016 0017 0019 0022 0029 0030 0040 0041 0042 0043 0044; do
+for migration in 0001 0002 0003 0009 0011 0013 0016 0017 0019 0022 0029 0030 0037 0038 0040 0041 0042 0043 0044; do
   file="$(ls "$ROOT"/supabase/migrations/${migration}_*.sql)"
   "${PSQL[@]}" -f "$file" >/dev/null 2>&1 || { "${PSQL[@]}" -f "$file"; exit 1; }
 done
 # Run twice: the migration says it is safe to.
 "${PSQL[@]}" -f "$(ls "$ROOT"/supabase/migrations/0040_*.sql)" >/dev/null
+# 0045 replaces the decision 0040 wrote, so it comes after that second run:
+# every billing test below runs on the plan page limits. Sent the way the
+# Supabase SQL editor sends a pasted file, twice.
+"${PSQL[@]}" -c "$(cat "$(ls "$ROOT"/supabase/migrations/0045_*.sql)")" >/dev/null
+"${PSQL[@]}" -c "$(cat "$(ls "$ROOT"/supabase/migrations/0045_*.sql)")" >/dev/null
 
 "${PSQL[@]}" -f "$HERE/tests.sql"
 # 0041 twice too, then the agent pages.
@@ -55,5 +61,10 @@ done
 # 0044 the same way, twice, then the translations.
 "${PSQL[@]}" -c "$(cat "$(ls "$ROOT"/supabase/migrations/0044_*.sql)")" >/dev/null
 "${PSQL[@]}" -f "$HERE/listing-translations.sql"
+"${PSQL[@]}" -f "$HERE/plan-limits.sql"
+# 0046 the same way, twice, then the photo angles and the WhatsApp line.
+"${PSQL[@]}" -c "$(cat "$(ls "$ROOT"/supabase/migrations/0046_*.sql)")" >/dev/null
+"${PSQL[@]}" -c "$(cat "$(ls "$ROOT"/supabase/migrations/0046_*.sql)")" >/dev/null
+"${PSQL[@]}" -f "$HERE/photo-angles.sql"
 bash "$HERE/race.sh" "$BIN" "$WORK" "$PORT"
-echo "OK: billing, agent-page, site-analytics, price-drop and translation SQL tests passed."
+echo "OK: billing, agent-page, site-analytics, price-drop, translation, plan-limit and photo-angle SQL tests passed."

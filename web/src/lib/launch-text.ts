@@ -3,8 +3,9 @@ import { offeredPlan, type CohortCount } from '@/features/billing/price';
 import { formatValue, parts } from './i18n';
 
 /**
- * The pricing page's own words around the launch offer: the headline price
- * and the real seat count (docs/PRICING.md §6). Kept apart from
+ * The pricing page's own words around the launch offer: the real seat count
+ * (docs/PRICING.md §6). The headline quotes the lowest plan, which the launch
+ * price does not undercut, so it no longer swaps. Kept apart from
  * launch-offer.ts so the homepage does not load the locale file.
  */
 
@@ -23,15 +24,8 @@ export function messageNodes(path: string, values: Record<string, string | numbe
 }
 
 export function showLaunchText(counts: CohortCount[] | null, root: ParentNode = document): void {
-  for (const headline of root.querySelectorAll<HTMLElement>('[data-offer]')) {
-    const key = headline.dataset.offer as 'agent_launch' | 'dealer_launch';
-    if (offeredPlan(key, counts).plan.key === key && headline.dataset.launch && headline.dataset.path) {
-      headline.replaceChildren(messageNodes(headline.dataset.path, { price: headline.dataset.launch }));
-    }
-  }
-
   for (const line of root.querySelectorAll<HTMLElement>('[data-seats]')) {
-    const key = line.dataset.seats as 'agent_launch' | 'dealer_launch';
+    const key = line.dataset.seats as 'agent_launch';
     const count = counts?.find((row) => row.cohort === key);
     if (!count) continue;
     const { seatsLeft } = offeredPlan(key, counts);

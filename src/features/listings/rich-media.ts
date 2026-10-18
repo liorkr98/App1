@@ -1,3 +1,4 @@
+import { EXTERIOR_RING, type PhotoAngle, type PhotoReview } from './photo-review.js';
 import { isPhotoRoom, type PhotoRoom } from './photo-rooms.js';
 
 /**
@@ -47,9 +48,41 @@ export function cleanPlanRooms(value: unknown): PlanRoom[] {
   return [...byRoom.values()].slice(0, PLAN_ROOMS_MAX);
 }
 
-/** A spin needs enough frames to read as turning; fewer is omitted. */
-export const SPIN_MIN = 12;
+/**
+ * A spin needs enough frames to read as turning; fewer is omitted. Four
+ * since 18 Oct 2026, when the spin started being built from the gallery
+ * (spinFromGallery): front, a side, the back and the other side already go
+ * round the car, and the page crossfades between them rather than jumping.
+ */
+export const SPIN_MIN = 4;
 export const SPIN_MAX = 36;
+/** From here a dedicated set turns without a crossfade: frames close enough to read as motion. */
+export const SPIN_SMOOTH = 12;
+
+/**
+ * The 360 from photographs the seller already uploaded (18 Oct 2026), so
+ * there is no second set to shoot. One photo per angle round the car, the
+ * best-scored where there are two, in walking order. Fewer than SPIN_MIN
+ * different angles is no spin: a turn that skips half the car is not one.
+ */
+export function spinFromGallery<T extends { id: string }>(
+  photos: readonly T[],
+  reviews: ReadonlyMap<string, PhotoReview>,
+): T[] {
+  const best = new Map<PhotoAngle, { photo: T; score: number }>();
+  for (const photo of photos) {
+    const review = reviews.get(photo.id);
+    if (!review?.angle || !EXTERIOR_RING.includes(review.angle)) continue;
+    const score = review.score ?? 0;
+    const held = best.get(review.angle);
+    if (!held || score > held.score) best.set(review.angle, { photo, score });
+  }
+  const ring = EXTERIOR_RING.flatMap((angle) => {
+    const held = best.get(angle);
+    return held ? [held.photo] : [];
+  });
+  return ring.length >= SPIN_MIN ? ring : [];
+}
 
 export function spinFrames<T>(frames: readonly T[] | undefined): T[] {
   if (!frames || frames.length < SPIN_MIN) return [];

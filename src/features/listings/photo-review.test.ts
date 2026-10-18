@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { parsePhotoReview, suggestedRoom } from './photo-review.js';
+import { parsePhotoReview, reviewSystem, suggestedRoom } from './photo-review.js';
 
 describe('parsePhotoReview', () => {
   it('keeps a known room, issue and tip, and drops a guess', () => {
@@ -35,5 +35,28 @@ describe('suggestedRoom', () => {
     assert.equal(suggestedRoom(review!, undefined), 'bedroom');
     assert.equal(suggestedRoom(review!, 'kitchen'), undefined);
     assert.equal(suggestedRoom({ ...review!, confidence: 0.4 }, undefined), undefined);
+  });
+});
+
+describe('parsePhotoReview by category (18 Oct 2026)', () => {
+  it('reads an angle and a colour for a car, and never a room', () => {
+    assert.deepEqual(
+      parsePhotoReview({ angle: 'frontLeft', room: 'kitchen', seen: ['silver', 'shelter', 'silver'], issues: ['plate'], score: 4 }, 'vehicle'),
+      { angle: 'frontLeft', seen: ['silver'], issues: ['plate'], score: 4 },
+    );
+    assert.equal(parsePhotoReview({ angle: 'sideways-ish' }, 'vehicle'), undefined);
+  });
+
+  it('reads a room and what a flat shows, and never an angle', () => {
+    assert.deepEqual(
+      parsePhotoReview({ room: 'living', angle: 'front', seen: ['shelter', 'red', 'pool'], issues: [] }, 'property'),
+      { room: 'living', seen: ['shelter'], issues: [] },
+    );
+  });
+
+  it('asks each category its own question, in json', () => {
+    assert.match(reviewSystem('vehicle'), /angle: .*frontLeft/);
+    assert.match(reviewSystem('property'), /room: /);
+    for (const category of ['vehicle', 'property'] as const) assert.match(reviewSystem(category), /json/);
   });
 });

@@ -1808,14 +1808,9 @@ import '../styles/dash.css';
         .order('created_at', { ascending: false })
         .limit(3);
       if (error || !Array.isArray(data) || data.length === 0) return;
-      // The price the lock moves to is the regular plan of the plan held now.
-      const { data: subs } = await supabase()
-        .from('subscriptions')
-        .select('plan_key')
-        .order('current_period_end', { ascending: false })
-        .limit(1);
-      const held = (Array.isArray(subs) ? subs[0]?.plan_key : undefined) as string | undefined;
-      const regularKey = held === 'dealer_launch' ? 'dealer' : 'agent';
+      // The price the lock moves to: the launch plan's regular plan. One
+      // launch plan for agents and dealers since 18 Oct 2026.
+      const regularKey = planByKey('agent_launch').regularPlan ?? 'agent';
       for (const notice of data as { id: string; kind: string; due_at: string | null }[]) {
         const card = document.createElement('div');
         card.className = 'billing-notice';

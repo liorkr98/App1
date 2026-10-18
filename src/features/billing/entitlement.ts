@@ -34,10 +34,19 @@ export function entitlementFromDecision(row: unknown, readFailed: boolean): Enti
   return credit ? 'free' : 'paid';
 }
 
-/** The refusal the trigger raises (PT402, HTTP 402) and what the editor does with it. */
-export type PublishRefusal = 'free_limit' | 'publish_unknown';
+/**
+ * The refusal the trigger raises (PT402, HTTP 402) and what the editor does
+ * with it. free_limit: the free pages are in use. plan_limit: a paid plan's
+ * active pages are in use (0045), so the paywall offers the next plan up.
+ */
+export type PublishRefusal = 'free_limit' | 'plan_limit' | 'publish_unknown';
 
 export function publishRefusal(error: { code?: string | undefined; message?: string | undefined } | null): PublishRefusal | null {
   if (!error || error.code !== 'PT402') return null;
-  return error.message === 'free_limit' ? 'free_limit' : 'publish_unknown';
+  return error.message === 'free_limit' || error.message === 'plan_limit' ? error.message : 'publish_unknown';
+}
+
+/** Whether a refusing decision is a paid plan at its cap. Which paywall to show; it grants nothing. */
+export function decisionCapped(row: unknown): boolean {
+  return typeof row === 'object' && row !== null && (row as Partial<DecisionRow>).reason === 'plan_limit';
 }

@@ -45,6 +45,17 @@ export function priceParts(plan: Plan): PriceParts {
   return { amount: shekels(plan.amountAgorot), terms: 'oneTimeInclVat' };
 }
 
+/**
+ * What one active page costs on a capped subscription, e.g. "₪4.90" for 10
+ * pages at ₪49. Rounded to the agora. null for unlimited, free and one-time
+ * plans: there is no honest per-page figure for them.
+ */
+export function perPage(plan: Plan): string | null {
+  if (plan.kind !== 'subscription' || !plan.pageLimit) return null;
+  const agorot = Math.round(plan.amountAgorot / plan.pageLimit);
+  return `₪${(agorot / 100).toFixed(2)}`;
+}
+
 /** The VAT-inclusive total of a B2B amount, rounded to the agora. */
 export function withVat(agorot: number, vatPercent: number = PRICING.vatPercent): number {
   return Math.round((agorot * (100 + vatPercent)) / 100);

@@ -24,6 +24,8 @@ interface Props {
   areaCount?: number | undefined;
   /** The photo checklist's one-line form (PhotoChecklist). Advice only. */
   photoCheck?: ReactNode;
+  /** The WhatsApp line: the agent's own, or DeepSeek's (18 Oct 2026). */
+  shareLineField?: ReactNode;
   /**
    * Why the last publish attempt did not produce a link.
    *
@@ -32,6 +34,8 @@ interface Props {
    * no way to tell a refused publish from a slow one.
    */
   failure?: string | undefined;
+  /** A paid plan at its active-page limit: the paywall offers the next plan up. */
+  planCapped?: boolean;
   onPublish: () => void;
   onCopy: (url: string) => void;
   /** Opens the share sheet: WhatsApp, Facebook, the phone's menu, the link. */
@@ -76,7 +80,9 @@ export function PublishStep({
   areaStatus,
   areaCount,
   photoCheck,
+  shareLineField,
   failure,
+  planCapped,
   onPublish,
   onCopy,
   onShare,
@@ -146,6 +152,8 @@ export function PublishStep({
         </div>
       </dl>
 
+      {shareLineField}
+
       {/*
         The fixable blockers are NOT listed here. The editor already shows
         every outstanding one in its own bar at the foot of the screen, and
@@ -161,7 +169,7 @@ export function PublishStep({
         <p className="field-hint">{t('editor.publish.freeHint')}</p>
       ) : null}
 
-      {payment?.code === 'paymentRequired' ? <Paywall category={state.category} /> : null}
+      {payment?.code === 'paymentRequired' ? <Paywall category={state.category} capped={planCapped ?? false} /> : null}
       {payment?.code === 'paymentUnverified' ? (
         <div className="paywall">
           <p>{t('editor.blockers.paymentUnverified')}</p>

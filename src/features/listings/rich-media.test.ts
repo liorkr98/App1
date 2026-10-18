@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { describe, it } from 'node:test';
 
-import { cleanPlanRooms, cleanVideo, depthFor, SPIN_MIN, spinFrames } from './rich-media.js';
+import type { PhotoReview } from './photo-review.js';
+import { cleanPlanRooms, cleanVideo, depthFor, SPIN_MIN, spinFrames, spinFromGallery } from './rich-media.js';
 
 describe('cleanPlanRooms', () => {
   it('keeps rooms inside the plan, rounded', () => {
@@ -75,5 +76,39 @@ describe('migration 0034', () => {
     assert.match(sql, /add value if not exists 'depth_map'/);
     assert.match(sql, /p_key not in \('storyUrl', 'flyerUrl', 'depth'\)/);
     assert.match(sql, /revoke all on function public\.attach_media_url\(uuid, text, jsonb\) from public, anon, authenticated/);
+  });
+});
+
+describe('spinFromGallery — the 360 from photos already uploaded (18 Oct 2026)', () => {
+  const photo = (id: string) => ({ id });
+  const at = (angle: PhotoReview['angle'], score?: number): PhotoReview => ({
+    issues: [],
+    ...(angle ? { angle } : {}),
+    ...(score ? { score } : {}),
+  });
+
+  it('goes round the car in walking order, one photo per angle, the best of two', () => {
+    const photos = ['rear', 'inside', 'front', 'left', 'right', 'left2'].map(photo);
+    const reviews = new Map<string, PhotoReview>([
+      ['rear', at('rear')],
+      ['inside', at('interior', 5)],
+      ['front', at('front')],
+      ['left', at('left', 2)],
+      ['right', at('right')],
+      ['left2', at('left', 4)],
+    ]);
+    assert.deepEqual(spinFromGallery(photos, reviews).map((item) => item.id), ['front', 'left2', 'rear', 'right']);
+  });
+
+  it('is no spin with fewer than four sides of the car', () => {
+    const photos = ['a', 'b', 'c', 'd'].map(photo);
+    const reviews = new Map<string, PhotoReview>([
+      ['a', at('front')],
+      ['b', at('frontLeft')],
+      ['c', at('left')],
+      ['d', at('engine')],
+    ]);
+    assert.deepEqual(spinFromGallery(photos, reviews), []);
+    assert.ok(SPIN_MIN === 4);
   });
 });

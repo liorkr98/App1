@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 
 import { DEEPSEEK_URL, DEEPSEEK_VISION_MODEL } from '../../lib/deepseek';
-import { OVERPASS_ENDPOINTS } from '../../lib/overpass';
+import { OVERPASS_ENDPOINTS, USER_AGENT } from '../../lib/overpass';
 import { supabaseAsUser, supabaseConfigured } from '../../lib/supabase';
 import { supabaseService } from '../../lib/supabase-service';
 
@@ -16,8 +16,13 @@ import { supabaseService } from '../../lib/supabase-service';
  *
  *   ai         the DeepSeek key is set AND a one-token request succeeds
  *   overpass   how many of the OpenStreetMap instances answer a tiny query
- *   routing    the walking-time router (self-hosted OSRM if set, else Valhalla)
- *   database   the newest migration the code relies on (0035) is applied
+ *   routing    the walking-time router. Self-hosted OSRM if OSRM_URL is set,
+ *              and Valhalla behind it, as lib/routing.ts falls back (18 Oct
+ *              2026: an OSRM_URL pointing at nothing read as "no walking
+ *              times" while Valhalla was answering every listing)
+ *   database   every migration the code relies on is applied: one probe per
+ *              migration, and the oldest missing one is named (until 18 Oct
+ *              it probed 0035 alone and said nothing about 0036 onwards)
  *   phone      the service key is set AND Supabase accepts it (upload from
  *              your phone). Added 12 Oct 2026, after a key pasted at the
  *              wrong length failed every phone upload with no sign anywhere
@@ -113,9 +118,12 @@ async function checkOverpass(): Promise<Check> {
   const answers = await Promise.all(
     OVERPASS_ENDPOINTS.map(async (endpoint) => {
       try {
+        // The same identification the real query sends (lib/overpass.ts):
+        // overpass-api.de refuses a request without one, so a check without
+        // it reported the service down when it was not.
         const response = await fetch(endpoint, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': USER_AGENT },
           body: new URLSearchParams({ data: '[out:json][timeout:5];node(1);out ids;' }),
           signal: AbortSignal.timeout(TIMEOUT_MS),
         });
@@ -129,18 +137,46 @@ async function checkOverpass(): Promise<Check> {
   return { key: 'overpass', ok: up > 0, detail: `${up}/${answers.length}` };
 }
 
-async function checkRouting(): Promise<Check> {
-  const osrm = (env as { OSRM_URL?: string }).OSRM_URL;
-  const url = osrm
-    ? `${osrm.replace(/\/+$/, '')}/table/v1/foot/34.78,32.08;34.79,32.09?sources=0`
-    : 'https://valhalla1.openstreetmap.de/status';
+async function reach(url: string): Promise<string> {
   try {
     const response = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
-    return { key: 'routing', ok: response.ok, detail: `${osrm ? 'osrm' : 'valhalla'}_${response.ok ? 'ok' : response.status}` };
+    return response.ok ? 'ok' : String(response.status);
   } catch (error) {
-    return { key: 'routing', ok: false, detail: `${osrm ? 'osrm' : 'valhalla'}_${failure(error)}` };
+    return failure(error);
   }
 }
+
+async function checkRouting(): Promise<Check> {
+  const osrm = (env as { OSRM_URL?: string }).OSRM_URL;
+  if (osrm) {
+    const answer = await reach(`${osrm.replace(/\/+$/, '')}/table/v1/foot/34.78,32.08;34.79,32.09?sources=0`);
+    if (answer === 'ok') return { key: 'routing', ok: true, detail: 'osrm_ok' };
+    // lib/routing.ts goes on to Valhalla, so walking times still work if it answers.
+    const fallback = await reach('https://valhalla1.openstreetmap.de/status');
+    return fallback === 'ok'
+      ? { key: 'routing', ok: true, detail: 'osrm_down_valhalla_ok' }
+      : { key: 'routing', ok: false, detail: `valhalla_${fallback}` };
+  }
+  const answer = await reach('https://valhalla1.openstreetmap.de/status');
+  return { key: 'routing', ok: answer === 'ok', detail: `valhalla_${answer}` };
+}
+
+/**
+ * One table or column each migration added, newest last. A select of it
+ * fails while the migration is missing. Add a row with every migration the
+ * code starts to rely on.
+ */
+const MIGRATION_PROBES: readonly [migration: string, table: string, column: string][] = [
+  ['0035', 'listing_time_to_link', 'listing_id'],
+  ['0036', 'photo_inbox', 'id'],
+  ['0037', 'photo_reviews', 'id'],
+  ['0040', 'plans', 'page_limit'],
+  ['0041', 'profiles', 'page_enabled'],
+  ['0042', 'site_page_views', 'id'],
+  ['0043', 'listings', 'price_was'],
+  ['0044', 'listings', 'translations'],
+  ['0046', 'listings', 'share_line'],
+];
 
 export const GET: APIRoute = async ({ request }) => {
   if (!supabaseConfigured) return json({ error: 'not_configured' }, 503);
@@ -152,9 +188,19 @@ export const GET: APIRoute = async ({ request }) => {
   if (admin.error || admin.data !== true) return json({ error: 'forbidden' }, 403);
 
   const database = async (): Promise<Check> => {
-    // 0035's view. Its absence means the database is behind the code.
-    const { error } = await client.from('listing_time_to_link').select('listing_id').limit(1);
-    return { key: 'database', ok: !error, detail: error ? 'missing_0035' : 'ok_0035' };
+    const missing = await Promise.all(
+      MIGRATION_PROBES.map(async ([migration, table, column]) => {
+        const { error } = await client.from(table).select(column).limit(1);
+        return error ? migration : null;
+      }),
+    );
+    // 0045 adds rows, not a column: its plan is the probe.
+    const plan = await client.from('plans').select('key').eq('key', 'agent_basic').maybeSingle();
+    const all = [...missing, plan.error || !plan.data ? '0045' : null].filter((item): item is string => item !== null).sort();
+    const newest = MIGRATION_PROBES[MIGRATION_PROBES.length - 1]![0];
+    return all.length === 0
+      ? { key: 'database', ok: true, detail: `ok_${newest}` }
+      : { key: 'database', ok: false, detail: `missing_${all[0]}` };
   };
 
   const checks = await Promise.all([

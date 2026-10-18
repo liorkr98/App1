@@ -1,0 +1,52 @@
+---
+import type { Plan } from '@/features/billing/pricing-config';
+import { PRICING } from '@/features/billing/pricing-config';
+import { perPage } from '@/features/billing/price';
+import Msg from './Msg.astro';
+import { t } from '../lib/i18n';
+import { amount, noteValues, termsPath } from '../lib/plan-copy';
+
+/**
+ * One subscription card on /pricing: the regular price, and the launch
+ * variant hidden until a real seat is proven (lib/launch-offer). Both share
+ * one grid cell, so the swap does not move the page. DISPLAY ONLY (§8).
+ *
+ * A capped plan also says what one active page costs: arithmetic on the one
+ * price list, never a literal.
+ */
+interface Props {
+  regular: Plan;
+  launch: Plan | null;
+  featured: boolean;
+  index: number;
+}
+
+const { regular, launch, featured, index } = Astro.props;
+---
+
+<li class:list={['pr-tier ls-fade', featured && 'is-featured']} style={`--i:${index}`} data-card={launch?.key}>
+  <p class="pr-name">
+    {t(`billing.plans.${regular.key}`)}
+    {featured && <span class="pr-pick">{t('pricing.recommended')}</span>}
+  </p>
+  <div class="pr-variants">
+    <div data-variant="regular">
+      <p class="pr-sum"><Msg path={termsPath(regular)} values={{ price: amount(regular) }} /></p>
+      {perPage(regular) && <p class="pr-per"><Msg path="pricing.perPage" values={{ price: perPage(regular)! }} /></p>}
+      <p class="pr-note"><Msg path={`billing.notes.${regular.key}`} values={noteValues(regular)} /></p>
+    </div>
+    {launch && (
+      <div data-variant="launch" class="is-off">
+        <p class="pr-flag">{t('billing.launchFlag')}</p>
+        <p class="pr-sum"><Msg path={termsPath(launch)} values={{ price: amount(launch) }} /></p>
+        {perPage(launch) && <p class="pr-per"><Msg path="pricing.perPage" values={{ price: perPage(launch)! }} /></p>}
+        <p class="pr-note"><Msg path={`billing.notes.${launch.key}`} values={noteValues(launch)} /></p>
+        <p class="pr-note pr-after"><Msg path="billing.regularAfter" values={{ months: PRICING.lockMonths, price: amount(regular) }} /></p>
+      </div>
+    )}
+  </div>
+  {/* Until a PSP is signed (CLAUDE.md §8) a paid plan is granted by hand: the
+      button says how to get one, instead of a greyed control that reads as a
+      broken site. Nothing here grants. */}
+  <a class="site-btn site-btn-ghost pr-go" href="/contact/">{t('pricing.talk')}</a>
+</li>

@@ -3,8 +3,9 @@
   floor under a slow scanning light, the spec strip, and the seller's
   disclosures as numbered cards.
 
-  One photograph, presented, not spun: the 360° spin needs 24–36 photos
-  around the car and lands in P7. Living Surfaces, Onyx; 1.x tokens pinned.
+  One photograph, presented; a turntable when the listing has a 360° spin,
+  built from the gallery's photographs by angle or from a dedicated set
+  (ShowroomStage.astro). Living Surfaces, Onyx; 1.x tokens pinned.
 */
 
 html[data-template='showroom'] {
@@ -110,7 +111,14 @@ html[data-template='showroom'] .sr-spin img {
   mask-image: radial-gradient(120% 90% at 50% 45%, #000 60%, transparent 100%);
 }
 
+/* A turn from the gallery's few photographs crossfades: the last frame is
+   held underneath (bindSpin), in the same cell. */
+html[data-template='showroom'] .sr-spin img {
+  grid-area: 1 / 1;
+}
+
 html[data-template='showroom'] .sr-spin-controls {
+  grid-row: 2;
   display: flex;
   align-items: center;
   justify-content: center;
