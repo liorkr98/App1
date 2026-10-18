@@ -16,6 +16,8 @@ import {
 import { autoTitle } from '@/features/listings/auto-title';
 import { blankFacts, reconcileFacts } from '@/features/listings/fact-entry';
 import { photoCoverage } from '@/features/listings/photo-coverage';
+import { autoOrder, sameOrder } from '@/features/listings/photo-order';
+import type { PhotoReview } from '@/features/listings/photo-review';
 import { isPhotoRoom, type PhotoRoom } from '@/features/listings/photo-rooms';
 import { LISTING_CATEGORIES, schemaFor } from '@/features/listings/schemas';
 import {
@@ -25,7 +27,7 @@ import {
   templateFits,
 } from '@/features/templates/manifest';
 import { suggestTemplate } from '@/features/templates/suggest';
-import { cleanPlanRooms, cleanVideo, type ListingVideo } from '@/features/listings/rich-media';
+import { cleanPlanRooms, cleanVideo, spinFromGallery, type ListingVideo } from '@/features/listings/rich-media';
 import type { MediaExtras } from '../../lib/listing-row';
 import { groundedDescription, type CopyTone } from '@/features/listings/listing-copy';
 import { nextAgentDescription } from '@/features/listings/agent-copy';
@@ -246,9 +248,41 @@ export default function Editor() {
   const [spin, setSpin] = useState<SpinFrame[]>([]);
   const [video, setVideo] = useState<ListingVideo | undefined>(undefined);
   const [extraUploading, setExtraUploading] = useState(false);
+
+  /**
+   * DeepSeek's labels for each photograph, by photo id (PhotoAdvice): the
+   * gallery order, the 360 and the fact suggestions are built from them.
+   */
+  const [reviews, setReviews] = useState<ReadonlyMap<string, PhotoReview>>(new Map());
+
+  /**
+   * The 360 from the gallery (18 Oct 2026): a car's photographs labelled by
+   * angle, in walking order, with no second set to shoot. A dedicated set the
+   * agent uploaded (`spin`) wins. `spinOff` is the agent saying no, and is
+   * saved. A spin saved earlier stands in until this visit's labels arrive.
+   */
+  const [spinOff, setSpinOff] = useState(false);
+  const [savedAutoSpin, setSavedAutoSpin] = useState<SpinFrame[]>([]);
+  const gallerySpin = useMemo<SpinFrame[]>(() => {
+    if (state.category !== 'vehicle' || spinOff) return [];
+    if (reviews.size === 0) return savedAutoSpin;
+    const ready = photos.filter((photo) => photo.publicUrl && photo.width && photo.height);
+    return spinFromGallery(ready, reviews).map((photo) => ({
+      id: `auto-${photo.id}`,
+      url: photo.publicUrl!,
+      width: photo.width!,
+      height: photo.height!,
+    }));
+  }, [state.category, spinOff, reviews, savedAutoSpin, photos]);
+
   const extras = useMemo<MediaExtras>(
-    () => ({ plan, spin, ...(video ? { video } : {}) }),
-    [plan, spin, video],
+    () => ({
+      plan,
+      spin: spin.length > 0 ? spin : gallerySpin,
+      ...(spinOff ? { spinOff } : {}),
+      ...(video ? { video } : {}),
+    }),
+    [plan, spin, gallerySpin, spinOff, video],
   );
   const extrasRef = useRef(extras);
   extrasRef.current = extras;
@@ -828,6 +862,53 @@ export default function Editor() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, area, suggestSource, suggesting, state.description, state.generatedDescription]);
 
+  /**
+   * DeepSeek's labels for each photograph, by photo id (PhotoAdvice), and
+   * the order they suggest (18 Oct 2026). Applied ONCE, with an undo, and
+   * only while the agent has not arranged the photos by hand: a seller's own
+   * order is never overridden. A listing loaded from a save counts as
+   * arranged.
+   */
+  const handOrdered = useRef(false);
+  const autoOrdered = useRef(false);
+  const [orderUndo, setOrderUndo] = useState<string[] | undefined>(undefined);
+  const suggestedOrder = useMemo(
+    () => (state.category ? autoOrder(photos, reviews, state.category) : photos),
+    [photos, reviews, state.category],
+  );
+  const reviewedAll =
+    photos.length >= 2 && photos.every((photo) => photo.status === 'uploaded' && reviews.has(photo.id));
+
+  useEffect(() => {
+    if (!reviewedAll || handOrdered.current || autoOrdered.current) return;
+    autoOrdered.current = true;
+    if (sameOrder(suggestedOrder, photos)) return;
+    setOrderUndo(photos.map((photo) => photo.id));
+    changePhotos(suggestedOrder);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reviewedAll, suggestedOrder]);
+
+  const undoOrder = () => {
+    if (!orderUndo) return;
+    const byId = new Map(photosRef.current.map((photo) => [photo.id, photo]));
+    const back = orderUndo.flatMap((id) => (byId.has(id) ? [byId.get(id)!] : []));
+    const added = photosRef.current.filter((photo) => !orderUndo.includes(photo.id));
+    handOrdered.current = true;
+    setOrderUndo(undefined);
+    changePhotos([...back, ...added]);
+  };
+
+  /** The agent's own change: a drag, or a cover picked, is their order from now on. */
+  const arrangePhotos = (next: EditorPhoto[]) => {
+    const current = photosRef.current;
+    const sameSet = next.length === current.length && next.every((photo) => current.some((item) => item.id === photo.id));
+    if (sameSet && !sameOrder(next, current)) {
+      handOrdered.current = true;
+      setOrderUndo(undefined);
+    }
+    changePhotos(next);
+  };
+
   const changePhotos = (next: EditorPhoto[]) => {
     photosRef.current = next;
     setPhotos(next);
@@ -856,7 +937,7 @@ export default function Editor() {
     const [picked] = next.splice(index, 1);
     if (!picked) return;
     next.unshift(picked);
-    changePhotos(next);
+    arrangePhotos(next);
   };
 
   const rotatePhoto = (id: string) => {
@@ -1107,6 +1188,7 @@ export default function Editor() {
             Boolean(image?.url),
         );
 
+        handOrdered.current = true;
         setPhotos(
           stored.map((image, index) => ({
             id: image.id ?? `saved-${index}`,
@@ -1238,6 +1320,7 @@ export default function Editor() {
               Boolean(image?.url),
           );
           if (stored.length === 0) return;
+          handOrdered.current = true;
           setPhotos(
             stored.map((image, index) => ({
               id: image.id ?? `saved-${index}`,
@@ -1258,7 +1341,9 @@ export default function Editor() {
           const saved = row.media as {
             floorPlan?: { url?: string; width?: number; height?: number; rooms?: unknown };
             spin?: { id?: string; url?: string; width?: number; height?: number }[];
+            spinOff?: unknown;
           };
+          if (saved.spinOff === true) setSpinOff(true);
           if (saved.floorPlan?.url) {
             setPlan({
               url: saved.floorPlan.url,
@@ -1268,16 +1353,18 @@ export default function Editor() {
             });
           }
           if (Array.isArray(saved.spin)) {
-            setSpin(
-              saved.spin
-                .filter((frame): frame is { id?: string; url: string; width?: number; height?: number } => Boolean(frame?.url))
-                .map((frame, index) => ({
-                  id: frame.id ?? `spin-${index}`,
-                  url: frame.url,
-                  width: Number(frame.width ?? 1),
-                  height: Number(frame.height ?? 1),
-                })),
-            );
+            const frames = saved.spin
+              .filter((frame): frame is { id?: string; url: string; width?: number; height?: number } => Boolean(frame?.url))
+              .map((frame, index) => ({
+                id: frame.id ?? `spin-${index}`,
+                url: frame.url,
+                width: Number(frame.width ?? 1),
+                height: Number(frame.height ?? 1),
+              }));
+            // A spin built from the gallery is rebuilt from it; only an
+            // uploaded set is the agent's own.
+            if (frames.every((frame) => frame.id.startsWith('auto-'))) setSavedAutoSpin(frames);
+            else setSpin(frames);
           }
         })
         .catch(() => undefined);
@@ -1614,20 +1701,43 @@ export default function Editor() {
               <>
                 <PhotosStep
                   photos={photos}
-                  onChange={changePhotos}
+                  onChange={arrangePhotos}
                   signedIn={signedIn}
                   category={state.category}
                 />
                 <PhonePortal signedIn={signedIn} ensureListing={ensureListing} onPhotos={takeFromPhone} />
                 <PhotoAdvice
                   listingId={savedRow?.id}
+                  category={state.category}
                   photos={photos}
+                  onReviews={setReviews}
                   status={photoCheck}
                   refreshKey={adviceTick}
                   onLabel={labelRoom}
                   onCover={makeCover}
                   onRotate={rotatePhoto}
                 />
+                {orderUndo ? (
+                  <p className="field-hint auto-order" role="status">
+                    {t(`editor.autoOrder.done.${state.category}`)}{' '}
+                    <button type="button" className="quiet" onClick={undoOrder}>
+                      {t('editor.autoOrder.undo')}
+                    </button>
+                  </p>
+                ) : reviewedAll && handOrdered.current && !sameOrder(suggestedOrder, photos) ? (
+                  <p className="field-hint auto-order">
+                    <button
+                      type="button"
+                      className="quiet"
+                      onClick={() => {
+                        setOrderUndo(photos.map((photo) => photo.id));
+                        changePhotos(suggestedOrder);
+                      }}
+                    >
+                      {t(`editor.autoOrder.offer.${state.category}`)}
+                    </button>
+                  </p>
+                ) : null}
                 <PhotoChecklist coverage={coverage} count={photos.length} />
                 {photosBusy ? <p className="hint">{t('editor.flow.uploadingNote')}</p> : null}
               </>
@@ -1736,7 +1846,15 @@ export default function Editor() {
                     ) : null}
                   </>
                 ) : signedIn ? (
-                  <SpinEditor frames={spin} onFrames={setSpin} onUpload={uploadSpin} uploading={extraUploading} />
+                  <SpinEditor
+                    frames={spin}
+                    autoFrames={gallerySpin}
+                    off={spinOff}
+                    onOff={setSpinOff}
+                    onFrames={setSpin}
+                    onUpload={uploadSpin}
+                    uploading={extraUploading}
+                  />
                 ) : null}
               </div>
             </details>

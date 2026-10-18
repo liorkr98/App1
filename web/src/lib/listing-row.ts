@@ -40,6 +40,8 @@ export interface SavedPhoto {
 export interface MediaExtras {
   plan?: { url: string; width: number; height: number; rooms: readonly PlanRoom[] } | undefined;
   spin?: readonly { id: string; url: string; width: number; height: number }[] | undefined;
+  /** The agent turned the gallery-built 360 off (18 Oct 2026). Saved, so it stays off. */
+  spinOff?: boolean | undefined;
   video?: ListingVideo | undefined;
 }
 
@@ -96,6 +98,7 @@ export function toMedia(photos: readonly SavedPhoto[], tourUrl?: string, extras:
     ...(extras.spin && extras.spin.length > 0
       ? { spin: extras.spin.map((frame) => ({ id: frame.id, url: frame.url, alt: '', width: frame.width, height: frame.height })) }
       : {}),
+    ...(extras.spinOff ? { spinOff: true } : {}),
     ...(extras.video ? { video: extras.video } : {}),
   };
 }

@@ -606,6 +606,12 @@
     },
     "spin": {
       "title": "",
+      "auto": "",
+      "hide": "",
+      "off": "",
+      "on": "",
+      "need": "",
+      "own": "",
       "hint": "",
       "upload": "",
       "count": "",
@@ -748,6 +754,17 @@
       "detailsCar": "",
       "ready": "",
       "publish": ""
+    },
+    "autoOrder": {
+      "done": {
+        "property": "",
+        "vehicle": ""
+      },
+      "undo": "",
+      "offer": {
+        "property": "",
+        "vehicle": ""
+      }
     }
   },
   "seo": {
