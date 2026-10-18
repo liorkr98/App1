@@ -765,6 +765,33 @@
         "property": "",
         "vehicle": ""
       }
+    },
+    "suggest": {
+      "title": "",
+      "yes": "",
+      "no": "",
+      "colour": "",
+      "seen": {
+        "shelter": "",
+        "parking": "",
+        "storage": "",
+        "elevator": "",
+        "renovated": "",
+        "needsRenovation": ""
+      },
+      "colours": {
+        "white": "",
+        "black": "",
+        "silver": "",
+        "grey": "",
+        "blue": "",
+        "red": "",
+        "green": "",
+        "brown": "",
+        "beige": "",
+        "yellow": "",
+        "orange": ""
+      }
     }
   },
   "seo": {

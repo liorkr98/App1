@@ -3347,7 +3347,9 @@ body:has(.live-preview.is-full) .nav {
   font-size: 0.78rem;
 }
 
-.photo-advice .quiet {
+.photo-advice .quiet,
+.auto-order .quiet,
+.fact-suggestions .quiet {
   margin-inline-start: 0.35rem;
   padding: 0.2rem 0.55rem;
   border: 1px solid var(--stone);
@@ -3358,4 +3360,32 @@ body:has(.live-preview.is-full) .nav {
   font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
+}
+
+/* What the photographs suggest (18 Oct 2026): one line each, yes or no. */
+.fact-suggestions {
+  display: grid;
+  gap: 0.4rem;
+  margin-block: 0.4rem 1rem;
+}
+
+.fact-suggestions h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.fact-suggestions ul {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fact-suggestions li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  line-height: 1.5;
 }

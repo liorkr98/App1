@@ -14,7 +14,8 @@ import {
   type Screen,
 } from '@/features/listings/editor';
 import { autoTitle } from '@/features/listings/auto-title';
-import { blankFacts, reconcileFacts } from '@/features/listings/fact-entry';
+import { answer, blankFacts, reconcileFacts } from '@/features/listings/fact-entry';
+import { suggestFacts, type FactSuggestion } from '@/features/listings/fact-suggest';
 import { photoCoverage } from '@/features/listings/photo-coverage';
 import { autoOrder, sameOrder } from '@/features/listings/photo-order';
 import type { PhotoReview } from '@/features/listings/photo-review';
@@ -61,6 +62,7 @@ import { SpinEditor, type SpinFrame } from './SpinEditor';
 import { PublishStep } from './PublishStep';
 import { DisclosuresStep } from './DisclosuresStep';
 import { FactsStep } from './FactsStep';
+import { FactSuggestions } from './FactSuggestions';
 import { Message } from './Message';
 import { FilmFile } from './FilmFile';
 import { PhonePortal, type InboxPhoto } from './PhonePortal';
@@ -1658,6 +1660,23 @@ export default function Editor() {
   const isProperty = state.category === 'property';
   const essential = state.category ? ESSENTIAL_FACTS[state.category] : [];
   const setFacts = (facts: EditorState['facts']) => setState((current) => ({ ...current, facts }));
+
+  /** Facts the photographs suggest; "no" hides one for this visit and records nothing. */
+  const [dismissedFacts, setDismissedFacts] = useState<ReadonlySet<string>>(new Set());
+  const factSuggestions = state.category
+    ? suggestFacts(reviews.values(), state.facts, state.category).filter(
+        (suggestion) => !dismissedFacts.has(`${suggestion.key}-${suggestion.seen}`),
+      )
+    : [];
+  const acceptFact = (suggestion: FactSuggestion) => {
+    const value =
+      suggestion.kind === 'present'
+        ? true
+        : suggestion.kind === 'option'
+          ? suggestion.option
+          : t(`editor.suggest.colours.${suggestion.seen}`);
+    setFacts(answer(stateRef.current.facts, suggestion.key, value));
+  };
   const setAudience = (audience: EditorState['audience']) =>
     setState((current) => {
       if (audience === undefined) {
@@ -1772,6 +1791,13 @@ export default function Editor() {
               onChange={(patch) => setState((current) => ({ ...current, ...patch }))}
             />
 
+            <FactSuggestions
+              suggestions={factSuggestions}
+              onAccept={acceptFact}
+              onDismiss={(suggestion) =>
+                setDismissedFacts((current) => new Set([...current, `${suggestion.key}-${suggestion.seen}`]))
+              }
+            />
             <FactsStep
               category={state.category}
               facts={state.facts}
