@@ -107,8 +107,8 @@ public surface:
 
 1. **No house number and no location pin** (§7). The street is "דיזנגוף", with
    no number. The editor fill types the street only.
-2. **No licence plate** (§7). The car template shows its plate field redacted,
-   exactly as the page renders it. No plate is typed on screen.
+2. **No licence plate** (§7). This cut shows no car at all; the dealer cut
+   (§11) must keep the plate field redacted, as the page renders it.
 3. **No valuation language**, and no "verified" or "trusted data" pitch: the
    11 Sept pivot removed that from marketing (CLAUDE.md §1).
 4. **The free tier is "2 pages, forever"** (docs/PRICING.md, `freePageLimit:
@@ -209,8 +209,9 @@ The street is typed as "דיזנגוף" only (guardrail 1).
   as a function of time): left Poster (108 in giant type), centre Aurora,
   right Blueprint (floor plan).
 - **13.5, 14.2, 14.9, 15.6:** the centre phone swaps template on the beat
-  with a vertical wipe: Heliograph (sun dial), Zine, **Keytag (the car: one
-  template family covers vehicles too)**, Monolith. The template's Hebrew
+  with a vertical wipe: Heliograph (sun dial), Zine, Keytag (the listing as
+  a key tag), Monolith. All of them show the same flat. The car templates are
+  left for the dealer cut (§11). The template's Hebrew
   name sits under the centre phone in a pill (`editor.templates.{id}`).
 - A soft tick sound on each swap, quantised to the beat.
 
