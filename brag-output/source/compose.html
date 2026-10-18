@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>עמוד מכירה — ad</title>
+<link rel="stylesheet" href="/fonts/faces.css">
+<style>
+  /* Tokens from web/src/styles/system/tokens.css (Onyx + Paper). */
+  :root {
+    --onyx: #0b0c0a;
+    --onyx-surface: #161713;
+    --ink-night: #f2f0ea;
+    --ink-night-2: #a7a89c;
+    --lift: #86b79a;
+    --paper: #f6f4ef;
+    --ink: #121310;
+    --ink-2: #5e5f57;
+    --accent: #2f5340;
+    --display: 'Noto Sans Hebrew', 'Heebo', sans-serif;
+    --body: 'Heebo', 'Assistant', sans-serif;
+    --serif: 'Frank Ruhl Libre', serif;
+    --wa-bg: #efeae2;
+    --wa-out: #d9fdd3;
+    --wa-link: #027eb5;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #000; }
+  #stage { position: relative; inline-size: 1080px; block-size: 1920px; overflow: hidden; background: var(--onyx); font-family: var(--body); }
+  .scene { position: absolute; inset: 0; display: none; }
+  .abs { position: absolute; }
+  .grain::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .06;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  bdi { unicode-bidi: isolate; }
+
+  /* ---------- chat (S1, S5) ---------- */
+  .chat { background: var(--wa-bg); }
+  .chat::before {
+    content: ''; position: absolute; inset: 0; opacity: .5;
+    background-image: radial-gradient(rgba(18,19,16,.06) 1.6px, transparent 1.7px);
+    background-size: 34px 34px;
+  }
+  .cap-dark { position: absolute; inset-inline: 80px; inset-block-start: 250px; font-family: var(--display); font-weight: 900; font-stretch: 75%; color: var(--ink); font-size: 104px; line-height: 1.02; margin: 0; }
+  .tag { position: absolute; inset-block-start: 452px; inset-inline-end: 80px; font: 600 30px/1 var(--body); color: var(--ink-2); border: 2px solid rgba(18,19,16,.18); border-radius: 999px; padding: 12px 22px 14px; background: rgba(255,255,255,.55); }
+  .chathead { position: absolute; inset-inline: 0; inset-block-start: 430px; display: flex; align-items: center; gap: 22px; padding-inline: 80px; }
+  .avatar { inline-size: 84px; block-size: 84px; border-radius: 50%; background: #c9c3b6; display: grid; place-items: center; font: 700 38px/1 var(--body); color: #fff; }
+  .chathead b { font: 700 42px/1.2 var(--body); color: var(--ink); }
+  .chathead small { display: block; font: 400 30px/1.3 var(--body); color: var(--ink-2); }
+  .bubble { position: absolute; border-radius: 30px; padding: 28px 36px 22px; font: 400 52px/1.45 var(--body); color: #111b21; box-shadow: 0 2px 2px rgba(0,0,0,.08); }
+  .bubble.out { background: var(--wa-out); inset-inline-end: 64px; border-start-end-radius: 30px; border-end-end-radius: 8px; }
+  .bubble.in { background: #fff; inset-inline-start: 64px; border-end-start-radius: 8px; }
+  .bubble .meta { display: block; text-align: end; font: 400 26px/1 var(--body); color: #667781; margin-block-start: 6px; }
+  .bubble .tick { color: #53bdeb; }
+  .link { color: var(--wa-link); text-decoration: underline; text-underline-offset: 6px; direction: ltr; unicode-bidi: isolate; display: block; text-align: end; font-size: 44px; }
+  .bubble.big { font-size: 68px; font-weight: 500; line-height: 1.4; }
+
+  /* ---------- S2 ---------- */
+  .h1 { position: absolute; inset-inline: 70px; margin: 0; font-family: var(--display); font-weight: 900; font-stretch: 70%; font-size: 146px; line-height: 1.04; white-space: nowrap; color: var(--ink-night); }
+  .h1 .line { display: block; overflow: hidden; padding-block-end: 12px; }
+  .h1 .line > span { display: inline-block; }
+  .h1 .lift { color: var(--lift); }
+  .photo { position: absolute; left: 0; top: 0; inline-size: 600px; block-size: 450px; border-radius: 26px; overflow: hidden; box-shadow: 0 40px 80px -30px rgba(0,0,0,.9); border: 10px solid #fff; background: #fff; }
+  .photo img { inline-size: 100%; block-size: 100%; object-fit: cover; display: block; }
+  .photo span { position: absolute; inset-block-end: 14px; inset-inline-start: 14px; background: rgba(11,12,10,.72); color: #fff; font: 600 30px/1 var(--body); padding: 10px 18px 12px; border-radius: 999px; }
+
+  /* ---------- phones ---------- */
+  .phone { position: absolute; inline-size: 636px; block-size: 1334px; border-radius: 86px; background: #1d1e1a; padding: 18px; box-shadow: 0 0 0 2px #34352f, 0 60px 120px -40px rgba(0,0,0,.95); transform-origin: 50% 0; }
+  .screen { position: relative; inline-size: 600px; block-size: 1298px; border-radius: 70px; overflow: hidden; background: #f4f3ee; }
+  .screen > img, .layer { position: absolute; inset-block-start: 0; inset-inline-start: 0; inline-size: 600px; }
+  .layer { block-size: 1298px; overflow: hidden; }
+  .layer > img { position: absolute; inset-block-start: 0; inset-inline-start: 0; inline-size: 600px; }
+  .notch { position: absolute; inset-block-start: 18px; inset-inline-start: 50%; transform: translateX(-50%); inline-size: 150px; block-size: 40px; border-radius: 22px; background: #0b0c0a; z-index: 5; }
+  .preview { position: absolute; inset-inline-start: 52px; inset-block-start: 569px; inline-size: 496px; block-size: 594px; border-radius: 30px; overflow: hidden; background: #000; }
+  .preview img { position: absolute; inset-block-start: 0; inset-inline-start: 0; inline-size: 496px; }
+  .tap { position: absolute; inline-size: 120px; block-size: 120px; margin: -60px 0 0 -60px; border-radius: 50%; background: rgba(134,183,154,.35); border: 5px solid rgba(242,240,234,.95); z-index: 6; opacity: 0; }
+
+  /* ---------- S3 / S4 captions ---------- */
+  .step { position: absolute; inset-inline: 80px; inset-block-start: 236px; display: flex; align-items: center; gap: 30px; }
+  .num { flex: none; inline-size: 118px; block-size: 118px; border-radius: 50%; border: 4px solid var(--lift); color: var(--lift); display: grid; place-items: center; font: 700 72px/1 var(--serif); padding-block-end: 8px; }
+  .step h2 { margin: 0; font-family: var(--display); font-weight: 900; font-stretch: 75%; font-size: 98px; line-height: 1; color: var(--ink-night); white-space: nowrap; }
+  .sub { position: absolute; inset-inline: 80px; inset-block-start: 392px; font: 500 44px/1.45 var(--body); color: var(--ink-night-2); margin: 0; }
+  .clock { position: absolute; inset-block-start: 1400px; inset-inline-end: 40px; display: flex; align-items: center; gap: 18px; background: var(--onyx-surface); border: 2px solid rgba(242,240,234,.14); border-radius: 999px; padding: 18px 34px 18px 26px; z-index: 8; box-shadow: 0 20px 40px -20px #000; direction: ltr; }
+  .clock svg { inline-size: 64px; block-size: 64px; }
+  .clock b { font: 700 72px/1 var(--serif); color: var(--ink-night); font-variant-numeric: tabular-nums; }
+  .clock small { font: 500 34px/1 var(--body); color: var(--ink-night-2); direction: rtl; }
+  .pill { position: absolute; inset-block-start: 496px; inset-inline-start: 50%; transform: translateX(50%); background: var(--lift); color: var(--onyx); font: 700 40px/1 var(--body); padding: 18px 34px 22px; border-radius: 999px; z-index: 9; white-space: nowrap; }
+
+  /* ---------- S6 ---------- */
+  .mark { position: absolute; inset-block-start: 470px; inset-inline-start: 50%; inline-size: 200px; block-size: 200px; margin-inline-start: -100px; }
+  .word { position: absolute; inset-inline: 0; inset-block-start: 720px; text-align: center; margin: 0; font: 700 168px/1.1 var(--serif); color: var(--ink-night); }
+  .tagline { position: absolute; inset-inline: 0; inset-block-start: 940px; text-align: center; margin: 0; font: 500 54px/1.4 var(--body); color: var(--ink-night-2); }
+  .cta { position: absolute; inset-block-start: 1100px; inset-inline-start: 50%; inline-size: 620px; margin-inline-start: -310px; block-size: 140px; border-radius: 999px; background: var(--accent); color: #fff; display: grid; place-items: center; font: 700 62px/1 var(--body); overflow: hidden; box-shadow: 0 0 0 2px rgba(134,183,154,.4); }
+  .cta i { position: absolute; inset-block: 0; inline-size: 160px; background: linear-gradient(100deg, transparent, rgba(255,255,255,.28), transparent); font-style: normal; }
+  .free { position: absolute; inset-inline: 0; inset-block-start: 1300px; text-align: center; margin: 0; font: 600 52px/1.4 var(--body); color: var(--ink-night); }
+  .url { position: absolute; inset-inline: 0; inset-block-start: 1386px; text-align: center; margin: 0; font: 500 46px/1.3 var(--body); color: var(--lift); direction: ltr; }
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <!-- S1 · the old way -->
+  <section class="scene chat" id="s1">
+    <h2 class="cap-dark" id="s1cap">הדרך הישנה</h2>
+    <span class="tag" id="s1tag">המחשה</span>
+    <div class="chathead" id="s1head"><span class="avatar">ד</span><div><b>דנה</b><small>קונה</small></div></div>
+    <div class="bubble out" id="s1out" style="inset-block-start: 620px; inline-size: 940px;">
+      היי, הנה הפרטים: <bdi>4</bdi> חדרים, <bdi>108</bdi> מ״ר, <bdi>₪4,250,000</bdi>. התמונות בדרייב:
+      <span class="link">drive.google.com/drive/folders/1xA9mQ7…</span>
+      <span class="meta"><bdi>10:42</bdi> <span class="tick">✓✓</span></span>
+    </div>
+    <div class="bubble in big" id="s1in" style="inset-block-start: 1120px; inline-size: 880px;">
+      רגע, איפה זה בדיוק? ויש תמונה של המטבח?
+      <span class="meta"><bdi>10:44</bdi></span>
+    </div>
+  </section>
+
+  <!-- S2 · photos in, a live page out -->
+  <section class="scene grain" id="s2">
+    <h1 class="h1" style="inset-block-start: 250px;">
+      <span class="line"><span id="l1">תמונות נכנסות.</span></span>
+      <span class="line"><span id="l2" class="lift">עמוד חי יוצא.</span></span>
+    </h1>
+    <div class="photo" id="p0"><img src="img/tlv-living-1200.webp" alt=""><span>סלון</span></div>
+    <div class="photo" id="p1"><img src="img/tlv-kitchen-1200.webp" alt=""><span>מטבח</span></div>
+    <div class="photo" id="p2"><img src="img/tlv-balcony-1200.webp" alt=""><span>מרפסת</span></div>
+    <div class="photo" id="p3"><img src="img/tlv-bath-1200.webp" alt=""><span>שירותים</span></div>
+  </section>
+
+  <!-- S3 + S4 · the real editor, then the real templates -->
+  <section class="scene grain" id="s34">
+    <div class="step" id="step"><span class="num" id="stepN"><bdi>1</bdi></span><h2 id="stepT">מצלמים</h2></div>
+    <p class="sub" id="sub"></p>
+    <h1 class="h1" id="s4cap" style="inset-block-start: 200px; font-size: 124px;">
+      <span class="line"><span id="s4l1">אותה מודעה.</span></span>
+      <span class="line"><span id="s4l2" class="lift">כל פעם סרט אחר.</span></span>
+    </h1>
+    <span class="pill" id="pill">אורורה</span>
+
+    <div class="phone" id="phL"><div class="screen"><div class="layer"><img id="imgL" src="img/poster.jpg" alt=""></div></div></div>
+    <div class="phone" id="phR"><div class="screen"><div class="layer"><img id="imgR" src="img/blueprint.jpg" alt=""></div></div></div>
+    <div class="phone" id="phC">
+      <div class="screen" id="scrC">
+        <span class="notch"></span>
+        <div class="layer" data-ed="e01-start"><img src="img/e01-start.jpg" alt=""></div>
+        <div class="layer" data-ed="e02-photos"><img src="img/e02-photos.jpg" alt=""></div>
+        <div class="layer" data-ed="e03-checklist"><img src="img/e03-checklist.jpg" alt=""></div>
+        <div class="layer" data-ed="e05-fill"><img src="img/e05-fill.jpg" alt=""></div>
+        <div class="layer" data-ed="e06-fill"><img src="img/e06-fill.jpg" alt=""></div>
+        <div class="layer" data-ed="e07-fill"><img src="img/e07-fill.jpg" alt=""></div>
+        <div class="layer" data-ed="e08-fill"><img src="img/e08-fill.jpg" alt=""></div>
+        <div class="layer" data-ed="e09-fill"><img src="img/e09-fill.jpg" alt=""></div>
+        <div class="layer" data-ed="e10-fill"><img src="img/e10-fill.jpg" alt=""></div>
+        <div class="layer" data-ed="e20-ready"><img src="img/e20-ready.jpg" alt=""><div class="preview"><img id="prevImg" src="img/aurora.jpg" alt=""></div></div>
+        <div class="layer" data-tpl="aurora"><img src="img/aurora.jpg" alt=""></div>
+        <div class="layer" data-tpl="heliograph"><img src="img/heliograph.jpg" alt=""></div>
+        <div class="layer" data-tpl="zine"><img src="img/zine.jpg" alt=""></div>
+        <div class="layer" data-tpl="keytag"><img src="img/keytag.jpg" alt=""></div>
+        <div class="layer" data-tpl="monolith"><img src="img/monolith.jpg" alt=""></div>
+        <span class="tap" id="tap"></span>
+      </div>
+    </div>
+    <div class="clock" id="clock">
+      <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="27" fill="none" stroke="rgba(242,240,234,.16)" stroke-width="6"/><circle id="ring" cx="32" cy="32" r="27" fill="none" stroke="#86b79a" stroke-width="6" stroke-linecap="round" stroke-dasharray="169.6" stroke-dashoffset="169.6" transform="rotate(-90 32 32)"/></svg>
+      <b id="clockT">0:00</b><small>דקות</small>
+    </div>
+  </section>
+
+  <!-- S5 · one link -->
+  <section class="scene chat" id="s5">
+    <h2 class="cap-dark" id="s5cap">שולחים קישור אחד.</h2>
+    <span class="tag" id="s5tag">המחשה</span>
+    <div class="chathead" id="s5head"><span class="avatar">ד</span><div><b>דנה</b><small>קונה</small></div></div>
+    <div class="bubble out" id="s5out" style="inset-block-start: 580px; inline-size: 880px; padding: 14px 14px 18px;">
+      <div style="border-radius: 20px; overflow: hidden; background: #f0f2f0;">
+        <img src="img/card.jpg" alt="" style="display:block; inline-size: 852px; block-size: 447px;">
+        <div style="padding: 18px 24px 22px;">
+          <b style="display:block; font: 700 40px/1.35 var(--body);">דירת <bdi>4</bdi> חדרים בתל אביב־יפו · <bdi>₪4,250,000</bdi></b>
+          <span style="display:block; font: 400 32px/1.45 var(--body); color: #54656f;"><bdi>108</bdi> מ״ר, קומה <bdi>5</bdi>, מעלית, מרפסת שמש <bdi>10</bdi> מ״ר, חניה, ממ״ד</span>
+          <span style="display:block; font: 400 30px/1.4 var(--body); color: #54656f; direction: ltr; text-align: end;">amudsell.com</span>
+        </div>
+      </div>
+      <span class="link" style="padding-inline: 20px; margin-block-start: 14px;">amudsell.com/a/T4V7A</span>
+      <span class="meta" style="padding-inline: 20px;"><bdi>10:42</bdi> <span class="tick">✓✓</span></span>
+    </div>
+    <div class="bubble in big" id="s5in" style="inset-block-start: 1410px; inline-size: 820px;">
+      וואו. אפשר לבוא לראות מחר?
+      <span class="meta"><bdi>10:43</bdi></span>
+    </div>
+  </section>
+
+  <!-- S6 · outro -->
+  <section class="scene grain" id="s6">
+    <svg class="mark" id="mark" viewBox="0 0 32 32" fill="none">
+      <rect id="markBg" width="32" height="32" rx="8" fill="#2f5340"/>
+      <circle class="ring" cx="16" cy="16" r="10" stroke="#FBFAF7" stroke-width="1.8" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" transform="rotate(-90 16 16)"/>
+      <circle class="ring" cx="16" cy="16" r="5.8" stroke="#FBFAF7" stroke-width="1.8" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" transform="rotate(-90 16 16)"/>
+      <circle id="dot" cx="16" cy="16" r="2.15" fill="#FBFAF7"/>
+    </svg>
+    <h1 class="word" id="word">עמוד מכירה</h1>
+    <p class="tagline" id="tagline">המודעה שלך, מוכנה לשליחה</p>
+    <div class="cta" id="cta">לבנות מודעה<i id="sheen"></i></div>
+    <p class="free" id="free"><bdi>2</bdi> דפים חינם, לתמיד.</p>
+    <p class="url" id="url">amudsell.com</p>
+  </section>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const prog = (t, a, b) => clamp((t - a) / (b - a));
+const expo = (x) => (x >= 1 ? 1 : 1 - Math.pow(2, -10 * x));          // --ls-ease-expo, close enough
+const io = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+const spring = (x) => { if (x <= 0) return 0; if (x >= 1) return 1; const c = 1.70158 * 1.3; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+const lerp = (a, b, x) => a + (b - a) * x;
+const show = (el, on) => { el.style.visibility = on ? 'visible' : 'hidden'; };
+// Scenes use display, not visibility: a child set visible would show through a hidden parent.
+const scene = (el, on) => { el.style.display = on ? 'block' : 'none'; };
+const set = (el, { x = 0, y = 0, s = 1, r = 0, o = 1 } = {}) => {
+  el.style.transform = `translate(${x}px, ${y}px) rotate(${r}deg) scale(${s})`;
+  el.style.opacity = o;
+};
+
+// Scene bounds (seconds) — on the 120 BPM grid.
+const S = { s1: [0, 2.5], s2: [2.5, 5.5], s3: [5.5, 12], s4: [12, 16.5], s5: [16.5, 19.5], s6: [19.5, 22.5] };
+const DURATION = 22.5;
+
+// Phone geometry: the screen is 600 px wide for a 390 css px capture.
+const K = 600 / 390;
+const PH = { w: 636, h: 1334 };
+const phoneLeft = (cx) => cx - PH.w / 2;
+
+// Editor timeline (S3).
+const ED = [
+  ['e01-start', 5.5], ['e02-photos', 6.45], ['e03-checklist', 7.25],
+  ['e05-fill', 8.05], ['e06-fill', 8.45], ['e07-fill', 8.85], ['e08-fill', 9.3], ['e09-fill', 9.65], ['e10-fill', 10.0],
+  ['e20-ready', 10.45],
+];
+const SLIDES = new Set(['e02-photos', 'e03-checklist', 'e05-fill', 'e08-fill', 'e20-ready']);
+const TAPS = [ [5.9, 281, 445], [7.75, 195, 800], [10.15, 136, 800] ];
+const TPL = [ ['aurora', 12.0], ['heliograph', 13.5], ['zine', 14.2], ['keytag', 14.9], ['monolith', 15.6] ];
+const TPL_NAME = { aurora: 'אורורה', heliograph: 'שמש', zine: 'ריזו', keytag: 'מחזיק מפתחות · רכב', monolith: 'מונולית' };
+
+const layers = [...document.querySelectorAll('#scrC .layer')];
+
+function renderS1(t) {
+  const a = expo(prog(t, 0, 0.3));
+  set($('s1cap'), { y: lerp(20, 0, a), o: 1 });
+  set($('s1out'), { y: lerp(24, 0, a), o: 1 });
+  const b = spring(prog(t, 0.75, 1.1));
+  set($('s1in'), { y: lerp(40, 0, b), s: lerp(0.9, 1, b), o: prog(t, 0.75, 0.85) });
+  const out = io(prog(t, 2.25, 2.5));
+  $('s1').style.transform = `translateY(${out * 60}px)`;
+  $('s1').style.opacity = 1 - out;
+}
+
+function renderS2(t) {
+  const u = t - 2.5;
+  const l1 = expo(prog(u, 0.2, 0.75)), l2 = expo(prog(u, 0.7, 1.25));
+  const exit = io(prog(u, 2.45, 3.0));
+  set($('l1'), { y: lerp(200, 0, l1) - exit * 300 });
+  set($('l2'), { y: lerp(200, 0, l2) - exit * 300 });
+  // Photos fall onto a loose stack, then fly into the phone.
+  const rest = [ [-120, 900, -7], [130, 960, 5], [-60, 1060, -2], [90, 1150, 6] ];
+  rest.forEach(([x, y, r], i) => {
+    const d = spring(prog(u, i * 0.13, i * 0.13 + 0.55));
+    const el = $('p' + i);
+    const fx = 540 + x - 300, fy = y;
+    const px = lerp(fx, 540 - 300, exit), py = lerp(lerp(-600, fy, d), 900, exit);
+    set(el, { x: px, y: py, r: lerp(r * 2.2, r, d) * (1 - exit), s: lerp(1, 0.55, exit), o: prog(u, i * 0.13, i * 0.13 + 0.08) * (1 - prog(u, 2.8, 3.0)) });
+  });
+}
+
+function edLayerAt(t) {
+  let cur = 0;
+  ED.forEach(([, at], i) => { if (t >= at) cur = i; });
+  return cur;
+}
+
+function renderS3(t) {
+  show($('step'), true); show($('sub'), true); show($('clock'), true);
+  show($('s4cap'), false); show($('pill'), false); show($('phL'), false); show($('phR'), false);
+  // Phone enters as the photos land in it.
+  const enter = expo(prog(t, 5.3, 5.9));
+  $('phC').style.left = phoneLeft(540) + 'px';
+  $('phC').style.top = '540px';
+  set($('phC'), { y: lerp(260, 0, enter), s: lerp(0.9, 1, enter), o: prog(t, 5.3, 5.5) });
+
+  // Captions per step.
+  const steps = [ [5.5, '1', 'מצלמים', 'החדרים מתויגים ותמונת השער נבחרת לבד.'],
+                  [8.0, '2', 'ממלאים כמה שדות', 'עיר, חדרים ומחיר. כל השאר לא חובה.'],
+                  [10.35, '3', 'בוחרים עיצוב', 'התבנית מוצעת לפי התמונות.'] ];
+  let si = 0; steps.forEach((s, i) => { if (t >= s[0]) si = i; });
+  const [at, n, title, sub] = steps[si];
+  $('stepN').firstChild.textContent = n; $('stepT').textContent = title; $('sub').textContent = sub;
+  const ca = expo(prog(t, at, at + 0.4));
+  set($('step'), { x: lerp(-60, 0, ca) * (si ? 1 : 0), y: si ? 0 : lerp(40, 0, ca), o: si ? clamp(0.2 + ca) : ca });
+  const sa = expo(prog(t, at + 0.2, at + 0.6));
+  set($('sub'), { y: lerp(24, 0, sa), o: sa });
+
+  // Editor screens.
+  const cur = edLayerAt(t);
+  layers.forEach((L) => { L.style.visibility = 'hidden'; L.style.transform = ''; L.style.clipPath = ''; L.style.opacity = 1; });
+  const curName = ED[cur][0];
+  const curEl = layers.find((L) => L.dataset.ed === curName);
+  const prevEl = cur > 0 ? layers.find((L) => L.dataset.ed === ED[cur - 1][0]) : null;
+  const sl = io(prog(t, ED[cur][1], ED[cur][1] + 0.35));
+  curEl.style.visibility = 'visible';
+  if (SLIDES.has(curName) && prevEl && sl < 1) {
+    // Old content out, new content in — a scroll, not a dissolve.
+    const dist = curName === 'e20-ready' ? 1298 : 520;
+    prevEl.style.visibility = 'visible';
+    prevEl.style.transform = `translateY(${-dist * sl}px)`;
+    curEl.style.transform = `translateY(${dist * (1 - sl)}px)`;
+  }
+  // The preview inside "the listing is ready" scrolls the real Aurora page.
+  const pv = io(prog(t, 10.9, 12.0));
+  $('prevImg').style.transform = `translateY(${-pv * 420}px)`;
+
+  // Taps.
+  const tap = $('tap'); tap.style.opacity = 0;
+  for (const [ta, x, y] of TAPS) {
+    const p = prog(t, ta - 0.08, ta + 0.4);
+    if (p > 0 && p < 1) {
+      tap.style.left = x * K + 'px'; tap.style.top = y * K + 'px';
+      tap.style.opacity = p < 0.2 ? p / 0.2 : 1 - (p - 0.2) / 0.8;
+      tap.style.transform = `scale(${lerp(0.55, 1.25, expo(p))})`;
+    }
+  }
+
+  // The clock: a time-lapse of the homepage's "four minutes".
+  const c = expo(prog(t, 5.5, 11.6) * 0.92) / expo(0.92);
+  const secs = Math.round(clamp(c) * 240);
+  $('clockT').textContent = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
+  $('ring').style.strokeDashoffset = 169.6 * (1 - clamp(c));
+  const ce = expo(prog(t, 5.6, 6.0));
+  const done = t >= 11.6 ? spring(prog(t, 11.6, 11.9)) : 0;
+  set($('clock'), { y: lerp(40, 0, ce), o: ce, s: 1 + 0.08 * Math.sin(Math.PI * done) });
+}
+
+function renderS4(t) {
+  show($('step'), false); show($('sub'), false); show($('s4cap'), true); show($('pill'), true);
+  show($('phL'), true); show($('phR'), true);
+  const u = t - 12;
+  // Clock leaves.
+  const cl = io(prog(u, 0, 0.3));
+  $('clockT').textContent = '4:00'; $('ring').style.strokeDashoffset = 0;
+  show($('clock'), cl < 1); set($('clock'), { y: cl * 60, o: 1 - cl });
+  // Caption.
+  const a1 = expo(prog(u, 0.05, 0.55)), a2 = expo(prog(u, 0.4, 0.9));
+  set($('s4l1'), { y: lerp(170, 0, a1) });
+  set($('s4l2'), { y: lerp(170, 0, a2) });
+  // Fan.
+  const f = expo(prog(u, 0.1, 0.8));
+  $('phC').style.left = phoneLeft(540) + 'px'; $('phC').style.top = '540px';
+  set($('phC'), { y: lerp(0, 120, f), s: lerp(1, 0.86, f) });
+  $('phC').style.zIndex = 3;
+  [['phL', -1], ['phR', 1]].forEach(([id, side]) => {
+    const el = $(id);
+    el.style.left = phoneLeft(540) + 'px'; el.style.top = '540px'; el.style.zIndex = 1;
+    set(el, { x: side * lerp(760, 350, f), y: lerp(260, 230, f), r: side * 7, s: 0.72, o: 1 });
+  });
+  // Every phone scrolls its real page.
+  const scroll = (start, speed) => -(start + speed * Math.max(0, u - 0.3));
+  $('imgL').style.transform = `translateY(${scroll(120, 360)}px)`;
+  $('imgR').style.transform = `translateY(${scroll(0, 300)}px)`;
+
+  // Centre phone: the editor's preview grows into the full page, then
+  // swaps template on the beat with a wipe.
+  layers.forEach((L) => { L.style.visibility = 'hidden'; L.style.transform = ''; L.style.clipPath = ''; });
+  let ci = 0; TPL.forEach(([, at], i) => { if (t >= at) ci = i; });
+  const [id, at] = TPL[ci];
+  const cur = layers.find((L) => L.dataset.tpl === id);
+  cur.style.visibility = 'visible';
+  const local = t - at;
+  cur.firstElementChild.style.transform = `translateY(${-(id === 'aurora' ? lerp(0, 1, io(prog(u, 0, 1.5))) * 900 : 80 + local * 520)}px)`;
+  const w = io(prog(local, 0, 0.28));
+  if (ci > 0 && w < 1) {
+    const prev = layers.find((L) => L.dataset.tpl === TPL[ci - 1][0]);
+    prev.style.visibility = 'visible';
+    cur.style.clipPath = `inset(${(1 - w) * 100}% 0 0 0)`;
+  }
+  if (ci === 0) {
+    // First 0.3 s: the e20 screen is still underneath, wiped up by the page.
+    const g = io(prog(u, 0, 0.3));
+    if (g < 1) {
+      const e20 = layers.find((L) => L.dataset.ed === 'e20-ready');
+      e20.style.visibility = 'visible';
+      cur.style.clipPath = `inset(${(1 - g) * 100}% 0 0 0)`;
+    }
+  }
+  $('pill').textContent = TPL_NAME[id];
+  const pp = spring(prog(local, 0, 0.3));
+  const pin = expo(prog(u, 0.5, 0.9));
+  $('pill').style.transform = `translateX(50%) translateY(${lerp(30, 0, pin)}px) scale(${ci ? lerp(0.85, 1, pp) : 1})`;
+  $('pill').style.opacity = pin;
+  $('tap').style.opacity = 0;
+  // Leave on the cut.
+  const out = io(prog(u, 4.25, 4.5));
+  $('s34').style.opacity = 1 - out;
+}
+
+function renderS5(t) {
+  const u = t - 16.5;
+  const a = expo(prog(u, 0, 0.45));
+  set($('s5cap'), { y: lerp(40, 0, a), o: a });
+  set($('s5tag'), { o: a });
+  set($('s5head'), { o: expo(prog(u, 0.05, 0.4)) });
+  const b = spring(prog(u, 0.15, 0.6));
+  set($('s5out'), { y: lerp(80, 0, b), s: lerp(0.92, 1, b), o: prog(u, 0.15, 0.25) });
+  const c = spring(prog(u, 1.1, 1.45));
+  set($('s5in'), { y: lerp(40, 0, c), s: lerp(0.9, 1, c), o: prog(u, 1.1, 1.2) });
+  const out = io(prog(u, 2.75, 3.0));
+  $('s5').style.opacity = 1 - out;
+}
+
+function renderS6(t) {
+  const u = t - 19.5;
+  const m = expo(prog(u, 0, 0.35));
+  set($('mark'), { s: lerp(0.7, 1, m), o: m });
+  document.querySelectorAll('#s6 .ring').forEach((r, i) => { r.style.strokeDashoffset = 1 - io(prog(u, 0.1 + i * 0.12, 0.5 + i * 0.12)); });
+  $('dot').style.transform = `scale(${spring(prog(u, 0.45, 0.75))})`; $('dot').style.transformOrigin = '16px 16px';
+  const w = expo(prog(u, 0.2, 0.7));
+  set($('word'), { y: lerp(60, 0, w), o: w });
+  const tg = expo(prog(u, 0.45, 0.9));
+  set($('tagline'), { y: lerp(30, 0, tg), o: tg });
+  const ct = spring(prog(u, 0.75, 1.15));
+  set($('cta'), { s: lerp(0.85, 1, ct), o: prog(u, 0.75, 0.85) });
+  $('sheen').style.transform = `translateX(${lerp(700, -900, io(prog(u, 1.3, 2.0)))}px)`;
+  const fr = expo(prog(u, 1.0, 1.4));
+  set($('free'), { y: lerp(24, 0, fr), o: fr });
+  const ur = expo(prog(u, 1.15, 1.55));
+  set($('url'), { y: lerp(24, 0, ur), o: ur });
+}
+
+window.render = (t) => {
+  for (const id of ['s1', 's2', 's34', 's5', 's6']) { scene($(id), false); $(id).style.opacity = 1; $(id).style.transform = ''; }
+  if (t < S.s1[1]) { scene($('s1'), true); renderS1(t); }
+  else if (t < S.s2[1]) { scene($('s2'), true); renderS2(t); if (t >= 5.3) { scene($('s34'), true); renderS3(t); show($('step'), false); show($('sub'), false); show($('clock'), false); } }
+  else if (t < S.s3[1]) { scene($('s34'), true); renderS3(t); }
+  else if (t < S.s4[1]) { scene($('s34'), true); renderS4(t); }
+  else if (t < S.s5[1]) { scene($('s5'), true); renderS5(t); }
+  else { scene($('s6'), true); renderS6(t); }
+};
+window.DURATION = DURATION;
+window.ready = (async () => {
+  await document.fonts.ready;
+  await Promise.all([
+    document.fonts.load('900 100px "Noto Sans Hebrew"', 'אב'), document.fonts.load('400 40px Heebo', 'אב'),
+    document.fonts.load('700 40px Heebo', 'אב'), document.fonts.load('700 100px "Frank Ruhl Libre"', 'אב1'),
+  ]);
+  await Promise.all([...document.images].map((im) => im.decode().catch(() => {})));
+  window.render(0);
+  return true;
+})();
+</script>
+</body>
+</html>
