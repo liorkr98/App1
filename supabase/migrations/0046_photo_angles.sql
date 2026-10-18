@@ -1,4 +1,4 @@
--- 0046: more from the photo check, and the agent's WhatsApp line (18 Oct 2026).
+-- 0046: more from the photo check, and the WhatsApp line the agent writes (18 Oct 2026).
 --
 -- 1. photo_reviews.angle: where the camera stood round a car (front,
 --    frontLeft, ... frontRight, or a close-up). The editor builds the 360
@@ -141,7 +141,7 @@ comment on function public.attach_own_photo_review(uuid, text, text, real, text[
 revoke all on function public.attach_own_photo_review(uuid, text, text, real, text[], text, int, text, text[]) from public, anon;
 grant execute on function public.attach_own_photo_review(uuid, text, text, real, text[], text, int, text, text[]) to authenticated;
 
--- The agent's own line for the WhatsApp message. One line, short: it sits
+-- The line the agent writes for the WhatsApp message. One line, short: it sits
 -- between the title and the facts, and a paragraph there pushes the link
 -- preview off the first screen of the chat.
 alter table public.listings
