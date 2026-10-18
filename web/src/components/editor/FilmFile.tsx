@@ -4,6 +4,8 @@ import type { ListingVideo } from '@/features/listings/rich-media';
 import { stripVideoLocation } from '@/features/listings/video-strip';
 
 import { FILM_MIN } from '@/features/listings/ken-burns';
+import { FILM_FORMAT_IDS, FILM_FORMATS, type FilmFormat } from '@/features/listings/film-overlay';
+import { FILM_MOODS, type FilmMood } from '@/features/listings/film-music';
 import type { Listing } from '@/types/listing';
 
 import { recordFilm } from '../../lib/film-file';
@@ -31,6 +33,13 @@ async function savedListing(listingId: string): Promise<Listing | undefined> {
   }
 }
 
+/** 1080 × 1350 → "4:5". */
+function ratio(width: number, height: number): string {
+  const divisor = (a: number, b: number): number => (b === 0 ? a : divisor(b, a % b));
+  const d = divisor(width, height);
+  return `${width / d}:${height / d}`;
+}
+
 /**
  * Screen 3. One action makes the story file from the photographs. The other
  * accepts a filmed clip and refuses it when the location is still in a live
@@ -39,6 +48,9 @@ async function savedListing(listingId: string): Promise<Listing | undefined> {
 export function FilmFile({ photos, listingId, onVideo }: Props) {
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | undefined>(undefined);
+  const [format, setFormat] = useState<FilmFormat>('story');
+  // No music unless the agent picks a mood.
+  const [mood, setMood] = useState<FilmMood | undefined>(undefined);
 
   const store = async (
     listing: string,
@@ -89,6 +101,17 @@ export function FilmFile({ photos, listingId, onVideo }: Props) {
       setNote(t('editor.film.needPhotos')); // "three" in words: FILM_MIN, pinned by ken-burns.test.ts
       return;
     }
+    // Made here, inside the tap, before any await: iOS refuses an
+    // AudioContext created after one.
+    let context: AudioContext | undefined;
+    if (mood && typeof AudioContext !== 'undefined') {
+      try {
+        context = new AudioContext();
+        void context.resume();
+      } catch {
+        context = undefined;
+      }
+    }
     setBusy(true);
     setNote(t('editor.film.working'));
     try {
@@ -98,7 +121,10 @@ export function FilmFile({ photos, listingId, onVideo }: Props) {
       const listing = await savedListing(listingId);
       const urls = listing ? filmPhotos(listing).map((photo) => photo.url) : uploaded;
       if (listing) await loadShareFonts();
-      const made = await recordFilm(urls, listing ? filmStory(listing) : undefined);
+      const made = await recordFilm(urls, listing ? filmStory(listing) : undefined, {
+        format,
+        ...(context && mood ? { music: { context, mood } } : {}),
+      });
       if (!made) {
         setNote(t('editor.film.failed'));
         return;
@@ -110,9 +136,11 @@ export function FilmFile({ photos, listingId, onVideo }: Props) {
         codec: made.codec,
       });
       if (!stored) return;
+      if (mood && !made.music) setNote(t('editor.film.noMusic'));
     } catch {
       setNote(t('editor.film.failed'));
     } finally {
+      void context?.close().catch(() => undefined);
       setBusy(false);
     }
   };
@@ -158,6 +186,37 @@ export function FilmFile({ photos, listingId, onVideo }: Props) {
 
   return (
     <div className="film-file">
+      <div className="tone-row" role="group" aria-label={t('editor.film.shape')}>
+        {FILM_FORMAT_IDS.map((option) => (
+          <button
+            key={option}
+            type="button"
+            className={option === format ? 'tone-chip chosen' : 'tone-chip'}
+            aria-pressed={option === format}
+            disabled={busy}
+            onClick={() => setFormat(option)}
+          >
+            {t(`editor.film.shapes.${option}`)}{' '}
+            <bdi>
+              {ratio(FILM_FORMATS[option].width, FILM_FORMATS[option].height)}
+            </bdi>
+          </button>
+        ))}
+      </div>
+      <div className="tone-row" role="group" aria-label={t('editor.film.music')}>
+        {[undefined, ...FILM_MOODS].map((option) => (
+          <button
+            key={option ?? 'none'}
+            type="button"
+            className={option === mood ? 'tone-chip chosen' : 'tone-chip'}
+            aria-pressed={option === mood}
+            disabled={busy}
+            onClick={() => setMood(option)}
+          >
+            {t(`editor.film.moods.${option ?? 'none'}`)}
+          </button>
+        ))}
+      </div>
       <button type="button" className="secondary" onClick={() => void make()} disabled={busy}>
         {t('editor.film.make')}
       </button>

@@ -3299,11 +3299,11 @@ body:has(.live-preview.is-full) .nav {
   margin-block-start: 0.8rem;
 }
 
-.film-file .field-hint {
+.film-file :is(.field-hint, .tone-row) {
   flex-basis: 100%;
 }
 
-.film-file :is(button, .film-file-pick) {
+.film-file > :is(button, .film-file-pick) {
   padding: 0.7rem 1.2rem;
   font: inherit;
   font-size: 0.95rem;

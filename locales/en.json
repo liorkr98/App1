@@ -668,7 +668,21 @@
       "tooLong": "",
       "tooBig": "",
       "hevc": "",
-      "ready": ""
+      "ready": "",
+      "shape": "",
+      "shapes": {
+        "story": "",
+        "feed": "",
+        "square": ""
+      },
+      "music": "",
+      "moods": {
+        "none": "",
+        "calm": "",
+        "warm": "",
+        "upbeat": ""
+      },
+      "noMusic": ""
     },
     "photoReview": {
       "waiting": "",

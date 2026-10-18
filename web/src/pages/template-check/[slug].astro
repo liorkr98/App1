@@ -7,6 +7,7 @@ import {
   listings,
   matrixListings,
   propertyListing,
+  vehicleListing,
   withNamedRooms,
 } from '../../lib/listings';
 import { priceDropped, realShapedListings } from '../../lib/real-shaped';
@@ -50,7 +51,16 @@ export function getStaticPaths() {
     params: { slug: `drop-${id}` },
     props: { listing: priceDropped(applyTemplate(propertyListing, id)) },
   }));
-  return [...demos, ...templates, ...fixturePages, ...combos, ...real, ...drops];
+  // The showroom's 360 from four photographs, the fewest a gallery spin takes
+  // (spinFromGallery): what e2e/spin.spec.ts turns with a mouse and keys.
+  const { cover, gallery } = vehicleListing.media;
+  const spin = {
+    params: { slug: 'spin-showroom' },
+    props: {
+      listing: { ...vehicleListing, template: 'showroom', media: { ...vehicleListing.media, spin: [cover, ...gallery] } } as Listing,
+    },
+  };
+  return [...demos, ...templates, ...fixturePages, ...combos, ...real, ...drops, spin];
 }
 
 const { listing } = Astro.props;

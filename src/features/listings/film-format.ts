@@ -24,13 +24,33 @@ export const RECORDER_TYPES: readonly RecorderChoice[] = [
 ];
 
 /**
+ * The same order with the sound named (18 Oct 2026), for a film with music:
+ * AAC beside H.264, which is what an iPhone and WhatsApp play, then Opus in
+ * WebM. A bare `video/mp4` stays last; Safari adds AAC to it by itself.
+ * When none is supported the film records silent, and the editor says so.
+ */
+export const RECORDER_TYPES_WITH_SOUND: readonly RecorderChoice[] = [
+  { mime: 'video/mp4;codecs=avc1.4d002a,mp4a.40.2', codec: 'h264', extension: 'mp4' },
+  { mime: 'video/mp4;codecs=avc1.42e01f,mp4a.40.2', codec: 'h264', extension: 'mp4' },
+  { mime: 'video/mp4;codecs=avc1,mp4a.40.2', codec: 'h264', extension: 'mp4' },
+  { mime: 'video/webm;codecs=vp9,opus', codec: 'vp9', extension: 'webm' },
+  { mime: 'video/webm;codecs=vp8,opus', codec: 'vp8', extension: 'webm' },
+  { mime: 'video/mp4', codec: 'h264', extension: 'mp4' },
+];
+
+export const FILM_AUDIO_BITS_PER_SECOND = 128_000;
+
+/**
  * About 4 Mbit/s: thirty seconds of 1080 × 1920 stays under the 16 MB a
  * WhatsApp status accepts, with room for a slow phone's bursts.
  */
 export const FILM_BITS_PER_SECOND = 4_000_000;
 
-export function pickRecorderType(isSupported: (mime: string) => boolean): RecorderChoice | undefined {
-  return RECORDER_TYPES.find((choice) => {
+export function pickRecorderType(
+  isSupported: (mime: string) => boolean,
+  types: readonly RecorderChoice[] = RECORDER_TYPES,
+): RecorderChoice | undefined {
+  return types.find((choice) => {
     try {
       return isSupported(choice.mime);
     } catch {

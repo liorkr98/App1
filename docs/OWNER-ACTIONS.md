@@ -84,6 +84,9 @@ done, so the next session knows.
 - [ ] **A named author for the guides**, when there is one. Today the guides
   are signed "צוות עמוד מכירה". A person (name and role) is a one-line change
   in `src/features/guides/guides.ts`.
-- [ ] **What to build next.** Offered, not started: a square or 4:5 feed
-  version of the video; a "price updated" card to re-share; pages in English,
-  Russian and Arabic; royalty-free music for the video.
+- [ ] **What to build next.** Offered, not started: a "price updated" card to
+  re-share; pages in English, Russian and Arabic. Built 18 Oct 2026: the
+  square and 4:5 feed versions of the video, and music for it (three moods,
+  generated in the agent's browser, so no track to licence). Not yet heard on
+  a real iPhone or Android: make one at `/lab/film/?format=square&music=calm`
+  and send it to yourself on WhatsApp.
