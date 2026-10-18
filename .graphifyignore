@@ -1,0 +1,7 @@
+# What `graphify update .` leaves out of the project graph (docs/AGENT-TOOLS.md).
+# The vendored assistant skills are tools for the agent, not the product.
+.claude/
+graphify-out/
+web/dist/
+web/e2e/__screenshots__/
+**/node_modules/
