@@ -30,8 +30,8 @@ import { resolveTemplateId } from '@/features/templates/manifest';
 export const LISTING_COLUMNS_BEFORE_0043 =
   'id, slug, category, title, description, price, currency, list_price, price_note, facts, media, disclosures, location, seller, template, accent, status, indexable, pre_portal, published_at, og_image_hash, audience, hyad_mark, area_places';
 
-/** Columns added by migrations the owner runs by hand (0043, 0044). */
-const LATER_COLUMNS = ['price_was', 'price_dropped_at', 'translations'] as const;
+/** Columns added by migrations the owner runs by hand (0043, 0044, 0046). */
+const LATER_COLUMNS = ['price_was', 'price_dropped_at', 'translations', 'share_line'] as const;
 
 export const LISTING_COLUMNS = [LISTING_COLUMNS_BEFORE_0043, ...LATER_COLUMNS].join(', ');
 
@@ -78,6 +78,7 @@ export interface ListingRow {
   status: string;
       indexable: boolean;
   pre_portal?: boolean | null;
+  share_line?: string | null;
   published_at: string | null;
   og_image_hash: string | null;
   audience: string | null;
@@ -341,6 +342,7 @@ export function listingFromRow(row: ListingRow): Listing | undefined {
       ? { areaPlaces, textAttributions: [OSM_ATTRIBUTION] }
       : {}),
     ...(row.pre_portal === true ? { prePortal: true } : {}),
+    ...(typeof row.share_line === 'string' && row.share_line.trim() ? { shareLine: row.share_line.trim() } : {}),
     ...(row.og_image_hash ? { ogImageHash: row.og_image_hash } : {}),
     ...(row.audience === 'investor' || row.audience === 'resident' || row.audience === 'both'
       ? { audience: row.audience }

@@ -792,6 +792,16 @@
         "yellow": "",
         "orange": ""
       }
+    },
+    "headline": {
+      "suggest": {
+        "title": "",
+        "line": ""
+      },
+      "busy": "",
+      "none": "",
+      "lineLabel": "",
+      "lineHint": ""
     }
   },
   "seo": {

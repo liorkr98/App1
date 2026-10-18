@@ -46,6 +46,7 @@ import { areaKey, areaSettled, requestArea, type AreaClientStatus } from '../../
 import { allPlaces, type AreaPlaces } from '@/features/listings/area-note';
 import { stripAndResize, uploadDerived } from '../../lib/listing-photo';
 import { loadListing, publishListing, saveListing } from '../../lib/listing-save';
+import { readShareLine, saveShareLine, suggestHeadline } from '../../lib/share-line';
 import { loadProfile } from '../../lib/profile';
 import { recordEditorEvent } from '../../lib/editor-events';
 import { recordListingEvent } from '../../lib/listing-events';
@@ -1039,6 +1040,57 @@ export default function Editor() {
    * agent types their own (auto-title.ts). An empty title blocks publishing,
    * and a blank box asking for a headline is where people stop.
    */
+  /**
+   * DeepSeek's title and WhatsApp line (/api/headline, 18 Oct 2026). Saved
+   * first, because the server reads the facts from the row. The line is
+   * stored on its own (lib/share-line.ts). Nothing comes back → a quiet
+   * "no suggestion right now", never an error.
+   */
+  const [shareLine, setShareLine] = useState('');
+  const [headlineBusy, setHeadlineBusy] = useState<'title' | 'line' | undefined>(undefined);
+  const [headlineMissed, setHeadlineMissed] = useState<'title' | 'line' | undefined>(undefined);
+  useEffect(() => {
+    const id = savedRow?.id;
+    if (!id || !supabaseConfigured) return;
+    let live = true;
+    void readShareLine(id).then((line) => {
+      if (live && line) setShareLine((current) => current || line);
+    });
+    return () => {
+      live = false;
+    };
+  }, [savedRow?.id]);
+
+  const askHeadline = async (part: 'title' | 'line') => {
+    const id = savedRow?.id ?? listingId.current;
+    if (!id || headlineBusy) return;
+    setHeadlineBusy(part);
+    setHeadlineMissed(undefined);
+    await saveListing(id, stateRef.current, photosRef.current, extrasRef.current).catch(() => undefined);
+    const suggestion = await suggestHeadline(id, tone);
+    setHeadlineBusy(undefined);
+    const text = suggestion[part];
+    if (!text) {
+      setHeadlineMissed(part);
+      return;
+    }
+    if (part === 'title') setState((current) => ({ ...current, title: text }));
+    else {
+      setShareLine(text);
+      void saveShareLine(id, text);
+    }
+  };
+
+  const headlineButton = (part: 'title' | 'line') =>
+    signedIn && supabaseConfigured ? (
+      <p className="field-hint">
+        <button type="button" className="quiet" disabled={headlineBusy !== undefined} onClick={() => void askHeadline(part)}>
+          {headlineBusy === part ? t('editor.headline.busy') : t(`editor.headline.suggest.${part}`)}
+        </button>
+        {headlineMissed === part ? <span> {t('editor.headline.none')}</span> : null}
+      </p>
+    ) : null;
+
   const lastAutoTitle = useRef('');
   useEffect(() => {
     const made = autoTitle(state.category, state.facts, state.city);
@@ -1848,6 +1900,7 @@ export default function Editor() {
                   street={state.street ?? ''}
                   priceNote={state.priceNote ?? ''}
                   fields={['title', 'priceNote']}
+                  titleAction={headlineButton('title')}
                   titleError={here.some((blocker) => blocker.code === 'titleMissing')}
                   onChange={(patch) => setState((current) => ({ ...current, ...patch }))}
                 />
@@ -2047,6 +2100,32 @@ export default function Editor() {
               areaStatus={state.category === 'property' && area && area.key === addressKey ? area.status : undefined}
               areaCount={area && area.key === addressKey ? area.count : undefined}
               photoCheck={<PhotoChecklist coverage={coverage} count={photos.length} variant="line" />}
+              shareLineField={
+                signedIn && supabaseConfigured ? (
+                  <div className="field share-line">
+                    <label className="field-label" htmlFor="p-share-line">
+                      {t('editor.headline.lineLabel')}
+                    </label>
+                    <input
+                      id="p-share-line"
+                      className="field-input"
+                      type="text"
+                      maxLength={160}
+                      value={shareLine}
+                      onChange={(event) => setShareLine(event.target.value)}
+                      onBlur={() => {
+                        const id = savedRow?.id ?? listingId.current;
+                        if (id) void saveShareLine(id, shareLine);
+                      }}
+                      aria-describedby="p-share-line-hint"
+                    />
+                    <p className="field-hint" id="p-share-line-hint">
+                      {t('editor.headline.lineHint')}
+                    </p>
+                    {headlineButton('line')}
+                  </div>
+                ) : undefined
+              }
               failure={failure}
               planCapped={planCapped}
               onPublish={publish}

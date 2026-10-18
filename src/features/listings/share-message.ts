@@ -19,6 +19,11 @@ export interface ShareInput {
   title: string;
   /** Formatted with the currency sign, e.g. ₪1,850,000. */
   price: string;
+  /**
+   * The agent's own line after the title (0046), one line. A line break in
+   * it would read as a second message.
+   */
+  line?: string;
   /** Short facts, already formatted with their units. Order is display order. */
   facts: readonly string[];
   /** Street and city, or just city. Omitted when the seller hid the address. */
@@ -46,6 +51,9 @@ export function shareMessage(input: ShareInput): string {
   const title = input.title.replace(/\s*\n\s*/g, ' ').trim();
 
   lines.push(input.price ? `${title} · ${input.price}` : title);
+
+  const own = input.line?.replace(/\s+/g, ' ').trim();
+  if (own) lines.push(own);
 
   if (input.facts.length > 0) {
     // A middle dot rather than a comma: the facts are already comma-shaped

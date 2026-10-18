@@ -170,6 +170,7 @@ const shareHref = whatsappShareUrl(
   shareMessage({
     title: listing.title,
     price: listing.price > 0 && listing.priceDisplay !== 'on_request' ? ils(listing.price) : '',
+    ...(listing.shareLine ? { line: listing.shareLine } : {}),
     facts: shareFacts,
     ...(sharePlace ? { place: sharePlace } : {}),
     ...(listing.prePortal ? { prePortalLine: t('listing.prePortal') } : {}),

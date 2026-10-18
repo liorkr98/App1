@@ -24,6 +24,8 @@ interface Props {
   areaCount?: number | undefined;
   /** The photo checklist's one-line form (PhotoChecklist). Advice only. */
   photoCheck?: ReactNode;
+  /** The WhatsApp line: the agent's own, or DeepSeek's (18 Oct 2026). */
+  shareLineField?: ReactNode;
   /**
    * Why the last publish attempt did not produce a link.
    *
@@ -78,6 +80,7 @@ export function PublishStep({
   areaStatus,
   areaCount,
   photoCheck,
+  shareLineField,
   failure,
   planCapped,
   onPublish,
@@ -148,6 +151,8 @@ export function PublishStep({
           </dd>
         </div>
       </dl>
+
+      {shareLineField}
 
       {/*
         The fixable blockers are NOT listed here. The editor already shows

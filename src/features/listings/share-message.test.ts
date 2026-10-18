@@ -12,6 +12,12 @@ const base = {
 };
 
 describe('the message an agent pastes', () => {
+  it("carries the agent's own line right after the title, as one line (0046)", () => {
+    const lines = shareMessage({ ...base, line: 'כניסה מיידית,\n קומה גבוהה ' }).split('\n');
+    assert.equal(lines[1], 'כניסה מיידית, קומה גבוהה');
+    assert.ok(!shareMessage(base).includes('כניסה מיידית'));
+  });
+
   it('puts the title and price on the first line', () => {
     // The first line is what shows in the chat list before anyone opens it.
     const first = shareMessage(base).split('\n')[0];

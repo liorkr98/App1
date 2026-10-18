@@ -30,6 +30,8 @@ interface Props {
    * note wait under "more details". Defaults to every field.
    */
   fields?: readonly DetailField[];
+  /** Under the title: DeepSeek's suggestion (18 Oct 2026). */
+  titleAction?: ReactNode;
   onChange: (patch: {
     title?: string;
     price?: number;
@@ -75,6 +77,7 @@ export function DetailsStep({
   areaStatus,
   areaCount,
   fields = ALL_FIELDS,
+  titleAction,
   onChange,
 }: Props) {
   const isProperty = category === 'property';
@@ -96,6 +99,7 @@ export function DetailsStep({
           aria-describedby={titleError ? 'd-title-err' : 'd-title-hint'}
         />
         <p className="field-hint" id="d-title-hint">{t('editor.details.titleHint')}</p>
+        {titleAction}
         {titleError ? (
           <p className="field-error" id="d-title-err" role="alert">
             {t('editor.blockers.titleMissing')}

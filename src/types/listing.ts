@@ -877,6 +877,11 @@ export interface Listing {
    * rendered as מאומת; it is לפי המוכר.
    */
   prePortal?: boolean;
+  /**
+   * One line the agent sends after the title in the WhatsApp message (0046,
+   * 18 Oct 2026). Their own words, or DeepSeek's that they kept.
+   */
+  shareLine?: string;
 
   /**
    * What OpenStreetMap says is around this address: the neighbourhood, and the
