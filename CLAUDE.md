@@ -615,6 +615,9 @@ already decided: `docs/AGENT-TOOLS.md`. Everything above outranks them.
   `graphify path "<A>" "<B>"`, `graphify explain "<thing>"`. After changing
   code, `graphify update .`. It is a local tool, pinned (install line in
   AGENT-TOOLS.md); where it is not installed, say so and search as before.
+- **marketing-psychology for copy, pricing pages and onboarding**, inside
+  the table in AGENT-TOOLS.md and §7/§8: no decoy tiers, no invented
+  urgency, social proof or "was" prices, no trial on a subscription.
 - **Not here:** OmniRoute, or any gateway that sends this code or listing
   data to another model provider (§9).
 

@@ -12,6 +12,7 @@ before committing one.
 | Ponytail | DietrichGebert/ponytail | MIT | Three skills: `ponytail` (the smallest change that fully solves the task), `ponytail-review` (a change) and `ponytail-audit` (the repo). Prompts only. |
 | agent-skills | addyosmani/agent-skills | MIT | 25 engineering skills (spec, plan, build, test, review, ship, security, performance…). Their shared checklists are in `.claude/references/`, where the skills' `../../references/` links land. |
 | graphify | Graphify-Labs/graphify | Apache-2.0 | A command-line tool, not a skill: maps the code into a graph you can query and open in a browser. |
+| marketing-psychology | coreyhaines31/marketingskills | MIT | One skill (added 18 Oct 2026): 70+ mental models with a marketing use each, for copy, pricing pages and onboarding. Its `evals/` folder is left out. Bound by the table under "Marketing psychology" below. |
 
 ## What was left out, and why
 
@@ -63,3 +64,20 @@ contract, then the CI gates, then any skill.
 | frontend-ui-engineering's layout and visual advice | The design contract and the four design skills for anything visual; RTL rules (§4) always |
 | Ponytail's "never add a dependency for a few lines" | Agrees with §2: no new dependency without asking |
 | Ponytail's ultra level pushes back on the request | Allowed when the owner asks for it; the default is full |
+
+## Marketing psychology
+
+The skill says to apply its models ethically and to use scarcity only when
+it is real. Here that is a rule, not advice: these pages are shown to
+Israeli agents and buyers, and Israeli consumer-protection law (misleading
+advertising, invented urgency, prices) applies to every line of copy. Proof
+is never invented (`docs/DESIGN-SKILLS.md`).
+
+| The skill suggests | Here |
+|---|---|
+| A decoy tier that is deliberately bad value | No. The plans are `docs/PRICING.md`'s and nothing else |
+| Low-stock warnings, urgency, "don't miss out" | Only what is true. The launch-seat counter shows `cohort_counters` as it is (CLAUDE.md §8); nothing else counts down |
+| Customer counts, testimonials, logos, "trending" | Only real ones, with the person's consent (`src/features/marketing/testimonials.ts`) |
+| Opt-out subscriptions, free trials | No free trial on a subscription (§8); a plan is chosen, never pre-ticked |
+| Anchoring on a higher "was" price | Only a real earlier price: the price drop shows the seller's own previous asking price |
+| Charm prices, framing, goal-gradient, peak-end, reciprocity (the 2 free pages) | Fine |
