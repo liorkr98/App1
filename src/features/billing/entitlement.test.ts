@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { entitlementFromDecision, publishRefusal } from './entitlement.js';
+import { decisionCapped, entitlementFromDecision, publishRefusal } from './entitlement.js';
 
 describe('entitlementFromDecision — fail closed (CLAUDE.md §8)', () => {
   it('is unknown when the read failed, even with a row that says allowed', () => {
@@ -36,6 +36,15 @@ describe('entitlementFromDecision — fail closed (CLAUDE.md §8)', () => {
 describe('publishRefusal — reading the trigger', () => {
   it('maps PT402 free_limit to the paywall', () => {
     assert.equal(publishRefusal({ code: 'PT402', message: 'free_limit' }), 'free_limit');
+  });
+
+  it('maps PT402 plan_limit to the upgrade paywall, and only that reason', () => {
+    assert.equal(publishRefusal({ code: 'PT402', message: 'plan_limit' }), 'plan_limit');
+    assert.equal(decisionCapped({ allowed: false, reason: 'plan_limit', credit: true }), true);
+    assert.equal(decisionCapped({ allowed: false, reason: 'free_limit', credit: true }), false);
+    assert.equal(decisionCapped(null), false);
+    // A capped decision is still not paid: the paywall, never a publish.
+    assert.equal(entitlementFromDecision({ allowed: false, reason: 'plan_limit', credit: true }, false), 'unpaid');
   });
 
   it('maps any other PT402 to unknown', () => {

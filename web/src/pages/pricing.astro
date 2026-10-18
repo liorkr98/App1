@@ -2,6 +2,7 @@
 import { PRICING, type Plan } from '@/features/billing/pricing-config';
 import { planByKey } from '@/features/billing/price';
 import Msg from '../components/Msg.astro';
+import PlanCard from '../components/PlanCard.astro';
 import { t } from '../lib/i18n';
 import { amount, cohortCap, noteValues, offerLd, termsPath } from '../lib/plan-copy';
 import Site from '../layouts/Site.astro';
@@ -31,16 +32,29 @@ const origin = Astro.site ?? new URL(Astro.url.origin);
 const url = new URL('/pricing/', origin).href;
 
 const free = planByKey('free');
+const agentBasic = planByKey('agent_basic');
 const agent = planByKey('agent');
+const agentUnlimited = planByKey('agent_unlimited');
 const agentLaunch = planByKey('agent_launch');
 const office = planByKey('office');
 const dealer = planByKey('dealer');
 const dealerLaunch = planByKey('dealer_launch');
 const privates = [planByKey('private_sale'), planByKey('private_rent'), planByKey('private_car')];
 
-/** A subscription card: regular by default, the launch variant hidden until a seat is proven. */
-const launchCards: { regular: Plan; launch: Plan | null; featured: boolean }[] = [
+/**
+ * The agent plans first, by active pages (18 Oct 2026): 5, 10, unlimited,
+ * with 10 in the middle and recommended. Three real plans; none is there to
+ * make another look good (docs/AGENT-TOOLS.md). In RTL the first is the
+ * rightmost, so the row reads 5 → 10 → unlimited.
+ */
+const agentCards: { regular: Plan; launch: Plan | null; featured: boolean }[] = [
+  { regular: agentBasic, launch: null, featured: false },
   { regular: agent, launch: agentLaunch, featured: true },
+  { regular: agentUnlimited, launch: null, featured: false },
+];
+
+/** A subscription card: regular by default, the launch variant hidden until a seat is proven. */
+const otherCards: { regular: Plan; launch: Plan | null; featured: boolean }[] = [
   { regular: office, launch: null, featured: false },
   { regular: dealer, launch: dealerLaunch, featured: false },
 ];
@@ -68,9 +82,7 @@ const ld = [
   <section class="pr-hero">
     <div class="site-shell pr-head">
       <h1 class="site-h2 pr-title">
-        <span data-offer="agent_launch" data-path="pricing.headline" data-launch={amount(agentLaunch)}>
-          <Msg path="pricing.headline" values={{ price: amount(agent) }} />
-        </span>
+        <Msg path="pricing.headline" values={{ price: amount(agentBasic) }} />
       </h1>
       <p class="site-sub">
         <Msg path="pricing.sub" values={{ free: PRICING.freePageLimit, seats: cohortCap('agent_launch'), months: PRICING.lockMonths }} />
@@ -79,34 +91,17 @@ const ld = [
     </div>
 
     <ul class="site-shell pr-tiers">
-      <li class="pr-tier ls-fade" style="--i:0">
+      {agentCards.map((card, i) => (
+        <PlanCard {...card} index={i} />
+      ))}
+      <li class="pr-tier ls-fade" style="--i:3">
         <p class="pr-name">{t(`billing.plans.${free.key}`)}</p>
         <p class="pr-sum is-free">{t('billing.terms.free')}</p>
         <p class="pr-note"><Msg path={`billing.notes.${free.key}`} values={noteValues(free)} /></p>
         <a class="site-btn site-btn-primary pr-go" href="/new/?fresh=1">{t('pricing.start')}</a>
       </li>
-      {launchCards.map(({ regular, launch, featured }, i) => (
-        <li class:list={['pr-tier ls-fade', featured && 'is-featured']} style={`--i:${i + 1}`} data-card={launch?.key}>
-          <p class="pr-name">{t(`billing.plans.${regular.key}`)}</p>
-          <div class="pr-variants">
-          <div data-variant="regular">
-            <p class="pr-sum"><Msg path={termsPath(regular)} values={{ price: amount(regular) }} /></p>
-            <p class="pr-note"><Msg path={`billing.notes.${regular.key}`} values={noteValues(regular)} /></p>
-          </div>
-          {launch && (
-            <div data-variant="launch" class="is-off">
-              <p class="pr-flag">{t('billing.launchFlag')}</p>
-              <p class="pr-sum"><Msg path={termsPath(launch)} values={{ price: amount(launch) }} /></p>
-              <p class="pr-note"><Msg path={`billing.notes.${launch.key}`} values={noteValues(launch)} /></p>
-              <p class="pr-note pr-after"><Msg path="billing.regularAfter" values={{ months: PRICING.lockMonths, price: amount(regular) }} /></p>
-            </div>
-          )}
-          </div>
-          {/* Until a PSP is signed (CLAUDE.md §8) a paid plan is granted by
-              hand: the button says how to get one, instead of a greyed
-              control that reads as a broken site. Nothing here grants. */}
-          <a class="site-btn site-btn-ghost pr-go" href="/contact/">{t('pricing.talk')}</a>
-        </li>
+      {otherCards.map((card, i) => (
+        <PlanCard {...card} index={i + 4} />
       ))}
     </ul>
 

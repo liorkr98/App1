@@ -32,6 +32,8 @@ interface Props {
    * no way to tell a refused publish from a slow one.
    */
   failure?: string | undefined;
+  /** A paid plan at its active-page limit: the paywall offers the next plan up. */
+  planCapped?: boolean;
   onPublish: () => void;
   onCopy: (url: string) => void;
   /** Opens the share sheet: WhatsApp, Facebook, the phone's menu, the link. */
@@ -77,6 +79,7 @@ export function PublishStep({
   areaCount,
   photoCheck,
   failure,
+  planCapped,
   onPublish,
   onCopy,
   onShare,
@@ -161,7 +164,7 @@ export function PublishStep({
         <p className="field-hint">{t('editor.publish.freeHint')}</p>
       ) : null}
 
-      {payment?.code === 'paymentRequired' ? <Paywall category={state.category} /> : null}
+      {payment?.code === 'paymentRequired' ? <Paywall category={state.category} capped={planCapped ?? false} /> : null}
       {payment?.code === 'paymentUnverified' ? (
         <div className="paywall">
           <p>{t('editor.blockers.paymentUnverified')}</p>

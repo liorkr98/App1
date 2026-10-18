@@ -300,6 +300,8 @@ export default function Editor() {
    * row) looked like nothing at all.
    */
   const [failure, setFailure] = useState<string | undefined>(undefined);
+  /** A paid plan at its active-page limit: which paywall to show, never whether to publish (§8). */
+  const [planCapped, setPlanCapped] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
   /** Why the last suggestion failed, by the server's own error code. */
   const [suggestFailed, setSuggestFailed] = useState<string | false>(false);
@@ -390,8 +392,10 @@ export default function Editor() {
   useEffect(() => {
     if (!supabaseConfigured || !signedIn) return;
     let live = true;
-    void loadEntitlement(listingId.current, state.category).then((entitlement) => {
-      if (live) setState((current) => ({ ...current, entitlement }));
+    void loadEntitlement(listingId.current, state.category).then(({ entitlement, capped }) => {
+      if (!live) return;
+      setState((current) => ({ ...current, entitlement }));
+      setPlanCapped(capped);
     });
     return () => {
       live = false;
@@ -1484,11 +1488,13 @@ export default function Editor() {
         /*
          * HUMAN REVIEW (CLAUDE.md §8). The trigger refused: PT402. The
          * editor did not decide this and does not argue with it; it shows
-         * the paywall (free_limit) or the honest "could not check" message.
+         * the paywall (free_limit), the next plan up (plan_limit, 0045) or
+         * the honest "could not check" message.
          */
         const refusal = publishRefusal('code' in result ? { code: result.code, message: result.error } : null);
-        if (refusal === 'free_limit') {
-          void recordBillingEvent('free_limit_hit', null);
+        if (refusal === 'free_limit' || refusal === 'plan_limit') {
+          if (refusal === 'free_limit') void recordBillingEvent('free_limit_hit', null);
+          setPlanCapped(refusal === 'plan_limit');
           setState((current) => ({ ...current, entitlement: 'unpaid' }));
           setFailure(undefined);
         } else {
@@ -1898,6 +1904,7 @@ export default function Editor() {
               areaCount={area && area.key === addressKey ? area.count : undefined}
               photoCheck={<PhotoChecklist coverage={coverage} count={photos.length} variant="line" />}
               failure={failure}
+              planCapped={planCapped}
               onPublish={publish}
               onCopy={(url) =>
                 void navigator.clipboard

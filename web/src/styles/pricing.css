@@ -56,7 +56,27 @@
 }
 
 .pr-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
   font-weight: 700;
+}
+
+/* The recommended plan, said in words on the card it belongs to. */
+.pr-pick {
+  padding: 0.1rem 0.6rem;
+  border-radius: 999px;
+  background: var(--ls-ground);
+  color: var(--ls-ink);
+  font-size: var(--ls-fs-label);
+  font-weight: 700;
+}
+
+/* What one active page costs: arithmetic on the price list, under the price. */
+.pr-per {
+  font-size: 0.95rem;
+  font-weight: 600;
 }
 
 /* On the dark cards the flag is the light green: #2f5340 on near-black is 2:1. */
@@ -198,8 +218,13 @@
   }
 }
 
+/* Three across: the agent plans (5, 10, unlimited) are one row, the free,
+   office and dealer cards the next. */
 @media (min-width: 1000px) {
-  .pr-tiers,
+  .pr-tiers {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .pr-addons {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }

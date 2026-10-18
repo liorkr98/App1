@@ -1107,6 +1107,8 @@
     "checkoutOff": "",
     "disabled": "",
     "talk": "",
+    "recommended": "",
+    "perPage": "",
     "start": "",
     "contact": "",
     "faqTitle": "",
@@ -1132,7 +1134,9 @@
     "plans": {
       "free": "",
       "agent_launch": "",
+      "agent_basic": "",
       "agent": "",
+      "agent_unlimited": "",
       "office": "",
       "dealer_launch": "",
       "dealer": "",
@@ -1143,7 +1147,9 @@
     "notes": {
       "free": "",
       "agent_launch": "",
+      "agent_basic": "",
       "agent": "",
+      "agent_unlimited": "",
       "office": "",
       "dealer_launch": "",
       "dealer": "",
@@ -1160,6 +1166,8 @@
     "regularAfter": "",
     "paywall": {
       "title": "",
+      "cappedTitle": "",
+      "cappedBody": "",
       "body": "",
       "selected": "",
       "archive": "",

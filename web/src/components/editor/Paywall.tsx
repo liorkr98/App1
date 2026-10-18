@@ -10,10 +10,14 @@ import { Message } from './Message';
 
 interface Props {
   category: 'property' | 'vehicle' | undefined;
+  /** A paid plan's active pages are all in use (plan_limit, 0045). */
+  capped?: boolean;
 }
 
 /**
- * The paywall, when the two free pages are in use (docs/PRICING.md §2).
+ * The paywall, when the two free pages are in use (docs/PRICING.md §2), or
+ * when a paid plan's active pages are (capped): then it offers the plans
+ * with more pages, and archiving one.
  *
  * ============================ HUMAN REVIEW ============================
  * CLAUDE.md §8: this may be built, and it decides nothing. It is shown
@@ -23,12 +27,18 @@ interface Props {
  * remains; otherwise the regular plan is.
  * ======================================================================
  */
-export function Paywall({ category }: Props) {
+export function Paywall({ category, capped = false }: Props) {
   const [counts, setCounts] = useState<CohortCount[] | null>(null);
-  const launchKey: PlanKey = category === 'vehicle' ? 'dealer_launch' : 'agent_launch';
+  const launchKey: PlanKey = capped ? 'agent_launch' : category === 'vehicle' ? 'dealer_launch' : 'agent_launch';
   const offered = offeredPlan(launchKey, counts).plan.key;
-  const options: PlanKey[] =
-    category === 'vehicle' ? [offered, 'agent', 'private_car'] : [offered, 'office', 'private_sale', 'private_rent'];
+  // Capped: whoever sees this is on 5 or 10 pages, so more pages is the
+  // answer. Which plan they are on is not read here; the next tier up is
+  // still the right list either way.
+  const options: PlanKey[] = capped
+    ? [offered, 'agent_unlimited', 'office']
+    : category === 'vehicle'
+      ? [offered, 'agent', 'private_car']
+      : [offered, 'agent_basic', 'agent_unlimited', 'private_sale', 'private_rent'];
   const [chosen, setChosen] = useState<PlanKey | null>(null);
   const shown = useRef(false);
 
@@ -53,9 +63,9 @@ export function Paywall({ category }: Props) {
   return (
     <div className="paywall" role="region" aria-labelledby="paywall-title">
       <h3 id="paywall-title">
-        <Message path="billing.paywall.title" values={{ pages: PRICING.freePageLimit }} />
+        {capped ? t('billing.paywall.cappedTitle') : <Message path="billing.paywall.title" values={{ pages: PRICING.freePageLimit }} />}
       </h3>
-      <p>{t('billing.paywall.body')}</p>
+      <p>{t(capped ? 'billing.paywall.cappedBody' : 'billing.paywall.body')}</p>
 
       <ul className="paywall-plans">
         {options.map((key) => {
@@ -84,9 +94,11 @@ export function Paywall({ category }: Props) {
                   <Message
                     path={`billing.notes.${key}`}
                     values={{
-                      pages: PRICING.freePageLimit,
+                      pages: plan.pageLimit ?? PRICING.freePageLimit,
+                      free: PRICING.freePageLimit,
                       months: PRICING.lockMonths,
                       annual: plan.annualMonths ?? 0,
+                      gift: plan.annualMonths ? 12 - plan.annualMonths : 0,
                       seats: plan.seats ?? 0,
                       days: plan.pageTtlDays ?? 0,
                     }}
