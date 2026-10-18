@@ -84,8 +84,10 @@ describe('the price list has one source (docs/PRICING.md)', () => {
     assert.equal(planByKey('agent_launch').pageLimit, planByKey('agent').pageLimit);
     assert.ok(planByKey('agent_basic').amountAgorot < planByKey('agent').amountAgorot);
     assert.ok(planByKey('agent').amountAgorot < planByKey('agent_unlimited').amountAgorot);
-    assert.equal(planByKey('dealer_launch').regularPlan, 'dealer');
-    assert.equal(planByKey('dealer').category, 'vehicle');
+    // Car dealers buy the same plans (18 Oct 2026): none of them is for one category.
+    for (const key of ['agent_basic', 'agent', 'agent_unlimited', 'agent_launch'] as const) {
+      assert.equal(planByKey(key).category, null, `${key} covers flats and cars`);
+    }
     assert.equal(planByKey('private_sale').pageTtlDays, 90);
     assert.equal(planByKey('private_rent').pageTtlDays, 60);
     assert.equal(planByKey('private_car').pageTtlDays, 60);
@@ -147,7 +149,7 @@ describe('the launch price is offered only while a real seat remains', () => {
   });
 
   it('offers the regular plan when the count could not be read: never an unproven launch price', () => {
-    assert.equal(offeredPlan('dealer_launch', null).plan.key, 'dealer');
-    assert.equal(offeredPlan('dealer_launch', []).plan.key, 'dealer');
+    assert.equal(offeredPlan('agent_launch', null).plan.key, 'agent');
+    assert.equal(offeredPlan('agent_launch', []).plan.key, 'agent');
   });
 });

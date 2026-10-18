@@ -492,16 +492,18 @@ mark is the viral loop: a listing page is forwarded to 30–80 people who are by
 definition interested in buying something. Small, elegant, clickable. A page
 marked sold still counts; archiving one frees its slot.
 
-**Agents and dealers subscribe; private sellers buy one page.** Agents
-choose by active pages: 5, 10 or unlimited (18 Oct 2026); office and dealer
-plans are unlimited. The launch price is the 10-page plan for the first 200
-agents (and the dealer plan for the first 100 dealers), locked for 12 months
+**Agents and dealers subscribe; private sellers buy one page.** Agents and
+car dealers buy the SAME plans, under the same names, by active pages: 5, 10
+or unlimited (18 Oct 2026); the office plan is unlimited. The launch price is
+the 10-page plan for the first 200 subscribers of either kind, locked for 12 months
 from the first payment, with notice 30 days before it ends. A seat is never
 returned and never faked: the counter shows `cohort_counters` as it is.
 
-**Agent and office plans need a broker licence that checked out** against the
-Justice Ministry register at signup. A check that failed or could not run is
-"not verified": fail closed for those plans, free and private stay open.
+**No plan needs a broker licence** (owner, 18 Oct 2026, when dealers joined
+the agent plans). The licence check against the Justice Ministry register
+decides one thing: whether the page shows מתווך מורשה. A check that failed or
+could not run is "not verified" and the badge stays off; publishing is
+unaffected.
 
 **No free trial on subscription tiers.** A private seller would take the trial,
 publish their one listing and churn — cannibalising the single-listing purchase

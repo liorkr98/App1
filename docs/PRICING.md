@@ -11,16 +11,19 @@ Code reads prices from config/DB — **never hardcode a price in a component.**
 | Plan key | Who | Price | Billing | Pages | Branding |
 |---|---|---|---|---|---|
 | `free` | Anyone | ₪0 | — | **2 active** published pages | Our credit "נבנה ב…" shown; no agent branding |
-| `agent_basic` | Licensed broker | ₪29/mo + מע״מ | Monthly; annual = 10× monthly | **5 active** | Agent branding, credit removed |
-| `agent` | Licensed broker | ₪49/mo + מע״מ | Monthly; annual = 10× monthly | **10 active** | Agent branding, credit removed |
-| `agent_unlimited` | Licensed broker | ₪79/mo + מע״מ | Monthly; annual = 10× monthly | Unlimited | Agent branding, credit removed |
-| `agent_launch` | Licensed broker, first 200 paying | **₪29/mo + מע״מ** | Monthly, cancel anytime | **10 active** (the `agent` plan at the launch price) | Agent branding, credit removed |
+| `agent_basic` | Agent or car dealer | ₪29/mo + מע״מ | Monthly; annual = 10× monthly | **5 active** | Agent branding, credit removed |
+| `agent` | Agent or car dealer | ₪49/mo + מע״מ | Monthly; annual = 10× monthly | **10 active** | Agent branding, credit removed |
+| `agent_unlimited` | Agent or car dealer | ₪79/mo + מע״מ | Monthly; annual = 10× monthly | Unlimited | Agent branding, credit removed |
+| `agent_launch` | Agent or car dealer, first 200 paying | **₪29/mo + מע״מ** | Monthly, cancel anytime | **10 active** (the `agent` plan at the launch price) | Agent branding, credit removed |
 | `office` | Brokerage office, up to 10 seats | ₪149/mo + מע״מ | Monthly; annual = 10× monthly | Unlimited, shared | Office + agent branding |
-| `dealer_launch` | Car dealer, first 100 paying | **₪29/mo + מע״מ** | Monthly | Unlimited vehicle pages | Dealer branding |
-| `dealer` | Car dealer | ₪49/mo + מע״מ | Monthly; annual = 10× monthly | Unlimited vehicle pages | Dealer branding |
 | `private_sale` | Private apartment seller | **₪19 incl. VAT** | One-time | 1 page, live 90 days | Our credit shown |
 | `private_rent` | Private landlord | **₪9.90 incl. VAT** | One-time | 1 page, live 60 days | Our credit shown |
 | `private_car` | Private car seller | **₪9.90 incl. VAT** | One-time | 1 page, live 60 days | Our credit shown |
+
+### One set of plans for agents and car dealers (decided 18 Oct 2026)
+- Car dealers buy the same plans as agents, under the same names (בסיס, מקצועי, בלי הגבלה) and at the same prices. `dealer` and `dealer_launch` are retired in 0045 (`active = false`, rows kept for any subscription already on one).
+- **No plan needs a broker licence.** The register check only decides whether a page shows "מתווך מורשה".
+- One launch pool: the first 200 subscribers, agents and dealers alike. The `dealer_launch` counter is left as it was, unused.
 
 ### Agent plans by active pages (decided 18 Oct 2026)
 - Agents choose by how many pages are **live at once**: 5, 10 or unlimited. "Active" is counted the same way as the free limit: published or sold, not a page living on a one-time purchase of its own. Archiving one frees its slot. Drafts never count.
@@ -32,8 +35,8 @@ Code reads prices from config/DB — **never hardcode a price in a component.**
 - Enforced in `publish_decision()` and `restore_account()`, migration 0045. The seed there is the current one (0040 holds the first).
 
 ### Launch-price rules
-- `agent_launch` and `dealer_launch` are **cohorts**, not coupons. A seat is consumed when the first payment succeeds.
-- Seat caps: 200 agents, 100 dealers. Count only successful first payments. Store the cap in config.
+- `agent_launch` is a **cohort**, not coupons. A seat is consumed when the first payment succeeds.
+- Seat cap: 200, agents and dealers together (until 18 Oct: 200 agents, 100 dealers). Count only successful first payments. Store the cap in config.
 - Launch price is **locked for 12 months** from the first payment (`price_locked_until`). After that the subscription moves to the regular plan. Send notice **30 days before** the change, by email and in the dashboard.
 - If a launch subscriber cancels, the seat is **not** returned to the pool.
 - When a cap is reached, the pricing page shows the regular price automatically. No deploy needed.
@@ -51,7 +54,7 @@ Code reads prices from config/DB — **never hardcode a price in a component.**
 - Re-subscribing restores branding and republishes. A launch-cohort member who returns within 12 months gets the launch price back.
 
 ## 4. VAT and price display
-- B2B plans (`agent*`, `office`, `dealer*`) are displayed as **"₪29 לחודש + מע״מ"**.
+- B2B plans (`agent*`, `office`) are displayed as **"₪29 לחודש + מע״מ"**.
 - Private plans are displayed **including VAT** (consumer law), e.g. **"₪19 כולל מע״מ"**.
 - Store all amounts in **agorot (integers)**, with `vat_inclusive: boolean` per price. VAT rate comes from config (currently 18%), never inline.
 - Invoice/receipt is issued by the payment provider. The business entity is Lior's חברה בע״מ.

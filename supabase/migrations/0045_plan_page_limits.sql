@@ -3,9 +3,11 @@
 -- HUMAN REVIEW, CLAUDE.md section 8. This migration decides who may publish.
 --
 -- The owner: 5 active pages for 29, 10 for 49, unlimited for 79 (a month,
--- before VAT). The launch price (first 200 agents, 29, locked for 12 months)
--- is now the 10-page plan at the launch price. Office and dealer plans are
--- unchanged and stay unlimited.
+-- before VAT). The launch price (first 200, 29, locked for 12 months) is
+-- now the 10-page plan at the launch price. Office stays unlimited. Car
+-- dealers buy the same plans under the same names, with no broker licence
+-- asked of anyone, and share the one launch pool of 200; the dealer plans
+-- are retired (section 1).
 --
 -- What it does:
 --   1. Seeds every plan again (src/features/billing/pricing-config.ts is the
@@ -44,11 +46,9 @@ values
   ('agent',           'subscription', 'agent',   4900,  false, 'month', 10,   10,   null, null,       true,  null,            null,     null, 3),
   ('agent_unlimited', 'subscription', 'agent',   7900,  false, 'month', 10,   null, null, null,       true,  null,            null,     null, 4),
   ('office',          'subscription', 'office',  14900, false, 'month', 10,   null, null, null,       true,  null,            null,     10,   5),
-  ('dealer_launch',   'subscription', 'dealer',  2900,  false, 'month', null, null, null, 'vehicle',  true,  'dealer_launch', 'dealer', null, 6),
-  ('dealer',          'subscription', 'dealer',  4900,  false, 'month', 10,   null, null, 'vehicle',  true,  null,            null,     null, 7),
-  ('private_sale',    'one_time',     'private', 1900,  true,  null,    null, 1,    90,   'property', false, null,            null,     null, 8),
-  ('private_rent',    'one_time',     'private', 990,   true,  null,    null, 1,    60,   'property', false, null,            null,     null, 9),
-  ('private_car',     'one_time',     'private', 990,   true,  null,    null, 1,    60,   'vehicle',  false, null,            null,     null, 10)
+  ('private_sale',    'one_time',     'private', 1900,  true,  null,    null, 1,    90,   'property', false, null,            null,     null, 6),
+  ('private_rent',    'one_time',     'private', 990,   true,  null,    null, 1,    60,   'property', false, null,            null,     null, 7),
+  ('private_car',     'one_time',     'private', 990,   true,  null,    null, 1,    60,   'vehicle',  false, null,            null,     null, 8)
 on conflict (key) do update set
   kind = excluded.kind,
   audience = excluded.audience,
@@ -63,7 +63,14 @@ on conflict (key) do update set
   cohort = excluded.cohort,
   regular_plan = excluded.regular_plan,
   seats = excluded.seats,
-  sort = excluded.sort;
+  sort = excluded.sort,
+  active = true;
+
+-- Car dealers buy the agent plans (owner, 18 Oct 2026): same names, same
+-- prices, one launch pool of 200. The dealer plans are retired, not deleted:
+-- a subscription already on one keeps its row and keeps working (the
+-- foreign key needs it). Nothing new is sold on them.
+update public.plans set active = false where key in ('dealer', 'dealer_launch');
 
 comment on column public.plans.page_limit is
   'Published or sold pages at once; null is unlimited. Read by publish_decision and restore_account (0045).';

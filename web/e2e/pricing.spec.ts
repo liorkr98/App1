@@ -84,10 +84,7 @@ test.describe('the price list', () => {
   });
 
   test('with seats left: the launch price and the true count', async ({ page }) => {
-    await seats(page, [
-      { cohort: 'agent_launch', used: 37, cap: 200 },
-      { cohort: 'dealer_launch', used: 100, cap: 100 },
-    ]);
+    await seats(page, [{ cohort: 'agent_launch', used: 37, cap: 200 }]);
     await page.goto(`${BASE}/pricing/`, { waitUntil: 'networkidle' });
 
     await expect(card(page, 'agent_launch').locator('[data-variant="launch"]')).toBeVisible();
@@ -96,9 +93,8 @@ test.describe('the price list', () => {
     await expect(page.locator('[data-seats="agent_launch"]')).toContainText('163');
     await expect(page.locator('[data-seats="agent_launch"] bdi').first()).toHaveText('163');
 
-    // The dealer cohort is full: its card stays at the regular price.
-    await expect(card(page, 'dealer_launch').locator('[data-variant="launch"]')).toBeHidden();
-    await expect(card(page, 'dealer_launch').locator('[data-variant="regular"] .pr-sum bdi')).toHaveText('₪49');
+    // Car dealers buy the same plans: there is no separate dealer card.
+    await expect(card(page, 'dealer_launch')).toHaveCount(0);
   });
 
   test('a full cohort says so, with the real cap', async ({ page }) => {
@@ -122,7 +118,7 @@ test('the pricing page offers every plan to search engines, VAT stated', async (
   const graph = await page.locator('script[type="application/ld+json"]').first().textContent();
   const nodes = (JSON.parse(graph ?? '{}') as { '@graph': { '@type': string; offers?: { priceSpecification: { valueAddedTaxIncluded: boolean }; price: string }[] }[] })['@graph'];
   const product = nodes.find((node) => node['@type'] === 'Product');
-  expect(product?.offers?.length).toBe(11);
+  expect(product?.offers?.length).toBe(9);
   const vat = product!.offers!.map((offer) => offer.priceSpecification.valueAddedTaxIncluded);
   expect(vat.filter(Boolean).length).toBe(4); // free + three private plans
 });

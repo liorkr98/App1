@@ -25,7 +25,7 @@ export function messageNodes(path: string, values: Record<string, string | numbe
 
 export function showLaunchText(counts: CohortCount[] | null, root: ParentNode = document): void {
   for (const line of root.querySelectorAll<HTMLElement>('[data-seats]')) {
-    const key = line.dataset.seats as 'agent_launch' | 'dealer_launch';
+    const key = line.dataset.seats as 'agent_launch';
     const count = counts?.find((row) => row.cohort === key);
     if (!count) continue;
     const { seatsLeft } = offeredPlan(key, counts);

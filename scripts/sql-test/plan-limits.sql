@@ -126,3 +126,24 @@ begin
   perform public.restore_account(u, 'agent_unlimited');
   perform t.check((select count(*) from public.listings where owner_id = u and status = 'published') = 8, 'unlimited restores every page');
 end $$;
+
+-- ---------------------------------------------------------------------------
+-- Car dealers buy the same plans (18 Oct 2026): no licence, cars covered,
+-- the dealer plans retired but still honoured for anyone already on one.
+-- ---------------------------------------------------------------------------
+do $$
+declare
+  u uuid := t.new_user('dealer-on-agent@test');
+  car uuid := t.new_listing(u, 'vehicle');
+  i integer;
+begin
+  perform t.check(t.pay('txn-dealer-agent', 'subscription_paid', u, 'agent_basic') = 'agent_basic', 'a dealer pays for agent_basic');
+  perform t.check((select licence_verified_at from public.profiles where id = u) is null, 'with no licence on file');
+  for i in 1..3 loop perform t.publish(u, t.new_listing(u, 'vehicle')); end loop;
+  perform t.publish(u, car);
+  perform t.check(t.status(car) = 'published' and not t.credit(car), 'and publishes car pages on it, with their branding');
+
+  perform t.check(not (select active from public.plans where key = 'dealer') and not (select active from public.plans where key = 'dealer_launch'),
+    'the dealer plans are retired');
+  perform t.check((select count(*) from public.plans where key in ('dealer', 'dealer_launch')) = 2, 'not deleted');
+end $$;

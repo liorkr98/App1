@@ -29,7 +29,8 @@ interface Props {
  */
 export function Paywall({ category, capped = false }: Props) {
   const [counts, setCounts] = useState<CohortCount[] | null>(null);
-  const launchKey: PlanKey = capped ? 'agent_launch' : category === 'vehicle' ? 'dealer_launch' : 'agent_launch';
+  // One set of plans for agents and car dealers (18 Oct 2026).
+  const launchKey: PlanKey = 'agent_launch';
   const offered = offeredPlan(launchKey, counts).plan.key;
   // Capped: whoever sees this is on 5 or 10 pages, so more pages is the
   // answer. Which plan they are on is not read here; the next tier up is
@@ -37,7 +38,7 @@ export function Paywall({ category, capped = false }: Props) {
   const options: PlanKey[] = capped
     ? [offered, 'agent_unlimited', 'office']
     : category === 'vehicle'
-      ? [offered, 'agent', 'private_car']
+      ? [offered, 'agent_basic', 'agent_unlimited', 'private_car']
       : [offered, 'agent_basic', 'agent_unlimited', 'private_sale', 'private_rent'];
   const [chosen, setChosen] = useState<PlanKey | null>(null);
   const shown = useRef(false);
@@ -109,10 +110,6 @@ export function Paywall({ category, capped = false }: Props) {
           );
         })}
       </ul>
-
-      {planByKey(selected).audience === 'agent' || planByKey(selected).audience === 'office' ? (
-        <p className="field-hint">{t('billing.paywall.licence')}</p>
-      ) : null}
 
       <button type="button" className="secondary" disabled>
         {t('pricing.disabled')}
