@@ -21,6 +21,8 @@ export interface ListingExtras {
   /** A car under warranty, as the seller declares it (CLAUDE.md §7: לפי המוכר). */
   warranty?: true;
   openHouse?: OpenHouse;
+  /** The photo slideshow film on the page (0048): off unless the agent turns it on. */
+  film?: true;
 }
 
 const ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})$/;
@@ -45,6 +47,7 @@ export function cleanExtras(value: unknown): ListingExtras {
     ...(record.visit === true ? { visit: true } : {}),
     ...(record.calculator === true ? { calculator: true } : {}),
     ...(record.warranty === true ? { warranty: true } : {}),
+    ...(record.film === true ? { film: true } : {}),
     ...(openHouse ? { openHouse } : {}),
   };
 }

@@ -71,5 +71,9 @@ done
 "${PSQL[@]}" -c "$(cat "$(ls "$ROOT"/supabase/migrations/0047_*.sql)")" >/dev/null
 "${PSQL[@]}" -c "$(cat "$(ls "$ROOT"/supabase/migrations/0047_*.sql)")" >/dev/null
 "${PSQL[@]}" -f "$HERE/page-options.sql"
+# 0048 the same way, twice, then the film switch.
+"${PSQL[@]}" -c "$(cat "$(ls "$ROOT"/supabase/migrations/0048_*.sql)")" >/dev/null
+"${PSQL[@]}" -c "$(cat "$(ls "$ROOT"/supabase/migrations/0048_*.sql)")" >/dev/null
+"${PSQL[@]}" -f "$HERE/page-film.sql"
 bash "$HERE/race.sh" "$BIN" "$WORK" "$PORT"
-echo "OK: billing, agent-page, site-analytics, price-drop, translation, plan-limit, photo-angle, owner-read and page-option SQL tests passed."
+echo "OK: billing, agent-page, site-analytics, price-drop, translation, plan-limit, photo-angle, owner-read, page-option and page-film SQL tests passed."

@@ -204,6 +204,7 @@ export async function duplicateListing(slug: string): Promise<DraftRow> {
   const kept = {
     ...(extras.visit ? { visit: true } : {}),
     ...(extras.calculator ? { calculator: true } : {}),
+    ...(extras.film ? { film: true } : {}),
   };
   const shape = {
     template: row.template,

@@ -80,7 +80,7 @@ export function PageOptions({ listingId, category, tourUrl, videoUrl, onLinks, o
     if (!listingId) return;
     void saveExtras(listingId, next).then((ok) => setUnsaved(!ok));
   };
-  const toggle = (key: 'visit' | 'calculator' | 'warranty', on: boolean) => {
+  const toggle = (key: 'visit' | 'calculator' | 'warranty' | 'film', on: boolean) => {
     const { [key]: _dropped, ...rest } = extras;
     change(on ? { ...rest, [key]: true } : rest);
   };
@@ -108,6 +108,11 @@ export function PageOptions({ listingId, category, tourUrl, videoUrl, onLinks, o
       <label className="declare">
         <input type="checkbox" checked={extras.visit === true} onChange={(event) => toggle('visit', event.target.checked)} />
         <span>{t(car ? 'editor.options.visitCar' : 'editor.options.visit')}</span>
+      </label>
+
+      <label className="declare">
+        <input type="checkbox" checked={extras.film === true} onChange={(event) => toggle('film', event.target.checked)} />
+        <span>{t('editor.options.film')}</span>
       </label>
 
       <label className="declare">

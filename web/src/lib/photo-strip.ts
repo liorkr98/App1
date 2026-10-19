@@ -1,6 +1,7 @@
 import { coverAccent } from '@/features/agents/cover-accent';
 import type { AccentId } from '@/features/agents/accents';
 import { checkPixels, type PhotoCheck } from '@/features/listings/photo-quality';
+import { applyTone, toneFor, type PhotoTone } from '@/features/listings/photo-tone';
 
 /**
  * Turning a phone photograph into something a public page can show.
@@ -50,6 +51,16 @@ export interface ProcessedPhoto {
   check?: PhotoCheck;
   /** The accent this photograph suggests if it is the cover (cover-accent.ts). */
   tone?: AccentId;
+  /** The automatic fix changed this copy (photo-tone.ts); the original is as shot. */
+  toned?: boolean;
+}
+
+export interface StripOptions {
+  /**
+   * The automatic light and colour fix (photo-tone.ts, 19 Oct 2026). On for
+   * listing photographs; off for a logo, and for the agent's "undo".
+   */
+  tone?: boolean;
 }
 
 /** The long edge the quality check is measured at. */
@@ -67,6 +78,7 @@ const DETAIL_CROP = 384;
 export async function stripAndResize(
   file: File,
   maxEdge: number = MAX_EDGE,
+  options: StripOptions = {},
 ): Promise<ProcessedPhoto | undefined> {
   try {
     const bitmap = await createImageBitmap(file);
@@ -93,6 +105,7 @@ export async function stripAndResize(
     // no advice for this photograph.
     let check: PhotoCheck | undefined;
     let tone: AccentId | undefined;
+    let fix: PhotoTone | undefined;
     try {
       const small = Math.min(1, CHECK_EDGE / Math.max(bitmap.width, bitmap.height));
       const w = Math.max(3, Math.round(bitmap.width * small));
@@ -119,19 +132,35 @@ export async function stripAndResize(
         }
         const pixels = pctx.getImageData(0, 0, w, h).data;
         check = checkPixels(pixels, w, h, bitmap, detail);
-        // The same small copy says which offered accent the photo leans to.
+        // The same small copy says which offered accent the photo leans to,
+        // and what the automatic fix should do. The check above reads the
+        // photograph as shot: "too dark" advice is about what the phone took.
         tone = coverAccent(pixels, w, h);
+        if (options.tone !== false) fix = toneFor(pixels, w, h);
       }
     } catch {
       check = undefined;
     }
     bitmap.close();
 
+    if (fix) {
+      try {
+        const image = context.getImageData(0, 0, width, height);
+        applyTone(image.data, fix);
+        context.putImageData(image, 0, 0);
+      } catch {
+        // A canvas the browser will not read back keeps the photo as shot.
+        fix = undefined;
+      }
+    }
+
     const blob = await new Promise<Blob | null>((resolve) =>
       canvas.toBlob(resolve, 'image/webp', QUALITY),
     );
 
-    return blob ? { blob, width, height, ...(check ? { check } : {}), ...(tone ? { tone } : {}) } : undefined;
+    return blob
+      ? { blob, width, height, ...(check ? { check } : {}), ...(tone ? { tone } : {}), ...(fix ? { toned: true } : {}) }
+      : undefined;
   } catch {
     return undefined;
   }

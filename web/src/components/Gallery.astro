@@ -13,15 +13,19 @@ interface Props {
   /** Cover first, then the gallery. The film never reorders them. */
   film?: Image[];
   video?: ListingVideo;
+  /** The agent turned the photo film on (extras.film, 0048). */
+  filmOn?: boolean;
 }
 
-const { images, film = [], video } = Astro.props;
+const { images, film = [], video, filmOn = false } = Astro.props;
 
 const grouped = hasRoomLabels(images);
 const groups = grouped ? groupByRoom(images) : [{ items: images }];
 // Every photograph, labelled or not (13 Oct: a labelled listing's film was its
 // cover alone), and no film at all under FILM_MIN.
-const showFilm = Boolean(video) || film.length >= FILM_MIN;
+// The photo film only when the agent turned it on (0048, 19 Oct 2026); a
+// video file the agent made is its own choice and always shows.
+const showFilm = Boolean(video) || (filmOn && film.length >= FILM_MIN);
 ---
 
 {/*

@@ -467,7 +467,10 @@ export default function Editor() {
    * own path: the original to the private bucket, a re-encoded copy — no
    * EXIF — to the public one. Undefined on any failure; the agent can retry.
    */
-  const uploadExtra = async (file: File): Promise<{ url: string; width: number; height: number } | undefined> => {
+  const uploadExtra = async (
+    file: File,
+    options: { tone?: boolean } = {},
+  ): Promise<{ url: string; width: number; height: number } | undefined> => {
     if (!supabaseConfigured || !signedIn || !state.category) return undefined;
     try {
       if (!listingId.current) {
@@ -478,7 +481,7 @@ export default function Editor() {
       }
       const original = await uploadOriginal(listingId.current, file);
       if ('error' in original) return undefined;
-      const processed = await stripAndResize(file);
+      const processed = await stripAndResize(file, undefined, options);
       if (!processed) return undefined;
       const published = await uploadDerived(listingId.current, original.path, processed);
       if ('error' in published) return undefined;
@@ -553,7 +556,8 @@ export default function Editor() {
 
   const uploadPlan = async (file: File) => {
     setExtraUploading(true);
-    const done = await uploadExtra(file);
+    // A floor plan is a drawing: its lines and paper stay as they are.
+    const done = await uploadExtra(file, { tone: false });
     setExtraUploading(false);
     if (done) setPlan({ ...done, rooms: [] });
     else setFailure(t('editor.uploadFailed'));
@@ -650,6 +654,7 @@ export default function Editor() {
         height: processed.height,
         ...(processed.check ? { check: processed.check } : {}),
         ...(processed.tone ? { tone: processed.tone } : {}),
+        ...(processed.toned ? { toned: true } : {}),
       });
     }
 
@@ -981,6 +986,31 @@ export default function Editor() {
       ),
     );
     return true;
+  };
+
+  /**
+   * The automatic fix, undone or done again (19 Oct 2026): every photograph
+   * whose File is still in this session is re-encoded from it, with or
+   * without the fix, and replaces its public copy. One switch for them all,
+   * not a button on each photograph.
+   */
+  const [toneBusy, setToneBusy] = useState(false);
+  const [toneOff, setToneOff] = useState(false);
+  const toneCount = photos.filter((photo) => photo.toned).length;
+  const setToning = async (on: boolean) => {
+    setToneBusy(true);
+    for (const photo of photosRef.current) {
+      if (!photo.file || !photo.publicUrl || Boolean(photo.toned) === on) continue;
+      const made = await stripAndResize(photo.file, undefined, { tone: on });
+      if (!made || !(await replacePhoto(photo.id, on ? 'toned' : 'as-shot', made))) continue;
+      changePhotos(
+        photosRef.current.map((current) =>
+          current.id === photo.id ? { ...current, toned: Boolean(made.toned) } : current,
+        ),
+      );
+    }
+    setToneOff(!on);
+    setToneBusy(false);
   };
 
   const rotatePhoto = (id: string) => {
@@ -1836,6 +1866,21 @@ export default function Editor() {
                   category={state.category}
                 />
                 <PhonePortal signedIn={signedIn} ensureListing={ensureListing} onPhotos={takeFromPhone} />
+                {toneCount > 0 || toneOff ? (
+                  <p className="field-hint tone-line" role="status">
+                    {toneOff ? (
+                      t('editor.tone.off')
+                    ) : (
+                      <Message
+                        path="editor.tone.on"
+                        values={{ count: toneCount }}
+                      />
+                    )}{' '}
+                    <button type="button" className="quiet" disabled={toneBusy} onClick={() => void setToning(toneOff)}>
+                      {t(toneOff ? 'editor.tone.redo' : 'editor.tone.undo')}
+                    </button>
+                  </p>
+                ) : null}
                 <PhotoAdvice
                   listingId={savedRow?.id}
                   category={state.category}
