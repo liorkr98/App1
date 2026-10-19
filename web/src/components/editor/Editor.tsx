@@ -326,6 +326,11 @@ export default function Editor() {
    */
   const [profile, setProfile] = useState<AgentProfile>({});
   const [publishedUrl, setPublishedUrl] = useState<string | undefined>(undefined);
+  // Opened from the dashboard to make the video of a listing already up.
+  const [filmFirst, setFilmFirst] = useState(false);
+  // How many of the page options are on (PageOptions), for the publish
+  // screen's closed "more options" row.
+  const [extrasOn, setExtrasOn] = useState(0);
   const [publishing, setPublishing] = useState(false);
   // What publish is waiting on, when it is waiting on something nameable.
   const [publishNote, setPublishNote] = useState<string | undefined>();
@@ -1360,6 +1365,12 @@ export default function Editor() {
         if (opening === 'preview') {
           followGap.current = false;
           setScreen('ready');
+        } else if (opening === 'film') {
+          // The dashboard's "סרטון" link (19 Oct 2026): the video is made
+          // after publishing, so it opens on the last screen, video first.
+          followGap.current = false;
+          setFilmFirst(true);
+          setScreen('publish');
         } else if (opened && followGap.current) {
           setScreen(nextScreen(opened));
         }
@@ -2025,8 +2036,6 @@ export default function Editor() {
                 }}
               />
             </div>
-            <FilmFile photos={photos} listingId={savedRow?.id} onVideo={acceptVideo} />
-
             <h2 className="ready-head">{t('editor.flow.textTitle')}</h2>
             <DescriptionStep
               text={state.description}
@@ -2154,7 +2163,18 @@ export default function Editor() {
               </section>
             ) : null}
 
+            {filmFirst && !publishedUrl ? (
+              <FilmFile photos={photos} listingId={savedRow?.id} onVideo={acceptVideo} />
+            ) : null}
             <PublishStep
+              afterPublish={<FilmFile photos={photos} listingId={savedRow?.id} onVideo={acceptVideo} />}
+              optionsOn={
+                extrasOn +
+                (state.prePortal ? 1 : 0) +
+                (state.indexable ? 1 : 0) +
+                (state.tourUrl ? 1 : 0) +
+                (state.videoUrl ? 1 : 0)
+              }
               onShare={() => (slug.current ? openShare(slug.current, false) : undefined)}
               state={state}
               blockers={outstanding}
@@ -2198,6 +2218,7 @@ export default function Editor() {
                   category={state.category ?? 'property'}
                   tourUrl={state.tourUrl}
                   videoUrl={state.videoUrl}
+                  onCount={setExtrasOn}
                   onLinks={(links) =>
                     setState((current) => {
                       const next = { ...current };
