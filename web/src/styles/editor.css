@@ -3419,3 +3419,62 @@ body:has(.live-preview.is-full) .nav {
   inline-size: auto;
   min-inline-size: 8.5rem;
 }
+
+/* Covering a licence plate (PlateCover, 19 Oct 2026). The stage is
+   left-to-right: the box is a place in the photograph, not text. */
+.plate-dialog {
+  inline-size: min(40rem, calc(100vw - 2rem));
+  padding: 1rem;
+  border: 0;
+  border-radius: 10px;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.plate-dialog::backdrop {
+  background: rgba(20, 20, 18, 0.6);
+}
+
+.plate-stage {
+  position: relative;
+  touch-action: none;
+  user-select: none;
+}
+
+.plate-stage img {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+}
+
+.plate-box {
+  position: absolute;
+  box-sizing: border-box;
+  border: 3px solid #fff;
+  outline: 2px solid var(--ink);
+  background: rgba(255, 255, 255, 0.18);
+  cursor: move;
+}
+
+.plate-box:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.plate-handle {
+  position: absolute;
+  inset-inline-end: -12px;
+  inset-block-end: -12px;
+  inline-size: 24px;
+  block-size: 24px;
+  border-radius: 999px;
+  background: #fff;
+  border: 2px solid var(--ink);
+  cursor: nwse-resize;
+}
+
+.plate-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}

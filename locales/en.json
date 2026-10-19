@@ -728,7 +728,8 @@
         "retake": "",
         "hidePlate": "",
         "clearClutter": ""
-      }
+      },
+      "coverPlate": ""
     },
     "flow": {
       "dot": {
@@ -858,6 +859,16 @@
       "videoBad": "",
       "tour": "",
       "unsaved": ""
+    },
+    "plate": {
+      "title": "",
+      "hint": "",
+      "box": "",
+      "blur": "",
+      "logo": "",
+      "cancel": "",
+      "working": "",
+      "failed": ""
     }
   },
   "seo": {
@@ -1444,7 +1455,9 @@
     "filmFormat": "",
     "filmLength": "",
     "filmSize": "",
-    "filmSave": ""
+    "filmSave": "",
+    "plateTitle": "",
+    "plateMake": ""
   },
   "guide": {
     "photosTitle": "",
