@@ -39,7 +39,8 @@ export async function uploadAgencyLogo(
   const userId = session.session?.user.id;
   if (!userId) return { signedOut: true };
 
-  const processed = await stripAndResize(file, MAX_EDGE);
+  // A logo is drawn as designed: no light or colour fix.
+  const processed = await stripAndResize(file, MAX_EDGE, { tone: false });
   if (!processed) return { error: 'process_failed' };
 
   const path = logoPath(userId);

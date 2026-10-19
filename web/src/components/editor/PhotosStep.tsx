@@ -63,6 +63,9 @@ export interface EditorPhoto {
 
   /** The accent this photo suggests when it is the cover (cover-accent.ts). */
   tone?: AccentId;
+
+  /** The automatic light and colour fix changed the public copy (photo-tone.ts). */
+  toned?: boolean;
 }
 
 interface Props {

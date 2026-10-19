@@ -70,6 +70,7 @@ export function getStaticPaths() {
         listing: {
           ...propertyListing,
           extras: {
+            film: true,
             visit: true,
             calculator: true,
             openHouse: { start: '2030-05-03T10:00:00+03:00', end: '2030-05-03T12:00:00+03:00' },
@@ -80,7 +81,7 @@ export function getStaticPaths() {
     },
     {
       params: { slug: 'options-vehicle' },
-      props: { listing: { ...vehicleListing, extras: { visit: true, calculator: true, warranty: true } } as Listing },
+      props: { listing: { ...vehicleListing, extras: { film: true, visit: true, calculator: true, warranty: true } } as Listing },
     },
     {
       params: { slug: 'sold-kept' },

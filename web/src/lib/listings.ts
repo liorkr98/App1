@@ -151,6 +151,8 @@ export const propertyListing: Listing = {
   publishedAt: '2026-09-07T00:00:00.000Z',
   indexable: false,
   hyadMark: true,
+  // The demo pages show the photo film, as an agent who turned it on would (0048).
+  extras: { film: true },
 };
 
 
@@ -238,6 +240,8 @@ export const vehicleListing: Listing = {
   publishedAt: '2026-09-07T00:00:00.000Z',
   indexable: false,
   hyadMark: true,
+  // The demo pages show the photo film, as an agent who turned it on would (0048).
+  extras: { film: true },
 };
 
 export const listings: Listing[] = [propertyListing, vehicleListing];

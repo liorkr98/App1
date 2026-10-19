@@ -19,9 +19,10 @@ describe('cleanExtras — the agent page options (0047)', () => {
     assert.equal(cleanExtras({ openHouse: { start: 'Friday', end: 'Saturday' } }).openHouse, undefined);
   });
 
-  it('names the same keys as the database check', () => {
-    const sql = readFileSync('supabase/migrations/0047_page_options_sold_page.sql', 'utf8');
-    for (const key of ['visit', 'calculator', 'warranty', 'openHouse']) assert.ok(sql.includes(`'${key}'`), key);
+  it('names the same keys as the database check (0047, film since 0048)', () => {
+    const sql = readFileSync('supabase/migrations/0048_page_film_option.sql', 'utf8');
+    for (const key of ['visit', 'calculator', 'warranty', 'openHouse', 'film']) assert.ok(sql.includes(`'${key}'`), key);
+    assert.deepEqual(cleanExtras({ film: true, films: true }), { film: true });
   });
 });
 

@@ -294,6 +294,7 @@ const shareHref = whatsappShareUrl(
   <Gallery
     images={galleryImages}
     film={[listing.media.cover, ...listing.media.gallery]}
+    filmOn={listing.extras?.film === true}
     video={listing.media.video}
   />
 

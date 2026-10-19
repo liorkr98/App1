@@ -610,10 +610,10 @@
       "suggestOrderHint": ""
     },
     "tone": {
-      "label": "",
-      "pro": "",
-      "warm": "",
-      "refined": ""
+      "on": "",
+      "off": "",
+      "undo": "",
+      "redo": ""
     },
     "plan": {
       "title": "",
@@ -860,7 +860,8 @@
       "videoHint": "",
       "videoBad": "",
       "tour": "",
-      "unsaved": ""
+      "unsaved": "",
+      "film": ""
     },
     "plate": {
       "title": "",
@@ -1459,7 +1460,9 @@
     "filmSize": "",
     "filmSave": "",
     "plateTitle": "",
-    "plateMake": ""
+    "plateMake": "",
+    "toneTitle": "",
+    "toneMake": ""
   },
   "guide": {
     "photosTitle": "",
