@@ -394,6 +394,11 @@ jobs:
         working-directory: web
         run: npx playwright test phone-upload
 
+      - name: Paying opens only Tranzila's window, and only when switched on
+        if: ${{ !cancelled() }}
+        working-directory: web
+        run: npx playwright test pay.spec
+
       - name: One movement per design (round three)
         if: ${{ !cancelled() }}
         working-directory: web

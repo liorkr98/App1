@@ -67,5 +67,25 @@ declare module 'cloudflare:workers' {
      * every licence check answers "unavailable" (fail closed, CLAUDE.md §8).
      */
     BROKER_REGISTER_RESOURCE_ID?: string;
+
+    /**
+     * Tranzila (0049, docs/PAYMENTS.md). The terminal name is a plain
+     * variable; the API app key, the API secret and the token key are
+     * secrets:
+     *
+     *   npx wrangler secret put TRANZILA_APP_KEY
+     *   npx wrangler secret put TRANZILA_SECRET
+     *   npx wrangler secret put PAYMENT_TOKEN_KEY   (32 random bytes, base64)
+     *
+     * Read only by web/src/lib/tranzila-env.ts. Any of them missing and
+     * every payment route answers "not set up": nobody can pay, nobody is
+     * marked paid (CLAUDE.md §8). PAYMENT_TOKEN_KEY seals the card token
+     * before it reaches the database; losing it means every saved card has
+     * to be entered again, so keep a copy somewhere safe.
+     */
+    TRANZILA_TERMINAL?: string;
+    TRANZILA_APP_KEY?: string;
+    TRANZILA_SECRET?: string;
+    PAYMENT_TOKEN_KEY?: string;
   };
 }

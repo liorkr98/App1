@@ -1,0 +1,79 @@
+---
+import Site from '../../layouts/Site.astro';
+import { t } from '../../lib/i18n';
+
+/**
+ * /pay/done/?s=<session>&r=paid|pending|failed — where /api/payments/done
+ * sends Tranzila's window after the payment (0049). By then the server has
+ * already asked Tranzila; this page only says what it found.
+ *
+ * If it opens inside the payment frame, it moves the whole tab here first.
+ * A pending payment is watched for a minute through the session row the
+ * owner may read (RLS); the plan itself is given by the server, never here.
+ */
+---
+
+<Site title={`${t('pay.done.title')} · ${t('common.brand')}`} robots="noindex,nofollow">
+  <div class="site-shell en">
+    <div class="en-card pay-card">
+      <section id="done-paid" hidden>
+        <h1 class="site-h2">{t('pay.done.paidTitle')}</h1>
+        <p class="site-sub">{t('pay.done.paidBody')}</p>
+        <a class="site-btn site-btn-primary" href="/mine/">{t('pay.done.toPages')}</a>
+      </section>
+      <section id="done-pending" hidden>
+        <h1 class="site-h2">{t('pay.done.pendingTitle')}</h1>
+        <p class="site-sub" role="status">{t('pay.done.pendingBody')}</p>
+        <p class="site-sub" id="done-late" hidden>{t('pay.done.stillPending')} <a href="/contact/">{t('pay.contact')}</a></p>
+      </section>
+      <section id="done-failed" hidden>
+        <h1 class="site-h2">{t('pay.done.failedTitle')}</h1>
+        <p class="site-sub">{t('pay.done.failedBody')}</p>
+        <a class="site-btn site-btn-primary" href="/pricing/">{t('pay.done.again')}</a>
+        <a class="site-btn site-btn-ghost" href="/contact/">{t('pay.contact')}</a>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    import { supabase, supabaseConfigured } from '../../lib/supabase';
+
+    if (window.top && window.top !== window.self) {
+      // Inside Tranzila's frame on /pay/: the result belongs to the whole tab.
+      window.top.location.replace(window.location.href);
+    } else {
+      const query = new URLSearchParams(window.location.search);
+      const session = query.get('s') ?? '';
+      const state = query.get('r');
+      const section = (name: string) => {
+        for (const id of ['done-paid', 'done-pending', 'done-failed']) document.getElementById(id)!.hidden = id !== `done-${name}`;
+      };
+
+      if (state === 'paid') section('paid');
+      else if (state !== 'pending' || !supabaseConfigured || !/^[0-9a-f-]{36}$/.test(session)) section('failed');
+      else {
+        section('pending');
+        let tries = 0;
+        const watch = window.setInterval(async () => {
+          tries += 1;
+          const { data } = await supabase().from('checkout_sessions').select('status').eq('id', session).maybeSingle();
+          if ((data as { status?: string } | null)?.status === 'paid') {
+            window.clearInterval(watch);
+            section('paid');
+          } else if (tries >= 20) {
+            window.clearInterval(watch);
+            document.getElementById('done-late')!.hidden = false;
+          }
+        }, 3000);
+      }
+    }
+  </script>
+</Site>
+
+<style>
+  .pay-card section {
+    display: grid;
+    gap: 0.75rem;
+    justify-items: start;
+  }
+</style>

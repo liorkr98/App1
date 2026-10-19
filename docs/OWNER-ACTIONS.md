@@ -6,6 +6,12 @@ done, so the next session knows.
 
 ## Switch on
 
+- [ ] **Payments through Tranzila: migration 0049, then the setup in
+  `docs/PAYMENTS.md`.** Run the migration the same way as 0048 (safe to run
+  twice; payments stay off). Then from Tranzila: the terminal, API keys,
+  handshake, tokens, 3-D Secure, invoices, and a test terminal. Four
+  Cloudflare variables, a test round as a site admin, and only then
+  `payments_mode = 'live'`.
 - [ ] **Agent pages and true view counts: migration 0041.** Supabase → SQL
   editor → paste `supabase/migrations/0041_agent_pages.sql` → Run, BEFORE
   merging the PR that adds it. It is safe to run twice. Without it the

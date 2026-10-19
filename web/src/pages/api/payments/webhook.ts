@@ -1,59 +1,32 @@
 import type { APIRoute } from 'astro';
 
-import { activeProvider } from '@/features/billing/provider';
-
-import { supabaseService } from '../../../lib/supabase-service';
+import { confirmPayment, resultParams } from '../../../lib/payment-confirm';
 
 export const prerender = false;
 
 /**
- * The payments webhook (docs/PRICING.md §5: webhooks are the source of truth
- * for payment state).
+ * Tranzila's notification (notify_url_address), server to server.
  *
  * ============================ HUMAN REVIEW ============================
- * CLAUDE.md §8. The provider adapter verifies the request with the
- * provider's own signature; only a verified, well-formed event reaches
- * `apply_payment_event`, which is idempotent on the transaction id, so a
- * replay changes nothing. With no PSP signed the adapter is `unset` and
- * this answers 503 to everything: there is no path here that marks anyone
- * paid without a provider saying so.
+ * CLAUDE.md §8. The notification is not signed, so nothing in it is
+ * believed: confirmPayment asks Tranzila about the transaction with our
+ * API keys and gives a plan only when Tranzila confirms it, for the
+ * session's amount and the session's id. Without Tranzila set up this
+ * answers 503 to everything.
  * ======================================================================
  *
- * The body is never logged: it can carry a name or a phone number.
+ * Answers: 200 "OK" when the payment is applied or already was; 400 when
+ * it is not ours or does not hold (Tranzila need not send it again); 503
+ * when Tranzila or the database could not answer, so it is sent again.
+ * The body is never logged.
  */
 export const POST: APIRoute = async ({ request }) => {
-  const provider = activeProvider();
-  if (provider.name === 'unset') {
-    return json({ error: 'no_provider' }, 503);
-  }
-
-  const event = await provider.verifyWebhook(request).catch(() => null);
-  if (!event) return json({ error: 'not_verified' }, 401);
-
-  const client = supabaseService();
-  if (!client) return json({ error: 'not_configured' }, 503);
-
-  const { data, error } = await client.rpc('apply_payment_event', {
-    p_txn_ref: event.txnRef,
-    p_kind: event.kind,
-    p_account: event.accountId,
-    p_plan: event.planKey,
-    p_listing: event.listingId ?? null,
-    p_amount_agorot: event.amountAgorot ?? null,
-    p_source: event.source ?? null,
-  });
-
-  if (error) {
-    console.warn(`payments_webhook apply_failed ${error.code ?? 'unknown'}`);
-    // 500 so the provider retries; the ledger makes the retry safe.
-    return json({ error: 'apply_failed' }, 500);
-  }
-  return json({ ok: true, outcome: data }, 200);
+  const result = await confirmPayment(await resultParams(request), true);
+  if (result.status === 'paid' || result.status === 'duplicate') return text('OK', 200);
+  if (result.status === 'refused') return text('refused', 400);
+  return text('unavailable', 503);
 };
 
-function json(body: unknown, status: number): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
-  });
+function text(body: string, status: number): Response {
+  return new Response(body, { status, headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' } });
 }

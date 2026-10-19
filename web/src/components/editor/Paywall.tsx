@@ -4,6 +4,7 @@ import { offeredPlan, planByKey, priceParts, type CohortCount } from '@/features
 import { PRICING, type PlanKey } from '@/features/billing/pricing-config';
 
 import { recordBillingEvent } from '../../lib/billing-events';
+import { checkoutOpen } from '../../lib/checkout-open';
 import { t } from '../../lib/i18n';
 import { readCounts } from '../../lib/launch-offer';
 import { Message } from './Message';
@@ -22,9 +23,10 @@ interface Props {
  * ============================ HUMAN REVIEW ============================
  * CLAUDE.md §8: this may be built, and it decides nothing. It is shown
  * because the database refused (or would refuse) the publish; choosing a
- * plan here grants nothing, and checkout stays disabled until an Israeli
- * PSP is signed. The launch plan is preselected only while a real seat
- * remains; otherwise the regular plan is.
+ * plan here grants nothing. Paying opens /pay/ (Tranzila, 0049) only while
+ * payments are switched on; otherwise the button stays disabled. The launch
+ * plan is preselected only while a real seat remains; otherwise the
+ * regular plan is.
  * ======================================================================
  */
 export function Paywall({ category, capped = false }: Props) {
@@ -41,12 +43,16 @@ export function Paywall({ category, capped = false }: Props) {
       ? [offered, 'agent_basic', 'agent_unlimited', 'private_car']
       : [offered, 'agent_basic', 'agent_unlimited', 'private_sale', 'private_rent'];
   const [chosen, setChosen] = useState<PlanKey | null>(null);
+  const [canPay, setCanPay] = useState(false);
   const shown = useRef(false);
 
   useEffect(() => {
     let live = true;
     void readCounts().then((rows) => {
       if (live) setCounts(rows);
+    });
+    void checkoutOpen().then((open) => {
+      if (live) setCanPay(open);
     });
     return () => {
       live = false;
@@ -111,12 +117,20 @@ export function Paywall({ category, capped = false }: Props) {
         })}
       </ul>
 
-      <button type="button" className="secondary" disabled>
-        {t('pricing.disabled')}
-      </button>
-      <p className="field-hint">
-        {t('pricing.checkoutOff')} <a href="/contact/">{t('pricing.contact')}</a>
-      </p>
+      {canPay ? (
+        <a className="publish-button paywall-pay" href={`/pay/?plan=${selected}`}>
+          {t('billing.pay')}
+        </a>
+      ) : (
+        <>
+          <button type="button" className="secondary" disabled>
+            {t('pricing.disabled')}
+          </button>
+          <p className="field-hint">
+            {t('pricing.checkoutOff')} <a href="/contact/">{t('pricing.contact')}</a>
+          </p>
+        </>
+      )}
       <p className="field-hint">{t('billing.paywall.archive')}</p>
     </div>
   );

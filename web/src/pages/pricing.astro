@@ -14,7 +14,8 @@ import '../styles/pricing.css';
  * and scripts/verify-no-price-literals.mjs fails the build if one appears.
  *
  * DISPLAY ONLY — CLAUDE.md §8. Nothing here reads or decides entitlement;
- * until an Israeli PSP is signed, a paid plan's button leads to /contact/.
+ * until payments are switched on (0049) a paid plan's button leads to
+ * /contact/, then to /pay/.
  *
  * NO LAYOUT SHIFT WHEN IT SWITCHES: both variants share one grid cell and
  * trade visibility, and the seat line keeps its height while empty (the
@@ -120,7 +121,7 @@ const ld = [
     </div>
 
     <p class="site-shell site-note pr-off"><Msg path="pricing.vatNote" values={{ vat: PRICING.vatPercent }} /></p>
-    <p class="site-shell site-note pr-off">
+    <p class="site-shell site-note pr-off" data-checkout-off>
       {t('pricing.checkoutOff')} <a href="/contact/">{t('pricing.contact')}</a>
     </p>
   </section>
@@ -166,9 +167,25 @@ const ld = [
 
 <script>
   import { recordBillingEventPlain } from '../lib/billing-event-plain';
+  import { checkoutOpen } from '../lib/checkout-open';
   import { showLaunchOffers } from '../lib/launch-offer';
   import { showLaunchText } from '../lib/launch-text';
 
   void recordBillingEventPlain('paywall_shown', null);
-  void showLaunchOffers().then((counts) => showLaunchText(counts));
+  const offers = showLaunchOffers().then((counts) => showLaunchText(counts));
+
+  // Payments switched on (0049): each card's button opens /pay/ for the
+  // plan it shows. The launch variant counts only once the seat count
+  // proved it (showLaunchOffers), so this waits for that first.
+  void Promise.all([checkoutOpen(), offers]).then(([open]) => {
+    if (!open) return;
+    for (const note of document.querySelectorAll<HTMLElement>('[data-checkout-off]')) note.hidden = true;
+    for (const link of document.querySelectorAll<HTMLAnchorElement>('a.pr-go[data-pay]')) {
+      const launchShown = link.closest('li')?.querySelector('[data-variant="launch"]:not(.is-off)');
+      const plan = launchShown && link.dataset.payLaunch ? link.dataset.payLaunch : link.dataset.pay;
+      if (!plan) continue;
+      link.href = `/pay/?plan=${plan}`;
+      if (link.dataset.payLabel) link.textContent = link.dataset.payLabel;
+    }
+  });
 </script>

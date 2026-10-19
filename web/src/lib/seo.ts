@@ -38,7 +38,7 @@ export const PUBLIC_PAGES: readonly { path: string; title: () => string }[] = [
 
 /** Paths no crawler needs: accounts, the editor, the API, CI fixtures. */
 export const PRIVATE_PATHS = [
-  '/new/', '/mine/', '/me/', '/enter/', '/up', '/admin/', '/api/', '/preview', '/lab/',
+  '/new/', '/mine/', '/me/', '/enter/', '/pay/', '/up', '/admin/', '/api/', '/preview', '/lab/',
   '/template-check/', '/a/*/share',
 ];
 

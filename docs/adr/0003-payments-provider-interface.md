@@ -1,6 +1,10 @@
 # ADR 0003 — What the payments interface needs from a PSP
 
-Status: **open decision.** Nothing implemented, no provider chosen.
+Status: **decided 19 Oct 2026: Tranzila**, with its invoices, and we own
+the recurring schedule (the "self-driven" shape below). The build and its
+safety rules are `docs/PAYMENTS.md`; this record stays as the list of
+questions it was written to be. `provider.ts` and `unsetProvider` were
+replaced by `src/features/billing/tranzila.ts` and `payments_mode = 'off'`.
 Date: September 2026
 
 **Current entitlement, until a PSP is signed** (12 Oct 2026, migration 0040,

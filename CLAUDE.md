@@ -75,7 +75,7 @@ sellers are secondary. When a design decision trades one against the other,
 | Images | The browser's re-encode (EXIF stripped, resized). sharp lives in `worker/`, idle |
 | PDF | **The phone's print sheet.** `/a/{slug}/flyer/` has a "save as PDF" button |
 | Listing map | **MapLibre GL JS** 6, self-served from a versioned path, with **OpenFreeMap** tiles. Lazy: loaded only when the map section nears the screen. Decided 5 Oct 2026 — see below. |
-| Payments | **Undecided.** Build behind a provider interface (PRD §6) |
+| Payments | **Tranzila** (19 Oct 2026), with its invoices; we run the monthly charge. `docs/PAYMENTS.md` |
 
 **`/a/[slug]` renders per request. Everything else is still a static file.**
 Corrected 14 September 2026, replacing "static output, no runtime rendering".
@@ -168,8 +168,8 @@ that file and the migration, not to the pipeline.
 **Never propose Stripe.** It does not support ILS as a base currency for an
 Israeli business: they cannot settle to a shekel account directly. Israeli
 sellers also need Bit, local instalments, and a compliant tax invoice per
-transaction, none of which Stripe provides. The provider will be an Israeli
-PSP.
+transaction, none of which Stripe provides. The provider is Tranzila, an
+Israeli PSP (19 Oct 2026, `docs/PAYMENTS.md`).
 
 **Never Google Distance Matrix, and never straight-line distance as a
 substitute for routing.** Distance Matrix is a per-listing cost forever, and
@@ -454,8 +454,8 @@ summary:
 - anything that grants access when a network call fails
 
 **Fail closed.** Unknown or errored entitlement means not paid. Never grant on
-network failure. The payments provider is undecided — build behind an
-interface with one adapter and say what the interface needs.
+network failure. The provider is Tranzila; everything that knows its names is
+`src/features/billing/tranzila.ts` (`docs/PAYMENTS.md`).
 
 **Plans, prices and limits are `docs/PRICING.md`** (decided 12 Oct 2026, the
 single source of truth). Prices live in `src/features/billing/pricing-config.ts`, seeded into the
@@ -481,10 +481,11 @@ and the rest become `unpublished` (never deleted); a new payment restores them,
 up to the new plan's page limit, most recent first (`restore_account()`, 0045).
 Launch cohorts are seats in `cohort_counters`, consumed in the payment
 transaction, never returned. Payment state comes only from
-`apply_payment_event()`, idempotent on `psp_txn_ref`, called by the webhook
-through the provider adapter. Until a PSP is signed the adapter is `disabled`
-and refuses everything; plans are granted by hand with `admin_grant_plan()`
-(required note). Admins are `site_admins` (uuid only — never commit an email).
+`apply_payment_event()`, idempotent on `psp_txn_ref`, reached only through
+`complete_checkout()` (0049) after Tranzila itself confirmed the transaction
+server to server. Nobody can pay while `billing_config.payments_mode` is
+`off` (the default); `test` is site admins only. Plans are still granted by
+hand with `admin_grant_plan()` (required note). Admins are `site_admins` (uuid only — never commit an email).
 
 Every PR that reads plan or grant state and decides publish must flag
 CLAUDE.md §8 in the summary.
