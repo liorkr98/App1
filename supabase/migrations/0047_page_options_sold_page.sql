@@ -1,4 +1,4 @@
--- 0047: the agent's options for one page, and a sold page they keep up (19 Oct 2026).
+-- 0047: the options an agent turns on for one page, and a sold page they keep up (19 Oct 2026).
 --
 -- 1. listings.extras: what the agent turns on for this page, each off until
 --    they do. Known keys only, each with its own type:
