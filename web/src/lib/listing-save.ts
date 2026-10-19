@@ -189,10 +189,17 @@ export async function publishListing(
 export async function loadListing(
   slug: string,
 ): Promise<{ row: Record<string, unknown> } | { error: string }> {
+  // Only the agent's own: RLS alone also returns any published listing
+  // (listings_select_public covers `authenticated`), and the editor would
+  // open another agent's page, then fail on every save.
+  const { data: session } = await supabase().auth.getSession();
+  const owner = session.session?.user.id;
+  if (!owner) return { error: 'not signed in' };
   const { data, error } = await supabase()
     .from('listings')
     .select('id, slug, category, title, price, price_note, description, facts, media, location, template, accent, audience, disclosures, indexable, pre_portal, owner_consent_declared_at, owner_consent_name, status, area_places')
     .eq('slug', slug)
+    .eq('owner_id', owner)
     .maybeSingle();
 
   if (error) return { error: error.message };

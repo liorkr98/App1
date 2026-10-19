@@ -1659,17 +1659,23 @@ import '../styles/dash.css';
           });
 
         /*
-         * No `.eq('owner_id', …)`, on purpose.
+         * The agent's own rows only, by `owner_id`.
          *
-         * The policy in 0002 restricts this to the signed-in agent's own rows.
-         * Adding the filter here would LOOK like the security and quietly
-         * become the security the day somebody edits the policy.
+         * This used to rely on RLS alone, and RLS does not do it: policies
+         * are combined with OR, and listings_select_public (0002, 0026)
+         * applies to `authenticated` as well as `anon`. Every agent's
+         * dashboard listed every other agent's published pages as its own —
+         * counted in the totals, with edit and delete buttons that then
+         * failed (19 Oct 2026, scripts/sql-test/owner-reads.sql). The
+         * policies still guard every write; this filter decides what "mine"
+         * means.
          */
+        const owner = session.session.user.id;
         const BASE = 'id, slug, title, price, status, category, template, media, location, published_at, area_places';
         // The seller's text and its translations (0044), for "שליחה בשפה אחרת".
         // A database before 0044 has no translations column: read without it.
         const read = (columns: string) =>
-          client.from('listings').select(columns).order('created_at', { ascending: false }) as unknown as Promise<{
+          client.from('listings').select(columns).eq('owner_id', owner).order('created_at', { ascending: false }) as unknown as Promise<{
             data: unknown[] | null;
             error: { code?: string } | null;
           }>;
