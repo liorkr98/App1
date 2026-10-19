@@ -16,7 +16,7 @@ import { key, url } from './supabase-project';
  * a visitor who is signed out. Analytics only: nothing here grants or refuses
  * anything (CLAUDE.md §8).
  */
-function bearer(): string {
+export function bearer(): string {
   try {
     const raw = SESSION_KEY ? localStorage.getItem(SESSION_KEY) : null;
     const stored = raw ? (JSON.parse(raw) as { access_token?: unknown; expires_at?: unknown } | null) : null;

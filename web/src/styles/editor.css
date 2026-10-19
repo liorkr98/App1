@@ -1749,6 +1749,14 @@ textarea {
   cursor: default;
 }
 
+/* The paywall's pay link (0049) wears the publish button. */
+.paywall-pay {
+  display: block;
+  box-sizing: border-box;
+  text-align: center;
+  text-decoration: none;
+}
+
 /* Publishing, by stage (PublishStep). The ring fills a quarter per stage;
    the arc's own movement is the only thing that says "still working". */
 .publish-progress {

@@ -75,5 +75,9 @@ done
 "${PSQL[@]}" -c "$(cat "$(ls "$ROOT"/supabase/migrations/0048_*.sql)")" >/dev/null
 "${PSQL[@]}" -c "$(cat "$(ls "$ROOT"/supabase/migrations/0048_*.sql)")" >/dev/null
 "${PSQL[@]}" -f "$HERE/page-film.sql"
+# 0049 the same way, twice, then the Tranzila checkout.
+"${PSQL[@]}" -c "$(cat "$(ls "$ROOT"/supabase/migrations/0049_*.sql)")" >/dev/null
+"${PSQL[@]}" -c "$(cat "$(ls "$ROOT"/supabase/migrations/0049_*.sql)")" >/dev/null
+"${PSQL[@]}" -f "$HERE/tranzila-checkout.sql"
 bash "$HERE/race.sh" "$BIN" "$WORK" "$PORT"
-echo "OK: billing, agent-page, site-analytics, price-drop, translation, plan-limit, photo-angle, owner-read, page-option and page-film SQL tests passed."
+echo "OK: billing, agent-page, site-analytics, price-drop, translation, plan-limit, photo-angle, owner-read, page-option, page-film and Tranzila checkout SQL tests passed."

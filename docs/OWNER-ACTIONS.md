@@ -6,6 +6,12 @@ done, so the next session knows.
 
 ## Switch on
 
+- [ ] **Payments through Tranzila: migration 0049, then the setup in
+  `docs/PAYMENTS.md`.** Run the migration the same way as 0048 (safe to run
+  twice; payments stay off). Then from Tranzila: the terminal, API keys,
+  handshake, tokens, 3-D Secure, invoices, and a test terminal. Four
+  Cloudflare variables, a test round as a site admin, and only then
+  `payments_mode = 'live'`.
 - [ ] **Agent pages and true view counts: migration 0041.** Supabase → SQL
   editor → paste `supabase/migrations/0041_agent_pages.sql` → Run, BEFORE
   merging the PR that adds it. It is safe to run twice. Without it the
@@ -36,11 +42,12 @@ done, so the next session knows.
   and lets a sold page stay up when the agent chooses. Until it runs nothing
   breaks: the editor says the options will be saved after the update, and
   marking a listing sold takes the page down as before.
-- [ ] **The photo film switch: migration 0048.** Same way:
+- [x] **The photo film switch: migration 0048.** Same way:
   `supabase/migrations/0048_page_film_option.sql` → **Raw** → copy all → a NEW
   empty tab → Run. Safe to run twice. From this change the photo slideshow
   film shows on a page only when the agent ticks "סרטון מהתמונות בעמוד";
   until 0048 runs, ticking it says it will be saved after the update.
+  Done 19 Oct.
 - [ ] **Read the Russian and Arabic copy** when you can: `locales/ru.json`,
   `locales/ar.json` and `locales/strings/` were written without a native
   reviewer (you chose to ship as is). The listing text itself is the

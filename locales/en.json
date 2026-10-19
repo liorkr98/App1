@@ -1343,7 +1343,8 @@
       "submit": "",
       "done": "",
       "failed": ""
-    }
+    },
+    "pay": ""
   },
   "admin": {
     "title": "",
@@ -1933,5 +1934,36 @@
     "forSale": "",
     "scan": "",
     "printHint": ""
+  },
+  "pay": {
+    "title": "",
+    "lead": "",
+    "loading": "",
+    "frameTitle": "",
+    "signIn": "",
+    "signInLink": "",
+    "noPlan": "",
+    "choose": "",
+    "contact": "",
+    "errors": {
+      "payments_off": "",
+      "already_subscribed": "",
+      "cohort_full": "",
+      "not_your_listing": "",
+      "too_many": "",
+      "unavailable": ""
+    },
+    "done": {
+      "title": "",
+      "paidTitle": "",
+      "paidBody": "",
+      "pendingTitle": "",
+      "pendingBody": "",
+      "stillPending": "",
+      "failedTitle": "",
+      "failedBody": "",
+      "again": "",
+      "toPages": ""
+    }
   }
 }

@@ -43,6 +43,7 @@ export const SERVER_ONLY_NAMESPACES = [
   'empty',
   'vehicle',
   'sign',
+  'pay',
 ];
 
 /**

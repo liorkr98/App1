@@ -1,0 +1,113 @@
+---
+import Site from '../../layouts/Site.astro';
+import { t } from '../../lib/i18n';
+
+/**
+ * /pay/?plan=<key>[&listing=<id>] — Tranzila's payment window, inside our
+ * page (0049, docs/PAYMENTS.md). A static file: the script asks
+ * /api/payments/checkout for the window, which works out the amount on the
+ * server, and only a https://direct.tranzila.com address is ever framed.
+ *
+ * The card is typed into Tranzila's frame, never into this page (PCI SAQ-A).
+ * Every message is rendered here and only shown or hidden by the script, so
+ * the browser carries none of the pay.* copy (integrations/client-copy.mjs).
+ */
+const errors = ['payments_off', 'already_subscribed', 'cohort_full', 'not_your_listing', 'too_many', 'unavailable'];
+---
+
+<Site title={`${t('pay.title')} · ${t('common.brand')}`} robots="noindex,nofollow">
+  <div class="site-shell en">
+    <div class="en-card pay-card">
+      <h1 class="site-h2">{t('pay.title')}</h1>
+      <p class="site-sub">{t('pay.lead')}</p>
+
+      <p class="pay-say" id="pay-loading" role="status">{t('pay.loading')}</p>
+      <p class="pay-say" id="pay-signin" hidden>{t('pay.signIn')} <a href="/enter/">{t('pay.signInLink')}</a></p>
+      <p class="pay-say" id="pay-noplan" hidden>{t('pay.noPlan')} <a href="/pricing/">{t('pay.choose')}</a></p>
+      {errors.map((code) => (
+        <p class="pay-say" data-error={code} hidden>
+          {t(`pay.errors.${code}`)} <a href="/pricing/">{t('pay.choose')}</a> · <a href="/contact/">{t('pay.contact')}</a>
+        </p>
+      ))}
+
+      <div class="pay-frame" id="pay-frame" data-title={t('pay.frameTitle')}></div>
+    </div>
+  </div>
+
+  <script>
+    import { supabase, supabaseConfigured } from '../../lib/supabase';
+
+    const show = (element: Element | null) => {
+      document.getElementById('pay-loading')!.hidden = true;
+      if (element instanceof HTMLElement) element.hidden = false;
+    };
+    const showError = (code: string) =>
+      show(document.querySelector(`[data-error="${code}"]`) ?? document.querySelector('[data-error="unavailable"]'));
+
+    async function open() {
+      const query = new URLSearchParams(window.location.search);
+      const plan = query.get('plan') ?? '';
+      const listingId = query.get('listing');
+      if (!/^[a-z_]{2,40}$/.test(plan)) return show(document.getElementById('pay-noplan'));
+      if (!supabaseConfigured) return showError('payments_off');
+
+      const { data } = await supabase().auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) return show(document.getElementById('pay-signin'));
+
+      let body: { url?: unknown; error?: unknown } = {};
+      try {
+        const response = await fetch('/api/payments/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ plan, ...(listingId ? { listingId } : {}) }),
+        });
+        body = (await response.json()) as typeof body;
+      } catch {
+        return showError('unavailable');
+      }
+
+      // Only Tranzila's own window, over https, is ever put in the frame.
+      let url: URL | undefined;
+      try {
+        url = typeof body.url === 'string' ? new URL(body.url) : undefined;
+      } catch {
+        url = undefined;
+      }
+      if (!url || url.origin !== 'https://direct.tranzila.com') {
+        const code = typeof body.error === 'string' ? body.error : 'unavailable';
+        return showError(code === 'test_only' || code === 'not_configured' ? 'payments_off' : code);
+      }
+
+      const holder = document.getElementById('pay-frame')!;
+      const frame = document.createElement('iframe');
+      frame.src = url.href;
+      frame.title = holder.dataset.title ?? '';
+      frame.referrerPolicy = 'no-referrer';
+      holder.append(frame);
+      document.getElementById('pay-loading')!.hidden = true;
+    }
+
+    void open();
+  </script>
+</Site>
+
+<style>
+  .pay-card {
+    display: grid;
+    gap: 0.75rem;
+  }
+  .pay-say {
+    margin: 0;
+    line-height: 1.6;
+  }
+  .pay-frame iframe {
+    display: block;
+    inline-size: 100%;
+    /* Tranzila's window, with room for the bank's 3-D Secure check (400 × 600). */
+    block-size: 640px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--ls-surface);
+  }
+</style>

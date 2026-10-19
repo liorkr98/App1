@@ -45,8 +45,16 @@ const { regular, launch, featured, index } = Astro.props;
       </div>
     )}
   </div>
-  {/* Until a PSP is signed (CLAUDE.md §8) a paid plan is granted by hand: the
-      button says how to get one, instead of a greyed control that reads as a
-      broken site. Nothing here grants. */}
-  <a class="site-btn site-btn-ghost pr-go" href="/contact/">{t('pricing.talk')}</a>
+  {/* Until payments are switched on (0049) a paid plan is granted by hand:
+      the button says how to get one, instead of a greyed control that reads
+      as a broken site. When they are, the page's script points it at /pay/
+      for the plan the card shows (launch while a seat is proven, else
+      regular). Nothing here grants (CLAUDE.md §8). */}
+  <a
+    class="site-btn site-btn-ghost pr-go"
+    href="/contact/"
+    data-pay={regular.key}
+    data-pay-launch={launch?.key}
+    data-pay-label={t('billing.pay')}
+  >{t('pricing.talk')}</a>
 </li>

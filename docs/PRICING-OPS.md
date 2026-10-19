@@ -41,10 +41,9 @@ are only for paid first payments.
 
 ## What is not built yet
 
-- **Checkout.** Buttons are disabled with a note until a PSP is signed (ADR
-  0003, never Stripe). The webhook (`/api/payments/webhook`) answers 503 to
-  everything until then. When a provider is chosen, its adapter goes next to
-  `src/features/billing/provider.ts` and `activeProvider()` returns it.
+- **Checkout** is built for Tranzila (0049) and switched off until the
+  owner turns on `payments_mode`: `docs/PAYMENTS.md`. The monthly charge,
+  cancel, card update and refunds are the next step.
 - **Office seats.** The `office` plan exists, but there is no place yet to
   add 10 agents to one office. Until then, grant each agent the plan.
 - **Email.** The lock notice is written to the dashboard only. Email needs a
