@@ -1,6 +1,7 @@
 import { DEFAULT_ACCENT, isAccentId } from '@/features/agents/accents';
 import { toSeller } from '@/features/agents/profile';
 import { generateSlug } from '@/features/listings/slug';
+import { cleanExtras } from '@/features/listings/page-extras';
 import { schemaFor, type ListingCategory } from '@/features/listings/schemas';
 import { NEW_LISTING_TEMPLATE } from '@/features/templates/manifest';
 
@@ -164,4 +165,58 @@ export async function uploadOriginal(
     .upload(path, file, { contentType: file.type, upsert: false });
 
   return error ? { error: error.message } : { path };
+}
+
+/**
+ * A new draft shaped like one of the agent's listings (19 Oct 2026): the
+ * same category, template, colour, audience, search setting and page
+ * options, so the next listing starts where the last one ended.
+ *
+ * Nothing that belongs to the old listing travels. Not the photographs
+ * (their files live under the old listing's id, 0004), the address, the
+ * price, the facts (a car's plate lookup is among them), the description,
+ * the disclosures, the owner's consent, an open house or anything billing
+ * decides. The seller block comes from the profile, as for any new draft.
+ */
+export async function duplicateListing(slug: string): Promise<DraftRow> {
+  const client = supabase();
+  const { data: session } = await client.auth.getSession();
+  const owner = session.session?.user.id;
+  if (!owner) throw new Error('not signed in');
+
+  const read = (columns: string) =>
+    client.from('listings').select(columns).eq('slug', slug).eq('owner_id', owner).maybeSingle();
+  // extras arrives with 0047, run by hand: copy without it when it is missing.
+  let source = await read('category, template, accent, audience, indexable, extras');
+  if (source.error?.code === '42703') source = await read('category, template, accent, audience, indexable');
+  if (source.error || !source.data) throw source.error ?? new Error('not found');
+  const row = source.data as unknown as {
+    category: ListingCategory;
+    template: string;
+    accent: string | null;
+    audience: string | null;
+    indexable: boolean;
+    extras?: unknown;
+  };
+
+  const draft = await createDraft(row.category);
+  const extras = cleanExtras(row.extras);
+  const kept = {
+    ...(extras.visit ? { visit: true } : {}),
+    ...(extras.calculator ? { calculator: true } : {}),
+  };
+  const shape = {
+    template: row.template,
+    ...(row.accent ? { accent: row.accent } : {}),
+    audience: row.audience,
+    indexable: row.indexable === true,
+  };
+  let { error } = await client
+    .from('listings')
+    .update(row.extras === undefined ? shape : { ...shape, extras: kept })
+    .eq('id', draft.id);
+  if (error?.code === '42703') ({ error } = await client.from('listings').update(shape).eq('id', draft.id));
+  // A copy that kept only its category is still a draft to work on.
+  if (error) console.warn('duplicate: shape not copied');
+  return draft;
 }

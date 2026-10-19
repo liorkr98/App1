@@ -8,7 +8,7 @@ import { cardFor, shareCardKey } from '@/features/listings/share-card';
 import type { Listing } from '@/types/listing';
 
 import { listingFromRow, selectListingColumns, type ListingRow } from './listing-row-map';
-import { drawCard, drawStory, encode, loadCover, loadShareFonts } from './share-draw';
+import { drawCard, drawPost, drawStory, encode, loadCover, loadShareFonts } from './share-draw';
 import { supabase } from './supabase';
 
 /**
@@ -31,6 +31,7 @@ import { supabase } from './supabase';
 export interface ShareImagesResult {
   status: 'made' | 'current' | 'failed';
   storyUrl?: string;
+  postUrl?: string;
 }
 
 const FAILED: ShareImagesResult = { status: 'failed' };
@@ -49,7 +50,10 @@ export async function makeShareImages(listingId: string): Promise<ShareImagesRes
     const key = shareCardKey(listing);
     const media = (typeof row.media === 'object' && row.media !== null ? row.media : {}) as Record<string, unknown>;
     const story = typeof media.storyUrl === 'string' ? media.storyUrl : '';
-    if (cardFor(media.card)?.key === key && story.includes(`-${key}.`)) return { status: 'current', storyUrl: story };
+    const post = typeof media.postUrl === 'string' ? media.postUrl : '';
+    if (cardFor(media.card)?.key === key && story.includes(`-${key}.`) && post.includes(`-${key}.`)) {
+      return { status: 'current', storyUrl: story, postUrl: post };
+    }
 
     const [cover] = await Promise.all([loadCover(listing.media.cover.url), loadShareFonts()]);
 
@@ -61,10 +65,18 @@ export async function makeShareImages(listingId: string): Promise<ShareImagesRes
       (canvas) => drawStory(canvas, listing, cover, window.location.host),
       false,
     );
-    if (!card && !storyUrl) return FAILED;
+    // The square feed post (19 Oct 2026), the story's design at 1080 × 1080.
+    const postUrl = await upload(
+      listing,
+      'post',
+      key,
+      (canvas) => drawPost(canvas, listing, cover, window.location.host),
+      false,
+    );
+    if (!card && !storyUrl && !postUrl) return FAILED;
 
     /*
-     * Re-read `media` immediately before writing, and change only these two
+     * Re-read `media` immediately before writing, and change only these
      * keys: a save from another tab in the meantime keeps its photographs.
      */
     const { data: fresh } = await client.from('listings').select('media').eq('id', listingId).maybeSingle();
@@ -77,11 +89,12 @@ export async function makeShareImages(listingId: string): Promise<ShareImagesRes
           ...base,
           ...(card ? { card: { url: card, key } } : {}),
           ...(storyUrl ? { storyUrl } : {}),
+          ...(postUrl ? { postUrl } : {}),
         },
       })
       .eq('id', listingId);
     if (writeError) return FAILED;
-    return { status: 'made', ...(storyUrl ? { storyUrl } : {}) };
+    return { status: 'made', ...(storyUrl ? { storyUrl } : {}), ...(postUrl ? { postUrl } : {}) };
   } catch {
     // Visible to the agent who can act on it; no plate, phone or address.
     console.warn('share images failed');

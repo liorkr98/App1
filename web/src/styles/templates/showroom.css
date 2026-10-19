@@ -95,6 +95,8 @@ html[data-template='showroom'] .sr-spin {
   touch-action: pan-y;
   cursor: grab;
   user-select: none;
+  /* The 360 slide (bindSpin) stays inside the stage. */
+  overflow: clip;
 }
 
 html[data-template='showroom'] .sr-spin:active {

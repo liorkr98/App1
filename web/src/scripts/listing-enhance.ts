@@ -378,16 +378,24 @@ function bindSpin(): void {
       probe.src = src;
     });
   };
+  // `want` is the frame last asked for, not wrapped round, so its change
+  // gives the way of the turn even across the seam (+1: drag right, → or ⟳).
+  let want = 0;
   const show = (next: number) => {
     const n = frames.length;
+    const dir = next < want ? -1 : 1;
+    want = next;
     let target = ((next % n) + n) % n;
     // Skip frames that are not in yet rather than flash an empty box.
-    for (let tries = 0; tries < n && !ready.has(target); tries++) target = (target + (next >= at ? 1 : -1) + n) % n;
+    for (let tries = 0; tries < n && !ready.has(target); tries++) target = (target + dir + n) % n;
     if (target === at) return;
     if (under) under.src = img.src;
     at = target;
     img.src = frames[at]!;
-    if (under) img.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 280, easing: 'ease-out' });
+    // Few frames: the new one fades in over the old while sliding in from
+    // where the finger came from, so a gap between two photographs reads
+    // as a turn.
+    if (under) img.animate({ opacity: [0, 1], translate: [`${dir * -24}px`, '0'] }, { duration: 280, easing: 'ease-out' });
   };
   let startX = 0;
   let startAt = 0;
@@ -397,7 +405,7 @@ function bindSpin(): void {
     load();
     dragging = true;
     startX = event.clientX;
-    startAt = at;
+    startAt = want;
     stage.setPointerCapture(event.pointerId);
   });
   stage.addEventListener('pointermove', (event) => {
@@ -413,13 +421,13 @@ function bindSpin(): void {
     const button = (event.target as Element).closest<HTMLButtonElement>('[data-spin-step]');
     if (!button) return;
     load();
-    show(at + Number(button.dataset.spinStep));
+    show(want + Number(button.dataset.spinStep));
   });
   stage.addEventListener('keydown', (event) => {
     if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
     event.preventDefault();
     load();
-    show(at + (event.key === 'ArrowRight' ? 1 : -1));
+    show(want + (event.key === 'ArrowRight' ? 1 : -1));
   });
 }
 

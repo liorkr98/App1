@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 
-import { CATEGORY_PRESENTATION } from '../../../lib/category-presentation';
+import { listingPrefill } from '@/features/listings/control-surface';
+
 import { countListingEvent } from '../../../lib/listing-events';
 import { publishedListing } from '../../../lib/listing-from-row';
 import { listingBySlug } from '../../../lib/listings';
@@ -33,8 +34,10 @@ export const GET: APIRoute = async ({ params, request, url }) => {
   // Counted only when a person tapped (count-rules.ts); the hop happens either way.
   const counted = await countListingEvent(slug, 'wa', request);
 
-  const fallback = CATEGORY_PRESENTATION[listing.category].whatsappMessage;
-  const text = url.searchParams.get('text') || fallback;
+  // Written here from the listing (control-surface.ts listingPrefill), never
+  // taken from the link: the page's links stay short, and nobody can put
+  // their own words into the agent's chat through our domain.
+  const text = listingPrefill(listing, url.searchParams.get('m') === 'visit' ? 'visit' : 'ask');
   const location = `https://wa.me/${listing.seller.phone}?text=${encodeURIComponent(text)}`;
 
   const headers = new Headers({ Location: location });

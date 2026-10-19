@@ -1,0 +1,91 @@
+---
+import type { LoanDefaults } from '@/features/listings/loan';
+
+import { ils } from '../lib/format';
+import { t } from '../lib/i18n';
+
+/**
+ * The calculator itself (LoanCalculator decides whether there is one).
+ *
+ * Complete without JavaScript: the server works out the payment for the
+ * starting values, so the first frame already says something. The script
+ * only redoes the sum as the buyer types. Nothing is fetched, and the line
+ * under it says what it is: an illustration, not an offer of credit and not
+ * a valuation (CLAUDE.md §7).
+ */
+interface Props {
+  price: number;
+  category: 'property' | 'vehicle';
+  start: LoanDefaults;
+  payment: number;
+}
+
+const { price, category, start, payment } = Astro.props;
+const car = category === 'vehicle';
+---
+<style is:inline>
+/* The loan calculator (LoanCalculator, 0047): the agent's choice, on pages with a price. */
+.loan{
+  margin:0;padding-block:1.1rem;padding-inline:var(--gut);
+  border-block-end:1px solid var(--stone);
+  display:grid;gap:.8rem;
+}
+.loan h2{margin:0;font-size:1.05rem;line-height:1.5}
+.loan-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));gap:.6rem}
+.loan-fields label{display:grid;gap:.25rem;font-size:.85rem;line-height:1.5;color:var(--muted)}
+.loan-fields input{
+  min-block-size:44px;padding:.4rem .6rem;
+  font:inherit;font-size:1rem;color:var(--ink);
+  border:1px solid var(--stone);border-radius:6px;background:var(--plaster);
+  text-align:start;
+}
+.loan-result{margin:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:.6rem;font-size:.95rem;line-height:1.5}
+.loan-result output{font-family:'Frank Ruhl Libre',serif;font-weight:700;font-size:1.6rem}
+.loan-note{margin:0;font-size:.78rem;line-height:1.5;color:var(--muted)}
+</style>
+<section class="reveal loan" aria-labelledby="loan-title" data-loan={String(price)}>
+  <h2 id="loan-title">{t(car ? 'listing.loan.titleCar' : 'listing.loan.title')}</h2>
+  <div class="loan-fields">
+    <label>
+      <span>{t('listing.loan.down')}</span>
+      <input type="number" inputmode="decimal" min="0" max="99" step="1" value={start.downPercent} data-loan-down />
+    </label>
+    <label>
+      <span>{t('listing.loan.rate')}</span>
+      <input type="number" inputmode="decimal" min="0" max="30" step="0.1" value={start.ratePercent} data-loan-rate />
+    </label>
+    <label>
+      <span>{t('listing.loan.years')}</span>
+      <input type="number" inputmode="numeric" min="1" max={start.maxYears} step="1" value={start.years} data-loan-years />
+    </label>
+  </div>
+  <p class="loan-result">
+    <span>{t('listing.loan.monthly')}</span>
+    <output data-loan-out><bdi dir="ltr">{ils(payment)}</bdi></output>
+  </p>
+  <p class="loan-note">{t('listing.loan.note')}</p>
+</section>
+
+<script>
+  import { loanFor } from '@/features/listings/loan';
+
+  // lib/format's ils, inline: importing it would bring the whole locale file
+  // (it imports i18n) into a script that only prints one number.
+  const shekels = new Intl.NumberFormat('he-IL', { maximumFractionDigits: 0 });
+  const ils = (value: number) => `₪${shekels.format(value)}`;
+
+  for (const box of document.querySelectorAll<HTMLElement>('[data-loan]')) {
+    const price = Number(box.dataset.loan);
+    const field = (name: string) => box.querySelector<HTMLInputElement>(`[data-loan-${name}]`);
+    const out = box.querySelector<HTMLElement>('[data-loan-out] bdi');
+    box.addEventListener('input', () => {
+      const payment = loanFor(
+        price,
+        Number(field('down')?.value),
+        Number(field('rate')?.value),
+        Number(field('years')?.value),
+      );
+      if (out) out.textContent = payment === undefined ? '—' : ils(payment);
+    });
+  }
+</script>

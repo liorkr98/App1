@@ -93,6 +93,7 @@ export function toDraft(
     ...(state.ownerConsentName === undefined ? {} : { ownerConsentName: state.ownerConsentName }),
     ...(state.disclosures === undefined ? {} : { disclosures: state.disclosures }),
     ...(state.tourUrl === undefined ? {} : { tourUrl: state.tourUrl }),
+    ...(state.videoUrl === undefined ? {} : { videoUrl: state.videoUrl }),
     ...(row?.listingId ? { listingId: row.listingId } : {}),
     ...(row?.slug ? { slug: row.slug } : {}),
   };
@@ -219,6 +220,7 @@ export function fromDraft(raw: unknown): Draft | null {
     ...(typeof parsed.tourUrl === 'string' && parsed.tourUrl.startsWith('https://')
       ? { tourUrl: parsed.tourUrl }
       : {}),
+    ...(typeof parsed.videoUrl === 'string' ? { videoUrl: parsed.videoUrl } : {}),
     ...(listingIdOk ? { listingId: listingIdOk } : {}),
     ...(slugOk ? { slug: slugOk } : {}),
   };

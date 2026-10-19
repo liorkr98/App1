@@ -75,7 +75,9 @@ const languages = pageLanguages(listing);
 
 // noindex unless the seller opted in. A private seller usually does not want
 // their home address permanently searchable; an agent does. Not our call.
-const robots = robotsOverride ?? (listing.indexable === true ? 'index,follow' : 'noindex, nofollow');
+// A sold page is a record the agent keeps for their clients, never for search.
+const robots =
+  robotsOverride ?? (listing.indexable === true && listing.status !== 'sold' ? 'index,follow' : 'noindex, nofollow');
 
 // Structured data only when Google is invited. A noindex page with JSON-LD
 // still puts the address in a crawl report.

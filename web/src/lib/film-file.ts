@@ -9,18 +9,29 @@ import {
   filmPose,
   type FilmPose,
 } from '@/features/listings/ken-burns';
-import { FILM_BITS_PER_SECOND, pickRecorderType, type RecorderChoice } from '@/features/listings/film-format';
 import {
-  FILM_SAFE,
+  FILM_AUDIO_BITS_PER_SECOND,
+  FILM_BITS_PER_SECOND,
+  pickRecorderType,
+  RECORDER_TYPES_WITH_SOUND,
+  type RecorderChoice,
+} from '@/features/listings/film-format';
+import type { FilmMood } from '@/features/listings/film-music';
+import {
+  FILM_FORMATS,
   endCardAlpha,
   hookAlpha,
   roomCaptionAt,
   storyDuration,
+  type FilmFormat,
+  type FilmFrame,
 } from '@/features/listings/film-overlay';
+import { filmMusic } from './film-music';
 import type { FilmStory } from './film-story';
 
 /**
- * Encodes the silent story film in this browser, only when the agent asks.
+ * Encodes the story film in this browser, only when the agent asks: 9:16,
+ * 4:5 or 1:1 (FILM_FORMATS), silent unless the agent picked music.
  *
  * The listing page never imports this. If the browser cannot record, the
  * caller keeps the on-page film and uploads nothing.
@@ -49,10 +60,18 @@ export interface RecordedFilm {
   codec: RecorderChoice['codec'];
   extension: RecorderChoice['extension'];
   mime: string;
+  /** Music was asked for and is in the file. */
+  music: boolean;
 }
 
-const WIDTH = 1080;
-const HEIGHT = 1920;
+export interface FilmOptions {
+  format?: FilmFormat;
+  /**
+   * Music under the film. The context is made by the caller inside the tap
+   * (iOS refuses one made later) and closed by the caller.
+   */
+  music?: { context: AudioContext; mood: FilmMood };
+}
 
 const DISPLAY = '"Noto Sans Hebrew", "Heebo", system-ui, sans-serif';
 const BODY = '"Heebo", "Assistant", system-ui, sans-serif';
@@ -74,10 +93,10 @@ function loadImage(url: string): Promise<HTMLImageElement> {
  * Canvas `filter` where the browser has it; elsewhere (older Safari) a
  * small copy scaled up in two steps — one step from 1/24 showed blocks.
  */
-function backdrop(image: HTMLImageElement): HTMLCanvasElement {
+function backdrop(image: HTMLImageElement, f: FilmFrame): HTMLCanvasElement {
   const full = document.createElement('canvas');
-  full.width = WIDTH;
-  full.height = HEIGHT;
+  full.width = f.width;
+  full.height = f.height;
   const big = full.getContext('2d');
   if (!big) return full;
   const ratio = image.naturalWidth / image.naturalHeight;
@@ -91,7 +110,7 @@ function backdrop(image: HTMLImageElement): HTMLCanvasElement {
   big.imageSmoothingQuality = 'high';
   // Typed as always there; older Safari has no canvas filter at all.
   if (typeof (big as { filter?: unknown }).filter === 'string') {
-    const area = cover(WIDTH, HEIGHT);
+    const area = cover(f.width, f.height);
     big.filter = 'blur(48px)';
     // Drawn a little larger so the blur has no soft, dark rim.
     big.drawImage(image, area.x - 96, area.y - 96, area.w + 192, area.h + 192);
@@ -99,8 +118,8 @@ function backdrop(image: HTMLImageElement): HTMLCanvasElement {
   } else {
     const steps = [24, 6].map((divisor) => {
       const canvas = document.createElement('canvas');
-      canvas.width = Math.round(WIDTH / divisor);
-      canvas.height = Math.round(HEIGHT / divisor);
+      canvas.width = Math.round(f.width / divisor);
+      canvas.height = Math.round(f.height / divisor);
       return canvas;
     });
     const [tiny, mid] = steps as [HTMLCanvasElement, HTMLCanvasElement];
@@ -111,21 +130,21 @@ function backdrop(image: HTMLImageElement): HTMLCanvasElement {
     tctx.drawImage(image, area.x, area.y, area.w, area.h);
     mctx.imageSmoothingQuality = 'high';
     mctx.drawImage(tiny, 0, 0, mid.width, mid.height);
-    big.drawImage(mid, 0, 0, WIDTH, HEIGHT);
+    big.drawImage(mid, 0, 0, f.width, f.height);
   }
   big.fillStyle = 'rgba(0, 0, 0, 0.32)';
-  big.fillRect(0, 0, WIDTH, HEIGHT);
+  big.fillRect(0, 0, f.width, f.height);
   return full;
 }
 
-function drawStill(ctx: Ctx, image: HTMLImageElement, behind: HTMLCanvasElement, pose: FilmPose): void {
+function drawStill(ctx: Ctx, f: FilmFrame, image: HTMLImageElement, behind: HTMLCanvasElement, pose: FilmPose): void {
   ctx.drawImage(behind, 0, 0);
   ctx.save();
-  ctx.translate(WIDTH / 2 + pose.shift * WIDTH, HEIGHT / 2);
+  ctx.translate(f.width / 2 + pose.shift * f.width, f.height / 2);
   ctx.scale(pose.scale, pose.scale);
   const { width, height } = filmFit(
     { width: image.naturalWidth, height: image.naturalHeight },
-    { width: WIDTH, height: HEIGHT },
+    { width: f.width, height: f.height },
   );
   ctx.drawImage(image, -width / 2, -height / 2, width, height);
   ctx.restore();
@@ -141,20 +160,22 @@ function run(ctx: Ctx, text: string, edge: number, y: number, isolated: boolean)
 }
 
 /** The words over the opening photographs, from the right-hand safe edge. */
-function drawHook(ctx: Ctx, story: FilmStory, alpha: number): void {
+function drawHook(ctx: Ctx, f: FilmFrame, story: FilmStory, alpha: number): void {
   if (alpha <= 0) return;
   ctx.save();
   ctx.globalAlpha = alpha;
-  const shade = ctx.createLinearGradient(0, 0, 0, 1100);
+  // Down to the words' end on a story; a square's shade stops before its middle.
+  const reach = Math.min(1100, Math.round(f.height * 0.62));
+  const shade = ctx.createLinearGradient(0, 0, 0, reach);
   shade.addColorStop(0, 'rgba(0, 0, 0, 0.62)');
   shade.addColorStop(1, 'rgba(0, 0, 0, 0)');
   ctx.fillStyle = shade;
-  ctx.fillRect(0, 0, WIDTH, 1100);
+  ctx.fillRect(0, 0, f.width, reach);
   ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
   ctx.shadowBlur = 12;
 
-  const edge = WIDTH - FILM_SAFE.side;
-  let y = FILM_SAFE.top + 30;
+  const edge = f.width - f.safe.side;
+  let y = f.safe.top + 30;
   if (story.place) {
     ctx.font = `700 36px ${BODY}`;
     ctx.fillStyle = 'rgba(255, 255, 255, 0.82)';
@@ -201,14 +222,14 @@ function drawHook(ctx: Ctx, story: FilmStory, alpha: number): void {
 }
 
 /** A room's name, centred, low but clear of the apps' caption and buttons. */
-function drawRoom(ctx: Ctx, text: string, alpha: number): void {
+function drawRoom(ctx: Ctx, f: FilmFrame, text: string, alpha: number): void {
   ctx.save();
   ctx.globalAlpha = alpha;
   ctx.font = `600 42px ${BODY}`;
   const width = ctx.measureText(text).width + 64;
   const height = 84;
-  const x = (WIDTH - width) / 2;
-  const y = HEIGHT - FILM_SAFE.bottom - height;
+  const x = (f.width - width) / 2;
+  const y = f.height - f.safe.bottom - height;
   ctx.fillStyle = 'rgba(12, 12, 10, 0.55)';
   ctx.beginPath();
   ctx.roundRect(x, y, width, height, height / 2);
@@ -217,19 +238,26 @@ function drawRoom(ctx: Ctx, text: string, alpha: number): void {
   ctx.direction = 'rtl';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(text, WIDTH / 2, y + height / 2 + 2);
+  ctx.fillText(text, f.width / 2, y + height / 2 + 2);
   ctx.restore();
 }
 
 /** The closing card: the agent's logo and name over the last photograph, blurred. */
-function drawEnd(ctx: Ctx, story: FilmStory, behind: HTMLCanvasElement, logo: HTMLImageElement | undefined, alpha: number): void {
+function drawEnd(
+  ctx: Ctx,
+  f: FilmFrame,
+  story: FilmStory,
+  behind: HTMLCanvasElement,
+  logo: HTMLImageElement | undefined,
+  alpha: number,
+): void {
   if (alpha <= 0 || !story.seller) return;
   ctx.save();
   ctx.globalAlpha = alpha;
   ctx.drawImage(behind, 0, 0);
   ctx.fillStyle = 'rgba(0, 0, 0, 0.38)';
-  ctx.fillRect(0, 0, WIDTH, HEIGHT);
-  let y = HEIGHT / 2 - (logo ? 170 : 40);
+  ctx.fillRect(0, 0, f.width, f.height);
+  let y = f.height / 2 - (logo ? 170 : 40);
   if (logo) {
     const size = 240;
     const scale = Math.min(size / logo.naturalWidth, size / logo.naturalHeight);
@@ -237,9 +265,9 @@ function drawEnd(ctx: Ctx, story: FilmStory, behind: HTMLCanvasElement, logo: HT
     const h = logo.naturalHeight * scale;
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.roundRect(WIDTH / 2 - size / 2 - 28, y - size / 2 - 28, size + 56, size + 56, 36);
+    ctx.roundRect(f.width / 2 - size / 2 - 28, y - size / 2 - 28, size + 56, size + 56, 36);
     ctx.fill();
-    ctx.drawImage(logo, WIDTH / 2 - w / 2, y - h / 2, w, h);
+    ctx.drawImage(logo, f.width / 2 - w / 2, y - h / 2, w, h);
     y += size / 2 + 110;
   }
   ctx.fillStyle = '#ffffff';
@@ -247,16 +275,17 @@ function drawEnd(ctx: Ctx, story: FilmStory, behind: HTMLCanvasElement, logo: HT
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.font = `800 68px ${DISPLAY}`;
-  ctx.fillText(story.seller.name, WIDTH / 2, y);
+  ctx.fillText(story.seller.name, f.width / 2, y);
   if (story.seller.role) {
     ctx.font = `400 42px ${BODY}`;
     ctx.fillStyle = 'rgba(255, 255, 255, 0.82)';
-    ctx.fillText(story.seller.role, WIDTH / 2, y + 84);
+    ctx.fillText(story.seller.role, f.width / 2, y + 84);
   }
   ctx.restore();
 }
 
 interface Scene {
+  frame: FilmFrame;
   images: HTMLImageElement[];
   behind: HTMLCanvasElement[];
   story: FilmStory | undefined;
@@ -264,9 +293,9 @@ interface Scene {
 }
 
 function paint(ctx: Ctx, scene: Scene, time: number): void {
-  const { images, behind, story, logo } = scene;
+  const { frame: f, images, behind, story, logo } = scene;
   const frames = filmFrames(images.length);
-  ctx.clearRect(0, 0, WIDTH, HEIGHT);
+  ctx.clearRect(0, 0, f.width, f.height);
   for (const frame of frames) {
     // The last photograph holds still under the closing card instead of vanishing.
     const last = frame.index === frames.length - 1;
@@ -281,16 +310,16 @@ function paint(ctx: Ctx, scene: Scene, time: number): void {
     if (!last && tail < FILM_FADE_SEC) alpha = Math.min(alpha, tail / FILM_FADE_SEC);
     ctx.save();
     ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
-    drawStill(ctx, image, back, filmPose(frame.motion, local / FILM_STILL_SEC));
+    drawStill(ctx, f, image, back, filmPose(frame.motion, local / FILM_STILL_SEC));
     ctx.restore();
   }
   if (!story) return;
-  drawHook(ctx, story, hookAlpha(time));
+  drawHook(ctx, f, story, hookAlpha(time));
   const caption = roomCaptionAt(time, story.rooms.slice(0, images.length));
   const room = caption ? story.rooms[caption.index] : undefined;
-  if (caption && room) drawRoom(ctx, room, caption.alpha);
+  if (caption && room) drawRoom(ctx, f, room, caption.alpha);
   const lastBehind = behind[images.length - 1];
-  if (lastBehind) drawEnd(ctx, story, lastBehind, logo, endCardAlpha(time, images.length));
+  if (lastBehind) drawEnd(ctx, f, story, lastBehind, logo, endCardAlpha(time, images.length));
 }
 
 /**
@@ -298,10 +327,17 @@ function paint(ctx: Ctx, scene: Scene, time: number): void {
  * photographs, or a photograph will not draw. `story` adds the words; the
  * film records without them when it is missing.
  */
-export async function recordFilm(urls: readonly string[], story?: FilmStory): Promise<RecordedFilm | undefined> {
+export async function recordFilm(
+  urls: readonly string[],
+  story?: FilmStory,
+  options: FilmOptions = {},
+): Promise<RecordedFilm | undefined> {
   if (typeof MediaRecorder === 'undefined') return undefined;
-  const chosen = pickRecorderType((mime) => MediaRecorder.isTypeSupported(mime));
+  const supported = (mime: string) => MediaRecorder.isTypeSupported(mime);
+  const withSound = options.music ? pickRecorderType(supported, RECORDER_TYPES_WITH_SOUND) : undefined;
+  const chosen = withSound ?? pickRecorderType(supported);
   if (!chosen || urls.length < FILM_MIN) return undefined;
+  const frame = FILM_FORMATS[options.format ?? 'story'];
   if (!('captureStream' in HTMLCanvasElement.prototype)) return undefined;
 
   let images: HTMLImageElement[];
@@ -314,14 +350,14 @@ export async function recordFilm(urls: readonly string[], story?: FilmStory): Pr
   const logo = story?.seller?.logoUrl ? await loadImage(story.seller.logoUrl).catch(() => undefined) : undefined;
 
   const canvas = document.createElement('canvas');
-  canvas.width = WIDTH;
-  canvas.height = HEIGHT;
+  canvas.width = frame.width;
+  canvas.height = frame.height;
   const ctx = canvas.getContext('2d');
   if (!ctx) return undefined;
 
   let scene: Scene;
   try {
-    scene = { images, behind: images.map(backdrop), story, logo };
+    scene = { frame, images, behind: images.map((image) => backdrop(image, frame)), story, logo };
     // The poster is the opening: the cover with its words.
     paint(ctx, scene, 1.2);
   } catch {
@@ -334,11 +370,19 @@ export async function recordFilm(urls: readonly string[], story?: FilmStory): Pr
   if (!poster) return undefined;
   paint(ctx, scene, 0);
 
+  const total = storyDuration(images.length, Boolean(story?.seller));
   const stream = canvas.captureStream(FILM_FPS);
+  const music = withSound && options.music ? filmMusic(options.music.context, options.music.mood, total) : undefined;
+  if (music) stream.addTrack(music.track);
   let recorder: MediaRecorder;
   try {
-    recorder = new MediaRecorder(stream, { mimeType: chosen.mime, videoBitsPerSecond: FILM_BITS_PER_SECOND });
+    recorder = new MediaRecorder(stream, {
+      mimeType: chosen.mime,
+      videoBitsPerSecond: FILM_BITS_PER_SECOND,
+      ...(music ? { audioBitsPerSecond: FILM_AUDIO_BITS_PER_SECOND } : {}),
+    });
   } catch {
+    music?.stop();
     return undefined;
   }
   const chunks: Blob[] = [];
@@ -349,8 +393,8 @@ export async function recordFilm(urls: readonly string[], story?: FilmStory): Pr
     recorder.onstop = () => resolve(new Blob(chunks, { type: chosen.mime }));
   });
 
-  const total = storyDuration(images.length, Boolean(story?.seller));
   recorder.start();
+  music?.start();
   const start = performance.now();
   // The real clock, not a frame count: the file lasts as long as the film.
   for (;;) {
@@ -361,16 +405,18 @@ export async function recordFilm(urls: readonly string[], story?: FilmStory): Pr
   }
   recorder.stop();
   const blob = await stopped;
+  music?.stop();
   if (blob.size === 0) return undefined;
 
   return {
     blob,
     poster,
     seconds: Math.max(1, Math.round(total)),
-    width: WIDTH,
-    height: HEIGHT,
+    width: frame.width,
+    height: frame.height,
     codec: chosen.codec,
     extension: chosen.extension,
     mime: chosen.mime,
+    music: Boolean(music),
   };
 }

@@ -12,6 +12,32 @@ import { FILM_FADE_SEC, FILM_STILL_SEC, filmDuration, filmFrames } from './ken-b
  */
 export const FILM_SAFE = { top: 260, bottom: 400, side: 72 } as const;
 
+/**
+ * The three shapes the agent can make (18 Oct 2026): the 9:16 story, and for
+ * a feed post 4:5 and 1:1. The same 1080 wide, so the words keep their size.
+ * A feed post has no app drawn over the picture, so its margin is small —
+ * the story's 260 at the top would push the words off a square.
+ */
+export type FilmFormat = 'story' | 'feed' | 'square';
+
+export interface FilmFrame {
+  width: number;
+  height: number;
+  safe: { top: number; bottom: number; side: number };
+}
+
+export const FILM_FORMATS: Record<FilmFormat, FilmFrame> = {
+  story: { width: 1080, height: 1920, safe: FILM_SAFE },
+  feed: { width: 1080, height: 1350, safe: { top: 80, bottom: 110, side: 72 } },
+  square: { width: 1080, height: 1080, safe: { top: 80, bottom: 110, side: 72 } },
+};
+
+export const FILM_FORMAT_IDS = Object.keys(FILM_FORMATS) as FilmFormat[];
+
+export function isFilmFormat(value: unknown): value is FilmFormat {
+  return typeof value === 'string' && (FILM_FORMAT_IDS as string[]).includes(value);
+}
+
 /** The opening words: in by 0.6 s, out by this. */
 export const FILM_HOOK_SEC = 2.8;
 /** How long a room's name stays after its photograph arrives. */

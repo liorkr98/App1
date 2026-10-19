@@ -36,7 +36,7 @@ trap cleanup EXIT
 PSQL=("$BIN/psql" -h "$WORK" -p "$PORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -q -X)
 
 "${PSQL[@]}" -f "$HERE/bootstrap.sql"
-for migration in 0001 0002 0003 0009 0011 0013 0016 0017 0019 0022 0029 0030 0037 0038 0040 0041 0042 0043 0044; do
+for migration in 0001 0002 0003 0009 0011 0013 0016 0017 0019 0022 0026 0029 0030 0037 0038 0040 0041 0042 0043 0044; do
   file="$(ls "$ROOT"/supabase/migrations/${migration}_*.sql)"
   "${PSQL[@]}" -f "$file" >/dev/null 2>&1 || { "${PSQL[@]}" -f "$file"; exit 1; }
 done
@@ -66,5 +66,10 @@ done
 "${PSQL[@]}" -c "$(cat "$(ls "$ROOT"/supabase/migrations/0046_*.sql)")" >/dev/null
 "${PSQL[@]}" -c "$(cat "$(ls "$ROOT"/supabase/migrations/0046_*.sql)")" >/dev/null
 "${PSQL[@]}" -f "$HERE/photo-angles.sql"
+"${PSQL[@]}" -f "$HERE/owner-reads.sql"
+# 0047 the same way, twice, then the page options and the sold page.
+"${PSQL[@]}" -c "$(cat "$(ls "$ROOT"/supabase/migrations/0047_*.sql)")" >/dev/null
+"${PSQL[@]}" -c "$(cat "$(ls "$ROOT"/supabase/migrations/0047_*.sql)")" >/dev/null
+"${PSQL[@]}" -f "$HERE/page-options.sql"
 bash "$HERE/race.sh" "$BIN" "$WORK" "$PORT"
-echo "OK: billing, agent-page, site-analytics, price-drop, translation, plan-limit and photo-angle SQL tests passed."
+echo "OK: billing, agent-page, site-analytics, price-drop, translation, plan-limit, photo-angle, owner-read and page-option SQL tests passed."

@@ -277,7 +277,22 @@
     "blueprintSheet": "Sheet",
     "priceDropped": "Price reduced",
     "priceWas": "Previous price:",
-    "photoRooms": "Rooms in the photos"
+    "photoRooms": "Rooms in the photos",
+    "openHouse": "",
+    "warranty": "",
+    "videoCta": "",
+    "videoCtaCar": "",
+    "visitCta": "",
+    "visitCtaCar": "",
+    "loan": {
+      "title": "",
+      "titleCar": "",
+      "down": "",
+      "rate": "",
+      "years": "",
+      "monthly": "",
+      "note": ""
+    }
   },
   "notFound": {
     "title": "Page not found",
@@ -556,7 +571,9 @@
       "waitingArea": "",
       "stageSave": "",
       "stageLive": "",
-      "stageCard": ""
+      "stageCard": "",
+      "copyLink": "",
+      "myListings": ""
     },
     "plateLookup": "",
     "plateLooking": "",
@@ -668,7 +685,21 @@
       "tooLong": "",
       "tooBig": "",
       "hevc": "",
-      "ready": ""
+      "ready": "",
+      "shape": "",
+      "shapes": {
+        "story": "",
+        "feed": "",
+        "square": ""
+      },
+      "music": "",
+      "moods": {
+        "none": "",
+        "calm": "",
+        "warm": "",
+        "upbeat": ""
+      },
+      "noMusic": ""
     },
     "photoReview": {
       "waiting": "",
@@ -697,7 +728,8 @@
         "retake": "",
         "hidePlate": "",
         "clearClutter": ""
-      }
+      },
+      "coverPlate": ""
     },
     "flow": {
       "dot": {
@@ -807,6 +839,36 @@
       "none": "",
       "lineLabel": "",
       "lineHint": ""
+    },
+    "options": {
+      "title": "",
+      "lead": "",
+      "visit": "",
+      "visitCar": "",
+      "calculator": "",
+      "calculatorCar": "",
+      "warranty": "",
+      "openHouse": "",
+      "openDate": "",
+      "openFrom": "",
+      "openTo": "",
+      "openClear": "",
+      "openHint": "",
+      "video": "",
+      "videoHint": "",
+      "videoBad": "",
+      "tour": "",
+      "unsaved": ""
+    },
+    "plate": {
+      "title": "",
+      "hint": "",
+      "box": "",
+      "blur": "",
+      "logo": "",
+      "cancel": "",
+      "working": "",
+      "failed": ""
     }
   },
   "seo": {
@@ -1124,7 +1186,16 @@
     "langSend": "",
     "langOpen": "",
     "langNeedsTitle": "",
-    "langNeedsMigration": ""
+    "langNeedsMigration": "",
+    "studioSign": "",
+    "studioPost": "",
+    "confirmKeepSold": "",
+    "soldKept": "",
+    "soldHidden": "",
+    "soldKeep": "",
+    "soldHide": "",
+    "duplicate": "",
+    "duplicateFailed": ""
   },
   "legal": {
     "terms": "Terms of use",
@@ -1384,7 +1455,9 @@
     "filmFormat": "",
     "filmLength": "",
     "filmSize": "",
-    "filmSave": ""
+    "filmSave": "",
+    "plateTitle": "",
+    "plateMake": ""
   },
   "guide": {
     "photosTitle": "",
@@ -1850,5 +1923,10 @@
     "product": "",
     "help": "",
     "legal": ""
+  },
+  "sign": {
+    "forSale": "",
+    "scan": "",
+    "printHint": ""
   }
 }

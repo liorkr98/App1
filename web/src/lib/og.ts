@@ -26,12 +26,11 @@ function get(facts: Fact[], key: string): Fact | undefined {
  * one line differ. This is content generation, not a template divergence.
  */
 export function ogTitle(listing: Listing): string {
-  const price = ogPriceFragment(
-    listing.price,
-    listing.priceDisplay,
-    ils(listing.price),
-    t('listing.priceFrom'),
-  );
+  // A sold page the agent kept up (0047) says so where the price would be.
+  const price =
+    listing.status === 'sold'
+      ? ` · ${t('listing.sold')}`
+      : ogPriceFragment(listing.price, listing.priceDisplay, ils(listing.price), t('listing.priceFrom'));
 
   // Another language: the agent's own translated title says what it is.
   if (lang() !== 'he') return `${listing.title.replace(/\s*\n\s*/g, ' ').trim()}${price}`;

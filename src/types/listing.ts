@@ -2,6 +2,7 @@ import type { ListingVideo, PlanRoom } from '@/features/listings/rich-media.js';
 import type { LogoPlacement } from '@/features/agents/logo-placement.js';
 import type { ListingCategory } from '@/features/listings/schemas/index.js';
 import type { PhotoRoom } from '@/features/listings/photo-rooms.js';
+import type { ListingExtras } from '@/features/listings/page-extras.js';
 
 /**
  * The listing domain (RESEARCH.md §6, PRD.md §2).
@@ -380,6 +381,12 @@ export interface Media {
    */
   tourUrl?: string;
   /**
+   * Optional outbound video: YouTube, TikTok or Instagram (page-extras.ts
+   * cleanVideoUrl, 19 Oct 2026). A chip that opens a new tab, like the tour.
+   * Never embedded: the page reads only from us.
+   */
+  videoUrl?: string;
+  /**
    * Floor plan photograph. Rendered as a תשריט chip inside the tour — not a
    * fifth section (DESIGN-CONTRACT §5).
    *
@@ -390,6 +397,8 @@ export interface Media {
 
   /** P7 · the story image (1080 × 1920), once render_story has made it. */
   storyUrl?: string;
+  /** The square feed post (1080 × 1080), drawn with the story (19 Oct 2026). */
+  postUrl?: string;
   /** P7 · the A4 QR flyer PDF, once the flyer render has made it. */
   flyerUrl?: string;
   /**
@@ -882,6 +891,10 @@ export interface Listing {
    * 18 Oct 2026). Their own words, or DeepSeek's that they kept.
    */
   shareLine?: string;
+  /** What the agent turned on for this page (0047): visit, calculator, warranty, open house. */
+  extras?: ListingExtras;
+  /** A sold listing whose page the agent kept up as a record of the sale (0047). */
+  soldPublic?: boolean;
 
   /**
    * What OpenStreetMap says is around this address: the neighbourhood, and the

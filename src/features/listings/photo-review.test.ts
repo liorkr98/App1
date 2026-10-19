@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { parsePhotoReview, reviewSystem, suggestedRoom } from './photo-review.js';
+import { parsePhotoReview, suggestedRoom } from './photo-review.js';
+import { reviewSystem } from './photo-review-prompt.js';
 
 describe('parsePhotoReview', () => {
   it('keeps a known room, issue and tip, and drops a guess', () => {

@@ -24,6 +24,8 @@ interface Props {
   onLabel: (id: string, room: PhotoRoom) => void;
   onCover: (id: string) => void;
   onRotate: (id: string) => void;
+  /** A plate in the picture (CLAUDE.md §7): the agent covers it. */
+  onPlate: (id: string) => void;
   /**
    * Every photograph's review, by photo id, whenever one arrives. The
    * editor orders the gallery, builds the 360 and suggests facts from it.
@@ -69,6 +71,7 @@ export function PhotoAdvice({
   onLabel,
   onCover,
   onRotate,
+  onPlate,
   onReviews,
 }: Props) {
   const [rows, setRows] = useState<Row[]>([]);
@@ -148,6 +151,11 @@ export function PhotoAdvice({
             {cover ? (
               <button type="button" className="quiet" onClick={() => onCover(photo.id)}>
                 {t('editor.photoReview.cover')}
+              </button>
+            ) : null}
+            {advice.issues.includes('plate') ? (
+              <button type="button" className="quiet" onClick={() => onPlate(photo.id)}>
+                {t('editor.photoReview.coverPlate')}
               </button>
             ) : null}
             {advice.issues.includes('sideways') ? (

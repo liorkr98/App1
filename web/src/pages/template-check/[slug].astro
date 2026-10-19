@@ -7,6 +7,7 @@ import {
   listings,
   matrixListings,
   propertyListing,
+  vehicleListing,
   withNamedRooms,
 } from '../../lib/listings';
 import { priceDropped, realShapedListings } from '../../lib/real-shaped';
@@ -50,7 +51,43 @@ export function getStaticPaths() {
     params: { slug: `drop-${id}` },
     props: { listing: priceDropped(applyTemplate(propertyListing, id)) },
   }));
-  return [...demos, ...templates, ...fixturePages, ...combos, ...real, ...drops];
+  // The showroom's 360 from four photographs, the fewest a gallery spin takes
+  // (spinFromGallery): what e2e/spin.spec.ts turns with a mouse and keys.
+  const { cover, gallery } = vehicleListing.media;
+  const spin = {
+    params: { slug: 'spin-showroom' },
+    props: {
+      listing: { ...vehicleListing, template: 'showroom', media: { ...vehicleListing.media, spin: [cover, ...gallery] } } as Listing,
+    },
+  };
+  // What the agent turns on for a page (0047): the visit button, the
+  // calculator, an open house (far ahead, so the page never ages out of it),
+  // a warranty and a video link. And a sold page kept up as a record.
+  const options = [
+    {
+      params: { slug: 'options-property' },
+      props: {
+        listing: {
+          ...propertyListing,
+          extras: {
+            visit: true,
+            calculator: true,
+            openHouse: { start: '2030-05-03T10:00:00+03:00', end: '2030-05-03T12:00:00+03:00' },
+          },
+          media: { ...propertyListing.media, videoUrl: 'https://www.youtube.com/watch?v=example' },
+        } as Listing,
+      },
+    },
+    {
+      params: { slug: 'options-vehicle' },
+      props: { listing: { ...vehicleListing, extras: { visit: true, calculator: true, warranty: true } } as Listing },
+    },
+    {
+      params: { slug: 'sold-kept' },
+      props: { listing: { ...propertyListing, status: 'sold', soldPublic: true, extras: { visit: true, calculator: true } } as Listing },
+    },
+  ];
+  return [...demos, ...templates, ...fixturePages, ...combos, ...real, ...drops, spin, ...options];
 }
 
 const { listing } = Astro.props;

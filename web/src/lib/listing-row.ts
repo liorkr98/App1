@@ -4,6 +4,7 @@ import { toSeller, type AgentProfile } from '@/features/agents/profile';
 import { schemaFor } from '@/features/listings/schemas';
 import type { PhotoRoom } from '@/features/listings/photo-rooms';
 import type { ListingVideo, PlanRoom } from '@/features/listings/rich-media';
+import { cleanVideoUrl } from '@/features/listings/page-extras';
 import type { EditorPhoto } from '../components/editor/PhotosStep';
 
 /**
@@ -45,7 +46,13 @@ export interface MediaExtras {
   video?: ListingVideo | undefined;
 }
 
-export function toMedia(photos: readonly SavedPhoto[], tourUrl?: string, extras: MediaExtras = {}) {
+/** The outbound links the agent typed: a 3D tour, and a video (page-extras.ts). */
+export interface MediaLinks {
+  tourUrl?: string | undefined;
+  videoUrl?: string | undefined;
+}
+
+export function toMedia(photos: readonly SavedPhoto[], links: MediaLinks = {}, extras: MediaExtras = {}) {
   const [cover, ...rest] = photos;
 
   /*
@@ -63,7 +70,8 @@ export function toMedia(photos: readonly SavedPhoto[], tourUrl?: string, extras:
    */
   if (!cover) return undefined;
 
-  const tour = tourUrl?.trim();
+  const tour = links.tourUrl?.trim();
+  const video = cleanVideoUrl(links.videoUrl);
 
   return {
     cover: {
@@ -83,6 +91,7 @@ export function toMedia(photos: readonly SavedPhoto[], tourUrl?: string, extras:
       ...(photo.room ? { room: photo.room } : {}),
     })),
     ...(tour && tour.startsWith('https://') ? { tourUrl: tour } : {}),
+    ...(video ? { videoUrl: video } : {}),
     ...(extras.plan
       ? {
           floorPlan: {
@@ -192,7 +201,7 @@ export function previewPayload(
     category,
     ...editorColumns(state),
     template: state.template ?? 'agency',
-    media: toMedia(savedPhotos(photos, { local: true }), state.tourUrl, extras) ?? null,
+    media: toMedia(savedPhotos(photos, { local: true }), state, extras) ?? null,
     seller,
     ...(accent ? { accent } : {}),
     ...(sun ? { sun } : {}),

@@ -28,6 +28,7 @@ import {
   templateFits,
 } from '@/features/templates/manifest';
 import { suggestTemplate } from '@/features/templates/suggest';
+import type { PlateRect } from '@/features/listings/plate-rect';
 import { cleanPlanRooms, cleanVideo, spinFromGallery, type ListingVideo } from '@/features/listings/rich-media';
 import type { MediaExtras } from '../../lib/listing-row';
 import { groundedDescription, type CopyTone } from '@/features/listings/listing-copy';
@@ -67,7 +68,10 @@ import { FactSuggestions } from './FactSuggestions';
 import { Message } from './Message';
 import { FilmFile } from './FilmFile';
 import { PhonePortal, type InboxPhoto } from './PhonePortal';
+import { PageOptions } from './PageOptions';
 import { PhotoAdvice } from './PhotoAdvice';
+import { PlateCover } from './PlateCover';
+import type { PlateMode } from '../../lib/plate-cover';
 import { PhotoChecklist } from './PhotoChecklist';
 import { PhotosStep, type EditorPhoto } from './PhotosStep';
 import { PlateStep } from './PlateStep';
@@ -943,10 +947,40 @@ export default function Editor() {
     arrangePhotos(next);
   };
 
-  const rotatePhoto = (id: string) => {
+  /**
+   * A photograph remade in this browser (turned, or its plate covered)
+   * replaces the old one: uploaded under the listing's browser/ prefix, then
+   * swapped in place, which saves the listing and asks for a new review.
+   */
+  const replacePhoto = async (
+    id: string,
+    prefix: string,
+    made: { blob: Blob; width: number; height: number },
+  ): Promise<boolean> => {
     const listing = savedRow?.id ?? listingId.current;
+    if (!listing) return false;
+    const uploaded = await uploadDerived(listing, `${prefix}-${Date.now()}.webp`, made);
+    if ('error' in uploaded) return false;
+    changePhotos(
+      photosRef.current.map((photo) =>
+        photo.id === id
+          ? {
+              ...photo,
+              url: uploaded.url,
+              publicUrl: uploaded.url,
+              width: made.width,
+              height: made.height,
+              status: 'uploaded',
+            }
+          : photo,
+      ),
+    );
+    return true;
+  };
+
+  const rotatePhoto = (id: string) => {
     const source = photosRef.current.find((photo) => photo.id === id)?.publicUrl;
-    if (!listing || !source) return;
+    if (!source) return;
     const image = new Image();
     image.crossOrigin = 'anonymous';
     image.onload = () => {
@@ -959,31 +993,32 @@ export default function Editor() {
       ctx.rotate(Math.PI / 2);
       ctx.drawImage(image, 0, 0);
       canvas.toBlob((blob) => {
-        if (!blob) return;
-        void uploadDerived(listing, `rotate-${Date.now()}.webp`, {
-          blob,
-          width: canvas.width,
-          height: canvas.height,
-        }).then((uploaded) => {
-          if ('error' in uploaded) return;
-          changePhotos(
-            photosRef.current.map((photo) =>
-              photo.id === id
-                ? {
-                    ...photo,
-                    url: uploaded.url,
-                    publicUrl: uploaded.url,
-                    width: canvas.width,
-                    height: canvas.height,
-                    status: 'uploaded',
-                  }
-                : photo,
-            ),
-          );
-        });
+        if (blob) void replacePhoto(id, 'rotate', { blob, width: canvas.width, height: canvas.height });
       }, 'image/webp', 0.9);
     };
     image.src = source;
+  };
+
+  /**
+   * The plate the photo check found (CLAUDE.md §7): the agent places a box
+   * over it and chooses a blur or their logo; the covered photograph
+   * replaces the old one (lib/plate-cover.ts).
+   */
+  const [plateFor, setPlateFor] = useState<string | undefined>(undefined);
+  const [plateBusy, setPlateBusy] = useState(false);
+  const [plateFailed, setPlateFailed] = useState(false);
+  const plateSource = plateFor ? photos.find((photo) => photo.id === plateFor)?.publicUrl : undefined;
+  const coverPlateOn = async (rect: PlateRect, mode: PlateMode) => {
+    const id = plateFor;
+    const source = id ? photosRef.current.find((photo) => photo.id === id)?.publicUrl : undefined;
+    if (!id || !source) return;
+    setPlateBusy(true);
+    const { coverPlate } = await import('../../lib/plate-cover');
+    const made = await coverPlate(source, rect, mode, profile.agencyLogoUrl ?? undefined);
+    const ok = made ? await replacePhoto(id, 'plate', made) : false;
+    setPlateBusy(false);
+    setPlateFailed(!ok);
+    if (ok) setPlateFor(undefined);
   };
 
   const reviewKey = useRef('');
@@ -1308,6 +1343,9 @@ export default function Editor() {
             ...(typeof (row.media as { tourUrl?: unknown } | null)?.tourUrl === 'string' &&
             String((row.media as { tourUrl: string }).tourUrl).startsWith('https://')
               ? { tourUrl: String((row.media as { tourUrl: string }).tourUrl) }
+              : {}),
+            ...(typeof (row.media as { videoUrl?: unknown } | null)?.videoUrl === 'string'
+              ? { videoUrl: String((row.media as { videoUrl: string }).videoUrl) }
               : {}),
           };
           opened = next;
@@ -1797,7 +1835,25 @@ export default function Editor() {
                   onLabel={labelRoom}
                   onCover={makeCover}
                   onRotate={rotatePhoto}
+                  onPlate={(id) => {
+                    setPlateFailed(false);
+                    setPlateFor(id);
+                  }}
                 />
+                {plateFor && plateSource ? (
+                  <PlateCover
+                    src={plateSource}
+                    logoUrl={profile.agencyLogoUrl ?? undefined}
+                    busy={plateBusy}
+                    onApply={(rect, mode) => void coverPlateOn(rect, mode)}
+                    onClose={() => setPlateFor(undefined)}
+                  />
+                ) : null}
+                {plateFailed ? (
+                  <p className="field-hint" role="alert">
+                    {t('editor.plate.failed')}
+                  </p>
+                ) : null}
                 {orderUndo ? (
                   <p className="field-hint auto-order" role="status">
                     {t(`editor.autoOrder.done.${state.category}`)}{' '}
@@ -2135,6 +2191,28 @@ export default function Editor() {
                     {headlineButton('line')}
                   </div>
                 ) : undefined
+              }
+              optionsField={
+                <PageOptions
+                  listingId={savedRow?.id ?? listingId.current ?? undefined}
+                  category={state.category ?? 'property'}
+                  tourUrl={state.tourUrl}
+                  videoUrl={state.videoUrl}
+                  onLinks={(links) =>
+                    setState((current) => {
+                      const next = { ...current };
+                      if ('tourUrl' in links) {
+                        if (links.tourUrl) next.tourUrl = links.tourUrl;
+                        else delete next.tourUrl;
+                      }
+                      if ('videoUrl' in links) {
+                        if (links.videoUrl) next.videoUrl = links.videoUrl;
+                        else delete next.videoUrl;
+                      }
+                      return next;
+                    })
+                  }
+                />
               }
               failure={failure}
               planCapped={planCapped}

@@ -45,3 +45,41 @@ test('the story file is 1080×1920, honestly labelled, and as long as the film',
   });
   expect(Math.abs(actual - expected), `${actual}s for a ${expected}s film`).toBeLessThan(0.8);
 });
+
+/**
+ * The feed shapes and the music (18 Oct 2026). A square film with the calm
+ * mood: the frame is 1080 × 1080, and the file carries sound you can hear —
+ * decoded and measured, not just a track that might be silence.
+ */
+test('a square film with music is 1080×1080 and has sound in it', async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.goto('/lab/film/?format=square&music=calm');
+  await page.locator('[data-film-make]').click();
+  const html = page.locator('html');
+  await expect(html).toHaveAttribute('data-film', /done|failed/, { timeout: 100_000 });
+  await expect(html).toHaveAttribute('data-film', 'done');
+
+  const data = await html.evaluate((element) => ({ ...(element as HTMLElement).dataset }));
+  expect(data.filmWidth).toBe('1080');
+  expect(data.filmHeight).toBe('1080');
+  expect(data.filmMusic).toBe('true');
+
+  const heard = await page.locator('[data-film-video]').evaluate(async (node) => {
+    const video = node as HTMLVideoElement;
+    if (video.readyState < 1) await new Promise((resolve) => video.addEventListener('loadedmetadata', resolve, { once: true }));
+    const bytes = await (await fetch(video.src)).arrayBuffer();
+    const context = new OfflineAudioContext(1, 44_100, 44_100);
+    const audio = await context.decodeAudioData(bytes);
+    const samples = audio.getChannelData(0);
+    // The middle of the film: past the fade-in, before the fade-out.
+    const from = Math.floor(samples.length * 0.4);
+    const to = Math.floor(samples.length * 0.6);
+    let sum = 0;
+    for (let index = from; index < to; index++) sum += samples[index]! * samples[index]!;
+    return { width: video.videoWidth, height: video.videoHeight, rms: Math.sqrt(sum / (to - from)), seconds: audio.duration };
+  });
+  expect(heard.width).toBe(1080);
+  expect(heard.height).toBe(1080);
+  expect(heard.seconds).toBeGreaterThan(5);
+  expect(heard.rms, 'the music is audible in the middle of the film').toBeGreaterThan(0.005);
+});

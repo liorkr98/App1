@@ -26,6 +26,8 @@ interface Props {
   photoCheck?: ReactNode;
   /** The WhatsApp line: the agent's own, or DeepSeek's (18 Oct 2026). */
   shareLineField?: ReactNode;
+  /** What the agent adds to this page (PageOptions, 0047). */
+  optionsField?: ReactNode;
   /**
    * Why the last publish attempt did not produce a link.
    *
@@ -81,6 +83,7 @@ export function PublishStep({
   areaCount,
   photoCheck,
   shareLineField,
+  optionsField,
   failure,
   planCapped,
   onPublish,
@@ -113,13 +116,13 @@ export function PublishStep({
             {t('editor.publish.shareNow')}
           </button>
           <button type="button" className="secondary" onClick={() => onCopy(publishedUrl)}>
-            {t('dash.copyLink')}
+            {t('editor.publish.copyLink')}
           </button>
           <a className="secondary" href={publishedUrl}>
             {t('editor.publish.open')}
           </a>
           <a className="secondary" href="/mine/">
-            {t('dash.title')}
+            {t('editor.publish.myListings')}
           </a>
         </div>
       </div>
@@ -153,6 +156,8 @@ export function PublishStep({
       </dl>
 
       {shareLineField}
+
+      {optionsField}
 
       {/*
         The fixable blockers are NOT listed here. The editor already shows

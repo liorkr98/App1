@@ -57,7 +57,7 @@ export async function saveListing(
    *         what destroyed earlier uploads; the column keeps what it has and
    *         the save that follows the upload writes the real list.
    */
-  const media = toMedia(saved, state.tourUrl, extras);
+  const media = toMedia(saved, state, extras);
   const mediaPatch =
     media !== undefined ? { media } : photos.length === 0 ? { media: {} } : {};
 
@@ -133,7 +133,7 @@ export async function publishListing(
    * A listing with no cover is not publishable: index 0 is the frame the
    * WhatsApp card is cut from (CLAUDE.md §6).
    */
-  const media = toMedia(savedPhotos(photos), state.tourUrl, extras);
+  const media = toMedia(savedPhotos(photos), state, extras);
   if (!media) return { error: 'no_photos' };
 
   let seller: Record<string, unknown> | undefined;
@@ -189,10 +189,17 @@ export async function publishListing(
 export async function loadListing(
   slug: string,
 ): Promise<{ row: Record<string, unknown> } | { error: string }> {
+  // Only the agent's own: RLS alone also returns any published listing
+  // (listings_select_public covers `authenticated`), and the editor would
+  // open another agent's page, then fail on every save.
+  const { data: session } = await supabase().auth.getSession();
+  const owner = session.session?.user.id;
+  if (!owner) return { error: 'not signed in' };
   const { data, error } = await supabase()
     .from('listings')
     .select('id, slug, category, title, price, price_note, description, facts, media, location, template, accent, audience, disclosures, indexable, pre_portal, owner_consent_declared_at, owner_consent_name, status, area_places')
     .eq('slug', slug)
+    .eq('owner_id', owner)
     .maybeSingle();
 
   if (error) return { error: error.message };

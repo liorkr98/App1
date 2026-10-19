@@ -40,7 +40,25 @@ export const SERVER_ONLY_NAMESPACES = [
   'source',
   'settings',
   'paywall',
+  'empty',
+  'vehicle',
+  'sign',
 ];
+
+/**
+ * COPY PER PAGE (19 Oct 2026). Namespaces one area's scripts read and the
+ * editor never does: the dashboard, the admin, sign-in, the phone upload and
+ * the contact form. Removed from the client he.json like the ones above, and
+ * served alone as `@locales/he.json?copy=<namespace>`, which the page that
+ * reads them imports through web/src/lib/copy/<namespace>.ts (it registers
+ * the namespace with i18n's addCopy). /new/ went over its budget again on
+ * copy only /mine/ reads.
+ *
+ * THE GUARD: scripts/verify-client-copy.mjs refuses a client chunk that
+ * names one of these keys without loading its copy (itself or through a
+ * chunk it imports), and its -fires.sh proves the check still matches.
+ */
+export const PAGE_NAMESPACES = ['dash', 'admin', 'auth', 'phoneUpload', 'legal'];
 
 const LOCALE = /[\\/]locales[\\/](he|en)\.json$/;
 
@@ -56,9 +74,16 @@ export default function clientCopy() {
                 name: 'client-copy:prune',
                 enforce: 'pre',
                 transform(code, id, options) {
-                  if (options?.ssr || !LOCALE.test(id.split('?')[0])) return undefined;
+                  const [file, query = ''] = id.split('?');
+                  if (options?.ssr || !LOCALE.test(file)) return undefined;
                   const copy = JSON.parse(code);
-                  for (const namespace of SERVER_ONLY_NAMESPACES) delete copy[namespace];
+                  const page = new URLSearchParams(query).get('copy');
+                  if (page) {
+                    if (!PAGE_NAMESPACES.includes(page)) throw new Error(`client-copy: ${page} is not a page namespace`);
+                    // A module, not JSON: Vite's JSON plugin leaves an id with a query alone.
+                    return { code: `export default ${JSON.stringify({ [page]: copy[page] })};`, map: null };
+                  }
+                  for (const namespace of [...SERVER_ONLY_NAMESPACES, ...PAGE_NAMESPACES]) delete copy[namespace];
                   return { code: JSON.stringify(copy), map: null };
                 },
               },
