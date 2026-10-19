@@ -36,11 +36,12 @@ done, so the next session knows.
   and lets a sold page stay up when the agent chooses. Until it runs nothing
   breaks: the editor says the options will be saved after the update, and
   marking a listing sold takes the page down as before.
-- [ ] **The photo film switch: migration 0048.** Same way:
+- [x] **The photo film switch: migration 0048.** Same way:
   `supabase/migrations/0048_page_film_option.sql` → **Raw** → copy all → a NEW
   empty tab → Run. Safe to run twice. From this change the photo slideshow
   film shows on a page only when the agent ticks "סרטון מהתמונות בעמוד";
   until 0048 runs, ticking it says it will be saved after the update.
+  Done 19 Oct.
 - [ ] **Read the Russian and Arabic copy** when you can: `locales/ru.json`,
   `locales/ar.json` and `locales/strings/` were written without a native
   reviewer (you chose to ship as is). The listing text itself is the
