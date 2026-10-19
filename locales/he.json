@@ -571,7 +571,9 @@
       "waitingArea": "מכינים את המפה והסביבה…",
       "stageSave": "שומרים את המודעה",
       "stageLive": "מעלים את הדף לאוויר",
-      "stageCard": "מכינים את כרטיס הוואטסאפ"
+      "stageCard": "מכינים את כרטיס הוואטסאפ",
+      "copyLink": "העתקת קישור",
+      "myListings": "המודעות שלי"
     },
     "plateLookup": "שליפת הפרטים",
     "plateLooking": "שולפים…",

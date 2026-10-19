@@ -26,4 +26,11 @@ if node scripts/verify-client-copy.mjs "$WORK" >/dev/null 2>&1; then
   echo "FAIL: the client-copy check passed a script that reads guides.title."
   exit 1
 fi
-echo "OK: the client-copy check fires on a client script that reads removed copy."
+rm "$WORK/_astro/__copy_probe.js"
+# A page's own copy (PAGE_NAMESPACES) read by a chunk that never loads it.
+echo 'export const probe = (t) => t("dash.title");' > "$WORK/_astro/__page_copy_probe.js"
+if node scripts/verify-client-copy.mjs "$WORK" >/dev/null 2>&1; then
+  echo "FAIL: the client-copy check passed a script that reads dash.title without loading it."
+  exit 1
+fi
+echo "OK: the client-copy check fires on a client script that reads removed copy, and on one that reads a page's copy without loading it."

@@ -106,6 +106,18 @@ function walk(root: Record<string, unknown>, path: string): string | undefined {
   return typeof found === 'string' && found !== '' ? found : undefined;
 }
 
+/**
+ * A page's own copy (lib/copy/*.ts, 19 Oct 2026). The browser's he.json
+ * leaves out the namespaces only one area reads (integrations/client-copy.mjs
+ * PAGE_NAMESPACES); the page that reads one imports its file, which lands
+ * here. On the server the whole file is already present, so this does
+ * nothing.
+ */
+export function addCopy(namespace: string, value: unknown): void {
+  const root = he as Record<string, unknown>;
+  if (!(namespace in root) && value !== null && typeof value === 'object') root[namespace] = value;
+}
+
 function lookup(path: string): string | undefined {
   const current = lang();
   if (current !== 'he') {

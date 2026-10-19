@@ -571,7 +571,9 @@
       "waitingArea": "",
       "stageSave": "",
       "stageLive": "",
-      "stageCard": ""
+      "stageCard": "",
+      "copyLink": "",
+      "myListings": ""
     },
     "plateLookup": "",
     "plateLooking": "",

@@ -116,13 +116,13 @@ export function PublishStep({
             {t('editor.publish.shareNow')}
           </button>
           <button type="button" className="secondary" onClick={() => onCopy(publishedUrl)}>
-            {t('dash.copyLink')}
+            {t('editor.publish.copyLink')}
           </button>
           <a className="secondary" href={publishedUrl}>
             {t('editor.publish.open')}
           </a>
           <a className="secondary" href="/mine/">
-            {t('dash.title')}
+            {t('editor.publish.myListings')}
           </a>
         </div>
       </div>
