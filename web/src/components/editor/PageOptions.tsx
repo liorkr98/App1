@@ -12,6 +12,8 @@ interface Props {
   tourUrl: string | undefined;
   videoUrl: string | undefined;
   onLinks: (links: { tourUrl?: string | undefined; videoUrl?: string | undefined }) => void;
+  /** How many switches are on (visit, calculator, warranty, open house), for the closed row's summary. */
+  onCount?: (count: number) => void;
 }
 
 /** The open house's date and times as the agent typed them, in Israel time. */
@@ -35,7 +37,7 @@ function wallClock(iso: string): { date: string; time: string } {
  * with the editor's own save (listings.media); the switches are their own
  * column, saved here, so a database without 0047 loses only these.
  */
-export function PageOptions({ listingId, category, tourUrl, videoUrl, onLinks }: Props) {
+export function PageOptions({ listingId, category, tourUrl, videoUrl, onLinks, onCount }: Props) {
   const [extras, setExtras] = useState<ListingExtras>({});
   const [unsaved, setUnsaved] = useState(false);
   const [openDate, setOpenDate] = useState('');
@@ -43,6 +45,15 @@ export function PageOptions({ listingId, category, tourUrl, videoUrl, onLinks }:
   const [openTo, setOpenTo] = useState('');
   const [videoDraft, setVideoDraft] = useState(videoUrl ?? '');
   const [videoBad, setVideoBad] = useState(false);
+  // The dates show only when the agent says there is an open house
+  // (19 Oct 2026): most listings have none, and three empty date and time
+  // boxes made the publish screen look like a form to fill in.
+  const [openTicked, setOpenTicked] = useState(false);
+  const openShown = openTicked || Boolean(extras.openHouse);
+
+  useEffect(() => {
+    onCount?.(Object.keys(extras).length);
+  }, [extras, onCount]);
 
   useEffect(() => {
     if (!listingId) return;
@@ -83,6 +94,7 @@ export function PageOptions({ listingId, category, tourUrl, videoUrl, onLinks }:
     setOpenDate('');
     setOpenFrom('');
     setOpenTo('');
+    setOpenTicked(false);
     change(rest);
   };
 
@@ -118,45 +130,49 @@ export function PageOptions({ listingId, category, tourUrl, videoUrl, onLinks }:
         </label>
       ) : (
         <div className="field open-house">
-          <span className="field-label">{t('editor.options.openHouse')}</span>
-          <div className="open-house-row">
+          <label className="declare">
             <input
-              className="field-input"
-              type="date"
-              aria-label={t('editor.options.openDate')}
-              value={openDate}
-              onChange={(event) => {
-                setOpenDate(event.target.value);
-                setOpenHouse(event.target.value, openFrom, openTo);
-              }}
+              type="checkbox"
+              checked={openShown}
+              onChange={(event) => (event.target.checked ? setOpenTicked(true) : clearOpenHouse())}
             />
-            <input
-              className="field-input"
-              type="time"
-              aria-label={t('editor.options.openFrom')}
-              value={openFrom}
-              onChange={(event) => {
-                setOpenFrom(event.target.value);
-                setOpenHouse(openDate, event.target.value, openTo);
-              }}
-            />
-            <input
-              className="field-input"
-              type="time"
-              aria-label={t('editor.options.openTo')}
-              value={openTo}
-              onChange={(event) => {
-                setOpenTo(event.target.value);
-                setOpenHouse(openDate, openFrom, event.target.value);
-              }}
-            />
-            {extras.openHouse ? (
-              <button type="button" className="disclosures-remove" onClick={clearOpenHouse}>
-                {t('editor.options.openClear')}
-              </button>
-            ) : null}
-          </div>
-          <p className="field-hint">{t('editor.options.openHint')}</p>
+            <span>{t('editor.options.openHouse')}</span>
+          </label>
+          {openShown ? (
+            <div className="open-house-row">
+              <input
+                className="field-input"
+                type="date"
+                aria-label={t('editor.options.openDate')}
+                value={openDate}
+                onChange={(event) => {
+                  setOpenDate(event.target.value);
+                  setOpenHouse(event.target.value, openFrom, openTo);
+                }}
+              />
+              <input
+                className="field-input"
+                type="time"
+                aria-label={t('editor.options.openFrom')}
+                value={openFrom}
+                onChange={(event) => {
+                  setOpenFrom(event.target.value);
+                  setOpenHouse(openDate, event.target.value, openTo);
+                }}
+              />
+              <input
+                className="field-input"
+                type="time"
+                aria-label={t('editor.options.openTo')}
+                value={openTo}
+                onChange={(event) => {
+                  setOpenTo(event.target.value);
+                  setOpenHouse(openDate, openFrom, event.target.value);
+                }}
+              />
+            </div>
+          ) : null}
+          {openShown ? <p className="field-hint">{t('editor.options.openHint')}</p> : null}
         </div>
       )}
 

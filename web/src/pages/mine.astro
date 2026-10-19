@@ -1622,6 +1622,11 @@ import '../styles/dash.css';
         flyer.target = '_blank';
         flyer.rel = 'noopener';
         flyer.textContent = t('dash.studioFlyer');
+        // The video, made after publishing: the editor opens on it (19 Oct 2026).
+        const film = document.createElement('a');
+        film.className = 'act';
+        film.href = `/new/?id=${encodeURIComponent(row.slug)}&step=film`;
+        film.textContent = t('editor.film.fromMine');
         // The "למכירה" sign, A4 landscape, for a car window or a board (19 Oct 2026).
         const sign = document.createElement('a');
         sign.className = 'act';
@@ -1629,7 +1634,7 @@ import '../styles/dash.css';
         sign.target = '_blank';
         sign.rel = 'noopener';
         sign.textContent = t('dash.studioSign');
-        made.append(flyer, sign);
+        made.append(film, flyer, sign);
         box.append(made);
 
         const acts = document.createElement('div');

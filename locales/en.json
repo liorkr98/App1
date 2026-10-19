@@ -573,7 +573,9 @@
       "stageLive": "",
       "stageCard": "",
       "copyLink": "",
-      "myListings": ""
+      "myListings": "",
+      "more": "",
+      "moreOn": ""
     },
     "plateLookup": "",
     "plateLooking": "",
@@ -699,7 +701,8 @@
         "warm": "",
         "upbeat": ""
       },
-      "noMusic": ""
+      "noMusic": "",
+      "fromMine": ""
     },
     "photoReview": {
       "waiting": "",
@@ -852,7 +855,6 @@
       "openDate": "",
       "openFrom": "",
       "openTo": "",
-      "openClear": "",
       "openHint": "",
       "video": "",
       "videoHint": "",
