@@ -25,7 +25,7 @@ test('the WhatsApp bar folds while reading and opens again at the end', async ({
   await expect.poll(fold).toBe(1);
   // Folded, it is still the same link with the same name, and still tappable.
   await expect(dock.locator('a.cta')).toHaveAccessibleName(/וואטסאפ/);
-  await expect(dock.locator('a.cta')).toHaveAttribute('href', /\/wa\?text=/);
+  await expect(dock.locator('a.cta')).toHaveAttribute('href', /\/wa$/);
   await page.evaluate(scrollToFraction, 1);
   await expect.poll(fold).toBe(0);
 });

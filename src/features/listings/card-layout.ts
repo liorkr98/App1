@@ -106,7 +106,7 @@ export function coverCrop(
   };
 }
 
-export type ShareImageKind = 'card' | 'story';
+export type ShareImageKind = 'card' | 'story' | 'post';
 
 /**
  * Where an image goes in the `derived` bucket.

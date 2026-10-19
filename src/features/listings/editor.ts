@@ -182,6 +182,8 @@ export interface EditorState {
 
   /** Optional https URL for a 3D tour. Poster only; never embedded. */
   tourUrl?: string;
+  /** Optional YouTube / TikTok / Instagram link (page-extras.ts cleanVideoUrl). Never embedded. */
+  videoUrl?: string;
 
   entitlement: Entitlement;
 }

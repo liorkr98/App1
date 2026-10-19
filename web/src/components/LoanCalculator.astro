@@ -1,0 +1,25 @@
+---
+import type { Listing } from '@/types/listing';
+import { LOAN_DEFAULTS, loanFor } from '@/features/listings/loan';
+
+import LoanBox from './LoanBox.astro';
+
+/**
+ * The mortgage (flat) or loan (car) calculator (19 Oct 2026), only when the
+ * agent turned it on (extras.calculator, 0047) and the page has a price.
+ *
+ * This decides; LoanBox draws. Split so the box's script and styles are
+ * written into a page only when it is shown: a component's script goes out
+ * with every render of the component, and this one renders on every listing.
+ */
+interface Props {
+  listing: Listing;
+}
+
+const { listing } = Astro.props;
+const price = listing.price;
+const show = listing.extras?.calculator === true && listing.status !== 'sold' && Number.isFinite(price) && price > 0;
+const start = LOAN_DEFAULTS[listing.category];
+const payment = show ? loanFor(price, start.downPercent, start.ratePercent, start.years) : undefined;
+---
+{show && payment !== undefined && <LoanBox price={price} category={listing.category} start={start} payment={payment} />}

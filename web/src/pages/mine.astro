@@ -242,6 +242,7 @@ import '../styles/dash.css';
           gallery?: { url?: string; alt?: string }[];
           /** Drawn in the agent's browser at publish (lib/share-images). */
           storyUrl?: string;
+          postUrl?: string;
           flyerUrl?: string;
         } | null;
         location: { city?: string; street?: string } | null;
@@ -254,6 +255,8 @@ import '../styles/dash.css';
         disclosures?: string[] | null;
         /** Saved translations (0044): {en: {title, description, priceNote?, disclosures?, source}}. */
         translations?: Record<string, Record<string, unknown>> | null;
+        /** A sold page kept up as a record of the sale (0047). */
+        sold_public?: boolean | null;
       };
 
       const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -407,15 +410,46 @@ import '../styles/dash.css';
 
       const markSold = async (slug: string, button: HTMLButtonElement) => {
         if (!window.confirm(t('dash.confirmSold'))) return;
+        // The page can stay up as a record of the sale (0047): the agent's
+        // choice, asked here, changeable later from the sold card.
+        const keep = window.confirm(t('dash.confirmKeepSold'));
         button.disabled = true;
-        // No owner filter, for the same reason the select has none: the
-        // update policy in 0002 is what restricts this to the agent's own row.
-        const { error } = await supabase().from('listings').update({ status: 'sold' }).eq('slug', slug);
+        // The update policy in 0002 restricts this to the agent's own row.
+        let { error } = await supabase().from('listings').update({ status: 'sold', sold_public: keep }).eq('slug', slug);
+        // A database before 0047 has no sold_public: sold, and gone, as before.
+        if (error?.code === '42703') ({ error } = await supabase().from('listings').update({ status: 'sold' }).eq('slug', slug));
         button.disabled = false;
         if (error) return tell(t('dash.soldFailed'), 'bad');
         const row = rows.find((candidate) => candidate.slug === slug);
-        if (row) row.status = 'sold';
-        tell(t('dash.soldDone'));
+        if (row) {
+          row.status = 'sold';
+          row.sold_public = keep;
+        }
+        tell(t(keep ? 'dash.soldKept' : 'dash.soldDone'));
+        paint();
+      };
+
+      const duplicate = async (slug: string, button: HTMLButtonElement) => {
+        button.disabled = true;
+        try {
+          const { duplicateListing } = await import('../lib/listing-draft');
+          const copy = await duplicateListing(slug);
+          location.href = `/new/?id=${encodeURIComponent(copy.slug)}`;
+        } catch {
+          button.disabled = false;
+          tell(t('dash.duplicateFailed'), 'bad');
+        }
+      };
+
+      /** Keep a sold page up, or take it down (0047). */
+      const setSoldPublic = async (row: Row, keep: boolean, button: HTMLButtonElement) => {
+        button.disabled = true;
+        const { saveSoldPublic } = await import('../lib/page-options');
+        const ok = await saveSoldPublic(row.slug, keep);
+        button.disabled = false;
+        if (!ok) return tell(t('dash.soldFailed'), 'bad');
+        row.sold_public = keep;
+        tell(t(keep ? 'dash.soldKept' : 'dash.soldHidden'));
         paint();
       };
 
@@ -830,6 +864,9 @@ import '../styles/dash.css';
         if (row.status === 'published') {
           item(button(t('dash.markSold'), 'menu-item', (self) => void markSold(row.slug, self)));
         }
+        // A new draft shaped like this one (template, colour, options), with
+        // none of its photographs, address, price or facts (listing-draft.ts).
+        item(button(t('dash.duplicate'), 'menu-item', (self) => void duplicate(row.slug, self)));
         if (row.status !== 'archived') {
           item(button(t('dash.archive'), 'menu-item', (self) => void archiveListing(row.slug, self)));
         }
@@ -1143,10 +1180,16 @@ import '../styles/dash.css';
             link(t('dash.preview'), 'act', `${edit}&step=preview`),
           );
         } else if (row.status === 'sold') {
-          acts.append(
-            link(t('dash.edit'), 'act', edit),
-            button(t('dash.copyLink'), 'act', () => void copy(href, row.slug)),
-          );
+          acts.append(link(t('dash.edit'), 'act', edit));
+          // The link works only while the agent keeps the sold page up (0047).
+          if (row.sold_public) {
+            acts.append(
+              button(t('dash.copyLink'), 'act', () => void copy(href, row.slug)),
+              button(t('dash.soldHide'), 'act', (self) => void setSoldPublic(row, false, self)),
+            );
+          } else {
+            acts.append(button(t('dash.soldKeep'), 'act', (self) => void setSoldPublic(row, true, self)));
+          }
         } else {
           acts.append(
             link(t('dash.edit'), 'act', edit),
@@ -1494,7 +1537,7 @@ import '../styles/dash.css';
         const https = (url: unknown) => (typeof url === 'string' && url.startsWith('https://') ? url : undefined);
         const made = document.createElement('div');
         made.className = 'studio-made';
-        const storyFigure = (story: string) => {
+        const storyFigure = (story: string, name = t('dash.studioStory')) => {
           const figure = document.createElement('a');
           figure.className = 'studio-story';
           figure.href = story;
@@ -1502,28 +1545,36 @@ import '../styles/dash.css';
           figure.rel = 'noopener';
           const image = document.createElement('img');
           image.src = story;
-          image.alt = t('dash.studioStory');
+          image.alt = name;
           image.loading = 'lazy';
           const label = document.createElement('span');
-          label.textContent = t('dash.studioStory');
+          label.textContent = name;
           figure.append(image, label);
           return figure;
         };
+        // The story and, since 19 Oct 2026, the square feed post beside it.
+        const figures = (storyUrl: string | undefined, postUrl: string | undefined) => [
+          ...(storyUrl ? [storyFigure(storyUrl)] : []),
+          ...(postUrl ? [storyFigure(postUrl, t('dash.studioPost'))] : []),
+        ];
         const story = https(row.media?.storyUrl);
-        if (story) {
-          made.append(storyFigure(story));
+        const post = https(row.media?.postUrl);
+        if (story && post) {
+          made.append(...figures(story, post));
         } else if (row.id) {
           const listingId = row.id;
+          if (story) made.append(storyFigure(story));
           made.append(
             button(t('dash.studioMake'), 'act', (self) => {
               self.disabled = true;
               self.textContent = t('dash.studioMaking');
               void import('../lib/share-images')
                 .then(({ makeShareImages }) => makeShareImages(listingId))
-                .catch(() => ({ status: 'failed' as const, storyUrl: undefined }))
+                .catch(() => ({ status: 'failed' as const, storyUrl: undefined, postUrl: undefined }))
                 .then((result) => {
-                  if (result.status !== 'failed' && result.storyUrl) {
-                    self.replaceWith(storyFigure(result.storyUrl));
+                  if (result.status !== 'failed' && (result.storyUrl || result.postUrl)) {
+                    made.querySelectorAll('.studio-story').forEach((old) => old.remove());
+                    self.replaceWith(...figures(result.storyUrl, result.postUrl));
                     return;
                   }
                   self.disabled = false;
@@ -1570,7 +1621,14 @@ import '../styles/dash.css';
         flyer.target = '_blank';
         flyer.rel = 'noopener';
         flyer.textContent = t('dash.studioFlyer');
-        made.append(flyer);
+        // The "למכירה" sign, A4 landscape, for a car window or a board (19 Oct 2026).
+        const sign = document.createElement('a');
+        sign.className = 'act';
+        sign.href = `/a/${encodeURIComponent(row.slug)}/sign/`;
+        sign.target = '_blank';
+        sign.rel = 'noopener';
+        sign.textContent = t('dash.studioSign');
+        made.append(flyer, sign);
         box.append(made);
 
         const acts = document.createElement('div');
@@ -1679,7 +1737,9 @@ import '../styles/dash.css';
             data: unknown[] | null;
             error: { code?: string } | null;
           }>;
-        let { data, error } = await read(`${BASE}, description, price_note, disclosures, translations`);
+        // sold_public arrives with 0047, run by hand: read without it first if missing.
+        let { data, error } = await read(`${BASE}, description, price_note, disclosures, translations, sold_public`);
+        if (error?.code === '42703') ({ data, error } = await read(`${BASE}, description, price_note, disclosures, translations`));
         if (error?.code === '42703') ({ data, error } = await read(`${BASE}, description, price_note, disclosures`));
         if (error) return show('failed');
         rows = (data ?? []) as Row[];

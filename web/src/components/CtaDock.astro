@@ -4,8 +4,6 @@ import { t } from '../lib/i18n';
 interface Props {
   /** Digits only, international format without a plus, e.g. 972500000000. */
   phone: string;
-  /** Hebrew opening message, encoded into the wa.me link. */
-  message: string;
   /** Public slug, so the tap is counted at /a/{slug}/wa before wa.me. */
   slug: string;
   /**
@@ -17,9 +15,10 @@ interface Props {
   href?: string | undefined;
 }
 
-const { message, slug, sold = false, href: given } = Astro.props;
+const { slug, sold = false, href: given } = Astro.props;
 
-const href = sold ? '/' : (given ?? `/a/${slug}/wa?text=${encodeURIComponent(message)}`);
+// The hop writes the message (control-surface.ts listingPrefill).
+const href = sold ? '/' : (given ?? `/a/${slug}/wa`);
 const label = sold ? t('listing.moreListings') : t('listing.whatsappCta');
 ---
 {/*

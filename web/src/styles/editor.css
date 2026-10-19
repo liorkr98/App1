@@ -3397,3 +3397,25 @@ body:has(.live-preview.is-full) .nav {
   font-weight: 600;
   color: var(--muted);
 }
+
+/* What the agent adds to one page (PageOptions, 0047). */
+.page-options {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  margin-block-start: 1.2rem;
+  padding: 0;
+  border: 0;
+}
+
+.open-house-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.open-house-row .field-input {
+  inline-size: auto;
+  min-inline-size: 8.5rem;
+}

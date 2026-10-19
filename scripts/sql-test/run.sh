@@ -67,5 +67,9 @@ done
 "${PSQL[@]}" -c "$(cat "$(ls "$ROOT"/supabase/migrations/0046_*.sql)")" >/dev/null
 "${PSQL[@]}" -f "$HERE/photo-angles.sql"
 "${PSQL[@]}" -f "$HERE/owner-reads.sql"
+# 0047 the same way, twice, then the page options and the sold page.
+"${PSQL[@]}" -c "$(cat "$(ls "$ROOT"/supabase/migrations/0047_*.sql)")" >/dev/null
+"${PSQL[@]}" -c "$(cat "$(ls "$ROOT"/supabase/migrations/0047_*.sql)")" >/dev/null
+"${PSQL[@]}" -f "$HERE/page-options.sql"
 bash "$HERE/race.sh" "$BIN" "$WORK" "$PORT"
-echo "OK: billing, agent-page, site-analytics, price-drop, translation, plan-limit, photo-angle and owner-read SQL tests passed."
+echo "OK: billing, agent-page, site-analytics, price-drop, translation, plan-limit, photo-angle, owner-read and page-option SQL tests passed."

@@ -67,6 +67,7 @@ import { FactSuggestions } from './FactSuggestions';
 import { Message } from './Message';
 import { FilmFile } from './FilmFile';
 import { PhonePortal, type InboxPhoto } from './PhonePortal';
+import { PageOptions } from './PageOptions';
 import { PhotoAdvice } from './PhotoAdvice';
 import { PhotoChecklist } from './PhotoChecklist';
 import { PhotosStep, type EditorPhoto } from './PhotosStep';
@@ -1309,6 +1310,9 @@ export default function Editor() {
             String((row.media as { tourUrl: string }).tourUrl).startsWith('https://')
               ? { tourUrl: String((row.media as { tourUrl: string }).tourUrl) }
               : {}),
+            ...(typeof (row.media as { videoUrl?: unknown } | null)?.videoUrl === 'string'
+              ? { videoUrl: String((row.media as { videoUrl: string }).videoUrl) }
+              : {}),
           };
           opened = next;
           return next;
@@ -2135,6 +2139,28 @@ export default function Editor() {
                     {headlineButton('line')}
                   </div>
                 ) : undefined
+              }
+              optionsField={
+                <PageOptions
+                  listingId={savedRow?.id ?? listingId.current ?? undefined}
+                  category={state.category ?? 'property'}
+                  tourUrl={state.tourUrl}
+                  videoUrl={state.videoUrl}
+                  onLinks={(links) =>
+                    setState((current) => {
+                      const next = { ...current };
+                      if ('tourUrl' in links) {
+                        if (links.tourUrl) next.tourUrl = links.tourUrl;
+                        else delete next.tourUrl;
+                      }
+                      if ('videoUrl' in links) {
+                        if (links.videoUrl) next.videoUrl = links.videoUrl;
+                        else delete next.videoUrl;
+                      }
+                      return next;
+                    })
+                  }
+                />
               }
               failure={failure}
               planCapped={planCapped}

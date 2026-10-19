@@ -665,42 +665,67 @@ export function drawCard(canvas: HTMLCanvasElement, listing: Listing, cover: HTM
 
 export const STORY_WIDTH = 1080;
 export const STORY_HEIGHT = 1920;
+/** The feed post (19 Oct 2026): Instagram and Facebook crop to a square. */
+export const POST_SIZE = 1080;
+
+interface PosterFrame {
+  height: number;
+  /** 1 for the story; smaller for the square, which has a third of the room for words. */
+  scale: number;
+  titleLines: number;
+  minPhoto: number;
+}
+
+const STORY_FRAME: PosterFrame = { height: STORY_HEIGHT, scale: 1, titleLines: 5, minPhoto: 640 };
+const POST_FRAME: PosterFrame = { height: POST_SIZE, scale: 0.72, titleLines: 2, minPhoto: 380 };
 
 export function drawStory(canvas: HTMLCanvasElement, listing: Listing, cover: HTMLImageElement, host: string): void {
+  drawPoster(canvas, listing, cover, host, STORY_FRAME);
+}
+
+/** The square feed post: the story's design, its words smaller, three facts. */
+export function drawPost(canvas: HTMLCanvasElement, listing: Listing, cover: HTMLImageElement, host: string): void {
+  drawPoster(canvas, listing, cover, host, POST_FRAME);
+}
+
+function drawPoster(canvas: HTMLCanvasElement, listing: Listing, cover: HTMLImageElement, host: string, frame: PosterFrame): void {
   const content = shareContent(listing);
   const palette = content.storyMode === 'paper' ? PAPER : ONYX;
+  const k = frame.scale;
+  const px = (size: number) => Math.round(size * k);
   canvas.width = STORY_WIDTH;
-  canvas.height = STORY_HEIGHT;
+  canvas.height = frame.height;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('canvas');
   const W = STORY_WIDTH;
-  const H = STORY_HEIGHT;
+  const H = frame.height;
   const side = 84;
   const width = W - side * 2;
   const edge = W - side;
 
   const flat = content.title;
-  const titleSize = flat.length > 60 ? 72 : flat.length > 36 ? 86 : 104;
+  const titleSize = px(flat.length > 60 ? 72 : flat.length > 36 ? 86 : 104);
   const titleFont = `800 ${titleSize}px ${DISPLAY}`;
   stretch(ctx, 'condensed');
   const measureTitle = measureWith(ctx, titleFont);
-  const lines = content.titleLines.flatMap((line) => wrapLines(line, width, measureTitle, 3)).slice(0, 5);
+  const lines = content.titleLines.flatMap((line) => wrapLines(line, width, measureTitle, 3)).slice(0, frame.titleLines);
   stretch(ctx, 'normal');
 
   const pieces: Piece[] = [];
-  if (content.place) pieces.push(linesPiece(ctx, wrapLines(content.place, width, measureWith(ctx, `700 34px ${BODY}`), 2), `700 34px ${BODY}`, palette.ink2, 51));
+  const placeFont = `700 ${px(34)}px ${BODY}`;
+  if (content.place) pieces.push(linesPiece(ctx, wrapLines(content.place, width, measureWith(ctx, placeFont), frame.titleLines > 2 ? 2 : 1), placeFont, palette.ink2, px(51)));
   pieces.push(linesPiece(ctx, lines, titleFont, palette.ink, titleSize * 1.02, 'condensed'));
   if (content.price) {
-    pieces.push(linesPiece(ctx, [content.price], `800 84px ${DISPLAY}`, content.storyMode === 'paper' ? content.accent.base : content.accent.lift, 92));
+    pieces.push(linesPiece(ctx, [content.price], `800 ${px(84)}px ${DISPLAY}`, content.storyMode === 'paper' ? content.accent.base : content.accent.lift, px(92)));
   }
   if (content.cells.length > 0) {
     pieces.push(
       cellsPiece(
         ctx,
         content.cells,
-        { font: `700 72px ${DISPLAY}`, size: 72, color: palette.ink },
-        { font: `700 30px ${BODY}`, size: 30, color: palette.ink2 },
-        56,
+        { font: `700 ${px(72)}px ${DISPLAY}`, size: px(72), color: palette.ink },
+        { font: `700 ${px(30)}px ${BODY}`, size: px(30), color: palette.ink2 },
+        px(56),
       ),
     );
   }
@@ -708,30 +733,32 @@ export function drawStory(canvas: HTMLCanvasElement, listing: Listing, cover: HT
   const licence = content.licence ? `${t('listing.licenceNumber')} ${content.licence}` : undefined;
   const link = `${host}/a/${listing.slug}`;
   pieces.push({
-    height: 30 + 2 + 34 + 57 + 48,
+    height: px(30) + 2 + px(34) + px(57) + px(48),
     draw: (edge, top) => {
       ctx.fillStyle = palette.line;
-      ctx.fillRect(side, top + 30, width, 2);
-      const y = top + 30 + 2 + 34;
-      ctx.font = `700 38px ${BODY}`;
+      ctx.fillRect(side, top + px(30), width, 2);
+      const y = top + px(30) + 2 + px(34);
+      ctx.font = `700 ${px(38)}px ${BODY}`;
       ctx.fillStyle = palette.ink;
-      run(ctx, content.name, edge, y + 28);
-      ctx.font = `400 32px ${BODY}`;
+      run(ctx, content.name, edge, y + px(28));
+      ctx.font = `400 ${px(32)}px ${BODY}`;
       ctx.fillStyle = palette.ink2;
       const rest = [content.role, licence].filter(Boolean).join(' · ');
-      if (rest) run(ctx, rest, edge, y + 57 + 24);
-      ctx.font = `800 34px ${BODY}`;
+      if (rest) run(ctx, rest, edge, y + px(57 + 24));
+      ctx.font = `800 ${px(34)}px ${BODY}`;
       ctx.fillStyle = palette.ink;
       ctx.direction = 'ltr';
       ctx.textAlign = 'start';
       ctx.textBaseline = 'middle';
-      ctx.fillText(link, side, y + 57 + 24);
+      ctx.fillText(link, side, y + px(57 + 24));
     },
   });
 
-  const bodyHeight = stack(pieces, 34) + 90;
+  const gap = px(34);
+  const bodyHeight = stack(pieces, gap) + px(90);
   // The photograph takes what the words leave; the words overlap it by 150.
-  const photoHeight = Math.max(640, H - bodyHeight + 150);
+  const overlap = px(150);
+  const photoHeight = Math.max(frame.minPhoto, H - bodyHeight + overlap);
   ctx.fillStyle = palette.ground;
   ctx.fillRect(0, 0, W, H);
   photo(ctx, cover, 0, 0, W, photoHeight, { x: listing.media.cover.focalX, y: listing.media.cover.focalY });
@@ -743,9 +770,9 @@ export function drawStory(canvas: HTMLCanvasElement, listing: Listing, cover: HT
   ctx.fillStyle = fade;
   ctx.fillRect(0, 0, W, photoHeight);
 
-  drawStack(pieces, edge, Math.max(640 - 150, H - bodyHeight), 34);
+  drawStack(pieces, edge, Math.max(frame.minPhoto - overlap, H - bodyHeight), gap);
 
-  if (content.badge) ribbon(ctx, content.badge, edge, 120, 46);
+  if (content.badge) ribbon(ctx, content.badge, edge, px(120), px(46));
 }
 
 // ---------------------------------------------------------------------------

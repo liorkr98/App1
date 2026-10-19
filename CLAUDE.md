@@ -392,6 +392,10 @@ date it was current.
   ordinary cell. An unbacked badge is worse than no badge.
 - **Never present data as a valuation.** No appraisal, no estimate of worth.
 - **Never publish a licence plate.** It is a lookup key only.
+- **A sold page stays up only when the agent chooses** (19 Oct 2026, 0047,
+  reversing 0026's "sold leaves the web" for that case only). It shows the
+  sale and nothing to act on: no price, no WhatsApp or call, no calculator,
+  noindex, no views counted. Without the choice, sold still 404s.
 - **The street, never the building** (7 Oct 2026). No house number and no
   location pin on any public surface — page, card, story, flyer, preview.
   `publicStreet()` strips the number where a row becomes a listing; the row

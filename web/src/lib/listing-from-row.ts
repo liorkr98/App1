@@ -11,14 +11,18 @@ export { listingFromRow, LISTING_COLUMNS, type ListingRow };
 /**
  * A published listing, by slug.
  *
- * Sold and archived listings 404. The public link is for a live ad.
+ * Sold and archived listings 404. The public link is for a live ad. The one
+ * exception is the listing page itself (`{ sold: true }`): a sold listing
+ * the agent kept up as a record of the sale (0047). RLS decides which sold
+ * rows can be read at all — before 0047 none, after it only sold_public —
+ * so the page asks for both statuses and the database answers.
  *
  * Demo fixtures win so `/a/A7K2M` stays the visual contract even if someone
  * later inserts a real row with that slug — they cannot, the check is five
  * Crockford characters and the samples are the same alphabet, but the
  * fixtures are what CI builds against and must not start reading a database.
  */
-export async function publishedListing(slug: string): Promise<Listing | undefined> {
+export async function publishedListing(slug: string, options: { sold?: boolean } = {}): Promise<Listing | undefined> {
   const demo = listingBySlug(slug);
   if (demo) return demo;
 
@@ -26,7 +30,12 @@ export async function publishedListing(slug: string): Promise<Listing | undefine
 
   try {
     const { data, error } = await selectListingColumns((columns) =>
-      supabasePublic().from('listings').select(columns).eq('slug', slug).eq('status', 'published').maybeSingle(),
+      supabasePublic()
+        .from('listings')
+        .select(columns)
+        .eq('slug', slug)
+        .in('status', options.sold ? ['published', 'sold'] : ['published'])
+        .maybeSingle(),
     );
 
     if (error || !data) return undefined;

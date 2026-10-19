@@ -29,6 +29,13 @@ done, so the next session knows.
   a NEW empty tab → Run. Safe to run twice. Until it runs, saving a translation
   on the dashboard says 0044 is missing, and nothing else changes. The
   translation uses the `DEEPSEEK_API_KEY` the Worker already has.
+- [ ] **Page options and the sold page: migration 0047.** Same way:
+  `supabase/migrations/0047_page_options_sold_page.sql` → **Raw** → copy all →
+  a NEW empty tab → Run. Safe to run twice. It adds what the agent turns on
+  for one page (the visit button, the calculator, an open house, a warranty)
+  and lets a sold page stay up when the agent chooses. Until it runs nothing
+  breaks: the editor says the options will be saved after the update, and
+  marking a listing sold takes the page down as before.
 - [ ] **Read the Russian and Arabic copy** when you can: `locales/ru.json`,
   `locales/ar.json` and `locales/strings/` were written without a native
   reviewer (you chose to ship as is). The listing text itself is the

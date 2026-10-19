@@ -277,7 +277,22 @@
     "blueprintSheet": "Sheet",
     "priceDropped": "Price reduced",
     "priceWas": "Previous price:",
-    "photoRooms": "Rooms in the photos"
+    "photoRooms": "Rooms in the photos",
+    "openHouse": "",
+    "warranty": "",
+    "videoCta": "",
+    "videoCtaCar": "",
+    "visitCta": "",
+    "visitCtaCar": "",
+    "loan": {
+      "title": "",
+      "titleCar": "",
+      "down": "",
+      "rate": "",
+      "years": "",
+      "monthly": "",
+      "note": ""
+    }
   },
   "notFound": {
     "title": "Page not found",
@@ -821,6 +836,26 @@
       "none": "",
       "lineLabel": "",
       "lineHint": ""
+    },
+    "options": {
+      "title": "",
+      "lead": "",
+      "visit": "",
+      "visitCar": "",
+      "calculator": "",
+      "calculatorCar": "",
+      "warranty": "",
+      "openHouse": "",
+      "openDate": "",
+      "openFrom": "",
+      "openTo": "",
+      "openClear": "",
+      "openHint": "",
+      "video": "",
+      "videoHint": "",
+      "videoBad": "",
+      "tour": "",
+      "unsaved": ""
     }
   },
   "seo": {
@@ -1138,7 +1173,16 @@
     "langSend": "",
     "langOpen": "",
     "langNeedsTitle": "",
-    "langNeedsMigration": ""
+    "langNeedsMigration": "",
+    "studioSign": "",
+    "studioPost": "",
+    "confirmKeepSold": "",
+    "soldKept": "",
+    "soldHidden": "",
+    "soldKeep": "",
+    "soldHide": "",
+    "duplicate": "",
+    "duplicateFailed": ""
   },
   "legal": {
     "terms": "Terms of use",
@@ -1864,5 +1908,10 @@
     "product": "",
     "help": "",
     "legal": ""
+  },
+  "sign": {
+    "forSale": "",
+    "scan": "",
+    "printHint": ""
   }
 }

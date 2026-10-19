@@ -2,7 +2,8 @@ import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 
 import { listingBrowserPath } from '@/features/listings/derived-photo';
-import { parsePhotoReview, PHOTO_REVIEW_USER, reviewSystem } from '@/features/listings/photo-review';
+import { parsePhotoReview } from '@/features/listings/photo-review';
+import { PHOTO_REVIEW_USER, reviewSystem } from '@/features/listings/photo-review-prompt';
 
 import { deepseekVision } from '../../lib/deepseek';
 import { supabaseAsUser, supabaseConfigured, supabaseUrl } from '../../lib/supabase';

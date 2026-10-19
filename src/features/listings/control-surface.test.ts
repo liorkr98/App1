@@ -9,8 +9,11 @@ import {
   publicStreet,
   showListingMap,
   whatsappPrefill,
+  listingShortName,
+  visitPrefill,
 } from './control-surface.js';
 import type { ListingLocation } from '@/types/listing.js';
+import { answer, blankFacts } from './fact-entry.js';
 
 const city: ListingLocation = { city: 'חולון' };
 const street: ListingLocation = { city: 'חולון', street: 'סוקולוב 12' };
@@ -72,6 +75,31 @@ describe('whatsappPrefill', () => {
       whatsappPrefill('property', 'דיזנגוף 99, תל אביב־יפו'),
       'היי, ראיתי את הדירה בדיזנגוף 99, תל אביב־יפו ואשמח לפרטים',
     );
+  });
+});
+
+describe('the WhatsApp lines name the listing (19 Oct 2026)', () => {
+  const car = answer(answer(answer(blankFacts('vehicle'), 'make', 'מאזדה'), 'model', '3'), 'year', 2009);
+  const flat = answer(blankFacts('property'), 'rooms', 4);
+
+  it('names a car by make, model and year', () => {
+    const name = listingShortName('vehicle', car);
+    assert.equal(name, 'מאזדה 3 2009');
+    assert.equal(
+      whatsappPrefill('vehicle', 'ראשון לציון', name),
+      'היי, ראיתי את מאזדה 3 2009 בראשון לציון ואשמח לפרטים',
+    );
+  });
+
+  it('names a flat by its rooms, and keeps the noun when too little was answered', () => {
+    assert.equal(listingShortName('property', flat), 'דירת 4 חדרים');
+    assert.equal(listingShortName('property', blankFacts('property')), undefined);
+    assert.equal(listingShortName('vehicle', blankFacts('vehicle')), undefined);
+  });
+
+  it('asks for a visit to a flat and a test drive of a car', () => {
+    assert.equal(visitPrefill('property', 'חיפה', 'דירת 4 חדרים'), 'היי, אשמח לתאם ביקור — דירת 4 חדרים בחיפה');
+    assert.equal(visitPrefill('vehicle'), 'היי, אשמח לתאם נסיעת מבחן — הרכב');
   });
 });
 

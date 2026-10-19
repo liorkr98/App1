@@ -57,7 +57,7 @@ export async function saveListing(
    *         what destroyed earlier uploads; the column keeps what it has and
    *         the save that follows the upload writes the real list.
    */
-  const media = toMedia(saved, state.tourUrl, extras);
+  const media = toMedia(saved, state, extras);
   const mediaPatch =
     media !== undefined ? { media } : photos.length === 0 ? { media: {} } : {};
 
@@ -133,7 +133,7 @@ export async function publishListing(
    * A listing with no cover is not publishable: index 0 is the frame the
    * WhatsApp card is cut from (CLAUDE.md §6).
    */
-  const media = toMedia(savedPhotos(photos), state.tourUrl, extras);
+  const media = toMedia(savedPhotos(photos), state, extras);
   if (!media) return { error: 'no_photos' };
 
   let seller: Record<string, unknown> | undefined;
