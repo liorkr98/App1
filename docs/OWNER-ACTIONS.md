@@ -29,6 +29,18 @@ done, so the next session knows.
   a NEW empty tab → Run. Safe to run twice. Until it runs, saving a translation
   on the dashboard says 0044 is missing, and nothing else changes. The
   translation uses the `DEEPSEEK_API_KEY` the Worker already has.
+- [ ] **Page options and the sold page: migration 0047.** Same way:
+  `supabase/migrations/0047_page_options_sold_page.sql` → **Raw** → copy all →
+  a NEW empty tab → Run. Safe to run twice. It adds what the agent turns on
+  for one page (the visit button, the calculator, an open house, a warranty)
+  and lets a sold page stay up when the agent chooses. Until it runs nothing
+  breaks: the editor says the options will be saved after the update, and
+  marking a listing sold takes the page down as before.
+- [ ] **The photo film switch: migration 0048.** Same way:
+  `supabase/migrations/0048_page_film_option.sql` → **Raw** → copy all → a NEW
+  empty tab → Run. Safe to run twice. From this change the photo slideshow
+  film shows on a page only when the agent ticks "סרטון מהתמונות בעמוד";
+  until 0048 runs, ticking it says it will be saved after the update.
 - [ ] **Read the Russian and Arabic copy** when you can: `locales/ru.json`,
   `locales/ar.json` and `locales/strings/` were written without a native
   reviewer (you chose to ship as is). The listing text itself is the
@@ -84,6 +96,9 @@ done, so the next session knows.
 - [ ] **A named author for the guides**, when there is one. Today the guides
   are signed "צוות עמוד מכירה". A person (name and role) is a one-line change
   in `src/features/guides/guides.ts`.
-- [ ] **What to build next.** Offered, not started: a square or 4:5 feed
-  version of the video; a "price updated" card to re-share; pages in English,
-  Russian and Arabic; royalty-free music for the video.
+- [ ] **What to build next.** Offered, not started: a "price updated" card to
+  re-share; pages in English, Russian and Arabic. Built 18 Oct 2026: the
+  square and 4:5 feed versions of the video, and music for it (three moods,
+  generated in the agent's browser, so no track to licence). Not yet heard on
+  a real iPhone or Android: make one at `/lab/film/?format=square&music=calm`
+  and send it to yourself on WhatsApp.

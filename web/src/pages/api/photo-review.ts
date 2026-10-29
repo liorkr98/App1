@@ -2,11 +2,8 @@ import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 
 import { listingBrowserPath } from '@/features/listings/derived-photo';
-import {
-  parsePhotoReview,
-  PHOTO_REVIEW_SYSTEM,
-  PHOTO_REVIEW_USER,
-} from '@/features/listings/photo-review';
+import { parsePhotoReview } from '@/features/listings/photo-review';
+import { PHOTO_REVIEW_USER, reviewSystem } from '@/features/listings/photo-review-prompt';
 
 import { deepseekVision } from '../../lib/deepseek';
 import { supabaseAsUser, supabaseConfigured, supabaseUrl } from '../../lib/supabase';
@@ -24,6 +21,10 @@ import { supabaseAsUser, supabaseConfigured, supabaseUrl } from '../../lib/supab
  * A picture that does not parse is still recorded, empty, so the next
  * request moves on. No key and no answer leave the row unwritten, and
  * neither one blocks publish.
+ *
+ * By category (18 Oct 2026): a flat's photograph gets a room, a car's an
+ * angle round the car (the editor builds the 360 from those), and both get
+ * what they show that the seller may want to state.
  *
  * NOT A PAGE-RENDER FETCH. The published page never calls this.
  */
@@ -58,10 +59,11 @@ export const POST: APIRoute = async ({ request }) => {
   if (!listingId) return json({ error: 'bad_request' }, 400);
 
   const client = supabaseAsUser(token);
-  const { data, error } = await client.from('listings').select('id, media').eq('id', listingId).maybeSingle();
+  const { data, error } = await client.from('listings').select('id, media, category').eq('id', listingId).maybeSingle();
   if (error) return json({ error: 'unavailable' }, 502);
   if (!data) return json({ error: 'not_found' }, 404);
 
+  const category = (data as { category?: unknown }).category === 'vehicle' ? 'vehicle' : 'property';
   const photos = photoUrls((data as { media?: unknown }).media).flatMap((url) => {
     const path = listingBrowserPath(url, supabaseUrl, listingId);
     return path ? [{ url, path }] : [];
@@ -84,14 +86,14 @@ export const POST: APIRoute = async ({ request }) => {
 
   const raw = await deepseekVision({
     apiKey,
-    system: PHOTO_REVIEW_SYSTEM,
+    system: reviewSystem(category),
     user: PHOTO_REVIEW_USER,
     imageUrl: next.url,
   });
   if (!raw) return json({ reviewed: 0, remaining: pending.length, reason: 'no_answer' }, 200);
 
-  const parsed = parsePhotoReview(raw);
-  const written = await client.rpc('attach_own_photo_review', {
+  const parsed = parsePhotoReview(raw, category);
+  const advice = {
     p_listing_id: listingId,
     p_photo_path: next.path,
     p_room: parsed?.room ?? null,
@@ -99,7 +101,11 @@ export const POST: APIRoute = async ({ request }) => {
     p_issues: parsed?.issues ?? [],
     p_tip: parsed?.tip ?? null,
     p_score: parsed?.score ?? null,
-  });
+  };
+  let written = await client.rpc('attach_own_photo_review', { ...advice, p_angle: parsed?.angle ?? null, p_seen: parsed?.seen ?? [] });
+  // A database without 0046 has no angle or seen to store (PGRST202: no
+  // function with those arguments). The advice is still worth keeping.
+  if (written.error?.code === 'PGRST202') written = await client.rpc('attach_own_photo_review', advice);
   if (written.error) return json({ error: 'unavailable' }, 502);
 
   return json({ reviewed: parsed ? 1 : 0, remaining: pending.length - 1 }, 200);

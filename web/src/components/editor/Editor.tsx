@@ -14,8 +14,11 @@ import {
   type Screen,
 } from '@/features/listings/editor';
 import { autoTitle } from '@/features/listings/auto-title';
-import { blankFacts, reconcileFacts } from '@/features/listings/fact-entry';
+import { answer, blankFacts, reconcileFacts } from '@/features/listings/fact-entry';
+import { suggestFacts, type FactSuggestion } from '@/features/listings/fact-suggest';
 import { photoCoverage } from '@/features/listings/photo-coverage';
+import { autoOrder, sameOrder } from '@/features/listings/photo-order';
+import type { PhotoReview } from '@/features/listings/photo-review';
 import { isPhotoRoom, type PhotoRoom } from '@/features/listings/photo-rooms';
 import { LISTING_CATEGORIES, schemaFor } from '@/features/listings/schemas';
 import {
@@ -25,7 +28,8 @@ import {
   templateFits,
 } from '@/features/templates/manifest';
 import { suggestTemplate } from '@/features/templates/suggest';
-import { cleanPlanRooms, cleanVideo, type ListingVideo } from '@/features/listings/rich-media';
+import type { PlateRect } from '@/features/listings/plate-rect';
+import { cleanPlanRooms, cleanVideo, spinFromGallery, type ListingVideo } from '@/features/listings/rich-media';
 import type { MediaExtras } from '../../lib/listing-row';
 import { groundedDescription, type CopyTone } from '@/features/listings/listing-copy';
 import { nextAgentDescription } from '@/features/listings/agent-copy';
@@ -43,6 +47,7 @@ import { areaKey, areaSettled, requestArea, type AreaClientStatus } from '../../
 import { allPlaces, type AreaPlaces } from '@/features/listings/area-note';
 import { stripAndResize, uploadDerived } from '../../lib/listing-photo';
 import { loadListing, publishListing, saveListing } from '../../lib/listing-save';
+import { readShareLine, saveShareLine, suggestHeadline } from '../../lib/share-line';
 import { loadProfile } from '../../lib/profile';
 import { recordEditorEvent } from '../../lib/editor-events';
 import { recordListingEvent } from '../../lib/listing-events';
@@ -59,10 +64,14 @@ import { SpinEditor, type SpinFrame } from './SpinEditor';
 import { PublishStep } from './PublishStep';
 import { DisclosuresStep } from './DisclosuresStep';
 import { FactsStep } from './FactsStep';
+import { FactSuggestions } from './FactSuggestions';
 import { Message } from './Message';
 import { FilmFile } from './FilmFile';
 import { PhonePortal, type InboxPhoto } from './PhonePortal';
+import { PageOptions } from './PageOptions';
 import { PhotoAdvice } from './PhotoAdvice';
+import { PlateCover } from './PlateCover';
+import type { PlateMode } from '../../lib/plate-cover';
 import { PhotoChecklist } from './PhotoChecklist';
 import { PhotosStep, type EditorPhoto } from './PhotosStep';
 import { PlateStep } from './PlateStep';
@@ -246,9 +255,41 @@ export default function Editor() {
   const [spin, setSpin] = useState<SpinFrame[]>([]);
   const [video, setVideo] = useState<ListingVideo | undefined>(undefined);
   const [extraUploading, setExtraUploading] = useState(false);
+
+  /**
+   * DeepSeek's labels for each photograph, by photo id (PhotoAdvice): the
+   * gallery order, the 360 and the fact suggestions are built from them.
+   */
+  const [reviews, setReviews] = useState<ReadonlyMap<string, PhotoReview>>(new Map());
+
+  /**
+   * The 360 from the gallery (18 Oct 2026): a car's photographs labelled by
+   * angle, in walking order, with no second set to shoot. A dedicated set the
+   * agent uploaded (`spin`) wins. `spinOff` is the agent saying no, and is
+   * saved. A spin saved earlier stands in until this visit's labels arrive.
+   */
+  const [spinOff, setSpinOff] = useState(false);
+  const [savedAutoSpin, setSavedAutoSpin] = useState<SpinFrame[]>([]);
+  const gallerySpin = useMemo<SpinFrame[]>(() => {
+    if (state.category !== 'vehicle' || spinOff) return [];
+    if (reviews.size === 0) return savedAutoSpin;
+    const ready = photos.filter((photo) => photo.publicUrl && photo.width && photo.height);
+    return spinFromGallery(ready, reviews).map((photo) => ({
+      id: `auto-${photo.id}`,
+      url: photo.publicUrl!,
+      width: photo.width!,
+      height: photo.height!,
+    }));
+  }, [state.category, spinOff, reviews, savedAutoSpin, photos]);
+
   const extras = useMemo<MediaExtras>(
-    () => ({ plan, spin, ...(video ? { video } : {}) }),
-    [plan, spin, video],
+    () => ({
+      plan,
+      spin: spin.length > 0 ? spin : gallerySpin,
+      ...(spinOff ? { spinOff } : {}),
+      ...(video ? { video } : {}),
+    }),
+    [plan, spin, gallerySpin, spinOff, video],
   );
   const extrasRef = useRef(extras);
   extrasRef.current = extras;
@@ -285,6 +326,11 @@ export default function Editor() {
    */
   const [profile, setProfile] = useState<AgentProfile>({});
   const [publishedUrl, setPublishedUrl] = useState<string | undefined>(undefined);
+  // Opened from the dashboard to make the video of a listing already up.
+  const [filmFirst, setFilmFirst] = useState(false);
+  // How many of the page options are on (PageOptions), for the publish
+  // screen's closed "more options" row.
+  const [extrasOn, setExtrasOn] = useState(0);
   const [publishing, setPublishing] = useState(false);
   // What publish is waiting on, when it is waiting on something nameable.
   const [publishNote, setPublishNote] = useState<string | undefined>();
@@ -300,6 +346,8 @@ export default function Editor() {
    * row) looked like nothing at all.
    */
   const [failure, setFailure] = useState<string | undefined>(undefined);
+  /** A paid plan at its active-page limit: which paywall to show, never whether to publish (§8). */
+  const [planCapped, setPlanCapped] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
   /** Why the last suggestion failed, by the server's own error code. */
   const [suggestFailed, setSuggestFailed] = useState<string | false>(false);
@@ -390,8 +438,10 @@ export default function Editor() {
   useEffect(() => {
     if (!supabaseConfigured || !signedIn) return;
     let live = true;
-    void loadEntitlement(listingId.current, state.category).then((entitlement) => {
-      if (live) setState((current) => ({ ...current, entitlement }));
+    void loadEntitlement(listingId.current, state.category).then(({ entitlement, capped }) => {
+      if (!live) return;
+      setState((current) => ({ ...current, entitlement }));
+      setPlanCapped(capped);
     });
     return () => {
       live = false;
@@ -417,7 +467,10 @@ export default function Editor() {
    * own path: the original to the private bucket, a re-encoded copy — no
    * EXIF — to the public one. Undefined on any failure; the agent can retry.
    */
-  const uploadExtra = async (file: File): Promise<{ url: string; width: number; height: number } | undefined> => {
+  const uploadExtra = async (
+    file: File,
+    options: { tone?: boolean } = {},
+  ): Promise<{ url: string; width: number; height: number } | undefined> => {
     if (!supabaseConfigured || !signedIn || !state.category) return undefined;
     try {
       if (!listingId.current) {
@@ -428,7 +481,7 @@ export default function Editor() {
       }
       const original = await uploadOriginal(listingId.current, file);
       if ('error' in original) return undefined;
-      const processed = await stripAndResize(file);
+      const processed = await stripAndResize(file, undefined, options);
       if (!processed) return undefined;
       const published = await uploadDerived(listingId.current, original.path, processed);
       if ('error' in published) return undefined;
@@ -503,7 +556,8 @@ export default function Editor() {
 
   const uploadPlan = async (file: File) => {
     setExtraUploading(true);
-    const done = await uploadExtra(file);
+    // A floor plan is a drawing: its lines and paper stay as they are.
+    const done = await uploadExtra(file, { tone: false });
     setExtraUploading(false);
     if (done) setPlan({ ...done, rooms: [] });
     else setFailure(t('editor.uploadFailed'));
@@ -600,6 +654,7 @@ export default function Editor() {
         height: processed.height,
         ...(processed.check ? { check: processed.check } : {}),
         ...(processed.tone ? { tone: processed.tone } : {}),
+        ...(processed.toned ? { toned: true } : {}),
       });
     }
 
@@ -824,6 +879,53 @@ export default function Editor() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, area, suggestSource, suggesting, state.description, state.generatedDescription]);
 
+  /**
+   * DeepSeek's labels for each photograph, by photo id (PhotoAdvice), and
+   * the order they suggest (18 Oct 2026). Applied ONCE, with an undo, and
+   * only while the agent has not arranged the photos by hand: a seller's own
+   * order is never overridden. A listing loaded from a save counts as
+   * arranged.
+   */
+  const handOrdered = useRef(false);
+  const autoOrdered = useRef(false);
+  const [orderUndo, setOrderUndo] = useState<string[] | undefined>(undefined);
+  const suggestedOrder = useMemo(
+    () => (state.category ? autoOrder(photos, reviews, state.category) : photos),
+    [photos, reviews, state.category],
+  );
+  const reviewedAll =
+    photos.length >= 2 && photos.every((photo) => photo.status === 'uploaded' && reviews.has(photo.id));
+
+  useEffect(() => {
+    if (!reviewedAll || handOrdered.current || autoOrdered.current) return;
+    autoOrdered.current = true;
+    if (sameOrder(suggestedOrder, photos)) return;
+    setOrderUndo(photos.map((photo) => photo.id));
+    changePhotos(suggestedOrder);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reviewedAll, suggestedOrder]);
+
+  const undoOrder = () => {
+    if (!orderUndo) return;
+    const byId = new Map(photosRef.current.map((photo) => [photo.id, photo]));
+    const back = orderUndo.flatMap((id) => (byId.has(id) ? [byId.get(id)!] : []));
+    const added = photosRef.current.filter((photo) => !orderUndo.includes(photo.id));
+    handOrdered.current = true;
+    setOrderUndo(undefined);
+    changePhotos([...back, ...added]);
+  };
+
+  /** The agent's own change: a drag, or a cover picked, is their order from now on. */
+  const arrangePhotos = (next: EditorPhoto[]) => {
+    const current = photosRef.current;
+    const sameSet = next.length === current.length && next.every((photo) => current.some((item) => item.id === photo.id));
+    if (sameSet && !sameOrder(next, current)) {
+      handOrdered.current = true;
+      setOrderUndo(undefined);
+    }
+    changePhotos(next);
+  };
+
   const changePhotos = (next: EditorPhoto[]) => {
     photosRef.current = next;
     setPhotos(next);
@@ -852,13 +954,68 @@ export default function Editor() {
     const [picked] = next.splice(index, 1);
     if (!picked) return;
     next.unshift(picked);
-    changePhotos(next);
+    arrangePhotos(next);
+  };
+
+  /**
+   * A photograph remade in this browser (turned, or its plate covered)
+   * replaces the old one: uploaded under the listing's browser/ prefix, then
+   * swapped in place, which saves the listing and asks for a new review.
+   */
+  const replacePhoto = async (
+    id: string,
+    prefix: string,
+    made: { blob: Blob; width: number; height: number },
+  ): Promise<boolean> => {
+    const listing = savedRow?.id ?? listingId.current;
+    if (!listing) return false;
+    const uploaded = await uploadDerived(listing, `${prefix}-${Date.now()}.webp`, made);
+    if ('error' in uploaded) return false;
+    changePhotos(
+      photosRef.current.map((photo) =>
+        photo.id === id
+          ? {
+              ...photo,
+              url: uploaded.url,
+              publicUrl: uploaded.url,
+              width: made.width,
+              height: made.height,
+              status: 'uploaded',
+            }
+          : photo,
+      ),
+    );
+    return true;
+  };
+
+  /**
+   * The automatic fix, undone or done again (19 Oct 2026): every photograph
+   * whose File is still in this session is re-encoded from it, with or
+   * without the fix, and replaces its public copy. One switch for them all,
+   * not a button on each photograph.
+   */
+  const [toneBusy, setToneBusy] = useState(false);
+  const [toneOff, setToneOff] = useState(false);
+  const toneCount = photos.filter((photo) => photo.toned).length;
+  const setToning = async (on: boolean) => {
+    setToneBusy(true);
+    for (const photo of photosRef.current) {
+      if (!photo.file || !photo.publicUrl || Boolean(photo.toned) === on) continue;
+      const made = await stripAndResize(photo.file, undefined, { tone: on });
+      if (!made || !(await replacePhoto(photo.id, on ? 'toned' : 'as-shot', made))) continue;
+      changePhotos(
+        photosRef.current.map((current) =>
+          current.id === photo.id ? { ...current, toned: Boolean(made.toned) } : current,
+        ),
+      );
+    }
+    setToneOff(!on);
+    setToneBusy(false);
   };
 
   const rotatePhoto = (id: string) => {
-    const listing = savedRow?.id ?? listingId.current;
     const source = photosRef.current.find((photo) => photo.id === id)?.publicUrl;
-    if (!listing || !source) return;
+    if (!source) return;
     const image = new Image();
     image.crossOrigin = 'anonymous';
     image.onload = () => {
@@ -871,31 +1028,32 @@ export default function Editor() {
       ctx.rotate(Math.PI / 2);
       ctx.drawImage(image, 0, 0);
       canvas.toBlob((blob) => {
-        if (!blob) return;
-        void uploadDerived(listing, `rotate-${Date.now()}.webp`, {
-          blob,
-          width: canvas.width,
-          height: canvas.height,
-        }).then((uploaded) => {
-          if ('error' in uploaded) return;
-          changePhotos(
-            photosRef.current.map((photo) =>
-              photo.id === id
-                ? {
-                    ...photo,
-                    url: uploaded.url,
-                    publicUrl: uploaded.url,
-                    width: canvas.width,
-                    height: canvas.height,
-                    status: 'uploaded',
-                  }
-                : photo,
-            ),
-          );
-        });
+        if (blob) void replacePhoto(id, 'rotate', { blob, width: canvas.width, height: canvas.height });
       }, 'image/webp', 0.9);
     };
     image.src = source;
+  };
+
+  /**
+   * The plate the photo check found (CLAUDE.md §7): the agent places a box
+   * over it and chooses a blur or their logo; the covered photograph
+   * replaces the old one (lib/plate-cover.ts).
+   */
+  const [plateFor, setPlateFor] = useState<string | undefined>(undefined);
+  const [plateBusy, setPlateBusy] = useState(false);
+  const [plateFailed, setPlateFailed] = useState(false);
+  const plateSource = plateFor ? photos.find((photo) => photo.id === plateFor)?.publicUrl : undefined;
+  const coverPlateOn = async (rect: PlateRect, mode: PlateMode) => {
+    const id = plateFor;
+    const source = id ? photosRef.current.find((photo) => photo.id === id)?.publicUrl : undefined;
+    if (!id || !source) return;
+    setPlateBusy(true);
+    const { coverPlate } = await import('../../lib/plate-cover');
+    const made = await coverPlate(source, rect, mode, profile.agencyLogoUrl ?? undefined);
+    const ok = made ? await replacePhoto(id, 'plate', made) : false;
+    setPlateBusy(false);
+    setPlateFailed(!ok);
+    if (ok) setPlateFor(undefined);
   };
 
   const reviewKey = useRef('');
@@ -952,6 +1110,57 @@ export default function Editor() {
    * agent types their own (auto-title.ts). An empty title blocks publishing,
    * and a blank box asking for a headline is where people stop.
    */
+  /**
+   * DeepSeek's title and WhatsApp line (/api/headline, 18 Oct 2026). Saved
+   * first, because the server reads the facts from the row. The line is
+   * stored on its own (lib/share-line.ts). Nothing comes back → a quiet
+   * "no suggestion right now", never an error.
+   */
+  const [shareLine, setShareLine] = useState('');
+  const [headlineBusy, setHeadlineBusy] = useState<'title' | 'line' | undefined>(undefined);
+  const [headlineMissed, setHeadlineMissed] = useState<'title' | 'line' | undefined>(undefined);
+  useEffect(() => {
+    const id = savedRow?.id;
+    if (!id || !supabaseConfigured) return;
+    let live = true;
+    void readShareLine(id).then((line) => {
+      if (live && line) setShareLine((current) => current || line);
+    });
+    return () => {
+      live = false;
+    };
+  }, [savedRow?.id]);
+
+  const askHeadline = async (part: 'title' | 'line') => {
+    const id = savedRow?.id ?? listingId.current;
+    if (!id || headlineBusy) return;
+    setHeadlineBusy(part);
+    setHeadlineMissed(undefined);
+    await saveListing(id, stateRef.current, photosRef.current, extrasRef.current).catch(() => undefined);
+    const suggestion = await suggestHeadline(id, tone);
+    setHeadlineBusy(undefined);
+    const text = suggestion[part];
+    if (!text) {
+      setHeadlineMissed(part);
+      return;
+    }
+    if (part === 'title') setState((current) => ({ ...current, title: text }));
+    else {
+      setShareLine(text);
+      void saveShareLine(id, text);
+    }
+  };
+
+  const headlineButton = (part: 'title' | 'line') =>
+    signedIn && supabaseConfigured ? (
+      <p className="field-hint">
+        <button type="button" className="quiet" disabled={headlineBusy !== undefined} onClick={() => void askHeadline(part)}>
+          {headlineBusy === part ? t('editor.headline.busy') : t(`editor.headline.suggest.${part}`)}
+        </button>
+        {headlineMissed === part ? <span> {t('editor.headline.none')}</span> : null}
+      </p>
+    ) : null;
+
   const lastAutoTitle = useRef('');
   useEffect(() => {
     const made = autoTitle(state.category, state.facts, state.city);
@@ -1103,6 +1312,7 @@ export default function Editor() {
             Boolean(image?.url),
         );
 
+        handOrdered.current = true;
         setPhotos(
           stored.map((image, index) => ({
             id: image.id ?? `saved-${index}`,
@@ -1169,6 +1379,9 @@ export default function Editor() {
             String((row.media as { tourUrl: string }).tourUrl).startsWith('https://')
               ? { tourUrl: String((row.media as { tourUrl: string }).tourUrl) }
               : {}),
+            ...(typeof (row.media as { videoUrl?: unknown } | null)?.videoUrl === 'string'
+              ? { videoUrl: String((row.media as { videoUrl: string }).videoUrl) }
+              : {}),
           };
           opened = next;
           return next;
@@ -1182,6 +1395,12 @@ export default function Editor() {
         if (opening === 'preview') {
           followGap.current = false;
           setScreen('ready');
+        } else if (opening === 'film') {
+          // The dashboard's "סרטון" link (19 Oct 2026): the video is made
+          // after publishing, so it opens on the last screen, video first.
+          followGap.current = false;
+          setFilmFirst(true);
+          setScreen('publish');
         } else if (opened && followGap.current) {
           setScreen(nextScreen(opened));
         }
@@ -1234,6 +1453,7 @@ export default function Editor() {
               Boolean(image?.url),
           );
           if (stored.length === 0) return;
+          handOrdered.current = true;
           setPhotos(
             stored.map((image, index) => ({
               id: image.id ?? `saved-${index}`,
@@ -1254,7 +1474,9 @@ export default function Editor() {
           const saved = row.media as {
             floorPlan?: { url?: string; width?: number; height?: number; rooms?: unknown };
             spin?: { id?: string; url?: string; width?: number; height?: number }[];
+            spinOff?: unknown;
           };
+          if (saved.spinOff === true) setSpinOff(true);
           if (saved.floorPlan?.url) {
             setPlan({
               url: saved.floorPlan.url,
@@ -1264,16 +1486,18 @@ export default function Editor() {
             });
           }
           if (Array.isArray(saved.spin)) {
-            setSpin(
-              saved.spin
-                .filter((frame): frame is { id?: string; url: string; width?: number; height?: number } => Boolean(frame?.url))
-                .map((frame, index) => ({
-                  id: frame.id ?? `spin-${index}`,
-                  url: frame.url,
-                  width: Number(frame.width ?? 1),
-                  height: Number(frame.height ?? 1),
-                })),
-            );
+            const frames = saved.spin
+              .filter((frame): frame is { id?: string; url: string; width?: number; height?: number } => Boolean(frame?.url))
+              .map((frame, index) => ({
+                id: frame.id ?? `spin-${index}`,
+                url: frame.url,
+                width: Number(frame.width ?? 1),
+                height: Number(frame.height ?? 1),
+              }));
+            // A spin built from the gallery is rebuilt from it; only an
+            // uploaded set is the agent's own.
+            if (frames.every((frame) => frame.id.startsWith('auto-'))) setSavedAutoSpin(frames);
+            else setSpin(frames);
           }
         })
         .catch(() => undefined);
@@ -1484,11 +1708,13 @@ export default function Editor() {
         /*
          * HUMAN REVIEW (CLAUDE.md §8). The trigger refused: PT402. The
          * editor did not decide this and does not argue with it; it shows
-         * the paywall (free_limit) or the honest "could not check" message.
+         * the paywall (free_limit), the next plan up (plan_limit, 0045) or
+         * the honest "could not check" message.
          */
         const refusal = publishRefusal('code' in result ? { code: result.code, message: result.error } : null);
-        if (refusal === 'free_limit') {
-          void recordBillingEvent('free_limit_hit', null);
+        if (refusal === 'free_limit' || refusal === 'plan_limit') {
+          if (refusal === 'free_limit') void recordBillingEvent('free_limit_hit', null);
+          setPlanCapped(refusal === 'plan_limit');
           setState((current) => ({ ...current, entitlement: 'unpaid' }));
           setFailure(undefined);
         } else {
@@ -1565,6 +1791,23 @@ export default function Editor() {
   const isProperty = state.category === 'property';
   const essential = state.category ? ESSENTIAL_FACTS[state.category] : [];
   const setFacts = (facts: EditorState['facts']) => setState((current) => ({ ...current, facts }));
+
+  /** Facts the photographs suggest; "no" hides one for this visit and records nothing. */
+  const [dismissedFacts, setDismissedFacts] = useState<ReadonlySet<string>>(new Set());
+  const factSuggestions = state.category
+    ? suggestFacts(reviews.values(), state.facts, state.category).filter(
+        (suggestion) => !dismissedFacts.has(`${suggestion.key}-${suggestion.seen}`),
+      )
+    : [];
+  const acceptFact = (suggestion: FactSuggestion) => {
+    const value =
+      suggestion.kind === 'present'
+        ? true
+        : suggestion.kind === 'option'
+          ? suggestion.option
+          : t(`editor.suggest.colours.${suggestion.seen}`);
+    setFacts(answer(stateRef.current.facts, suggestion.key, value));
+  };
   const setAudience = (audience: EditorState['audience']) =>
     setState((current) => {
       if (audience === undefined) {
@@ -1595,6 +1838,16 @@ export default function Editor() {
         </ol>
         <h1 className="flow-title">{t(`editor.flow.${screen}.title`)}</h1>
         <p className="flow-lead">{t(`editor.flow.${screen}.lead`)}</p>
+        {/* How near the link is (goal gradient): the real count of screens left. */}
+        <p className="flow-left">
+          {SCREENS.length - 1 - position === 0 ? (
+            t('editor.flow.left.last')
+          ) : SCREENS.length - 1 - position === 1 ? (
+            t('editor.flow.left.one')
+          ) : (
+            <Message path="editor.flow.left.many" values={{ n: SCREENS.length - 1 - position }} />
+          )}
+        </p>
       </header>
 
       {/* Keyed by screen so each arrival is a fresh element and its entrance
@@ -1608,20 +1861,76 @@ export default function Editor() {
               <>
                 <PhotosStep
                   photos={photos}
-                  onChange={changePhotos}
+                  onChange={arrangePhotos}
                   signedIn={signedIn}
                   category={state.category}
                 />
                 <PhonePortal signedIn={signedIn} ensureListing={ensureListing} onPhotos={takeFromPhone} />
+                {toneCount > 0 || toneOff ? (
+                  <p className="field-hint tone-line" role="status">
+                    {toneOff ? (
+                      t('editor.tone.off')
+                    ) : (
+                      <Message
+                        path="editor.tone.on"
+                        values={{ count: toneCount }}
+                      />
+                    )}{' '}
+                    <button type="button" className="quiet" disabled={toneBusy} onClick={() => void setToning(toneOff)}>
+                      {t(toneOff ? 'editor.tone.redo' : 'editor.tone.undo')}
+                    </button>
+                  </p>
+                ) : null}
                 <PhotoAdvice
                   listingId={savedRow?.id}
+                  category={state.category}
                   photos={photos}
+                  onReviews={setReviews}
                   status={photoCheck}
                   refreshKey={adviceTick}
                   onLabel={labelRoom}
                   onCover={makeCover}
                   onRotate={rotatePhoto}
+                  onPlate={(id) => {
+                    setPlateFailed(false);
+                    setPlateFor(id);
+                  }}
                 />
+                {plateFor && plateSource ? (
+                  <PlateCover
+                    src={plateSource}
+                    logoUrl={profile.agencyLogoUrl ?? undefined}
+                    busy={plateBusy}
+                    onApply={(rect, mode) => void coverPlateOn(rect, mode)}
+                    onClose={() => setPlateFor(undefined)}
+                  />
+                ) : null}
+                {plateFailed ? (
+                  <p className="field-hint" role="alert">
+                    {t('editor.plate.failed')}
+                  </p>
+                ) : null}
+                {orderUndo ? (
+                  <p className="field-hint auto-order" role="status">
+                    {t(`editor.autoOrder.done.${state.category}`)}{' '}
+                    <button type="button" className="quiet" onClick={undoOrder}>
+                      {t('editor.autoOrder.undo')}
+                    </button>
+                  </p>
+                ) : reviewedAll && handOrdered.current && !sameOrder(suggestedOrder, photos) ? (
+                  <p className="field-hint auto-order">
+                    <button
+                      type="button"
+                      className="quiet"
+                      onClick={() => {
+                        setOrderUndo(photos.map((photo) => photo.id));
+                        changePhotos(suggestedOrder);
+                      }}
+                    >
+                      {t(`editor.autoOrder.offer.${state.category}`)}
+                    </button>
+                  </p>
+                ) : null}
                 <PhotoChecklist coverage={coverage} count={photos.length} />
                 {photosBusy ? <p className="hint">{t('editor.flow.uploadingNote')}</p> : null}
               </>
@@ -1656,6 +1965,13 @@ export default function Editor() {
               onChange={(patch) => setState((current) => ({ ...current, ...patch }))}
             />
 
+            <FactSuggestions
+              suggestions={factSuggestions}
+              onAccept={acceptFact}
+              onDismiss={(suggestion) =>
+                setDismissedFacts((current) => new Set([...current, `${suggestion.key}-${suggestion.seen}`]))
+              }
+            />
             <FactsStep
               category={state.category}
               facts={state.facts}
@@ -1706,6 +2022,7 @@ export default function Editor() {
                   street={state.street ?? ''}
                   priceNote={state.priceNote ?? ''}
                   fields={['title', 'priceNote']}
+                  titleAction={headlineButton('title')}
                   titleError={here.some((blocker) => blocker.code === 'titleMissing')}
                   onChange={(patch) => setState((current) => ({ ...current, ...patch }))}
                 />
@@ -1730,7 +2047,15 @@ export default function Editor() {
                     ) : null}
                   </>
                 ) : signedIn ? (
-                  <SpinEditor frames={spin} onFrames={setSpin} onUpload={uploadSpin} uploading={extraUploading} />
+                  <SpinEditor
+                    frames={spin}
+                    autoFrames={gallerySpin}
+                    off={spinOff}
+                    onOff={setSpinOff}
+                    onFrames={setSpin}
+                    onUpload={uploadSpin}
+                    uploading={extraUploading}
+                  />
                 ) : null}
               </div>
             </details>
@@ -1756,8 +2081,6 @@ export default function Editor() {
                 }}
               />
             </div>
-            <FilmFile photos={photos} listingId={savedRow?.id} onVideo={acceptVideo} />
-
             <h2 className="ready-head">{t('editor.flow.textTitle')}</h2>
             <DescriptionStep
               text={state.description}
@@ -1885,7 +2208,18 @@ export default function Editor() {
               </section>
             ) : null}
 
+            {filmFirst && !publishedUrl ? (
+              <FilmFile photos={photos} listingId={savedRow?.id} onVideo={acceptVideo} />
+            ) : null}
             <PublishStep
+              afterPublish={<FilmFile photos={photos} listingId={savedRow?.id} onVideo={acceptVideo} />}
+              optionsOn={
+                extrasOn +
+                (state.prePortal ? 1 : 0) +
+                (state.indexable ? 1 : 0) +
+                (state.tourUrl ? 1 : 0) +
+                (state.videoUrl ? 1 : 0)
+              }
               onShare={() => (slug.current ? openShare(slug.current, false) : undefined)}
               state={state}
               blockers={outstanding}
@@ -1897,7 +2231,57 @@ export default function Editor() {
               areaStatus={state.category === 'property' && area && area.key === addressKey ? area.status : undefined}
               areaCount={area && area.key === addressKey ? area.count : undefined}
               photoCheck={<PhotoChecklist coverage={coverage} count={photos.length} variant="line" />}
+              shareLineField={
+                signedIn && supabaseConfigured ? (
+                  <div className="field share-line">
+                    <label className="field-label" htmlFor="p-share-line">
+                      {t('editor.headline.lineLabel')}
+                    </label>
+                    <input
+                      id="p-share-line"
+                      className="field-input"
+                      type="text"
+                      maxLength={160}
+                      value={shareLine}
+                      onChange={(event) => setShareLine(event.target.value)}
+                      onBlur={() => {
+                        const id = savedRow?.id ?? listingId.current;
+                        if (id) void saveShareLine(id, shareLine);
+                      }}
+                      aria-describedby="p-share-line-hint"
+                    />
+                    <p className="field-hint" id="p-share-line-hint">
+                      {t('editor.headline.lineHint')}
+                    </p>
+                    {headlineButton('line')}
+                  </div>
+                ) : undefined
+              }
+              optionsField={
+                <PageOptions
+                  listingId={savedRow?.id ?? listingId.current ?? undefined}
+                  category={state.category ?? 'property'}
+                  tourUrl={state.tourUrl}
+                  videoUrl={state.videoUrl}
+                  onCount={setExtrasOn}
+                  onLinks={(links) =>
+                    setState((current) => {
+                      const next = { ...current };
+                      if ('tourUrl' in links) {
+                        if (links.tourUrl) next.tourUrl = links.tourUrl;
+                        else delete next.tourUrl;
+                      }
+                      if ('videoUrl' in links) {
+                        if (links.videoUrl) next.videoUrl = links.videoUrl;
+                        else delete next.videoUrl;
+                      }
+                      return next;
+                    })
+                  }
+                />
+              }
               failure={failure}
+              planCapped={planCapped}
               onPublish={publish}
               onCopy={(url) =>
                 void navigator.clipboard

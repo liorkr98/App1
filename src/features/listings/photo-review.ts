@@ -10,19 +10,58 @@
  * and show an example, which is what that API requires for JSON output.
  */
 
-export const PHOTO_REVIEW_SYSTEM = [
-  'You label one real-estate photograph. Reply with json only.',
-  'Example: {"room":"kitchen","confidence":0.8,"issues":["dark"],"tip":"turnOnLight","score":3}',
-  'room: living, kitchen, bedroom, bathroom, balcony, outdoor, or other.',
-  'confidence: a number from 0 to 1.',
-  'issues: any of dark, blurry, tilted, sideways, portraitCover, clutter, person, documents, plate, blownWindow, tooClose.',
-  'tip: one of openCurtain, stepBack, turnOnLight, straighten, retake, hidePlate, clearClutter.',
-  'score: an integer from 1 to 5. 5 is the best cover photograph.',
-].join(' ');
-
-export const PHOTO_REVIEW_USER = 'Label this photograph.';
-
 import { isPhotoRoom, type PhotoRoom } from './photo-rooms.js';
+
+/**
+ * Where the camera stands round a car (18 Oct 2026). The first eight are the
+ * walk round it, in order: the 360 on the page is built from these, one
+ * photograph per angle, so the seller does not shoot a second set. "left" is
+ * the car's own left. The rest are close-ups that never join the turn.
+ */
+export const PHOTO_ANGLES = [
+  'front',
+  'frontLeft',
+  'left',
+  'rearLeft',
+  'rear',
+  'rearRight',
+  'right',
+  'frontRight',
+  'interior',
+  'dashboard',
+  'engine',
+  'trunk',
+  'wheel',
+  'detail',
+] as const;
+
+export type PhotoAngle = (typeof PHOTO_ANGLES)[number];
+
+/** The walk round the car, in order. Index 0 follows index 7. */
+export const EXTERIOR_RING: readonly PhotoAngle[] = PHOTO_ANGLES.slice(0, 8);
+
+/**
+ * What a photograph shows that the seller may want to state (18 Oct 2026).
+ * A suggestion only: the seller confirms it, and it is then THEIR
+ * declaration (לפי המוכר), never a verified fact (CLAUDE.md §7). Not seeing
+ * something is never evidence that it is absent.
+ */
+export const PROPERTY_SEEN = ['shelter', 'parking', 'storage', 'elevator', 'balcony', 'renovated', 'needsRenovation'] as const;
+export const VEHICLE_COLOURS = [
+  'white',
+  'black',
+  'silver',
+  'grey',
+  'blue',
+  'red',
+  'green',
+  'brown',
+  'beige',
+  'yellow',
+  'orange',
+] as const;
+
+export type PhotoSeen = (typeof PROPERTY_SEEN)[number] | (typeof VEHICLE_COLOURS)[number];
 
 export const REVIEW_ISSUES = [
   'dark',
@@ -54,6 +93,9 @@ export type ReviewTip = (typeof REVIEW_TIPS)[number];
 
 export interface PhotoReview {
   room?: PhotoRoom;
+  angle?: PhotoAngle;
+  /** Suggestions for the seller, by category; empty when nothing was seen. */
+  seen?: PhotoSeen[];
   confidence?: number;
   issues: ReviewIssue[];
   tip?: ReviewTip;
@@ -63,8 +105,18 @@ export interface PhotoReview {
 const issueSet = new Set<string>(REVIEW_ISSUES);
 const tipSet = new Set<string>(REVIEW_TIPS);
 
-/** A model answer. Undefined means no label and no advice. */
-export function parsePhotoReview(value: unknown): PhotoReview | undefined {
+const angleSet = new Set<string>(PHOTO_ANGLES);
+const seenFor = {
+  property: new Set<string>(PROPERTY_SEEN),
+  vehicle: new Set<string>(VEHICLE_COLOURS),
+};
+
+/**
+ * A model answer. Undefined means no label and no advice. A room is read only
+ * for a property and an angle only for a car: a model that calls a car photo
+ * "kitchen" has not said anything usable.
+ */
+export function parsePhotoReview(value: unknown, category: 'property' | 'vehicle' = 'property'): PhotoReview | undefined {
   let parsed: unknown = value;
   if (typeof parsed === 'string') {
     const text = parsed.trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
@@ -79,7 +131,15 @@ export function parsePhotoReview(value: unknown): PhotoReview | undefined {
   const issues = Array.isArray(record.issues)
     ? record.issues.filter((item): item is ReviewIssue => typeof item === 'string' && issueSet.has(item))
     : [];
-  const room = isPhotoRoom(record.room) && record.room !== 'other' ? record.room : undefined;
+  const room = category === 'property' && isPhotoRoom(record.room) && record.room !== 'other' ? record.room : undefined;
+  const angle =
+    category === 'vehicle' && typeof record.angle === 'string' && angleSet.has(record.angle)
+      ? (record.angle as PhotoAngle)
+      : undefined;
+  const allowed = seenFor[category];
+  const seen = Array.isArray(record.seen)
+    ? [...new Set(record.seen.filter((item): item is PhotoSeen => typeof item === 'string' && allowed.has(item)))]
+    : [];
   const confidence = typeof record.confidence === 'number' && record.confidence >= 0 && record.confidence <= 1
     ? record.confidence
     : undefined;
@@ -87,10 +147,12 @@ export function parsePhotoReview(value: unknown): PhotoReview | undefined {
   const score = typeof record.score === 'number' && Number.isInteger(record.score) && record.score >= 1 && record.score <= 5
     ? record.score
     : undefined;
-  if (!room && issues.length === 0 && !tip && score === undefined) return undefined;
+  if (!room && !angle && seen.length === 0 && issues.length === 0 && !tip && score === undefined) return undefined;
   return {
     issues,
     ...(room ? { room } : {}),
+    ...(angle ? { angle } : {}),
+    ...(seen.length > 0 ? { seen } : {}),
     ...(confidence !== undefined ? { confidence } : {}),
     ...(tip ? { tip } : {}),
     ...(score !== undefined ? { score } : {}),

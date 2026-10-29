@@ -1,4 +1,4 @@
-import type { ListingLocation } from '@/types/listing.js';
+import type { Fact, ListingLocation } from '@/types/listing.js';
 
 export type PriceDisplay = 'exact' | 'from' | 'on_request';
 export type LocationPrecision = 'exact' | 'street' | 'area';
@@ -83,11 +83,63 @@ export function showListingMap(location: ListingLocation | undefined): boolean {
 
 /**
  * Opening WhatsApp line. The place is interpolated so the agent does not
- * type the address into every send — the page already knows it.
+ * type the address into every send — the page already knows it. With a
+ * name (listingShortName, 19 Oct 2026) the agent also knows which listing
+ * the message is about without asking: an agent with ten live pages gets
+ * ten identical "ראיתי את הדירה" otherwise.
  */
-export function whatsappPrefill(category: 'property' | 'vehicle', place?: string): string {
-  const noun = category === 'property' ? 'הדירה' : 'הרכב';
+export function whatsappPrefill(category: 'property' | 'vehicle', place?: string, name?: string): string {
+  const noun = name ?? (category === 'property' ? 'הדירה' : 'הרכב');
   return place
     ? `היי, ראיתי את ${noun} ב${place} ואשמח לפרטים`
     : `היי, ראיתי את ${noun} ואשמח לפרטים`;
+}
+
+/**
+ * The second button's line (extras.visit): a visit to a flat, a test drive
+ * of a car. The same name and place as the first.
+ */
+export function visitPrefill(category: 'property' | 'vehicle', place?: string, name?: string): string {
+  const noun = name ?? (category === 'property' ? 'הדירה' : 'הרכב');
+  const what = category === 'property' ? 'ביקור' : 'נסיעת מבחן';
+  return place ? `היי, אשמח לתאם ${what} — ${noun} ב${place}` : `היי, אשמח לתאם ${what} — ${noun}`;
+}
+
+/**
+ * The message a WhatsApp tap opens with, written by the hop (/a/{slug}/wa)
+ * rather than carried in the page's links (19 Oct 2026). A link that carried
+ * it put about 200 bytes of percent-encoded Hebrew into every one of a
+ * page's three WhatsApp links, and let anyone write a message into the
+ * agent's chat through our domain. `visit` is the second button (0047).
+ */
+export function listingPrefill(
+  listing: { category: 'property' | 'vehicle'; facts: readonly Fact[]; location?: ListingLocation | undefined },
+  kind: 'ask' | 'visit',
+): string {
+  const place = listing.location ? publicPlace(listing.location) : undefined;
+  const name = listingShortName(listing.category, listing.facts);
+  return kind === 'visit' ? visitPrefill(listing.category, place, name) : whatsappPrefill(listing.category, place, name);
+}
+
+const answer = (facts: readonly Fact[], key: string): string | undefined => {
+  const fact = facts.find((candidate) => candidate.key === key && candidate.present !== false);
+  const value = fact?.value;
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+};
+
+/**
+ * What the listing is, in a few words, from the seller's answers: "מאזדה 3
+ * 2009", "דירת 4 חדרים". Never the plate (it is not a fact a name is made
+ * of) and never a number the facts do not hold. Undefined when too little
+ * was answered: the plain noun is better than half a name.
+ */
+export function listingShortName(category: 'property' | 'vehicle', facts: readonly Fact[]): string | undefined {
+  if (category === 'vehicle') {
+    const make = answer(facts, 'make');
+    if (!make) return undefined;
+    return [make, answer(facts, 'model'), answer(facts, 'year')].filter(Boolean).join(' ');
+  }
+  const rooms = answer(facts, 'rooms');
+  return rooms ? `דירת ${rooms} חדרים` : undefined;
 }

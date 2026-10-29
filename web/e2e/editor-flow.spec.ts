@@ -85,6 +85,9 @@ test('four screens, one big button, nothing greyed out', async ({ browser }) => 
   await expect(page.locator('.flow-title')).toHaveText('המודעה מוכנה');
   await expect(page.locator('textarea').first()).not.toHaveValue('');
   await expect(page.locator('.ready-design')).toContainText('בחרנו בשבילכם');
+  // The video is made after publishing (19 Oct 2026): eleven chips and
+  // buttons stood above the text and the design.
+  await expect(page.locator('.film-file')).toHaveCount(0);
 
   // Screen 4: what is missing, said in words, each with a way to fix it.
   await page.locator('.nav-next').click();
@@ -95,6 +98,23 @@ test('four screens, one big button, nothing greyed out', async ({ browser }) => 
   await expect(page.locator('.missing')).not.toContainText('כותרת');
   expect(await smallTargets(page), 'tap targets on the publish screen').toEqual([]);
   expect(await sideways(page)).toBeLessThanOrEqual(0);
+
+  // The publish screen is short (19 Oct 2026): what is missing, the button,
+  // and every optional setting behind one closed row. It was 3,254px, the
+  // button four phone screens down.
+  const more = page.locator('.publish details.more, details.more').last();
+  await expect(more).not.toHaveAttribute('open', '');
+  await expect(page.locator('input[type=date]')).toHaveCount(0);
+  // Where the button is, not how long the page is: the site footer below it
+  // is not the agent's to scroll through.
+  const button = await page.locator('.publish-button, button.publish').first().evaluate((node) => node.getBoundingClientRect().top + scrollY);
+  expect(button, 'the publish button within about two phone screens').toBeLessThan(1900);
+  // Open, the dates appear only once the open house is ticked.
+  await more.locator('summary').click();
+  await expect(page.locator('input[type=date]')).toHaveCount(0);
+  await page.getByRole('checkbox', { name: 'בית פתוח' }).check();
+  await expect(page.locator('input[type=date]')).toBeVisible();
+  await more.locator('summary').click();
 
   // "Fix" takes the agent back to the screen that holds the gap.
   await page.locator('.missing-fix').first().click();

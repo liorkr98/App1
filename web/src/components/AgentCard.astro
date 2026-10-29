@@ -6,7 +6,7 @@ import { t, tr } from '../lib/i18n';
 
 interface Props {
   seller: Seller;
-  /** Counted WhatsApp route, /a/{slug}/wa?text=… */
+  /** Counted WhatsApp route, /a/{slug}/wa (the hop writes the message). */
   waHref: string;
   sold?: boolean;
   /** `aside` for the gallery's sticky column; `div` inside the showcase card. */

@@ -6,6 +6,7 @@ import { CATEGORY_PRESENTATION } from '../lib/category-presentation';
 import { GALLERY_WIDTHS, HERO_WIDTHS, largest } from '../lib/images';
 import { golfListing, tlvListing } from '../lib/fixtures';
 import Prose from '../components/Prose.astro';
+import Msg from '../components/Msg.astro';
 import PriceTiers from '../components/PriceTiers.astro';
 import Site from '../layouts/Site.astro';
 import { TEMPLATE_IDS } from '@/types/listing';
@@ -17,6 +18,7 @@ import { filmDuration } from '@/features/listings/ken-burns';
 import { softwareLd } from '../lib/seo';
 import { demoPath } from '../lib/template-pages';
 import { MAX_IMAGES } from '@/features/listings/editor';
+import { PRICING } from '@/features/billing/pricing-config';
 import Testimonials from '../components/Testimonials.astro';
 
 /**
@@ -89,6 +91,8 @@ const wow = [
   { key: 'Video', live: true, href: '#hero', image: photoOf(1) },
 ] as const;
 
+/** The free tier's page count, from the price list — never a literal (docs/PRICING.md). */
+const free = { pages: PRICING.freePageLimit };
 const title = `${t('common.brand')} — ${t('home.tagline')}`;
 const ogImage = new URL('/og-home.webp', Astro.site).href;
 ---
@@ -145,7 +149,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
           <a class="site-btn site-btn-primary ls-sheen" href="/new/?fresh=1">{t('home.cta')}</a>
           <a class="site-btn site-btn-ghost" href="#templates">{t('home.ctaTemplates')}</a>
         </div>
-        <p class="site-note ls-fade" style="--i:4">{t('home.ctaNote')}</p>
+        <p class="site-note ls-fade" style="--i:4"><Msg path="home.ctaNote" values={free} /></p>
       </div>
 
       {/* Rests on the finished listing (state 3). The script plays the steps
@@ -366,6 +370,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
     <div class="site-shell hm-wa-grid">
       <div>
         <h2 class="site-h2">{t('home.waTitle')}</h2>
+        <p class="site-sub">{t('home.waWhy')}</p>
         <p class="site-sub">{t('home.waNote')}</p>
       </div>
       {/*
@@ -416,19 +421,19 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
 
   <section class="site-sect">
     <div class="site-shell">
-      <h2 class="site-h2">{t('home.pricingTitle')}</h2>
+      <h2 class="site-h2"><Msg path="home.pricingTitle" values={free} /></h2>
       <PriceTiers />
+      {/* The risk taken away, in true words: cancelling unpublishes, it never
+          deletes (CLAUDE.md §8). "למי זה מתאים" lived here until 18 Oct 2026;
+          the owner took it down, and the footer keeps the three pages. */}
+      <p class="hm-more">{t('pricing.noRisk')}</p>
       <p class="hm-more"><a class="site-link" href="/pricing/">{t('home.pricingLink')}</a></p>
-      <p class="hm-more">
-        {t('audiences.homeLine')}{' '}
-        <a href="/agents/">{t('audiences.navAgents')}</a> · <a href="/dealers/">{t('audiences.navDealers')}</a> · <a href="/private/">{t('audiences.navPrivate')}</a>
-      </p>
     </div>
   </section>
 
   <section class="site-sect hm-closing">
     <div class="site-shell">
-      <h2 class="site-h2">{t('home.closingTitle')}</h2>
+      <h2 class="site-h2"><Msg path="home.closingTitle" values={free} /></h2>
       <p class="site-sub">{t('home.closingBody')}</p>
       <div class="site-actions">
         <a class="site-btn site-btn-primary" href="/new/?fresh=1">{t('home.cta')}</a>

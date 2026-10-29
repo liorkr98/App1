@@ -171,6 +171,8 @@ export const tlvListing: Listing = {
   publishedAt: '2026-09-18T00:00:00.000Z',
   indexable: false,
   hyadMark: false,
+  // The demo pages show the photo film, as an agent who turned it on would (0048).
+  extras: { film: true },
   highlights: ['ממ״ד', 'מרפסת שמש', 'חניה'],
 };
 
@@ -233,6 +235,8 @@ export const holonListing: Listing = {
   publishedAt: '2026-08-02T00:00:00.000Z',
   indexable: false,
   hyadMark: true,
+  // The demo pages show the photo film, as an agent who turned it on would (0048).
+  extras: { film: true },
 };
 
 /** 300-character agent description — the wrap case linen and brochure have to survive. */
@@ -281,6 +285,8 @@ export const moshavListing: Listing = {
   publishedAt: '2026-09-12T00:00:00.000Z',
   indexable: false,
   hyadMark: true,
+  // The demo pages show the photo film, as an agent who turned it on would (0048).
+  extras: { film: true },
 };
 
 const golfEnrichment: VehicleEnrichment = {
@@ -342,6 +348,8 @@ export const golfListing: Listing = {
   publishedAt: '2026-09-10T00:00:00.000Z',
   indexable: false,
   hyadMark: true,
+  // The demo pages show the photo film, as an agent who turned it on would (0048).
+  extras: { film: true },
 };
 
 /**
@@ -386,6 +394,8 @@ export const poloListing: Listing = {
   publishedAt: '2026-09-14T00:00:00.000Z',
   indexable: false,
   hyadMark: true,
+  // The demo pages show the photo film, as an agent who turned it on would (0048).
+  extras: { film: true },
 };
 
 /** Older car with flaws. No register payload — the point is section.flaws. */
@@ -434,6 +444,8 @@ export const beetleListing: Listing = {
   publishedAt: '2026-09-05T00:00:00.000Z',
   indexable: false,
   hyadMark: true,
+  // The demo pages show the photo film, as an agent who turned it on would (0048).
+  extras: { film: true },
 };
 
 export const fixtures: Listing[] = [

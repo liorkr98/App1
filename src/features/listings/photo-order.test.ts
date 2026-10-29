@@ -7,7 +7,11 @@ import {
   moveItem,
   publishedOrder,
   type Direction,
+  autoOrder,
+  sameOrder,
 } from './photo-order.js';
+import type { PhotoReview } from './photo-review.js';
+import type { PhotoRoom } from './photo-rooms.js';
 
 /**
  * The test the brief asks for by name: reorder four photos and assert the
@@ -138,5 +142,61 @@ describe('a full RTL reorder, end to end', () => {
 
     assert.deepEqual(published, [...PHOTOS]);
     assert.equal(coverOf(published), 'סלון');
+  });
+});
+
+describe('autoOrder — the order the labels suggest (18 Oct 2026)', () => {
+  const photo = (id: string, room?: PhotoRoom) => ({ id, ...(room ? { room } : {}) });
+  const review = (patch: Partial<PhotoReview>): PhotoReview => ({ issues: [], ...patch });
+
+  it('walks a flat the way a visitor does, the best clean photo first', () => {
+    const items = [photo('bath'), photo('bed'), photo('living'), photo('kitchen'), photo('unknown')];
+    const reviews = new Map<string, PhotoReview>([
+      ['bath', review({ room: 'bathroom', score: 2 })],
+      ['bed', review({ room: 'bedroom', score: 3 })],
+      ['living', review({ room: 'living', score: 4 })],
+      ['kitchen', review({ room: 'kitchen', score: 5, issues: ['dark'] })],
+    ]);
+    // The kitchen scores higher but is dark: it cannot be the cover.
+    assert.deepEqual(autoOrder(items, reviews, 'property').map((item) => item.id), ['living', 'kitchen', 'bed', 'bath', 'unknown']);
+  });
+
+  it('puts the best clean photo first even when it is not first in the walk', () => {
+    const items = [photo('kitchen'), photo('living'), photo('balcony')];
+    const reviews = new Map<string, PhotoReview>([
+      ['kitchen', review({ room: 'kitchen', score: 3 })],
+      ['living', review({ room: 'living', score: 2 })],
+      ['balcony', review({ room: 'balcony', score: 5 })],
+    ]);
+    // Index 0 is the cover, the rightmost in RTL (§4.4).
+    assert.deepEqual(autoOrder(items, reviews, 'property').map((item) => item.id), ['balcony', 'living', 'kitchen']);
+  });
+
+  it("keeps the seller's own room label over the model's", () => {
+    const items = [photo('a', 'bedroom'), photo('b')];
+    const reviews = new Map<string, PhotoReview>([
+      ['a', review({ room: 'living' })],
+      ['b', review({ room: 'kitchen' })],
+    ]);
+    assert.deepEqual(autoOrder(items, reviews, 'property').map((item) => item.id), ['b', 'a']);
+  });
+
+  it('goes round a car from the front corner, then inside, never covering with the plate', () => {
+    const items = [photo('engine'), photo('rear'), photo('inside'), photo('front'), photo('corner')];
+    const reviews = new Map<string, PhotoReview>([
+      ['engine', review({ angle: 'engine', score: 2 })],
+      ['rear', review({ angle: 'rear', score: 3 })],
+      ['inside', review({ angle: 'interior', score: 4 })],
+      ['front', review({ angle: 'front', score: 5, issues: ['plate'] })],
+      ['corner', review({ angle: 'frontLeft', score: 4 })],
+    ]);
+    assert.deepEqual(autoOrder(items, reviews, 'vehicle').map((item) => item.id), ['corner', 'front', 'rear', 'inside', 'engine']);
+  });
+
+  it('changes nothing without labels, and says so', () => {
+    const items = [photo('x'), photo('y')];
+    const ordered = autoOrder(items, new Map(), 'property');
+    assert.ok(sameOrder(ordered, items));
+    assert.ok(!sameOrder([photo('y'), photo('x')], items));
   });
 });

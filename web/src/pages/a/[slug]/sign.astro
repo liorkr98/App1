@@ -1,0 +1,143 @@
+---
+import { accentFor } from '@/features/agents/accents';
+import { ogPriceFragment } from '@/features/listings/control-surface';
+import { displayPhone } from '@/features/listings/phone';
+import Prose from '../../../components/Prose.astro';
+import QrCode from '../../../components/QrCode.astro';
+import { ils } from '../../../lib/format';
+import { t } from '../../../lib/i18n';
+import { publishedListing } from '../../../lib/listing-from-row';
+import { stagePlace, titleLines } from '../../../lib/stage';
+import '../../../styles/tokens.css';
+import '../../../styles/fonts.css';
+import '../../../styles/fonts-listing.css';
+import '../../../styles/system/tokens.css';
+
+/**
+ * The "למכירה" sign (19 Oct 2026): A4 landscape, for a car's window or a
+ * board outside a flat. Read from across the street, so it carries only what
+ * reads at that distance — the word, the price, a phone — and a QR large
+ * enough to scan through glass. Everything else is on the page the QR opens.
+ *
+ * The same rules as the flyer: the licence number, נבנה עם עמוד מכירה when
+ * the listing carries the mark (§8), never a plate (§7), noindex. Saved as
+ * PDF from the phone's print sheet.
+ */
+export const prerender = false;
+Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+
+const slug = Astro.params.slug ?? '';
+const listing = slug ? await publishedListing(slug) : undefined;
+if (!listing) {
+  return new Response('not found', { status: 404 });
+}
+
+const accent = accentFor(listing.accent);
+const price = ogPriceFragment(listing.price, listing.priceDisplay, ils(listing.price), t('listing.priceFrom')).replace(/^[\s·]+/, '');
+const place = stagePlace(listing);
+const pageUrl = new URL(`/a/${listing.slug}/`, Astro.site ?? Astro.url).href;
+const legal = listing.hyadMark !== false ? `${t('common.builtByPrefix')}${t('common.brand')}` : undefined;
+---
+<!DOCTYPE html>
+<html lang="he" dir="rtl" data-ls="paper">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=1140" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>{t('sign.forSale')} · {listing.title.replace(/\s*\n\s*/g, ' ')}</title>
+    <style is:global>
+      @page { size: A4 landscape; margin: 0; }
+      html, body { margin: 0; }
+      body {
+        inline-size: 297mm;
+        margin-inline: auto;
+        background: #fff;
+        color: var(--ls-ink);
+        font-family: var(--ls-font-body);
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .sg { display: grid; grid-template-rows: auto 1fr auto; block-size: 210mm; }
+      .sg-head {
+        margin: 0;
+        padding: 8mm 14mm;
+        background: var(--accent-base);
+        color: #fff;
+        font-family: var(--ls-font-display);
+        font-weight: 800;
+        font-size: 64pt;
+        line-height: 1.1;
+      }
+      .sg-body { display: grid; grid-template-columns: 1fr 104mm; gap: 12mm; padding: 10mm 14mm 0; align-items: center; }
+      .sg-place { margin: 0; font-size: 18pt; font-weight: 700; color: var(--ls-ink-2); line-height: 1.5; }
+      .sg-title { margin: 2mm 0 0; font-family: var(--ls-font-display); font-weight: 800; font-size: 34pt; line-height: 1.15; display: grid; }
+      .sg-price { margin: 6mm 0 0; font-family: var(--ls-font-display); font-weight: 800; font-size: 48pt; line-height: 1.1; color: var(--accent-base); }
+      .sg-phone { display: block; margin: 6mm 0 0; font-family: var(--ls-font-display); font-weight: 800; font-size: 40pt; line-height: 1.1; }
+      .sg-qr { display: grid; gap: 3mm; justify-items: center; text-align: center; }
+      .sg-qr .qr { inline-size: 100mm; block-size: 100mm; }
+      .sg-qr p { margin: 0; font-size: 16pt; font-weight: 700; line-height: 1.5; }
+      .sg-foot { display: flex; justify-content: space-between; gap: 8mm; margin: 0 14mm; padding-block: 5mm; font-size: 11pt; color: var(--ls-ink-2); line-height: 1.5; }
+      .sg-print {
+        position: sticky;
+        inset-block-start: 0;
+        z-index: 2;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 4mm;
+        padding: 4mm 14mm;
+        background: var(--ls-ink);
+        color: #fff;
+        font-size: 18pt;
+        line-height: 1.5;
+      }
+      .sg-print button {
+        font: inherit;
+        font-weight: 700;
+        padding: 3mm 8mm;
+        border: 0;
+        border-radius: 999px;
+        background: var(--accent-base);
+        color: #fff;
+        cursor: pointer;
+      }
+      .sg-print span { opacity: 0.8; }
+      @media print {
+        .sg-print { display: none; }
+      }
+    </style>
+  </head>
+  <body style={`--accent-base:${accent.base}`}>
+    <div class="sg-print">
+      <button type="button" data-print>{t('flyer.print')}</button>
+      <span>{t('sign.printHint')}</span>
+    </div>
+    <div class="sg">
+      <p class="sg-head">{t('sign.forSale')}</p>
+      <div class="sg-body">
+        <div>
+          {place && <p class="sg-place"><Prose text={place} /></p>}
+          <h1 class="sg-title">{titleLines(listing).map((line) => <span><Prose text={line} /></span>)}</h1>
+          {price && <p class="sg-price"><Prose text={price} /></p>}
+          <bdi class="sg-phone" dir="ltr">{displayPhone(listing.seller.phone)}</bdi>
+        </div>
+        <div class="sg-qr">
+          <QrCode text={pageUrl} label={t('flyer.qrLabel')} />
+          <p>{t('sign.scan')}</p>
+        </div>
+      </div>
+      <div class="sg-foot">
+        <span>
+          {listing.seller.name}
+          {listing.seller.licenceNumber && (
+            <Fragment>{' · '}{t('listing.licenceNumber')}{' '}<bdi>{listing.seller.licenceNumber}</bdi></Fragment>
+          )}
+        </span>
+        {legal && <span><Prose text={legal} /></span>}
+      </div>
+    </div>
+    <script>
+      document.querySelector<HTMLButtonElement>('[data-print]')?.addEventListener('click', () => window.print());
+    </script>
+  </body>
+</html>

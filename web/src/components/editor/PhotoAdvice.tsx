@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { parsePhotoReview, suggestedRoom, type ReviewIssue, type ReviewTip } from '@/features/listings/photo-review';
+import {
+  parsePhotoReview,
+  suggestedRoom,
+  type PhotoReview,
+  type ReviewIssue,
+  type ReviewTip,
+} from '@/features/listings/photo-review';
 import type { PhotoRoom } from '@/features/listings/photo-rooms';
 
 import { t } from '../../lib/i18n';
@@ -9,6 +15,7 @@ import type { EditorPhoto } from './PhotosStep';
 
 interface Props {
   listingId: string | undefined;
+  category: 'property' | 'vehicle';
   photos: readonly EditorPhoto[];
   /** looking: DeepSeek is reading a photograph. no_key: the Worker has no key. */
   status?: 'idle' | 'looking' | 'no_key';
@@ -17,6 +24,13 @@ interface Props {
   onLabel: (id: string, room: PhotoRoom) => void;
   onCover: (id: string) => void;
   onRotate: (id: string) => void;
+  /** A plate in the picture (CLAUDE.md §7): the agent covers it. */
+  onPlate: (id: string) => void;
+  /**
+   * Every photograph's review, by photo id, whenever one arrives. The
+   * editor orders the gallery, builds the 360 and suggests facts from it.
+   */
+  onReviews?: (reviews: ReadonlyMap<string, PhotoReview>) => void;
 }
 
 interface Row {
@@ -26,13 +40,40 @@ interface Row {
   issues: string[] | null;
   tip: string | null;
   score: number | null;
+  angle?: string | null;
+  seen?: string[] | null;
 }
+
+const review = (row: Row, category: 'property' | 'vehicle') =>
+  parsePhotoReview(
+    {
+      room: row.room,
+      angle: row.angle,
+      seen: row.seen ?? [],
+      confidence: row.room_confidence,
+      issues: row.issues ?? [],
+      tip: row.tip,
+      score: row.score,
+    },
+    category,
+  );
 
 /**
  * Advice from DeepSeek. It never blocks a step. A room the agent already
  * named is left alone.
  */
-export function PhotoAdvice({ listingId, photos, status = 'idle', refreshKey = 0, onLabel, onCover, onRotate }: Props) {
+export function PhotoAdvice({
+  listingId,
+  category,
+  photos,
+  status = 'idle',
+  refreshKey = 0,
+  onLabel,
+  onCover,
+  onRotate,
+  onPlate,
+  onReviews,
+}: Props) {
   const [rows, setRows] = useState<Row[]>([]);
   const applied = useRef(new Set<string>());
 
@@ -42,11 +83,14 @@ export function PhotoAdvice({ listingId, photos, status = 'idle', refreshKey = 0
 
     const look = async () => {
       const client = supabase();
-      const { data } = await client
+      const columns = 'photo_path, room, room_confidence, issues, tip, score';
+      let read: { data: unknown; error: unknown } = await client
         .from('photo_reviews')
-        .select('photo_path, room, room_confidence, issues, tip, score')
+        .select(`${columns}, angle, seen`)
         .eq('listing_id', listingId);
-      if (!stopped && Array.isArray(data)) setRows(data as Row[]);
+      // A database without 0046 has no angle or seen; the advice still reads.
+      if (read.error) read = await client.from('photo_reviews').select(columns).eq('listing_id', listingId);
+      if (!stopped && !read.error && Array.isArray(read.data)) setRows(read.data as Row[]);
     };
 
     void look();
@@ -62,19 +106,24 @@ export function PhotoAdvice({ listingId, photos, status = 'idle', refreshKey = 0
       if (!photo.publicUrl || applied.current.has(photo.id)) continue;
       const row = rows.find((item) => photo.publicUrl?.includes(item.photo_path));
       if (!row) continue;
-      const review = parsePhotoReview({
-        room: row.room,
-        confidence: row.room_confidence,
-        issues: row.issues ?? [],
-        tip: row.tip,
-        score: row.score,
-      });
-      const room = review ? suggestedRoom(review, photo.room) : undefined;
+      const parsed = review(row, category);
+      const room = parsed ? suggestedRoom(parsed, photo.room) : undefined;
       if (!room) continue;
       applied.current.add(photo.id);
       onLabel(photo.id, room);
     }
-  }, [photos, rows, onLabel]);
+  }, [photos, rows, onLabel, category]);
+
+  useEffect(() => {
+    if (!onReviews) return;
+    const byPhoto = new Map<string, PhotoReview>();
+    for (const photo of photos) {
+      const row = photo.publicUrl ? rows.find((item) => photo.publicUrl?.includes(item.photo_path)) : undefined;
+      const parsed = row ? review(row, category) : undefined;
+      if (parsed) byPhoto.set(photo.id, parsed);
+    }
+    onReviews(byPhoto);
+  }, [photos, rows, category, onReviews]);
 
   if (!listingId) return null;
 
@@ -90,29 +139,26 @@ export function PhotoAdvice({ listingId, photos, status = 'idle', refreshKey = 0
       {status === 'no_key' ? <p className="field-hint">{t('editor.photoReview.noKey')}</p> : null}
       {photos.map((photo) => {
         const row = photo.publicUrl ? rows.find((item) => photo.publicUrl?.includes(item.photo_path)) : undefined;
-        const review = row
-          ? parsePhotoReview({
-              room: row.room,
-              confidence: row.room_confidence,
-              issues: row.issues ?? [],
-              tip: row.tip,
-              score: row.score,
-            })
-          : undefined;
-        if (!review || (review.issues.length === 0 && !review.tip)) return null;
+        const advice = row ? review(row, category) : undefined;
+        if (!advice || (advice.issues.length === 0 && !advice.tip)) return null;
         const cover = best && row && best.photo_path === row.photo_path && photos[0]?.id !== photo.id;
         return (
           <p key={photo.id} className="field-hint">
-            {review.issues.map((issue: ReviewIssue) => (
+            {advice.issues.map((issue: ReviewIssue) => (
               <span key={issue} className="photo-advice-chip">{t(`editor.photoReview.issues.${issue}`)}</span>
             ))}
-            {review.tip ? <span>{t(`editor.photoReview.tips.${review.tip as ReviewTip}`)}</span> : null}
+            {advice.tip ? <span>{t(`editor.photoReview.tips.${advice.tip as ReviewTip}`)}</span> : null}
             {cover ? (
               <button type="button" className="quiet" onClick={() => onCover(photo.id)}>
                 {t('editor.photoReview.cover')}
               </button>
             ) : null}
-            {review.issues.includes('sideways') ? (
+            {advice.issues.includes('plate') ? (
+              <button type="button" className="quiet" onClick={() => onPlate(photo.id)}>
+                {t('editor.photoReview.coverPlate')}
+              </button>
+            ) : null}
+            {advice.issues.includes('sideways') ? (
               <button type="button" className="quiet" onClick={() => onRotate(photo.id)}>
                 {t('editor.photoReview.rotate')}
               </button>

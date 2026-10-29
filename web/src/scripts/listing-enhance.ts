@@ -325,10 +325,22 @@ function bindBlueprint(): void {
  * The 360° spin (P7, Showroom). Frames are a JSON list on the element; only
  * the first is in the page. The first touch, key or button loads the rest,
  * then dragging turns the car — about one frame per 14px, wrapping round.
+ *
+ * A turn built from the gallery (18 Oct 2026) has as few as four frames, one
+ * per side. Jumping between them reads as a slideshow, so under SMOOTH frames
+ * each step crossfades from the last one (a copy of it held underneath), and
+ * a frame takes a longer drag, about 60px. Under reduced motion it steps.
  * Arrow keys and the two buttons step one frame, and they are the whole of
  * it under reduced motion (drag is the reader's own movement, not ours,
  * so it stays too). A frame that fails to load is skipped, never a blank.
  */
+/**
+ * SPIN_SMOOTH in features/listings/rich-media.ts, written here rather than
+ * imported: that module brings the photo-check prompts into every listing
+ * page's script.
+ */
+const SMOOTH = 12;
+
 function bindSpin(): void {
   const stage = document.querySelector<HTMLElement>('[data-spin]');
   if (!stage) return;
@@ -346,6 +358,16 @@ function bindSpin(): void {
   const ready = new Set<number>([0]);
   let loaded = false;
   let at = 0;
+  const sparse = frames.length < SMOOTH;
+  const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let under: HTMLImageElement | undefined;
+  if (sparse && !still) {
+    under = img.cloneNode() as HTMLImageElement;
+    under.removeAttribute('fetchpriority');
+    under.classList.add('sr-spin-under');
+    under.setAttribute('aria-hidden', 'true');
+    img.before(under);
+  }
   const load = () => {
     if (loaded) return;
     loaded = true;
@@ -356,13 +378,24 @@ function bindSpin(): void {
       probe.src = src;
     });
   };
+  // `want` is the frame last asked for, not wrapped round, so its change
+  // gives the way of the turn even across the seam (+1: drag right, → or ⟳).
+  let want = 0;
   const show = (next: number) => {
     const n = frames.length;
+    const dir = next < want ? -1 : 1;
+    want = next;
     let target = ((next % n) + n) % n;
     // Skip frames that are not in yet rather than flash an empty box.
-    for (let tries = 0; tries < n && !ready.has(target); tries++) target = (target + (next >= at ? 1 : -1) + n) % n;
+    for (let tries = 0; tries < n && !ready.has(target); tries++) target = (target + dir + n) % n;
+    if (target === at) return;
+    if (under) under.src = img.src;
     at = target;
     img.src = frames[at]!;
+    // Few frames: the new one fades in over the old while sliding in from
+    // where the finger came from, so a gap between two photographs reads
+    // as a turn.
+    if (under) img.animate({ opacity: [0, 1], translate: [`${dir * -24}px`, '0'] }, { duration: 280, easing: 'ease-out' });
   };
   let startX = 0;
   let startAt = 0;
@@ -372,12 +405,12 @@ function bindSpin(): void {
     load();
     dragging = true;
     startX = event.clientX;
-    startAt = at;
+    startAt = want;
     stage.setPointerCapture(event.pointerId);
   });
   stage.addEventListener('pointermove', (event) => {
     if (!dragging) return;
-    show(startAt + Math.round((event.clientX - startX) / 14));
+    show(startAt + Math.round((event.clientX - startX) / (sparse ? 60 : 14)));
   });
   const stop = () => {
     dragging = false;
@@ -388,13 +421,13 @@ function bindSpin(): void {
     const button = (event.target as Element).closest<HTMLButtonElement>('[data-spin-step]');
     if (!button) return;
     load();
-    show(at + Number(button.dataset.spinStep));
+    show(want + Number(button.dataset.spinStep));
   });
   stage.addEventListener('keydown', (event) => {
     if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
     event.preventDefault();
     load();
-    show(at + (event.key === 'ArrowRight' ? 1 : -1));
+    show(want + (event.key === 'ArrowRight' ? 1 : -1));
   });
 }
 

@@ -68,6 +68,7 @@ export function shareText(listing: Listing, site: string): ShareText {
   const message = shareMessage({
     title: listing.title,
     price,
+    ...(listing.shareLine ? { line: listing.shareLine } : {}),
     facts: teaser,
     ...(place ? { place } : {}),
     ...(listing.prePortal ? { prePortalLine: t('listing.prePortal') } : {}),

@@ -53,36 +53,53 @@ test.describe('the price list', () => {
     expect(bare).toEqual([]);
   });
 
+  test('agents choose by active pages: 5, 10 and unlimited, 10 recommended', async ({ page }) => {
+    await seats(page, 'fail');
+    await page.goto(`${BASE}/pricing/`, { waitUntil: 'networkidle' });
+
+    // The first three cards are the agent plans, in this order (index 0 is
+    // the rightmost in RTL).
+    const sums = page.locator('.pr-tier [data-variant="regular"] .pr-sum bdi');
+    await expect(sums.nth(0)).toHaveText('₪29');
+    await expect(sums.nth(1)).toHaveText('₪49');
+    await expect(sums.nth(2)).toHaveText('₪79');
+
+    const recommended = page.locator('.pr-tier.is-featured');
+    await expect(recommended).toHaveCount(1);
+    await expect(recommended).toHaveAttribute('data-card', 'agent_launch');
+    await expect(recommended.locator('.pr-pick')).toHaveText('מומלץ');
+
+    // What one active page costs, on the capped plans only.
+    await expect(recommended.locator('[data-variant="regular"] .pr-per bdi')).toHaveText('₪4.90');
+    await expect(page.locator('.pr-tier').nth(0).locator('.pr-per bdi')).toHaveText('₪5.80');
+    await expect(page.locator('.pr-tier').nth(2).locator('.pr-per')).toHaveCount(0);
+  });
+
   test('a count that could not be read keeps the regular price and shows no counter', async ({ page }) => {
     await seats(page, 'fail');
     await page.goto(`${BASE}/pricing/`, { waitUntil: 'networkidle' });
     await expect(card(page, 'agent_launch').locator('[data-variant="launch"]')).toBeHidden();
-    await expect(page.locator('h1 bdi')).toHaveText('₪49');
+    await expect(page.locator('h1 bdi')).toHaveText('₪29');
     await expect(page.locator('[data-seats]')).toBeHidden();
   });
 
   test('with seats left: the launch price and the true count', async ({ page }) => {
-    await seats(page, [
-      { cohort: 'agent_launch', used: 37, cap: 200 },
-      { cohort: 'dealer_launch', used: 100, cap: 100 },
-    ]);
+    await seats(page, [{ cohort: 'agent_launch', used: 37, cap: 200 }]);
     await page.goto(`${BASE}/pricing/`, { waitUntil: 'networkidle' });
 
     await expect(card(page, 'agent_launch').locator('[data-variant="launch"]')).toBeVisible();
     await expect(card(page, 'agent_launch').locator('[data-variant="launch"] .pr-sum bdi')).toHaveText('₪29');
-    await expect(page.locator('h1 bdi')).toHaveText('₪29');
+    await expect(card(page, 'agent_launch').locator('[data-variant="launch"] .pr-per bdi')).toHaveText('₪2.90');
     await expect(page.locator('[data-seats="agent_launch"]')).toContainText('163');
     await expect(page.locator('[data-seats="agent_launch"] bdi').first()).toHaveText('163');
 
-    // The dealer cohort is full: its card stays at the regular price.
-    await expect(card(page, 'dealer_launch').locator('[data-variant="launch"]')).toBeHidden();
-    await expect(card(page, 'dealer_launch').locator('[data-variant="regular"] .pr-sum bdi')).toHaveText('₪49');
+    // Car dealers buy the same plans: there is no separate dealer card.
+    await expect(card(page, 'dealer_launch')).toHaveCount(0);
   });
 
   test('a full cohort says so, with the real cap', async ({ page }) => {
     await seats(page, [{ cohort: 'agent_launch', used: 200, cap: 200 }]);
     await page.goto(`${BASE}/pricing/`, { waitUntil: 'networkidle' });
-    await expect(page.locator('h1 bdi')).toHaveText('₪49');
     await expect(page.locator('[data-seats="agent_launch"]')).toContainText('200');
     await expect(card(page, 'agent_launch').locator('[data-variant="launch"]')).toBeHidden();
   });

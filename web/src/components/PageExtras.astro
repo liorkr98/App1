@@ -1,0 +1,85 @@
+---
+import type { Listing } from '@/types/listing';
+import { upcomingOpenHouse } from '@/features/listings/page-extras';
+
+import { t } from '../lib/i18n';
+
+/**
+ * What the agent turned on for this page (0047, 19 Oct 2026): an open house
+ * still to come, a car under warranty, a video. Nothing turned on, nothing
+ * rendered — no empty row (CLAUDE.md §7).
+ *
+ * The open house is read against the time of this request: /a/{slug}
+ * renders per request, so it is gone from the page once it has ended,
+ * without anyone taking it down. The warranty is the seller's word and says
+ * so; the video opens on its own site, never inside the page.
+ */
+interface Props {
+  listing: Listing;
+}
+
+const { listing } = Astro.props;
+const sold = listing.status === 'sold';
+const open = sold ? undefined : upcomingOpenHouse(listing.extras, Date.now());
+const warranty = listing.category === 'vehicle' && listing.extras?.warranty === true;
+const video = listing.media.videoUrl;
+
+const zone = { timeZone: 'Asia/Jerusalem' } as const;
+const day = (iso: string) => new Intl.DateTimeFormat('he-IL', { ...zone, weekday: 'long' }).format(new Date(iso));
+const date = (iso: string) =>
+  new Intl.DateTimeFormat('he-IL', { ...zone, day: 'numeric', month: 'numeric' }).format(new Date(iso));
+const time = (iso: string) =>
+  new Intl.DateTimeFormat('he-IL', { ...zone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(
+    new Date(iso),
+  );
+---
+{(open || warranty || video) && (
+  <Fragment>
+  {/* Inline and only here, so a page without options carries none of it. */}
+  <style is:inline>
+/* What the agent turned on for the page (PageExtras, 0047): an open house,
+   a warranty, a video. Rendered only when there is one, so no other page moves. */
+.page-extras{
+  display:flex;flex-wrap:wrap;align-items:center;gap:.5rem .9rem;
+  padding-block:.7rem;padding-inline:var(--gut);
+  border-block-end:1px solid var(--stone);
+  font-size:.92rem;line-height:1.5;
+}
+.page-extra{margin:0;display:flex;align-items:center;flex-wrap:wrap;gap:.5rem}
+.page-extra-tag{
+  padding:.1rem .6rem;border-radius:999px;
+  background:var(--accent-base,#4a5d3a);color:#fff;font-weight:600;
+}
+.page-extra-src{font-size:.78rem;color:var(--muted);border:1px solid var(--stone);border-radius:999px;padding:0 .45rem}
+.page-extra-link{
+  display:inline-flex;align-items:center;min-block-size:44px;
+  padding:.3rem .75rem;border:1px solid var(--stone);border-radius:999px;
+  color:var(--olive);font-weight:600;font-size:.82rem;text-decoration:none;background:var(--plaster);
+}
+.page-extra-link{transition:transform var(--dur-press) var(--ease-out)}
+.page-extra-link:active{transform:scale(.97)}
+  </style>
+  <div class="page-extras">
+    {open && (
+      <p class="page-extra">
+        <span class="page-extra-tag">{t('listing.openHouse')}</span>
+        <span>
+          {day(open.start)} <bdi>{date(open.start)}</bdi>, <bdi dir="ltr">{time(open.start)}–{time(open.end)}</bdi>
+        </span>
+      </p>
+    )}
+    {warranty && (
+      <p class="page-extra">
+        <span class="page-extra-tag">{t('listing.warranty')}</span>
+        <span class="page-extra-src">{t('source.seller')}</span>
+      </p>
+    )}
+    {video && (
+      <a class="page-extra-link" href={video} target="_blank" rel="noopener noreferrer">
+        {t(listing.category === 'vehicle' ? 'listing.videoCtaCar' : 'listing.videoCta')}
+        <span class="visually-hidden"> ({t('listing.newWindow')})</span>
+      </a>
+    )}
+  </div>
+  </Fragment>
+)}

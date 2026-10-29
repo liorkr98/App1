@@ -10,8 +10,12 @@ import { JobFailure, type JobContext } from '../types.js';
  * /api/photo-review itself; this drain is for a job already sitting in the
  * queue. Nothing here writes listings.media.
  *
- * The prompt matches src/features/listings/photo-review.ts. This package
- * cannot import that file.
+ * The prompt matched src/features/listings/photo-review.ts until 18 Oct
+ * 2026, when that one gained a car prompt (angle round the car) and the
+ * "seen" suggestions (migration 0046). This copy was not brought along: the
+ * worker is not deployed (CLAUDE.md §2), and a car reviewed here gets a
+ * property label and no angle. Port it with the deploy. This package cannot
+ * import that file.
  */
 
 const MODEL = 'deepseek-flash';

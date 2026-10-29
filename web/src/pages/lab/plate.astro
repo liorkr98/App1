@@ -1,0 +1,76 @@
+---
+import Plain from '../../layouts/Plain.astro';
+import { t } from '../../lib/i18n';
+
+/**
+ * The plate cover on a sample car (19 Oct 2026), for e2e/plate.spec.ts:
+ * the same coverPlate the editor runs, on a fixture photograph, so the test
+ * can measure that the box's pixels became a mosaic and the rest did not.
+ * Noindex, and /lab/ is disallowed in robots.txt.
+ */
+---
+<Plain title={t('lab.plateTitle')} robots="noindex,nofollow">
+  <h1>{t('lab.plateTitle')}</h1>
+  <p><button type="button" class="plate-lab-go" data-plate-make>{t('lab.plateMake')}</button></p>
+</Plain>
+
+<script>
+  import { coverPlate } from '../../lib/plate-cover';
+
+  const SOURCE = '/fixtures/golf-side-1200.webp';
+  const RECT = { x: 0.3, y: 0.5, w: 0.3, h: 0.2 };
+  const page = document.documentElement;
+
+  /** Mean of |difference| between neighbouring pixels in a box: how much detail it holds. */
+  const detail = (data: Uint8ClampedArray, width: number, box: { x: number; y: number; w: number; h: number }) => {
+    let sum = 0;
+    let count = 0;
+    for (let y = box.y; y < box.y + box.h; y += 1) {
+      for (let x = box.x; x < box.x + box.w - 1; x += 1) {
+        const at = (y * width + x) * 4;
+        sum += Math.abs(data[at]! - data[at + 4]!);
+        count += 1;
+      }
+    }
+    return count ? sum / count : 0;
+  };
+  const pixels = async (src: string) => {
+    const image = new Image();
+    image.src = src;
+    await image.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = image.naturalWidth;
+    canvas.height = image.naturalHeight;
+    const ctx = canvas.getContext('2d')!;
+    ctx.drawImage(image, 0, 0);
+    return { data: ctx.getImageData(0, 0, canvas.width, canvas.height).data, width: canvas.width, height: canvas.height };
+  };
+
+  document.querySelector('[data-plate-make]')?.addEventListener('click', async () => {
+    page.dataset.plate = 'working';
+    const made = await coverPlate(SOURCE, RECT, 'blur');
+    if (!made) {
+      page.dataset.plate = 'failed';
+      return;
+    }
+    const before = await pixels(SOURCE);
+    const after = await pixels(URL.createObjectURL(made.blob));
+    const inside = {
+      x: Math.round(RECT.x * after.width) + 4,
+      y: Math.round(RECT.y * after.height) + 4,
+      w: Math.round(RECT.w * after.width) - 8,
+      h: Math.round(RECT.h * after.height) - 8,
+    };
+    const outside = { x: 10, y: 10, w: Math.round(after.width * 0.2), h: Math.round(after.height * 0.2) };
+    Object.assign(page.dataset, {
+      plate: 'done',
+      plateType: made.blob.type,
+      plateSize: `${made.width}x${made.height}`,
+      plateSource: `${before.width}x${before.height}`,
+      plateInsideBefore: detail(before.data, before.width, inside).toFixed(2),
+      plateInsideAfter: detail(after.data, after.width, inside).toFixed(2),
+      plateOutsideBefore: detail(before.data, before.width, outside).toFixed(2),
+      plateOutsideAfter: detail(after.data, after.width, outside).toFixed(2),
+    });
+  });
+</script>

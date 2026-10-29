@@ -8,9 +8,12 @@ import { planByKey, priceParts } from '@/features/billing/price';
  */
 export function noteValues(plan: Plan): Record<string, string | number> {
   return {
-    pages: PRICING.freePageLimit,
+    pages: plan.pageLimit ?? PRICING.freePageLimit,
+    free: PRICING.freePageLimit,
     months: PRICING.lockMonths,
     annual: plan.annualMonths ?? 0,
+    // Annual is annualMonths payments for twelve months (PRICING §1): the rest is the gift.
+    gift: plan.annualMonths ? 12 - plan.annualMonths : 0,
     seats: plan.seats ?? 0,
     days: plan.pageTtlDays ?? 0,
   };

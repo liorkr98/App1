@@ -11,10 +11,13 @@ interface Props {
   whatsappHref?: string;
   /** Pre-composed forward message. Buyer sharing, not contacting. */
   shareHref?: string;
+  /** The agent's second button (0047): book a visit or a test drive, over WhatsApp. */
+  visitHref?: string | undefined;
+  visitLabel?: string;
   sold?: boolean;
 }
 
-const { seller, whatsappHref, shareHref, sold = false } = Astro.props;
+const { seller, whatsappHref, visitHref, visitLabel, shareHref, sold = false } = Astro.props;
 const sellerRole = seller.role ? tr(canonicalSellerRole(seller.role)) : '';
 
 /**
@@ -92,6 +95,9 @@ const phoneLabel = displayPhone(seller.phone);
       )}
       {whatsappHref && (
         <a class="seller-action seller-action-wa" href={whatsappHref}>{t('listing.whatsappShort')}</a>
+      )}
+      {visitHref && visitLabel && (
+        <a class="seller-action" href={visitHref}>{visitLabel}</a>
       )}
     </div>
   )}

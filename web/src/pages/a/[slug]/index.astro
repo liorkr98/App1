@@ -27,7 +27,7 @@ import { publishedListing, purchaseExpired } from '../../../lib/listing-from-row
 export const prerender = false;
 
 const slug = Astro.params.slug ?? '';
-const listing = slug ? await publishedListing(slug) : undefined;
+const listing = slug ? await publishedListing(slug, { sold: true }) : undefined;
 // A fixture answering here is an example page: its contact buttons call no one.
 const demo = Boolean(slug && listingBySlug(slug));
 
@@ -61,7 +61,7 @@ if (ended) {
  * for the fetchers that read headers and never parse the HTML (some AI
  * assistants' among them). Only a seller who opted in is indexable (§7).
  */
-if (!listing || listing.indexable !== true || ended) {
+if (!listing || listing.indexable !== true || listing.status === 'sold' || ended) {
   Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
 }
 
@@ -70,7 +70,8 @@ if (!listing || listing.indexable !== true || ended) {
  * agent's own browser, or the same browser again within 30 minutes
  * (count-rules.ts, 13 Oct 2026). Never a fixture: it is not in the table.
  */
-if (listing && !ended && !demo) {
+// A sold page the agent kept up (0047) is a record, not an ad: no views.
+if (listing && !ended && !demo && listing.status !== 'sold') {
   const counted = await countListingEvent(slug, 'view', Astro.request);
   if (counted) Astro.response.headers.append('Set-Cookie', counted);
 }

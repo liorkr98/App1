@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import type { Blocker, EditorState } from '@/features/listings/editor';
 
 import type { AreaClientStatus } from '../../lib/area-request';
-import { t } from '../../lib/i18n';
+import { parts, t } from '../../lib/i18n';
 import { AreaLine } from './AreaLine';
 import { Paywall } from './Paywall';
 
@@ -24,6 +24,14 @@ interface Props {
   areaCount?: number | undefined;
   /** The photo checklist's one-line form (PhotoChecklist). Advice only. */
   photoCheck?: ReactNode;
+  /** The WhatsApp line: the agent's own, or DeepSeek's (18 Oct 2026). */
+  shareLineField?: ReactNode;
+  /** What the agent adds to this page (PageOptions, 0047). */
+  optionsField?: ReactNode;
+  /** How many of the optional settings are on, for the closed row's summary. */
+  optionsOn?: number;
+  /** Below the link once it exists: the video, made after publishing (19 Oct 2026). */
+  afterPublish?: ReactNode;
   /**
    * Why the last publish attempt did not produce a link.
    *
@@ -32,6 +40,8 @@ interface Props {
    * no way to tell a refused publish from a slow one.
    */
   failure?: string | undefined;
+  /** A paid plan at its active-page limit: the paywall offers the next plan up. */
+  planCapped?: boolean;
   onPublish: () => void;
   onCopy: (url: string) => void;
   /** Opens the share sheet: WhatsApp, Facebook, the phone's menu, the link. */
@@ -76,7 +86,12 @@ export function PublishStep({
   areaStatus,
   areaCount,
   photoCheck,
+  shareLineField,
+  optionsField,
+  optionsOn = 0,
+  afterPublish,
   failure,
+  planCapped,
   onPublish,
   onCopy,
   onShare,
@@ -107,15 +122,16 @@ export function PublishStep({
             {t('editor.publish.shareNow')}
           </button>
           <button type="button" className="secondary" onClick={() => onCopy(publishedUrl)}>
-            {t('dash.copyLink')}
+            {t('editor.publish.copyLink')}
           </button>
           <a className="secondary" href={publishedUrl}>
             {t('editor.publish.open')}
           </a>
           <a className="secondary" href="/mine/">
-            {t('dash.title')}
+            {t('editor.publish.myListings')}
           </a>
         </div>
+        {afterPublish}
       </div>
     );
   }
@@ -146,6 +162,8 @@ export function PublishStep({
         </div>
       </dl>
 
+      {shareLineField}
+
       {/*
         The fixable blockers are NOT listed here. The editor already shows
         every outstanding one in its own bar at the foot of the screen, and
@@ -161,7 +179,7 @@ export function PublishStep({
         <p className="field-hint">{t('editor.publish.freeHint')}</p>
       ) : null}
 
-      {payment?.code === 'paymentRequired' ? <Paywall category={state.category} /> : null}
+      {payment?.code === 'paymentRequired' ? <Paywall category={state.category} capped={planCapped ?? false} /> : null}
       {payment?.code === 'paymentUnverified' ? (
         <div className="paywall">
           <p>{t('editor.blockers.paymentUnverified')}</p>
@@ -169,25 +187,46 @@ export function PublishStep({
         </div>
       ) : null}
 
-      <label className="declare">
-        <input
-          type="checkbox"
-          checked={state.prePortal === true}
-          onChange={(event) => onPrePortal(event.target.checked)}
-        />
-        <span>{t('editor.publish.prePortal')}</span>
-      </label>
-      <p className="field-hint">{t('editor.publish.prePortalWhy')}</p>
+      {/*
+        Everything optional, behind one closed row (19 Oct 2026). The screen
+        was four phone screens long, with the button at the bottom of all of
+        it. The summary says how many are on, so a setting that is on is
+        never hidden without a trace.
+      */}
+      <details className="more">
+        <summary className="more-summary">
+          <span className="more-title">{t('editor.publish.more')}</span>
+          {optionsOn > 0 ? (
+            <span className="more-hint">
+              {parts('editor.publish.moreOn').map((part, index) =>
+                'text' in part ? part.text : <bdi key={index}>{optionsOn}</bdi>,
+              )}
+            </span>
+          ) : null}
+        </summary>
 
-      <label className="declare">
-        <input
-          type="checkbox"
-          checked={state.indexable === true}
-          onChange={(event) => onIndexable(event.target.checked)}
-        />
-        <span>{t('editor.publish.indexable')}</span>
-      </label>
-      <p className="field-hint">{t('editor.publish.indexableWhy')}</p>
+        {optionsField}
+
+        <label className="declare">
+          <input
+            type="checkbox"
+            checked={state.prePortal === true}
+            onChange={(event) => onPrePortal(event.target.checked)}
+          />
+          <span>{t('editor.publish.prePortal')}</span>
+        </label>
+        <p className="field-hint">{t('editor.publish.prePortalWhy')}</p>
+
+        <label className="declare">
+          <input
+            type="checkbox"
+            checked={state.indexable === true}
+            onChange={(event) => onIndexable(event.target.checked)}
+          />
+          <span>{t('editor.publish.indexable')}</span>
+        </label>
+        <p className="field-hint">{t('editor.publish.indexableWhy')}</p>
+      </details>
 
       {failure ? (
         <p className="publish-failure" role="alert">

@@ -23,6 +23,7 @@ import { applyPicks, rankEveryday } from '@/features/listings/place-rank';
 import { isPhotoRoom } from '@/features/listings/photo-rooms';
 import { cleanPlanRooms, cleanVideo, depthFor, spinFrames } from '@/features/listings/rich-media';
 import { cardFor } from '@/features/listings/share-card';
+import { cleanExtras, cleanVideoUrl } from '@/features/listings/page-extras';
 import { resolveTemplateId } from '@/features/templates/manifest';
 
 
@@ -30,8 +31,8 @@ import { resolveTemplateId } from '@/features/templates/manifest';
 export const LISTING_COLUMNS_BEFORE_0043 =
   'id, slug, category, title, description, price, currency, list_price, price_note, facts, media, disclosures, location, seller, template, accent, status, indexable, pre_portal, published_at, og_image_hash, audience, hyad_mark, area_places';
 
-/** Columns added by migrations the owner runs by hand (0043, 0044). */
-const LATER_COLUMNS = ['price_was', 'price_dropped_at', 'translations'] as const;
+/** Columns added by migrations the owner runs by hand (0043, 0044, 0046, 0047). */
+const LATER_COLUMNS = ['price_was', 'price_dropped_at', 'translations', 'share_line', 'extras', 'sold_public'] as const;
 
 export const LISTING_COLUMNS = [LISTING_COLUMNS_BEFORE_0043, ...LATER_COLUMNS].join(', ');
 
@@ -78,6 +79,9 @@ export interface ListingRow {
   status: string;
       indexable: boolean;
   pre_portal?: boolean | null;
+  share_line?: string | null;
+  extras?: unknown;
+  sold_public?: boolean | null;
   published_at: string | null;
   og_image_hash: string | null;
   audience: string | null;
@@ -245,8 +249,10 @@ function asMedia(value: unknown, listingId: string): Media | undefined {
   const video = cleanVideo(value.video, listingId);
   const https = (url: unknown) => (typeof url === 'string' && url.startsWith('https://') ? url : undefined);
   const storyUrl = https(value.storyUrl);
+  const postUrl = https(value.postUrl);
   const flyerUrl = https(value.flyerUrl);
   const card = cardFor(value.card);
+  const videoUrl = cleanVideoUrl(value.videoUrl);
 
   return {
     cover,
@@ -255,11 +261,13 @@ function asMedia(value: unknown, listingId: string): Media | undefined {
     ...(typeof value.tourUrl === 'string' && value.tourUrl.startsWith('https://')
       ? { tourUrl: value.tourUrl }
       : {}),
+    ...(videoUrl ? { videoUrl } : {}),
     ...(floorPlan ? { floorPlan } : {}),
     ...(spin.length > 0 ? { spin } : {}),
     ...(depthUrl ? { depthUrl } : {}),
     ...(video ? { video } : {}),
     ...(storyUrl ? { storyUrl } : {}),
+    ...(postUrl ? { postUrl } : {}),
     ...(flyerUrl ? { flyerUrl } : {}),
     ...(card ? { card } : {}),
   };
@@ -341,12 +349,21 @@ export function listingFromRow(row: ListingRow): Listing | undefined {
       ? { areaPlaces, textAttributions: [OSM_ATTRIBUTION] }
       : {}),
     ...(row.pre_portal === true ? { prePortal: true } : {}),
+    ...(typeof row.share_line === 'string' && row.share_line.trim() ? { shareLine: row.share_line.trim() } : {}),
+    ...extrasFrom(row.extras),
+    ...(row.status === 'sold' && row.sold_public === true ? { soldPublic: true } : {}),
     ...(row.og_image_hash ? { ogImageHash: row.og_image_hash } : {}),
     ...(row.audience === 'investor' || row.audience === 'resident' || row.audience === 'both'
       ? { audience: row.audience }
       : {}),
     ...(enrichment ? { enrichment } : {}),
   };
+}
+
+/** The page options the agent turned on (0047), or nothing. */
+function extrasFrom(value: unknown): Pick<Listing, 'extras'> {
+  const extras = cleanExtras(value);
+  return Object.keys(extras).length > 0 ? { extras } : {};
 }
 
 /** The saved translations (0044), each with a title and a description, or nothing. */

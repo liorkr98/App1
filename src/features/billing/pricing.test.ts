@@ -3,7 +3,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, it } from 'node:test';
 
-import { offeredPlan, planByKey, priceParts, shekels, withVat } from './price.js';
+import { offeredPlan, perPage, planByKey, priceParts, shekels, withVat } from './price.js';
 import { PRICING, type Plan } from './pricing-config.js';
 
 /** The repo root, from test-build/features/billing (or src/features/billing). */
@@ -16,11 +16,19 @@ function migration(prefix: string): string {
   return readFileSync(join(dir, file), 'utf8');
 }
 
-/** The plan rows migration 0040 seeds, parsed from its VALUES list. */
+const PLAN_SEED = /insert into public\.plans[\s\S]*?values([\s\S]*?)on conflict/;
+
+/**
+ * The plan rows the LATEST migration that seeds plans writes (0040, then
+ * 0045 for the page-count plans), parsed from its VALUES list. An older
+ * seed is history: the database ends up with the last one.
+ */
 function seededPlans(): Map<string, string[]> {
-  const sql = migration('0040_');
-  const block = /insert into public\.plans[\s\S]*?values([\s\S]*?)on conflict/.exec(sql);
-  assert.ok(block, 'no plans seed in 0040');
+  const dir = join(ROOT, 'supabase', 'migrations');
+  const files = readdirSync(dir).filter((name) => name.endsWith('.sql')).sort().reverse();
+  const sql = files.map((name) => readFileSync(join(dir, name), 'utf8')).find((text) => PLAN_SEED.test(text));
+  const block = sql ? PLAN_SEED.exec(sql) : null;
+  assert.ok(block, 'no plans seed in any migration');
   const rows = new Map<string, string[]>();
   for (const match of block[1]!.matchAll(/\(([^()]*)\)/g)) {
     const cells = match[1]!.split(',').map((cell) => cell.trim().replace(/^'(.*)'$/, '$1'));
@@ -32,7 +40,7 @@ function seededPlans(): Map<string, string[]> {
 const cell = (value: unknown) => (value === null ? 'null' : String(value));
 
 describe('the price list has one source (docs/PRICING.md)', () => {
-  it('migration 0040 seeds exactly the plans in pricing-config.ts', () => {
+  it('the latest plans seed holds exactly the plans in pricing-config.ts', () => {
     const seeded = seededPlans();
     assert.deepEqual([...seeded.keys()].sort(), PRICING.plans.map((plan) => plan.key).sort());
     for (const plan of PRICING.plans) {
@@ -68,8 +76,18 @@ describe('the price list has one source (docs/PRICING.md)', () => {
 
   it('matches the decisions in PRICING.md §1', () => {
     assert.equal(planByKey('agent_launch').regularPlan, 'agent');
-    assert.equal(planByKey('dealer_launch').regularPlan, 'dealer');
-    assert.equal(planByKey('dealer').category, 'vehicle');
+    // Agents buy by active pages (18 Oct 2026): 5, 10 or unlimited, and the
+    // launch price is the 10-page plan.
+    assert.equal(planByKey('agent_basic').pageLimit, 5);
+    assert.equal(planByKey('agent').pageLimit, 10);
+    assert.equal(planByKey('agent_unlimited').pageLimit, null);
+    assert.equal(planByKey('agent_launch').pageLimit, planByKey('agent').pageLimit);
+    assert.ok(planByKey('agent_basic').amountAgorot < planByKey('agent').amountAgorot);
+    assert.ok(planByKey('agent').amountAgorot < planByKey('agent_unlimited').amountAgorot);
+    // Car dealers buy the same plans (18 Oct 2026): none of them is for one category.
+    for (const key of ['agent_basic', 'agent', 'agent_unlimited', 'agent_launch'] as const) {
+      assert.equal(planByKey(key).category, null, `${key} covers flats and cars`);
+    }
     assert.equal(planByKey('private_sale').pageTtlDays, 90);
     assert.equal(planByKey('private_rent').pageTtlDays, 60);
     assert.equal(planByKey('private_car').pageTtlDays, 60);
@@ -102,6 +120,15 @@ describe('how a price is said (PRICING §4)', () => {
     assert.throws(() => priceParts(wrong));
   });
 
+  it('says what one active page costs, only where there is a cap', () => {
+    assert.equal(perPage(planByKey('agent')), '₪4.90');
+    assert.equal(perPage(planByKey('agent_basic')), '₪5.80');
+    assert.equal(perPage(planByKey('agent_launch')), '₪2.90');
+    assert.equal(perPage(planByKey('agent_unlimited')), null);
+    assert.equal(perPage(planByKey('free')), null);
+    assert.equal(perPage(planByKey('private_sale')), null);
+  });
+
   it('adds VAT at the configured rate', () => {
     assert.equal(withVat(2900), 3422);
     assert.equal(withVat(4900, 17), 5733);
@@ -122,7 +149,7 @@ describe('the launch price is offered only while a real seat remains', () => {
   });
 
   it('offers the regular plan when the count could not be read: never an unproven launch price', () => {
-    assert.equal(offeredPlan('dealer_launch', null).plan.key, 'dealer');
-    assert.equal(offeredPlan('dealer_launch', []).plan.key, 'dealer');
+    assert.equal(offeredPlan('agent_launch', null).plan.key, 'agent');
+    assert.equal(offeredPlan('agent_launch', []).plan.key, 'agent');
   });
 });

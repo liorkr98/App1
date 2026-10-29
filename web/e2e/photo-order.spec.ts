@@ -103,7 +103,7 @@ test('a mouse picks the fourth photo up and makes it the cover', async ({ browse
   await page.mouse.up();
 
   await expect(page.locator('.strip > li.lifted')).toHaveCount(0);
-  expect(await order(page)).toEqual(['d-balcony.jpg', 'a-salon.jpg', 'b-kitchen.jpg', 'c-bedroom.jpg']);
+  await expect.poll(() => order(page)).toEqual(['d-balcony.jpg', 'a-salon.jpg', 'b-kitchen.jpg', 'c-bedroom.jpg']);
   await coverIsRightmost(page);
   // Nothing is left displaced once it has settled.
   await page.waitForTimeout(400);
@@ -128,7 +128,7 @@ test('a finger holds, lifts, and moves the photo; a quick swipe only scrolls', a
   for (let step = 1; step <= 6; step += 1) await touch('touchMove', { x: from.x, y: from.y - step * 12 });
   await touch('touchEnd');
   await expect(page.locator('.strip > li.lifted')).toHaveCount(0);
-  expect(await order(page)).toEqual(NAMES);
+  await expect.poll(() => order(page)).toEqual(NAMES);
   // Let the swipe's fling finish: Chrome treats a touch that lands during a
   // fling as passive, and so would a real phone.
   await page.waitForTimeout(800);
@@ -149,7 +149,7 @@ test('a finger holds, lifts, and moves the photo; a quick swipe only scrolls', a
   await touch('touchEnd');
 
   await expect(page.locator('.strip > li.lifted')).toHaveCount(0);
-  expect(await order(page)).toEqual(['d-balcony.jpg', 'a-salon.jpg', 'b-kitchen.jpg', 'c-bedroom.jpg']);
+  await expect.poll(() => order(page)).toEqual(['d-balcony.jpg', 'a-salon.jpg', 'b-kitchen.jpg', 'c-bedroom.jpg']);
   await coverIsRightmost(page);
   await context.close();
 });
@@ -159,7 +159,7 @@ test('the move buttons still reorder, without a pointer', async ({ browser }) =>
   const page = await context.newPage();
   await addFour(page);
   await page.locator('.strip > li').nth(1).locator('.shot-move').first().click();
-  expect(await order(page)).toEqual(['b-kitchen.jpg', 'a-salon.jpg', 'c-bedroom.jpg', 'd-balcony.jpg']);
+  await expect.poll(() => order(page)).toEqual(['b-kitchen.jpg', 'a-salon.jpg', 'c-bedroom.jpg', 'd-balcony.jpg']);
   await coverIsRightmost(page);
   await context.close();
 });

@@ -9,6 +9,8 @@ import { t } from '../../lib/i18n';
  * see the REAL file on a real iPhone and Android phone — the codec, the
  * length, how it plays in WhatsApp — and so e2e/film.spec.ts can record one
  * in CI. It runs the same recordFilm and filmStory the editor's button does.
+ * `?format=square|feed` and `?music=calm|warm|upbeat` make the other shapes
+ * and the film with music (18 Oct 2026).
  */
 ---
 <Plain title={t('lab.filmTitle')} robots="noindex,nofollow">
@@ -29,6 +31,8 @@ import { t } from '../../lib/i18n';
 </Plain>
 
 <script>
+  import { isFilmMood } from '@/features/listings/film-music';
+  import { isFilmFormat } from '@/features/listings/film-overlay';
   import { recordFilm } from '../../lib/film-file';
   import { filmPhotos, filmStory } from '../../lib/film-story';
   import { tlvListing } from '../../lib/fixtures';
@@ -39,14 +43,25 @@ import { t } from '../../lib/i18n';
   const button = $<HTMLButtonElement>('make');
   const page = document.documentElement;
 
+  const query = new URLSearchParams(location.search);
+  const format = query.get('format');
+  const mood = query.get('music');
+
   button?.addEventListener('click', async () => {
+    // Inside the tap, as the editor does: iOS refuses a later AudioContext.
+    const context = isFilmMood(mood) && typeof AudioContext !== 'undefined' ? new AudioContext() : undefined;
+    void context?.resume();
     button.disabled = true;
     page.dataset.film = 'working';
     $('note')!.hidden = false;
     $('failed')!.hidden = true;
     await loadShareFonts();
     const urls = filmPhotos(tlvListing).map((photo) => largest(photo, GALLERY_WIDTHS));
-    const made = await recordFilm(urls, filmStory(tlvListing));
+    const made = await recordFilm(urls, filmStory(tlvListing), {
+      ...(isFilmFormat(format) ? { format } : {}),
+      ...(context && isFilmMood(mood) ? { music: { context, mood } } : {}),
+    });
+    void context?.close().catch(() => undefined);
     $('note')!.hidden = true;
     button.disabled = false;
     if (!made) {
@@ -72,6 +87,7 @@ import { t } from '../../lib/i18n';
       filmBytes: String(made.blob.size),
       filmWidth: String(made.width),
       filmHeight: String(made.height),
+      filmMusic: String(made.music),
     });
   });
 </script>

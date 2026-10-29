@@ -13,7 +13,6 @@ import Msg from './Msg.astro';
 const cards = [
   { regular: planByKey('free'), launch: null },
   { regular: planByKey('agent'), launch: planByKey('agent_launch') },
-  { regular: planByKey('dealer'), launch: planByKey('dealer_launch') },
   { regular: planByKey('private_sale'), launch: null },
 ];
 ---
@@ -63,7 +62,7 @@ const cards = [
 
   @media (min-width: 960px) {
     .price-tiers {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
 

@@ -15,6 +15,8 @@ import PriceBar from './PriceBar.astro';
 import { priceProps } from '../lib/stage';
 import Prose from './Prose.astro';
 import SellerBlock from './SellerBlock.astro';
+import PageExtras from './PageExtras.astro';
+import LoanCalculator from './LoanCalculator.astro';
 import Stage from './Stage.astro';
 import AgentCard from './AgentCard.astro';
 import Walk from './Walk.astro';
@@ -27,11 +29,7 @@ import { areaMap } from '@/features/listings/area-map';
 import { isWalkItem, labeledWalkItems } from '@/features/listings/photo-rooms';
 import { enrichmentHasContent } from '@/features/listings/enrichment-view';
 import { shareMessage, whatsappShareUrl } from '@/features/listings/share-message';
-import {
-  publicPlace,
-  showListingMap,
-  whatsappPrefill,
-} from '@/features/listings/control-surface';
+import { showListingMap } from '@/features/listings/control-surface';
 import { templateFor, templateSpec } from '@/features/templates/manifest';
 import { toCells } from '../lib/facts';
 import { DEMO_NOTE } from '../lib/template-pages';
@@ -74,7 +72,14 @@ const given: Listing = demo ? { ...shown, seller: { ...shown.seller, phone: '' }
 // A template drawn for the other category (Showroom on a flat) is drawn as
 // its fallback instead — here, once, so BaseListing's data-template and every
 // Stage below agree on what the page actually is.
-const listing: Listing = { ...given, template: templateFor(given.template, given.category) };
+//
+// A sold page the agent kept up (0047) is a record of the sale, not an
+// offer: no price anywhere on it. Price 0 is "unanswered" to every template
+// (PriceBar, the stages, og:title), so each one leaves the price out the way
+// it already does for a seller who gave none.
+const { listPrice: _listPrice, priceNote: _priceNote, priceDisplay: _priceDisplay, priceWas: _priceWas, priceDroppedAt: _droppedAt, ...unpriced } = given;
+const record: Listing = given.status === 'sold' ? { ...unpriced, price: 0 } : given;
+const listing: Listing = { ...record, template: templateFor(record.template, record.category) };
 const presentation = CATEGORY_PRESENTATION[listing.category];
 
 const paragraphs = listing.description.split('\n\n');
@@ -119,11 +124,12 @@ const walkImages = [listing.media.cover, ...listing.media.gallery];
 const walkItems = labeledWalkItems(walkImages);
 const galleryImages = listing.media.gallery.filter((image) => !isWalkItem(image, walkItems));
 const hasWalk = walkItems.length > 0;
-const waMessage = whatsappPrefill(
-  listing.category,
-  listing.location ? publicPlace(listing.location) : undefined,
-);
-const waHref = demo ? DEMO_NOTE : `/a/${listing.slug}/wa?text=${encodeURIComponent(waMessage)}`;
+// The hop writes the message from the listing (control-surface.ts
+// listingPrefill): the link names only the listing.
+const waHref = demo ? DEMO_NOTE : `/a/${listing.slug}/wa`;
+// The second button (0047), only when the agent turned it on. Counted as a
+// WhatsApp tap: it is one, and the agent sees it on /mine with the rest.
+const visitHref = listing.extras?.visit && !sold ? (demo ? DEMO_NOTE : `/a/${listing.slug}/wa?m=visit`) : undefined;
 const homeLabel = listing.category === 'property' ? t('listing.section.home') : t('listing.section.vehicle');
 
 const shareCells = toCells(listing.category, listing.facts, listing.audience);
@@ -170,6 +176,7 @@ const shareHref = whatsappShareUrl(
   shareMessage({
     title: listing.title,
     price: listing.price > 0 && listing.priceDisplay !== 'on_request' ? ils(listing.price) : '',
+    ...(listing.shareLine ? { line: listing.shareLine } : {}),
     facts: shareFacts,
     ...(sharePlace ? { place: sharePlace } : {}),
     ...(listing.prePortal ? { prePortalLine: t('listing.prePortal') } : {}),
@@ -248,6 +255,8 @@ const shareHref = whatsappShareUrl(
     </p>
   ) : null}
 
+  <PageExtras listing={listing} />
+
   <FactsGrid
     category={listing.category}
     facts={listing.facts}
@@ -255,6 +264,7 @@ const shareHref = whatsappShareUrl(
     omit={stageKeys}
   />
   <MonthlyCost facts={listing.facts} />
+  <LoanCalculator listing={listing} />
 
   <section class="reveal about">
     <SectionLabel text={homeLabel} />
@@ -284,6 +294,7 @@ const shareHref = whatsappShareUrl(
   <Gallery
     images={galleryImages}
     film={[listing.media.cover, ...listing.media.gallery]}
+    filmOn={listing.extras?.film === true}
     video={listing.media.video}
   />
 
@@ -306,6 +317,8 @@ const shareHref = whatsappShareUrl(
   <SellerBlock
     seller={listing.seller}
     whatsappHref={waHref}
+    visitHref={visitHref}
+    visitLabel={t(listing.category === 'vehicle' ? 'listing.visitCtaCar' : 'listing.visitCta')}
     shareHref={shareHref}
     sold={sold}
   />
@@ -317,7 +330,6 @@ const shareHref = whatsappShareUrl(
       <CtaDock
         href={demo ? DEMO_NOTE : undefined}
         phone={listing.seller.phone}
-        message={waMessage}
         slug={listing.slug}
         sold={sold}
       />

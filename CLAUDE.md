@@ -392,6 +392,10 @@ date it was current.
   ordinary cell. An unbacked badge is worse than no badge.
 - **Never present data as a valuation.** No appraisal, no estimate of worth.
 - **Never publish a licence plate.** It is a lookup key only.
+- **A sold page stays up only when the agent chooses** (19 Oct 2026, 0047,
+  reversing 0026's "sold leaves the web" for that case only). It shows the
+  sale and nothing to act on: no price, no WhatsApp or call, no calculator,
+  noindex, no views counted. Without the choice, sold still 404s.
 - **The street, never the building** (7 Oct 2026). No house number and no
   location pin on any public surface — page, card, story, flyer, preview.
   `publicStreet()` strips the number where a row becomes a listing; the row
@@ -455,24 +459,26 @@ interface with one adapter and say what the interface needs.
 
 **Plans, prices and limits are `docs/PRICING.md`** (decided 12 Oct 2026, the
 single source of truth). Prices live in `src/features/billing/pricing-config.ts`, seeded into the
-`plans` table by migration 0040; no component carries a price literal, and
+`plans` table by migration 0040 and again by 0045; no component carries a price literal, and
 `scripts/verify-no-price-literals.mjs` fails the build on one.
 
-**The publish gate is the Postgres trigger (migration 0040).** At the moment a
+**The publish gate is the Postgres trigger (migration 0040, page limits 0045).** At the moment a
 listing becomes published or sold it reads the owner's CURRENT entitlement,
 `public.publish_decision()`:
 
 | Situation | Publish | Our credit (נבנה עם עמוד מכירה) |
 |---|---|---|
-| live subscription (active, cancelled but inside the paid period, or past due inside the 7-day grace) whose category fits | yes | off when the plan has branding |
+| live subscription (active, cancelled but inside the paid period, or past due inside the 7-day grace) whose category fits, and fewer pages published or sold than its `page_limit` (5, 10 or none) | yes | off when the plan has branding |
 | live admin comp in `listing_grants` (honoured until its `effective_to`, no longer decremented) | yes | off |
 | a one-time purchase for this listing, or an unused one for its category | yes; expires first publish + 90 or 60 days, then 410 | on |
 | free: fewer than 2 pages published or sold | yes | on |
+| a subscriber at their plan's cap with no comp or purchase | **no**: `PT402 plan_limit`; the editor offers the plans with more pages | |
 | anything else, including an error | **no**: `PT402`, which the API returns as HTTP 402 and the editor turns into the paywall | |
 
 Drafts and previews are never gated. Cancellation, or 7 days past due, runs
 `downgrade_account()`: the credit comes back, the 2 most recent pages stay up
-and the rest become `unpublished` (never deleted); a new payment restores them.
+and the rest become `unpublished` (never deleted); a new payment restores them,
+up to the new plan's page limit, most recent first (`restore_account()`, 0045).
 Launch cohorts are seats in `cohort_counters`, consumed in the payment
 transaction, never returned. Payment state comes only from
 `apply_payment_event()`, idempotent on `psp_txn_ref`, called by the webhook
@@ -490,14 +496,18 @@ mark is the viral loop: a listing page is forwarded to 30–80 people who are by
 definition interested in buying something. Small, elegant, clickable. A page
 marked sold still counts; archiving one frees its slot.
 
-**Agents and dealers subscribe; private sellers buy one page.** The launch
-price is a cohort (first 200 agents, first 100 dealers), locked for 12 months
+**Agents and dealers subscribe; private sellers buy one page.** Agents and
+car dealers buy the SAME plans, under the same names, by active pages: 5, 10
+or unlimited (18 Oct 2026); the office plan is unlimited. The launch price is
+the 10-page plan for the first 200 subscribers of either kind, locked for 12 months
 from the first payment, with notice 30 days before it ends. A seat is never
 returned and never faked: the counter shows `cohort_counters` as it is.
 
-**Agent and office plans need a broker licence that checked out** against the
-Justice Ministry register at signup. A check that failed or could not run is
-"not verified": fail closed for those plans, free and private stay open.
+**No plan needs a broker licence** (owner, 18 Oct 2026, when dealers joined
+the agent plans). The licence check against the Justice Ministry register
+decides one thing: whether the page shows מתווך מורשה. A check that failed or
+could not run is "not verified" and the badge stays off; publishing is
+unaffected.
 
 **No free trial on subscription tiers.** A private seller would take the trial,
 publish their one listing and churn — cannibalising the single-listing purchase

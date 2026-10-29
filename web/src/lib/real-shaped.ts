@@ -44,7 +44,8 @@ export const realAreaPlaces: AreaPlaces = {
 };
 
 // Without what an editor listing never has.
-const { enrichment: _enrichment, ...plain } = tlvListing;
+// No enrichment and no page options: a real listing starts with neither (0048).
+const { enrichment: _enrichment, extras: _extras, ...plain } = tlvListing;
 const { room: _room, focalX: _x, focalY: _y, ...cover } = tlvListing.media.cover;
 
 export const realListing: Listing = {
@@ -87,7 +88,7 @@ export const realBareListing: Listing = {
 };
 
 /** A car as an agent publishes it: the seller's answers, no register data. */
-const { enrichment: _golfRegister, ...golfPlain } = golfListing;
+const { enrichment: _golfRegister, extras: _golfExtras, ...golfPlain } = golfListing;
 
 export const realVehicleListing: Listing = {
   ...golfPlain,
