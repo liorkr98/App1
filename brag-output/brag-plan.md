@@ -326,3 +326,51 @@ the exact licence before publishing"), and this is a paid ad. So the score is
 - **6-second bumper:** the S2 headline straight into S4's fan, then the logo.
 - **English subtitle track** (`en.json` has empty values today, so this needs
   copy first).
+
+---
+
+## 12. Before the ad goes live (29 Oct 2026)
+
+Done in this pass:
+
+- [x] Re-captured from `main` (30 commits newer than the first render): the
+      editor now shows "עוד N שלבים עד הקישור", and the ad matches it.
+- [x] The licence badge ("מאומת · פנקס המתווכים") and licence number are no
+      longer shown. The fixture agent is fictional, and the register check is
+      not switched on in production (OWNER-ACTIONS.md), so the ad must not
+      show a badge no real agent can get today.
+- [x] Encoded with the BT.709 matrix and tags. The first export was untagged
+      with a BT.601 matrix, which shifts greens on phones and ad platforms.
+- [x] The homepage free-tier copy now matches the ad ("2 דפים חינם, לתמיד").
+
+Only a person can do these:
+
+- [ ] **Listen to it** on a phone speaker and on headphones. The score was
+      checked by measurement only (−14 LUFS, band balance), never by ear.
+- [ ] **Open amudsell.com on a phone** and follow the ad's path: homepage →
+      "לבנות מודעה" → upload four photos → publish → send the link to
+      yourself on WhatsApp. The card must look like the one in S5. This
+      session could not reach the live site.
+- [ ] **The landing link** for each platform. The site's counter keeps only
+      `utm_source` (lowercase letters, digits, `.` and `-`, up to 40), so
+      put the platform and the ad in it: `https://amudsell.com/?utm_source=meta-reel-1`,
+      `?utm_source=tiktok-1`, `?utm_source=wa-status`. Then check that
+      `/admin/data/` counts the visit (needs migration 0042).
+- [ ] **Photo licences.** `docs/CREDITS.md` lists the four Tel Aviv photos
+      as "Unsplash / Pexels" without recorded authors or URLs. Both licences
+      allow use in ads, but in a paid ad the source of each file should be
+      re-confirmed and written down. Otherwise swap in your own photos.
+- [ ] **The listing is a demo.** A stock flat with a price can be read as a
+      real listing. The chats are already tagged "המחשה"; decide whether the
+      listing scenes need a small "דוגמה" tag as well.
+- [ ] **Ad platform category.** Meta may route anything mentioning
+      apartments and prices into its Housing special ad category, which
+      limits targeting. The ad sells software to agents, not housing, so
+      declare it as such and keep the targeting to professionals.
+- [ ] **Payments.** The PSP is still undecided and the adapter is disabled
+      (CLAUDE.md §8). The ad promises only the free tier, which works today.
+      An agent who hits the third page cannot pay yet, so plans are granted by
+      hand with `admin_grant_plan()`.
+- [ ] **4:5 feed version.** Facebook and Instagram feeds crop 9:16 to 4:5,
+      which cuts the captions at the top. Use the 9:16 video only for
+      Reels, Stories, TikTok and WhatsApp Status until a 4:5 cut exists.

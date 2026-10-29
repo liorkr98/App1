@@ -6,7 +6,11 @@ const ids = ['aurora','poster','monolith','zine','ticket','glass','blueprint','h
 for (const id of ids) {
   const p = await ctx.newPage();
   await p.goto(`http://localhost:4321/templates/${id}/demo/`, { waitUntil: 'networkidle' });
-  await p.addStyleTag({ content: '.demo-bar{display:none!important}' });
+  // The demo banner is not part of a listing. The licence badge and number
+  // are hidden because the fixture agent is fictional and the register check
+  // is not switched on in production (OWNER-ACTIONS.md): this is how the page
+  // renders for an agent whose licence was not verified.
+  await p.addStyleTag({ content: '.demo-bar,.agent-verified,.agent-card-licence,.verified,.ap-licence{display:none!important}' });
   await p.evaluate(() => document.fonts.ready);
   await p.waitForTimeout(500);
   await p.screenshot({ path: `${out}/${id}-first.png` });
