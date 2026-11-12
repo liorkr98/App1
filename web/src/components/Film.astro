@@ -12,7 +12,7 @@ import {
 } from '@/features/listings/ken-burns';
 import type { Image } from '@/types/listing';
 import type { ListingVideo } from '@/features/listings/rich-media';
-import { GALLERY_WIDTHS, largest } from '../lib/images';
+import { GALLERY_WIDTHS, largest, srcset } from '../lib/images';
 import { t } from '../lib/i18n';
 import '../styles/film.css';
 
@@ -21,9 +21,19 @@ interface Props {
   video?: ListingVideo;
   /** Hero: the phone's finished frame. Gallery: a tile with a play control. */
   mode?: 'gallery' | 'hero';
+  /**
+   * Hero only. The homepage phone is 320px, 340px from 900px. Passed in so
+   * the stills pick the same file as the cover underneath.
+   */
+  sizes?: string;
 }
 
-const { images, video, mode = 'gallery' } = Astro.props;
+const {
+  images,
+  video,
+  mode = 'gallery',
+  sizes = '(min-width: 900px) 340px, 320px',
+} = Astro.props;
 const frames = filmFrames(images.length);
 const seconds = video?.seconds ?? filmDuration(frames.length);
 const clock = filmClock(seconds);
@@ -70,6 +80,13 @@ const extraCss = extra.length > 0 ? `<style>${extra.join('')}</style>` : '';
 
 {extraCss ? <Fragment set:html={extraCss} /> : null}
 
+{/*
+  The homepage phone. This film sits on top of the cover, so its first
+  still is the picture that paints: high priority, same file as the cover.
+  The later stills stay lazy and low priority. An eager film used to pull
+  every photograph into the first screen, the same failure the gallery
+  tile below already refuses.
+*/}
 {hero && frames.length > 0 && (
   <div class="film hm-film" style={film}>
     {frames.map((frame) => {
@@ -79,9 +96,14 @@ const extraCss = extra.length > 0 ? `<style>${extra.join('')}</style>` : '';
           class={`film-still${frame.index === 0 ? ' is-first' : ''}`}
           style={stillStyle(frame.motion, frame.index)}
           src={largest(image, GALLERY_WIDTHS)}
+          srcset={srcset(image, GALLERY_WIDTHS) || undefined}
+          sizes={sizes}
           alt=""
           width={image.width}
           height={image.height}
+          decoding="async"
+          loading={frame.index === 0 ? undefined : 'lazy'}
+          fetchpriority={frame.index === 0 ? 'high' : 'low'}
         />
       ) : null;
     })}
@@ -108,6 +130,8 @@ const extraCss = extra.length > 0 ? `<style>${extra.join('')}</style>` : '';
           photograph, up to ten stills downloaded with the page and pushed the
           first screen's photo past 2 s on a cheap phone. They load when the
           tile comes near the screen, long before anyone presses play.
+          The tile is the full column (620px), not a half-width thumb, so
+          its sizes stay wider than the gallery cells beside it.
         */}
         {frames.map((frame) => {
           const image = images[frame.index];
@@ -116,6 +140,8 @@ const extraCss = extra.length > 0 ? `<style>${extra.join('')}</style>` : '';
               class={`film-still${frame.index === 0 ? ' is-first' : ''}`}
               style={stillStyle(frame.motion, frame.index)}
               src={largest(image, GALLERY_WIDTHS)}
+              srcset={srcset(image, GALLERY_WIDTHS) || undefined}
+              sizes="(min-width: 640px) 620px, 100vw"
               alt=""
               width={image.width}
               height={image.height}
