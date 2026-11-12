@@ -3,7 +3,7 @@ import { t } from '../lib/i18n';
 import { ils } from '../lib/format';
 import { ogDescription, ogTitle } from '../lib/og';
 import { CATEGORY_PRESENTATION } from '../lib/category-presentation';
-import { GALLERY_WIDTHS, HERO_WIDTHS, largest } from '../lib/images';
+import { GALLERY_WIDTHS, HERO_WIDTHS, largest, srcset } from '../lib/images';
 import { golfListing, tlvListing } from '../lib/fixtures';
 import Prose from '../components/Prose.astro';
 import Msg from '../components/Msg.astro';
@@ -67,7 +67,16 @@ const sharedWithCars = catalogue.filter((tpl) => !tpl.car && templateFits(tpl.id
 
 const cardTitle = ogTitle(home);
 const cardFacts = ogDescription(home, CATEGORY_PRESENTATION.property.ogFactKeys);
-const cardImage = largest(home.media.cover, HERO_WIDTHS);
+// The chat card is a thumbnail of the same cover the hero already shows.
+// srcset lets a phone reuse that 800px file; a wide screen can still take
+// the 1200px one. A single largest() URL always fetched the 1200px copy
+// as well, a second download of a picture the first screen already has.
+const cardSrc = largest(home.media.cover, HERO_WIDTHS);
+const cardSet = srcset(home.media.cover, HERO_WIDTHS) || undefined;
+const cardSizes = '(min-width: 900px) 480px, 92vw';
+// The hero phone is 320px, 340px from 900px. The cover fills it, so that
+// is the size the browser should match — not the file's own 1200px width.
+const phoneSizes = '(min-width: 900px) 340px, 320px';
 // The scroll story's third screen: the first template the catalogue shows,
 // whose picture the templates row already loads.
 const storyTemplate = catalogue[0]?.id ?? 'aurora';
@@ -166,17 +175,19 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
             <div class="hm-photo" data-i={i}>
               <img
                 src={largest(image, GALLERY_WIDTHS)}
+                srcset={srcset(image, GALLERY_WIDTHS) || undefined}
+                sizes={phoneSizes}
                 alt=""
                 width={image.width}
                 height={image.height}
                 decoding="async"
-                fetchpriority={i === 0 ? 'high' : undefined}
+                fetchpriority={i === 0 ? 'high' : 'low'}
                 loading={i === 0 ? 'eager' : 'lazy'}
               />
               {image.room && <span class="hm-room">{t(`editor.rooms.${image.room}`)}</span>}
             </div>
           ))}
-          <Film images={builderPhotos} mode="hero" />
+          <Film images={builderPhotos} mode="hero" sizes={phoneSizes} />
           <div class="hm-shade"></div>
           <div class="hm-ui">
             <p class="hm-ui-title">{titleLines.map((line) => <span><Prose text={line} /></span>)}</p>
@@ -232,8 +243,19 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
         <div class="hm-story-phone" data-story-phone data-step="4" role="img" aria-label={t('home.storyPhone')}>
           <div class="hm-story-screen" data-n="1">
             <div class="hm-story-photos">
+              {/* Same sizes as the hero phone, on purpose: a tighter size would
+                  fetch a second copy of a photograph the hero already has. */}
               {builderPhotos.map((image) => (
-                <img src={largest(image, GALLERY_WIDTHS)} alt="" loading="lazy" decoding="async" width={image.width} height={image.height} />
+                <img
+                  src={largest(image, GALLERY_WIDTHS)}
+                  srcset={srcset(image, GALLERY_WIDTHS) || undefined}
+                  sizes={phoneSizes}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  width={image.width}
+                  height={image.height}
+                />
               ))}
             </div>
           </div>
@@ -250,7 +272,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
           <div class="hm-story-screen hm-story-wa" data-n="4">
             <div class="hm-bubble">
               <div class="hm-card">
-                <img src={cardImage} alt="" loading="lazy" decoding="async" width="1200" height="630" />
+                <img src={cardSrc} srcset={cardSet} sizes={cardSizes} alt="" loading="lazy" decoding="async" width="1200" height="630" />
                 <div>
                   <b><Prose text={cardTitle} /></b>
                   <small dir="ltr">amudsell.com</small>
@@ -397,7 +419,7 @@ const ogImage = new URL('/og-home.webp', Astro.site).href;
             <p class="hm-bubble is-them">{t('home.waAsk')}</p>
             <div class="hm-bubble">
               <div class="hm-card">
-                <img src={cardImage} alt="" loading="lazy" decoding="async" width="1200" height="630" />
+                <img src={cardSrc} srcset={cardSet} sizes={cardSizes} alt="" loading="lazy" decoding="async" width="1200" height="630" />
                 <div>
                   <b><Prose text={cardTitle} /></b>
                   <small><Prose text={cardFacts} /></small>
